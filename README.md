@@ -12,24 +12,23 @@ pip install ipui
 
 ## 🛠️ The IPUI Advantage
 
-IPUI isn't just a library; it's a structural engine designed to make pygame UIs easy, error resistant, and sharp looking.
+- 🗂️ **First-Class Tab System:** Define your app’s tabs and pane layout from a single dictionary. IPUI scaffolds the structure and keeps each tab cleanly modular.
+- 📱 **Resolution Independent:** UI scales automatically to physical screen height, so it stays usable on an old laptop or a 4K monitor.
+- 📐 **Declarative Layout:** Simple, flexible syntax that handles the math so you can focus on the logic.
+- 🧩 **Built to Extend:** Custom widgets get layout, events, and styling automatically. Standard widgets take 5–10 LOC; even tools like a network diagram widget come in under 150 LOC.
+- 📜 **One-Touch Scrolling:** Make any Card scrollable with a single parameter—no complex viewport setup required.
+- 🔗 **Construction IS Attachment:** No floating widgets or `add()` calls. If you build it inside a container, it’s attached automatically.
+- 🔄 **Multiple Update Styles:** Use DAG-based reactivity, pipeline-driven synchronization, or direct widget access—whichever fits the job best.
+- ⛓️ **Data Pipeline:** Bind widgets to a Pipeline Key and let IPUI propagate updates automatically. Derives stay in sync with zero manual update code.
+- 💡 **Multi-Tier Tooltips:** Choose between standard hover tips or “Super Tooltips”—pinnable, scrollable windows capable of displaying deep technical data.
+- 🗃️ **Automatic Widget Registry:** When DAG or pipeline isn’t the right fit, named widgets stay easy to reach across tabs and panes—no globals, no reference plumbing required.
+- 🐞 **Pro Debug Mode:** Includes a live Widget Tree and layout overlays to make positioning issues easy to diagnose.
+- 💻 **Beautiful Code Boxes:** Display source code by passing a string or a file path; IPUI handles the formatting.
+- 🗺️ **Tab Map:** A bird’s-eye view of your entire application for quick review and navigation.
+- 📊 **Grid:** The most capable grid in the pygame ecosystem. Automatic sorting and filtering. SQL-ready. Feed it lists, dicts, or databases—it adapts to your workflow.
+- 📚 **Self-Documenting:** Documentation stays in sync with the framework by reading the source code directly.
+- 📈 **Matplotlib Graphs:** Embed real-time updating research visuals directly in your pygame UI—useful for training curves, experiment monitoring, and diagnostics.
 
-* **📱 Resolution Independent**: UI scales automatically to physical screen height—looks perfect on a laptop or a 4K monitor.
-* **📐 Declarative Layout**: Simple, flexible syntax that handles the math so you can focus on the logic.
-* **🧩 Radical Extensibility**: Custom widgets get layout, events, and styling for free. Standard widgets take 5–10 LOC; even complex tools like "Network Diagram Builders" are under 150 LOC.
-* **🗂️ First-Class Tab System**: Define your entire app structure with a single dictionary at the top of your Form.
-* **📜 One-Touch Scrolling**: Make any Card scrollable with a single parameter—no complex viewport setup required.
-* **🔗 Construction IS Attachment**: No floating widgets or `add()` calls. If you build it inside a container, it's attached. No voids, no leaks.
-* **🔄 Hybrid Paradigms**: Mix **Reactive** (DAG-based updates) and **Imperative** (event-driven) styles freely in the same pane.
-* **⛓️ Data Pipeline**: Link widgets to keys for automatic initial values and seamless data reading across different tabs.
-* **💡 Multi-Tier Tooltips**: Choose between standard hover tips or "Super Tooltips"—pinnable, scrollable windows capable of displaying deep technical data.
-* **🗃️ Automatic Widget Registry**: Stop passing references around. Access any widget instantly via the global registry.
-* **📚 Self-Documenting**: Documentation that stays accurate by reading the framework source code directly.
-* **🐞 Pro Debug Mode**: Includes a live "Widget Tree" and layout overlays to make solving positioning issues a breeze.
-* **💻 Beautiful Code Boxes**: Display source code by passing a string or a file path; IPUI handles the formatting.
-* **🗺️ Tab Map**: A birds-eye view of your entire application content for quick review and navigation.
-* **📊 The "Baddest" DataGrid**: Sortable, filterable, and SQL-ready. Feed it lists, dicts, or databases—it just works.
-* **📊 MatPlotLib Graphs**:  Add to your pygame apps with this widget.
 ---
 
 ## Quick Start (tabs, banner, label, and button w/ modal message -  11 lines of code)
