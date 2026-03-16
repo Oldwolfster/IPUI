@@ -14,7 +14,6 @@ class ProjectListItem(_BaseWidget):
     """
     def build(self):
         self.project_info   = self.data
-        self.my_name        = f"ProjectListItem: {self.project_info.name}"
         self.font           = self.font or Style.FONT_BODY
         self.font_detail    = Style.FONT_DETAIL
         self.color_bg       = Style.COLOR_CARD_BG

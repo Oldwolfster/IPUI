@@ -25,7 +25,6 @@ class NetworkDiagram(_BaseWidget):
     COL_GAP        = 32
 
     def build(self):
-        self.my_name          = "NetworkDiagram"
         self.layers           = []
         self.selected_layer   = -1
         self.on_layer_selected = None

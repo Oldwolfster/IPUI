@@ -14,7 +14,6 @@ class Row(_BaseWidget):
     api:         (layout only — no custom methods)
     """
     def build(self):
-        self.my_name    = "Row"
         self.horizontal = True
         self.pad        = 0
         self.border     = 0
@@ -29,7 +28,6 @@ class Col(_BaseWidget):
     api:         (layout only — no custom methods)
     """
     def build(self):
-        self.my_name = "Col"
         self.pad     = 0
         self.border  = 0
 
@@ -43,7 +41,6 @@ class CardRow(_BaseWidget):
     api:         (layout only — no custom methods)
     """
     def build(self):
-        self.my_name    = "CardRow"
         self.horizontal = True
         if self.color_bg is None: self.color_bg   = Style.COLOR_CARD_BG
         MgrColor.apply_bevel(self, "sunken")
@@ -58,7 +55,6 @@ class CardCol(_BaseWidget):
     api:         (layout only — no custom methods)
     """
     def build(self):
-        self.my_name  = "CardCol"
         if self.color_bg is None: self.color_bg = Style.COLOR_CARD_BG
         MgrColor.apply_bevel(self, "sunken")
 

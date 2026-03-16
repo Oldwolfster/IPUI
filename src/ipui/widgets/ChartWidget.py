@@ -12,7 +12,6 @@ class ChartWidget(_BaseWidget):
     api:         set_data(lines, x_label, y_label)
     """
     def build(self):
-        self.my_name       = "ChartWidget"
         self.height_flex   = self.height_flex or 1
         self.my_surface    = None
         self.pad           = 0

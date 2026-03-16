@@ -12,7 +12,6 @@ class Spacer(_BaseWidget):
     def build(self):
         self.width_flex     = self.width_flex or 1
         self.height_flex    = self.height_flex or 1
-        self.my_name        = f"Spacer"
         self.pad            = 0
         self.gap            = 0
         self.border         = 0

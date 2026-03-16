@@ -1,4 +1,4 @@
-# Ref.py  NEW: Debug reference pane with button menu and Widget Catalog
+# Reference.py  Update: one pane per mode, shared menu, green active button
 
 from datetime import datetime
 
@@ -7,50 +7,90 @@ from ipui.widgets.CodeBox import CodeBox
 from ipui.utils.WidgetCatalog import WidgetCatalog
 
 
-class Ref(_basePane):
+class Reference(_basePane):
 
     def initialize(self):
-        self.catalog            = WidgetCatalog()
-        self.catalog_loaded_at  = datetime.now()
-
-        if self.form.pipeline_read("ref_mode") is None:
-            self.form.pipeline_set("ref_mode", "widgets")
+        self.catalog           = WidgetCatalog()
+        self.catalog_loaded_at = datetime.now()
+        self.active_mode       = "widgets"
 
     # ══════════════════════════════════════════════════════════════
-    # LEFT PANE
+    # SHARED MENU
+    # ══════════════════════════════════════════════════════════════
+
+    def build_menu(self, parent):
+        row = Row(parent, justify_center=True)
+        modes = [
+            ("Widgets",  self.pane_widgets),
+            ("ReadMe",   self.pane_markdown),
+            ("Pipeline", self.show_stub),
+            ("Examples", self.show_stub),
+            ("Layout",   self.pane_markdown),
+        ]
+        for label, builder in modes:
+            is_active = (label.lower() == self.active_mode)
+            color     = Style.COLOR_PAL_GREEN_DARK if is_active else Style.COLOR_TAB_BG
+            if builder:
+                btn = Button(row, label, color_bg=color, width_flex=1,
+                             on_click=lambda b=builder, l=label: self.set_mode(l.lower(), b))
+            else:
+                btn = Button(row, label, color_bg=color, width_flex=1,
+                             on_click=self.show_stub)
+
+    def set_mode(self, mode, builder):
+        self.active_mode = mode
+        self.form.set_pane(0, builder)
+        self.form.set_pane(1, self.ref_detail)
+
+    def md_file_for_mode(self):
+        files = {
+            "readme": "docs/README.md",
+            "layout": "docs/IPUI_Layout_Guide_Original_Flex.md",
+        }
+        return files.get(self.active_mode)
+
+    # ══════════════════════════════════════════════════════════════
+    # PANE: Widgets (default / startup)
     # ══════════════════════════════════════════════════════════════
 
     def debug_ref(self, parent):
-        mode = (self.form.pipeline_read("ref_mode") or "widgets").lower()
+        self.pane_widgets(parent)
 
-        if mode == "readme":
-            #self.build_markdown(parent, "ipui/docs/README.md")
-            self.form.set_pane(1, self.build_markdown_detail, "docs/README.md")
-        elif mode == "layout":
-            self.build_markdown(parent, "IPUI_Layout_Guide_Original_Flex.md")
-        else:
-            self.build_widgets(parent)
-
-    def build_markdown_detail(self, parent, file_path):
-        from ipui.widgets.MarkdownView import MarkdownView
+    def pane_widgets(self, parent):
+        self.build_menu(parent)
+        Title(parent, "Widget Catalog", glow=True)
+        Body(parent, f"{len(self.catalog.entries)} widgets discovered at runtime")
 
         card = CardCol(parent, height_flex=True, scrollable=True)
-        MarkdownView(card, data=file_path)
+        grid = PowerGrid(card, name="grid_ref_widgets")
+        grid.set_data(self.catalog.as_grid_data())
+        grid.set_column_max("Description", 500)
+        grid.on_row_click(self.handle_widget_selected, "Widget")
+
+    # ══════════════════════════════════════════════════════════════════
+    # PANE: Markdown - no specific method needed.. just set active_mode
+    # ══════════════════════════════════════════════════════════════════
 
 
-    def ref_globals(self, parent):
-        row = Row(parent, justify_center=True)
+    def pane_markdown(self, parent):
+        self.build_menu(parent)
+        from ipui.widgets.MarkdownTOC import MarkdownTOC
+        MarkdownTOC(parent, data=self.md_file_for_mode(), height_flex=True,
+                    on_change=self.handle_toc_selected,
+                    initial_value=getattr(self, 'active_toc_item', None))
 
-        Button(row, "Widgets",  color_bg=Style.COLOR_TAB_BG, width_flex=1, on_click=lambda: self.set_mode("widgets"))
-        Button(row, "ReadMe",   color_bg=Style.COLOR_TAB_BG, width_flex=1, on_click=lambda: self.set_mode("readme"))
-        Button(row, "Pipeline", color_bg=Style.COLOR_TAB_BG, width_flex=1, on_click=self.show_stub)
-        Button(row, "Examples", color_bg=Style.COLOR_TAB_BG, width_flex=1, on_click=self.show_stub)
-        Button(row, "Layout",   color_bg=Style.COLOR_TAB_BG, width_flex=1, on_click=lambda: self.set_mode("layout"))
+    # ══════════════════════════════════════════════════════════════
+    # TOC callback (placeholder until MarkdownBody)
+    # ══════════════════════════════════════════════════════════════
 
-    def set_mode(self, mode):
-        self.form.pipeline_set("ref_mode", mode)
-        self.form.set_pane(0, self.debug_ref)
-        self.form.set_pane(1, self.ref_detail)
+    def handle_toc_selected(self, title):
+        self.active_toc_item = title
+        self.form.set_pane(1, self.pane_md_section, title)
+
+    def pane_md_section(self, parent, title):
+        from ipui.widgets.MarkdownBody import MarkdownBody
+        card = CardCol(parent, height_flex=True, scrollable=True)
+        MarkdownBody(card, data=self.md_file_for_mode(), text=title)
 
     # ══════════════════════════════════════════════════════════════
     # RIGHT PANE
@@ -59,36 +99,13 @@ class Ref(_basePane):
     def ref_detail(self, parent):
         Title(parent, "Detail", glow=True)
         Body(parent, "Click a widget to inspect it.",
-            name="lbl_ref_detail")
+             name="lbl_ref_detail")
 
     # ══════════════════════════════════════════════════════════════
-    # ReadMe VIEW
+    # WIDGET DETAIL
     # ══════════════════════════════════════════════════════════════
 
-    def build_markdown(self, parent, file_path):
-        self.ref_globals(parent)
-
-        from ipui.widgets.MarkdownView import MarkdownView
-        card = CardCol(parent, height_flex=True, scrollable=True)
-        MarkdownView(card, data=file_path)
-
-    # ══════════════════════════════════════════════════════════════
-    # WIDGETS VIEW
-    # ══════════════════════════════════════════════════════════════
-
-    def build_widgets(self, parent):
-        self.ref_globals(parent)
-
-        Title(parent, "Widget Catalog", glow=True)
-        Body(parent, f"{len(self.catalog.entries)} widgets discovered at runtime")
-
-        card = CardCol(parent, height_flex=True, scrollable=True)
-        grid = PowerGrid(card, name="grid_ref_widgets")
-        grid.set_data(self.catalog.as_grid_data())
-        grid.set_column_max("Description", 500)
-        grid.on_row_click(self.on_widget_selected, "Widget")
-
-    def on_widget_selected(self, widget_name):
+    def handle_widget_selected(self, widget_name):
         entry = self.catalog.entry_for(widget_name)
         if not entry:
             return

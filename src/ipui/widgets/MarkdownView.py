@@ -39,7 +39,7 @@ class MarkdownView(_BaseWidget):
         print(f"[MarkdownView] Exists:    {resolved.exists()}")
 
         try:
-            with open(self.data, 'r', encoding='utf-8') as f:
+            with open(self.data, 'r', encoding='utf-8') as f: #resolved
                 return f.read().splitlines()
         except FileNotFoundError as e:
             Body(self, f"Markdown file not found: {resolved}")

@@ -23,7 +23,6 @@ class DropDown(_BaseWidget):
     MAX_VISIBLE = 8
 
     def build(self):
-        self.my_name       = f"DropDown: {self.placeholder or ''}"
         self.is_open       = False
         self.max_visible   = self.MAX_VISIBLE
 

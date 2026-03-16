@@ -14,7 +14,6 @@ class SelectionList(_BaseWidget):
     """
 
     def build(self):
-        self.my_name    = f"SelectionList: {self.text}"
         self.items_data = self.data or {}
 
         if self.scrollable:

@@ -28,7 +28,6 @@ class TextBox(Label):
     # ══════════════════════════════════════════════════════════════
 
     def build(self):
-        self.my_name               = f"TextBox: {self.placeholder}"
         self.font                  = self.font or Style.FONT_BODY
         self.wrap                  = False
         self.color_bg              = Style.COLOR_CARD_BG

@@ -15,7 +15,6 @@ pip install ipui
 ```
 
 ---
-
 ## Table of Contents
 
 - [The IPUI Advantage](#-the-ipui-advantage)
@@ -35,6 +34,12 @@ pip install ipui
 - [Dependencies](#dependencies)
 - [Appendix A: Single Pass Cycle](#appendix-a-detail-of-single-pass-cycle)
 - [Appendix B: The Game Loop](#appendix-b-the-game-loop)
+
+---
+
+## Additional Documentation
+- [Naming Conventions](docs/NamingAndConventions.md)
+- [Layout Guide](docs/IPUI_Layout_Guide_Original_Flex.md)
 
 ---
 
@@ -435,6 +440,8 @@ Button(parent, "Launch",
     width_flex = 2)
 ```
 Automatic hover brightening, press bevel inversion, disabled dimming using HSL math.
+> Note:  Automatically generating hover/disabled colors saves a lot of work but isn't always perfect.
+> You can always override the automatically generated colors.
 
 **TextBox**
 ```python
@@ -713,7 +720,7 @@ IPUI catches mistakes when you make them, not when users hit them:
 | `on_click_me(non_callable)`               | `TypeError` at registration                |
 | `on_click_me(func_with_params)`           | `ValueError` at registration               |
 
-Error messages use plain language: `HEY PILGRIM! EZ-FIX ---->` followed by exactly what to change.
+IPUI Error messages stand out by always starting: `Houston we have a problem!`
 
 ---
 

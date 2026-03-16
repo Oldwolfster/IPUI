@@ -109,8 +109,8 @@ class _BaseWidget:
         self.horizontal         = False
         self.wrap               = wrap
         self.text_align         = text_align.lower()
-        self.width_minimum              = None      #min space needed to render surface of children
-        self.height_minimum              = None      #min space needed to render surface of children
+        self.width_minimum      = None      #min space needed to render surface of children
+        self.height_minimum     = None      #min space needed to render surface of children
 
         if text_align.lower() in ('c', 'r') and self.width_flex == 0: self.width_flex = 1
 
@@ -179,7 +179,6 @@ class _BaseWidget:
         # =============================================================
 
         if self.widget_type is None: self.widget_type =  type(self).__name__
-
         self.private_build_comp = True
 
     def validate(self) -> None:

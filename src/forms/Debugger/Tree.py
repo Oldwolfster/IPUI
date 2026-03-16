@@ -197,7 +197,10 @@ class Tree(_basePane):
         for child in widget.children:
             self.walk(child, depth + 1, rows)
 
-
+    def node_icon(self, widget):
+        if widget.children:
+            return "+ "
+        return "· "
 
     def walk(self, widget, depth, rows):
         indent      = "  " * depth + self.node_icon(widget)

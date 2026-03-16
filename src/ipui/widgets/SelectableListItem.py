@@ -8,7 +8,6 @@ from ipui.Style import Style
 class SelectableListItem(_BaseWidget):
 
     def build(self):
-        self.my_name      = f"SelectableListItem: {self.text}"
         self.font         = self.font or Style.FONT_BODY
         self.color_bg     = Style.COLOR_CARD_BG
         self.color_txt    = Style.COLOR_TEXT

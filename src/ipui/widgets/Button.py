@@ -11,7 +11,6 @@ class Button(_BaseWidget):
     api:         set_disabled(reason), set_enabled(), set_radiate(), on_click_me(callback)
     """
     def build(self):
-        self.my_name = f"Button: {self.text}"
         self.font = self.font or Style.FONT_BODY
         self.color_txt = Style.COLOR_TEXT
         self.color_bg = self.color_bg or Style.COLOR_BUTTON_BG

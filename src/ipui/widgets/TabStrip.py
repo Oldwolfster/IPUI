@@ -31,7 +31,6 @@ class TabStrip(_BaseWidget):
     note:        When using _BaseForm with TAB_LAYOUT, all api methods are available directly on the form.
     """
     def build(self):
-        self.my_name     = "TabStrip"
         self.width_flex  = 1
         self.height_flex = 1
         self.active_tab  = None

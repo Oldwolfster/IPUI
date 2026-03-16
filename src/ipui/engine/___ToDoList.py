@@ -185,8 +185,12 @@ Clean up list
 183) DONE: Auto-refresh Tree — ip_think refreshes when active, no stale data
 184) DONE: PowerGrid scroll preservation — commented out the reset-to-top in set_data
 185) DONE: API design work — ip.every_seconds(0.5, callback) designed, ready to build
-
-
+190) DONE: MarkdownTOC.py — New widget. Scans a markdown file, extracts TOC entries (explicit - [Title](#anchor) format or fallback to ## headings), strips emojis, renders as a single-select SelectionList with sunken/glow selection pattern. Supports initial_value for persistence across tab switches. Passes slugs via on_change for reliable section matching.
+191) DONE: MarkdownBody.py — New widget. Renders a single ## section from a markdown file, matched by slug. Handles headings, bullets, code blocks, spacers. Strips emojis from display text. CodeBox trailing newline fix prevents single-line code strings from being treated as file paths.
+192) DONE: Reference.py — Rewritten. Renamed class Ref → Reference. One pane method per mode (pane_widgets, pane_markdown). Shared build_menu helper with green highlight on active mode button. Pane state stored as instance attributes (active_mode, active_toc_slug) instead of polluting the pipeline. TOC selection persists across tab switches. Widget catalog still fully functional.
+193) DONE: general_text.py — Added EMOJI_PATTERN, strip_emojis(), and strip_for_md_toc() as shared utilities.
+194) DONE: Slug matching system — TOC display titles and ## headings matched via GitHub-style slug generation. Handles emoji stripping, backtick stripping, and leading dash edge case.
+195) DONE: Deprecated MarkdownView
 ######################################################################
 
 
@@ -220,6 +224,11 @@ Clean up list
 165 screw our shitty text align... create string :(
 167) SQL recordselector behaving off. compare it to tree
 170) Remove all the references to my_name
+186) Read me should mention debug tools
+187) Read me should mention f11 - rect shower
+188) MD viewer should respect bold tag.
+189) MD viewer shuold render table.
+196) create table widget.
 
 ##########################################################
 Text Selection

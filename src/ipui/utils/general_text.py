@@ -207,3 +207,16 @@ def mid(text: str, start: int, length: int) -> str:
 
     end = zero_start + length
     return text[zero_start:end]
+
+
+
+import re
+EMOJI_PATTERN = re.compile(r'[\U0001F300-\U0001FAFF\u2600-\u27BF\uFE0F]')
+
+
+def strip_emojis(text):
+    """Strip only emojis (can't render them yet).😞😞😞"""
+    return EMOJI_PATTERN.sub('', text).strip()
+
+def strip_for_md_toc(text):
+    return strip_emojis(text).replace('`', '').strip()

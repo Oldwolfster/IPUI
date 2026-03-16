@@ -229,7 +229,7 @@ from ipui.widgets.Label import Label, Banner, Title, Heading, Body, Detail
 | `MissingTabUI.py` | `from ipui.widgets.Text import ...` |
 | `TabStrip.py` | `from ipui.widgets.Text import Title, Body` |
 | `NetworkDiagram.py` | `from ipui.widgets.Text import Detail, Title, Body` |
-| `MarkdownView.py` | `from ipui.widgets.Text import Title, Heading, Body` |
+
 | `__init__.py` | Likely re-exports (verify) |
 
 **Mitigation:** Add `Text.py` as a one-line re-export shim:
