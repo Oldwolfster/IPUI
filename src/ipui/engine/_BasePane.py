@@ -1,11 +1,39 @@
-# _basePane.py  Update: add initialize lifecycle hook
+# _basePane.py  Update: ip_ lifecycle hooks and IP_LIFECYCLE policy
 from ipui.utils.EZ import EZ
 
 
 class _basePane:
     """Base class for pane builders.
     Gives self.form to all methods.
-    Override initialize() for one-time setup."""
+    Override initialize() for one-time setup.
+
+    ══════════════════════════════════════════════════════════════
+    LIFECYCLE HOOKS — override these in your Pane subclass
+    ══════════════════════════════════════════════════════════════
+    ip_think(ctx)      — Every frame. State, math, physics, logic.
+    ip_renderpre(ctx)  — Before UI draws. Game world, backgrounds.
+    ip_renderpost(ctx) — After UI draws. Custom cursors, overlays.
+
+    ctx fields:
+        ctx.dt         — Seconds since last frame.
+        ctx.fps        — Current FPS.
+        ctx.frame_id   — Monotonically increasing frame counter.
+        ctx.surface    — The pygame draw surface.
+        ctx.events     — All pygame events this frame.
+        ctx.unhandled  — Events the UI did not consume.
+
+    DRAW IN ip_think AT YOUR OWN RISK.
+    ══════════════════════════════════════════════════════════════
+
+    IP_LIFECYCLE controls what happens when the tab is not active:
+        "persist"  — ip_think keeps running (default)
+        "pause"    — ip_think stops, resumes on return
+        "restart"  — ip_think stops, initialize() re-runs on return
+        "kill"     — pane destroyed, rebuilt on return
+    ══════════════════════════════════════════════════════════════
+    """
+
+    IP_LIFECYCLE = "persist"
 
     # _basePane.py method: __init_subclass__  NEW: guard against __init__ override
     def __init_subclass__(cls, **kwargs):
@@ -49,3 +77,19 @@ class _basePane:
         def do_swap():
             self.form.set_pane(index, builder)
         return do_swap
+
+    # ══════════════════════════════════════════════════════════════
+    # LIFECYCLE HOOKS — override in your pane
+    # ══════════════════════════════════════════════════════════════
+
+    def ip_think(self, ctx):
+        """Per-frame logic. Override for state, physics, AI."""
+        pass
+
+    def ip_renderpre(self, ctx):
+        """Draw before UI. Override for game worlds, backgrounds."""
+        pass
+
+    def ip_renderpost(self, ctx):
+        """Draw after UI. Override for overlays, cursors, effects."""
+        pass

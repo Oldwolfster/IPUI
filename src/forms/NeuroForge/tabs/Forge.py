@@ -303,21 +303,10 @@ class EZ_Pane(_basePane):
 
     def refresh(self) -> None:
         """Refresh both the label and the diagram."""
-        self.refresh_label()
-        self.refresh_diagram()
+        self.form.set_pane(2, self.preview)
+        #self.refresh_label()
+        #self.refresh_diagram()
 
-    def refresh_label(self) -> None:
-        """Update the workbench text label."""
-        lbl = self.form.widgets.get("lbl_workbench")
-        if lbl:
-            lbl.set_text(self.format_layers(self.form.workbench_layers))
-
-    def refresh_diagram(self) -> None:
-        """Update the network diagram display."""
-        diagram = self.form.widgets.get("net_diagram")
-        if diagram:
-            diagram.set_layers(self.form.workbench_layers)
-            diagram.set_selected(self.get_selected())
 
     def refresh_saved(self) -> None:
         """Update the saved architectures label."""

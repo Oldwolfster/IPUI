@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "A pygame UI framework.  Easy to get right. Hard to get wrong."
 readme = "README.md"
 license = {text = "MIT"}
+authors = [{name = "ChrisFirst", email = "chrisfirstarchitect@gmail.com"}]
 requires-python = ">=3.10"
 dependencies = [
     "pygame>=2.5",
@@ -25,6 +26,9 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: User Interfaces",
 ]
+
+[tool.ruff.format]
+exclude = ["*"] # Effectively tells formatters to ignore the whole project
 
 [project.optional-dependencies]
 charts = ["matplotlib>=3.7"]

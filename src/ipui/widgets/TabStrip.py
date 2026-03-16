@@ -1,16 +1,24 @@
 # TabStrip.py  Update: lazy pane discovery from string-based data dict
-
+from ipui.widgets.Row import Col
+from ipui.widgets.Spacer import Spacer
 import importlib.util
 import inspect
 from pathlib import Path
-
+from ipui.widgets.Row import Row
 from ipui.Style import Style
 from ipui.engine.MgrColor import MgrColor
 from ipui.engine._BasePane import _basePane
 from ipui.engine._BaseWidget import _BaseWidget
 from ipui.utils.EZ import EZ
 from ipui.widgets.Button import Button
+from ipui.widgets.Pane import Pane
 from ipui.widgets.Row import CardCol, CardRow
+from ipui.widgets.TabArea import TabArea
+from ipui.widgets.Label import Title, Body
+from ipui.widgets.Button import Button
+from pathlib import Path
+import inspect
+from ipui.widgets.TabArea import TabArea
 
 
 class TabStrip(_BaseWidget):
@@ -28,28 +36,33 @@ class TabStrip(_BaseWidget):
         self.height_flex = 1
         self.active_tab  = None
         self.pane_cache  = {}
-        self.normalize_data()
+        self.tab_layout  = {}
+        self.clean_tab_layout_once()
         self.build_tab_buttons()
         for name in (self.early_load or []):  # Maybe below contenyt
             self.prepare(name)
         self.build_content_area()
-        self.switch_tab(next(iter(self.data)))
+        self.switch_tab(next(iter(self.tab_layout)))
 
-    def parse_builders(self, entries):
-        """Normalize mixed format: builder or (builder, weight) -> [(builder, weight)]"""
-        result = []
-        for entry in entries:
-            if isinstance(entry, tuple):
-                result.append(entry)
-            else:
-                result.append((entry, 1))
-        return result
+    def clean_tab_layout_once(self):
+        """do any cleaning needed for tab_layout - should end with each value is a list of tuple(s) aka [("pane",1)]"""
+        self.clean_tab_layout_ensure_list()
+        self.clean_tab_layout_add_default_flex()
 
-    def normalize_data(self):
-        """Allow single pane to based as just a value"""
+    def clean_tab_layout_ensure_list(self):
+        """Ensure every value in dict is a list. this gives flexibility that single pane - not in list wont cause an error"""
         for key, val in self.data.items():
-            if not isinstance(val, list):
-                self.data[key] = [val]
+            if not isinstance(val, list): self.data[key] = [val]
+
+    def clean_tab_layout_add_default_flex(self):
+        """Normalize mixed format: builder or (builder, weight) -> [(builder, weight)]"""
+        for key, entries in self.data.items():
+            one_tab = []
+            for entry in entries:
+                if isinstance(entry, tuple): one_tab.append(entry)
+                else                       : one_tab.append((entry, 1))
+            self.tab_layout[key] = one_tab
+
     # ============================================================
     # Build
     # ============================================================
@@ -57,14 +70,23 @@ class TabStrip(_BaseWidget):
         outer          = CardRow(self, pad=2)
         self.tab_row   = CardRow(outer, width_flex=True)
 
-    def build_content_area(self):
-        max_panes = max(len(v) for v in self.data.values())
-        outer = CardCol(self, width_flex=True, height_flex=True, pad=2)
-        self.content = CardRow(outer, width_flex=True, height_flex=True)
+    def build_content_area_DeleteMe(self):
+        max_panes = max(len(v) for v in self.tab_layout.values())
+        #outer = CardCol(self, width_flex=True, height_flex=True, pad=2)
+        outer = TabArea(self, width_flex=True, height_flex=True,pad=1)
+        self.content = outer.inner
         self.panes = []
         for _ in range(max_panes):
-            pane = CardCol(self.content, width_flex=True, height_flex=True)
+            #pane = CardCol(self.content, width_flex=True, height_flex=True)
+
+            pane = Pane(self.content, width_flex=True, height_flex=True)
+
             self.panes.append(pane)
+        self.rebuild_tab_buttons()
+
+    def build_content_area(self):
+        self.content = Row(self, width_flex=True, height_flex=True)
+        self.panes   = []
         self.rebuild_tab_buttons()
 
     def rebuild_tab_buttons(self):
@@ -73,25 +95,35 @@ class TabStrip(_BaseWidget):
             btn          = Button(self.tab_row, tab_name, color_bg=Style.COLOR_TAB_BG, width_flex=True)
             btn.on_click = lambda name=tab_name: self.switch_tab(name)
 
-    # TabStrip method: prepare  NEW: on-demand tab instantiation
+
     def prepare(self, name):
         """Resolve, cache, and initialize a tab's _basePane on demand."""
-        if name not in self.pane_cache:
-            self.resolve_pane(name)
+        if name not in self.pane_cache:  self.resolve_pane(name)
         return self.pane_cache[name]
-
 
     # ============================================================
     # Switching
     # ============================================================
+
     def switch_tab(self, name):
         if self.on_change:
             if self.on_change(name, self.active_tab) is False:
                 return
-
         self.active_tab = name
         self.update_button_visuals()
-        self.rebuild_pane_content(name)
+        entries = self.tab_layout[name]
+        if self.needs_missing_page(name, entries):
+            entries = self.missing_tab_entries(name)
+        self.rebuild_tab_areas(entries)
+        self.fill_panes(name, entries)
+
+    def needs_missing_page(self, name, entries):
+        if self.resolve_pane(name) is not None:
+            return False
+        return any(
+            isinstance(b, str) and "." not in b
+            for b, w in entries if b is not None
+        )
 
     def update_button_visuals(self):
         for btn in self.tab_row.children:
@@ -102,11 +134,49 @@ class TabStrip(_BaseWidget):
                 MgrColor.apply_bevel(btn, "raised")
                 btn.show_glow = False
 
+
+    def rebuild_tab_areas(self, pane_list):
+
+        self.content.children.clear()
+        #pane_list        = self.tab_layout[name]
+        self.panes       = [None] * len(pane_list)
+        current_area     = None
+
+        for i, entry in enumerate(pane_list):
+            builder, weight = entry[0], entry[1]
+            if builder is None:
+                #Col(self.content, width_flex=weight, height_flex=True)
+                current_area = None
+                pane = Pane(self.content, width_flex=weight, height_flex=True)
+                pane.color_bg  = None
+                pane.border_top = None
+                self.panes[i]  = pane
+            else:
+                if current_area is None:  current_area = TabArea(self.content, width_flex=0, height_flex=True)
+                current_area.width_flex += weight
+                pane = Pane(current_area.inner, width_flex=weight, height_flex=True)
+                self.panes[i] = pane
+
+
+
+    def fill_panes(self, name, pane_list):
+        for i, entry in enumerate(pane_list):
+            builder = entry[0]
+            args    = entry[2] if len(entry) > 2 else ()
+            kwargs  = entry[3] if len(entry) > 3 else {}
+            if builder is not None:
+                self.invoke_builder(name, builder, self.panes[i], *args, **kwargs)
+
     def rebuild_pane_content(self, name):
-        entries = self.parse_builders(self.data.get(name, []))
+        entries = self.parse_builders(self.tab_layout.get(name, []))
         if self.resolve_pane(name) is None:
-            entries = self.parse_builders(self.missing_tab_entries(name))
-            self.ensure_pane_count(len(entries))
+            needs_local = any(
+                isinstance(e[0], str) and "." not in e[0]
+                for e in entries if e[0] is not None
+            )
+            if needs_local:
+                entries = self.parse_builders(self.missing_tab_entries(name))
+                self.ensure_pane_count(len(entries))
 
         for i, pane in enumerate(self.panes):
             pane.children.clear()
@@ -123,12 +193,12 @@ class TabStrip(_BaseWidget):
     def missing_tab_entries(self, tab_name):
         from ipui.engine.MissingTabUI import MissingTabUI
         self.form.pipeline_set("missing_tab_name", tab_name)
-        methods = [e[0] if isinstance(e, tuple) else e for e in self.data[tab_name]]
+        methods = [e[0] if isinstance(e, tuple) else e for e in self.tab_layout[tab_name]]
         self.form.pipeline_set("missing_tab_methods", methods)
         form_dir = Path(inspect.getfile(self.form.__class__)).parent  # NEW
         self.form.pipeline_set("missing_tab_path", str(form_dir / (tab_name + ".py")))
         self.pane_cache["__missing__"] = MissingTabUI(self.form)
-        return [("__missing__.pitch", 2), "__missing__.choices"]
+        return [("__missing__.pitch", 2), ("__missing__.choices",1)]
 
     def ensure_pane_count(self, needed):
         while len(self.panes) < needed:
@@ -176,19 +246,23 @@ class TabStrip(_BaseWidget):
         for btn in self.tab_row.children:
             if btn.text == name:  btn.visible = True
 
+
     def set_pane(self, index, builder, *args, tab_name=None, **kwargs):
-        tab_name                    = tab_name or self.active_tab
-        entry                       = self.data[tab_name][index]
-        weight                      = entry[1] if isinstance(entry, tuple) else 1
-        self.data[tab_name][index]  = (builder, weight)
+        tab_name                            = tab_name or self.active_tab
+        entry                               = self.tab_layout[tab_name][index]
+        weight                              = entry[1]
+        self.tab_layout[tab_name][index]    = (builder, weight, args, kwargs)
         if tab_name == self.active_tab:
-            pane                    = self.panes[index]
-            pane.children           . clear()
-            self.invoke_builder     ( tab_name, builder, pane, *args, **kwargs)
+            pane                            = self.panes[index]
+            if pane is None: return
+            pane.children.clear()
+            pane.children.clear()
+            self.invoke_builder             ( tab_name, builder, pane, *args, **kwargs)
+
 
     def refresh_pane(self, index, tab_name=None):
         tab_name = tab_name or self.active_tab
-        entry = self.data[tab_name][index]
+        entry = self.tab_layout[tab_name][index]
         builder = entry[0] if isinstance(entry, tuple) else entry
         self.set_pane(index, builder, tab_name=tab_name)
 
@@ -201,9 +275,10 @@ class TabStrip(_BaseWidget):
             return self.pane_cache[tab_name]
 
         form_file  = Path(inspect.getfile(self.form.__class__)).parent
-        tab_lower  = tab_name.lower()
-        found      = [f for f in form_file.rglob("*.py") if f.stem.lower() == tab_lower]
-
+        #tab_lower  = tab_name.lower()
+        #found      = [f for f in form_file.rglob("*.py") if f.stem.lower() == tab_lower]
+        tab_lower  = tab_name.replace(" ", "").lower()
+        found      = [f for f in form_file.rglob("*.py") if f.stem.replace("_", "").lower() == tab_lower]
         if len(found) == 0:
             return None
             #raise ImportError(f"No file '{tab_name}.py' found under {form_file}")
@@ -241,12 +316,8 @@ class TabStrip(_BaseWidget):
     # ============================================================
     #
     # ============================================================
-# TabStrip.py  method: build_missing_pane  Update: add create button
     def build_missing_pane(self, tab_name, pane):
-        from ipui.widgets.Label import Title, Body
-        from ipui.widgets.Button import Button
-        from pathlib import Path
-        import inspect
+
 
         form_dir = Path(inspect.getfile(self.form.__class__)).parent
         file_path = form_dir / (tab_name + ".py")

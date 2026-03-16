@@ -28,8 +28,14 @@ class Tree(_basePane):
         widget = target.widget_registry.get(int(selected_wid))
         if not widget:
             return "Widget Tree"
-        type_name = type(widget).__name__
-        name = self.clean_widget_tree(type_name, self.reg_name(widget) or widget.my_name)
+
+
+        type_name = widget.widget_type
+
+        name = self.reg_name(widget) or str(widget.text or "")[:30]
+        return f"Widget Tree — {type_name}: {name} (wid {selected_wid})"
+
+
         return f"Widget Tree — {type_name}: {name} (wid {selected_wid})"
 
     # ══════════════════════════════════════════════════════════════
@@ -172,8 +178,8 @@ class Tree(_basePane):
     def walk(self, widget, depth, rows):
         indent = "  " * depth + self.icon(widget)
         rect   = widget.rect
-        type_name = type(widget).__name__
-        name = self.clean_widget_tree(type_name, self.reg_name(widget) or widget.my_name)
+        type_name = widget.widget_type
+        name = self.clean_widget_tree(type_name, self.reg_name(widget) or widget.widget_type)
         rows.append([
             indent,
             type_name,
@@ -188,6 +194,20 @@ class Tree(_basePane):
             rect.height if rect else "—",
             widget.widget_id,
         ])
+        for child in widget.children:
+            self.walk(child, depth + 1, rows)
+
+
+
+    def walk(self, widget, depth, rows):
+        indent      = "  " * depth + self.node_icon(widget)
+        wtype       = widget.widget_type
+        reg_name    = widget.display_name
+        label       = reg_name or str(widget.text or "")[:30]
+        kids        = len(widget.children)
+        rect        = widget.rect
+        size        = f"{rect.width}x{rect.height}" if rect else "—"
+        rows.append([indent, wtype, label, kids, size, widget.widget_id])
         for child in widget.children:
             self.walk(child, depth + 1, rows)
 
@@ -236,5 +256,8 @@ class Tree(_basePane):
                 return key
         return ""
 
-
-
+    # ══════════════════════════════════════════════════════════════
+    # Auto Refresh
+    #def ip_think(self, ip):
+     #   if ip.is_active_pane: self.refresh_tree()
+    # ══════════════════════════════════════════════════════════════

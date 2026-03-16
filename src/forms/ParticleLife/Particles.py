@@ -171,7 +171,7 @@ class Particles(_basePane):
                 if v is None:
                     v = 0.0
                 self.form.pipeline_set(self._g_key(b, a), float(v))
-        self.form.set_pane(1,  self.matrix())
+        self.form.set_pane(1,  self.matrix)
 
     def _preset_loop(self):
         """

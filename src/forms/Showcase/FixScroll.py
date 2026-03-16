@@ -6,7 +6,7 @@ class FixScroll(_basePane):
 
     @staticmethod
     def pane1(parent):
-        scroller= Card(scrollable=True)
+        scroller= Card(parent, scrollable=True)
         Banner(parent,"Fix when scroll needs to go on parent\nThe quick brown fox jumped over the lazy good for nothign dog\nThe quick brown fox jumped over the lazy good for nothign dog\nThe quick brown fox jumped over the lazy good for nothign dog",glow=True, scrollable=True)
         Banner(scroller,"Fix when scroll needs to go on parent\nThe quick brown fox jumped over the lazy good for nothign dog\nThe quick brown fox jumped over the lazy good for nothign dog\nThe quick brown fox jumped over the lazy good for nothign dog",glow=True,scrollable=True)
         #Banner(scroller,"Fix when scroll needs to go on parent\nThe quick brown fox jumped over the lazy good for nothign dog\nThe quick brown fox jumped over the lazy good for nothign dog\nThe quick brown fox jumped over the lazy good for nothign dog", glow=True, scrollable=True, height_flex=False)

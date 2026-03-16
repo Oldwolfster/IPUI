@@ -1,20 +1,59 @@
-# PowerGrid.py — IPUI Framework Data Grid
-# Sticky header, internal scrolling, sortable headers, zebra rows, auto-sized columns.
+# PowerGrid2.py — IPUI Framework Data Grid  NEW: Child-widget architecture
+# Header, body, and scroller are proper widgets. Layout engine handles everything.
+# Scrolling is unified via _BaseWidget — no custom scroll code.
 
 import inspect
 import pygame
 
 from ipui.engine._BaseWidget import _BaseWidget
+from ipui.widgets.Row import Col
 from ipui.Style import Style
+from ipui.widgets.RecordSelector import RecordSelector
 
+
+# ══════════════════════════════════════════════════════════════════
+# GRID HEADER — displays column names, will handle sort clicks later
+# ══════════════════════════════════════════════════════════════════
+
+class GridHeader(_BaseWidget):
+    def build(self):
+        self.my_name  = "GridHeader"
+        self.pad      = 0
+        self.border   = 0
+
+    def measure(self):
+        if self.my_surface:
+            return (self.my_surface.get_width(), self.my_surface.get_height())
+        return (0, 0)
+
+
+# ══════════════════════════════════════════════════════════════════
+# GRID BODY — holds the composited rows surface
+# ══════════════════════════════════════════════════════════════════
+
+class GridBody(_BaseWidget):
+    def build(self):
+        self.my_name  = "GridBody"
+        self.pad      = 0
+        self.border   = 0
+
+    def measure(self):
+        if self.my_surface:
+            return (self.my_surface.get_width(), self.my_surface.get_height())
+        return (0, 0)
+
+
+# ══════════════════════════════════════════════════════════════════
+# POWER GRID — the main widget
+# ══════════════════════════════════════════════════════════════════
 
 class PowerGrid(_BaseWidget):
     """
-    desc:        The sweetest grid in the Pygame ecosystem. Sticky header, internal scroll, sortable headers, zebra rows, three input formats, validated row clicks.
+    desc:        The sweetest grid in the Pygame ecosystem. Sticky header, internal scroll, sortable headers, zebra rows, three input formats, validated row clicks, pagination.
     when_to_use: Tabular data of any shape.
     best_for:    Batch lists, run results, leaderboards, any data that belongs in rows and columns.
-    example:     grid = PowerGrid(parent, name="results"); grid.set_data(rows, columns=["A","B"])
-    api:         set_data(data, columns), on_row_click(callback, column), set_column_max(col, width)
+    example:     grid = PowerGrid2(parent, name="results"); grid.set_data(rows, columns=["A","B"])
+    api:         set_data(data, columns), on_row_click(callback, column), set_column_max(col, width), set_page_size(n)
 
     Accepts three input formats via set_data():
         1. List of lists   — set_data([[1,"A"],[2,"B"]], columns=["ID","Name"])
@@ -28,7 +67,12 @@ class PowerGrid(_BaseWidget):
         grid.on_row_click(my_handler, "batch_id")  # handler receives value of that column
         grid.on_row_click(my_handler, 0)           # handler receives value of column 0
 
-    Scrolls internally — no need for a scrollable parent container.
+    Child structure:
+        PowerGrid2
+        ├── GridHeader       (fixed height)
+        ├── Col              (scrollable=True, height_flex=1)
+        │   └── GridBody     (full content height — drives scroll)
+        └── RecordSelector   (fixed height, hidden when not needed)
     """
 
     SCROLLBAR_W = 10
@@ -39,8 +83,9 @@ class PowerGrid(_BaseWidget):
 
     def build(self):
         if self.height_flex == 0:
-            print("[PowerGrid] Note: height_flex forced to 1 — PowerGrid scrolls internally.")
-        self.height_flex = 1
+            print("[PowerGrid2] Note: height_flex forced to 1 — PowerGrid2 scrolls internally.")
+        self.height_flex        = 1
+        self.pad                = 0
         self.my_name            = "DataGrid"
         self.font               = self.font or Style.FONT_BODY
         self.color_txt          = Style.COLOR_TEXT
@@ -62,36 +107,43 @@ class PowerGrid(_BaseWidget):
         self.available_width    = 0
         self.row_click_callback = None
         self.row_click_column   = None
-        self.header_surface     = None
-        self.rows_surface       = None
-        self.grid_scroll        = 0
-        if self.data            : self.set_data(self.data) #allows for setting data in constrctur
+        self.page_size          = 50
+        self.build_body()
+        if self.data            : self.set_data(self.data)
 
-    def measure(self):
-        w = 0
-        h = 0
-        if self.header_surface:
-            w = max(w, self.header_surface.get_width())
-            h += self.header_surface.get_height()
-        if self.rows_surface:
-            w = max(w, self.rows_surface.get_width())
-            h += self.rows_surface.get_height()
-        frame = self.frame_size
-        return (w + frame, h + frame)
+    def build_body(self):
+        self.grid_header     = GridHeader(self)
+        self.grid_scroller   = Col(self, scrollable=True, height_flex=1)
+        self.grid_body       = GridBody(self.grid_scroller)
+        self.record_selector = RecordSelector(self, on_change=self.handle_page_change)
+
     # ══════════════════════════════════════════════════════════════
     # PUBLIC API
     # ══════════════════════════════════════════════════════════════
 
-    def set_data(self, data, columns=None):
-        """Accept list-of-lists, list-of-dicts, or dict-of-lists."""
-        self.columns, self.rows_all = Normalizer.normalize(data, columns)
-        self.grid_scroll = 0
+    def set_data(self, data, columns=None, query=None, table=None):
+        """Accept lists, dicts, SQLite path, or connection."""
+        self.sql_source = None
+        if query or table:
+            from ipui.utils.SQLDataSource import SQLDataSource
+            self.sql_source = SQLDataSource(data, query=query, table=table)
+            self.columns, self.rows_all = self.sql_source.fetch()
+        else:
+            self.columns, self.rows_all = Normalizer.normalize(data, columns)
+        # THIS WORKS!!  Resets position.  temp disable --> self.grid_scroller.scroll_offset = 0
+        self.update_record_selector()
         self.rebuild()
 
     def set_column_max(self, col, max_width):
         """Cap a column's pixel width.  Accepts index or column name."""
         idx = col if isinstance(col, int) else self.columns.index(col)
         self.col_max[idx] = max_width
+
+    def set_page_size(self, size):
+        """Set rows per page. 0 = no pagination."""
+        self.page_size = size
+        self.update_record_selector()
+        self.rebuild()
 
     def on_row_click(self, callback, column=None):
         """Register a callback for row clicks.
@@ -112,6 +164,38 @@ class PowerGrid(_BaseWidget):
         self.row_click_column   = column
 
     # ══════════════════════════════════════════════════════════════
+    # PAGINATION
+    # ══════════════════════════════════════════════════════════════
+
+    def update_record_selector(self):
+        if self.page_size <= 0 or len(self.rows_all) <= self.page_size:
+            if self.record_selector:
+                self.record_selector.visible = False
+            return
+        if not self.record_selector:
+            from ipui.widgets.RecordSelector import RecordSelector
+            self.record_selector = RecordSelector(self,
+                                                  on_change=self.handle_page_change)
+        self.record_selector.visible = True
+        self.record_selector.set_data(
+            total_rows=len(self.rows_all),
+            page_size=self.page_size)
+
+    def handle_page_change(self, page, start_row, end_row):
+        self.grid_scroller.scroll_offset = 0
+        self.rebuild()
+
+    def rows_page(self):
+        if self.page_size <= 0 or not self.record_selector:
+            return self.rows_sorted
+        if not self.record_selector.visible:
+            return self.rows_sorted
+        rs    = self.record_selector
+        start = rs.start_row() - 1
+        end   = rs.end_row()
+        return self.rows_sorted[start:end]
+
+    # ══════════════════════════════════════════════════════════════
     # REBUILD — the single orchestrator
     # ══════════════════════════════════════════════════════════════
 
@@ -119,9 +203,10 @@ class PowerGrid(_BaseWidget):
         self.rows_sorted = self.apply_sort()
         self.detect_col_alignment()
         self.detect_col_precision(self.rows_sorted)
-        self.measure_columns(self.rows_sorted)
+        page = self.rows_page()
+        self.measure_columns(page)
         self.calc_render_gap()
-        self.composite(self.rows_sorted)
+        self.composite(page)
 
     # ══════════════════════════════════════════════════════════════
     # SORT
@@ -142,6 +227,8 @@ class PowerGrid(_BaseWidget):
         else:
             self.sort_col = col_idx
             self.sort_asc = True
+        if self.record_selector and self.record_selector.visible:
+            self.record_selector.go_to_page(1)
         self.rebuild()
 
     # ══════════════════════════════════════════════════════════════
@@ -214,16 +301,16 @@ class PowerGrid(_BaseWidget):
 
     def calc_render_gap(self):
         """Distribute extra width as spacing between columns."""
-        if not self.columns or not self.rect:
+        rect = self.grid_scroller.rect if self.grid_scroller.rect else self.rect
+        if not self.columns or not rect:
             self.render_gap = self.gap
             return
         content_w       = sum(self.col_widths)
         gap_count       = max(1, len(self.columns) - 1)
-        available       = self.rect.width - self.frame_size
+        available       = rect.width
         extra           = available - content_w
         self.render_gap = max(self.gap, extra // gap_count) if extra > 0 else self.gap
-        self.render_gap = self.render_gap *.95 #cjf
-        #self.render_gap = max(self.gap, min(extra // gap_count, self.gap * 1)) if extra > 0 else self.gap
+        self.render_gap = self.render_gap * .95
 
     def header_label(self, col_idx):
         name = str(self.columns[col_idx])
@@ -244,19 +331,6 @@ class PowerGrid(_BaseWidget):
         return str(value)
 
     # ══════════════════════════════════════════════════════════════
-    # LAYOUT — redistribute space when rect changes
-    # ══════════════════════════════════════════════════════════════
-
-    def layout(self, rect):
-        old_width = self.available_width
-        self.rect = rect
-        if self.columns and self.rect:
-            new_width = self.rect.width - self.frame_size
-            if new_width != old_width:
-                self.available_width = new_width
-                self.rebuild()
-
-    # ══════════════════════════════════════════════════════════════
     # HOVER — suppress hover brightening on the grid
     # ══════════════════════════════════════════════════════════════
 
@@ -264,21 +338,19 @@ class PowerGrid(_BaseWidget):
         return self.color_bg
 
     # ══════════════════════════════════════════════════════════════
-    # COMPOSITE — build header_surface and rows_surface separately
+    # COMPOSITE — build surfaces, assign to child widgets
     # ══════════════════════════════════════════════════════════════
 
     def composite(self, rows):
         if not self.columns:
-            self.header_surface = None
-            self.rows_surface   = None
-            self.my_surface     = None
+            self.grid_header.my_surface = None
+            self.grid_body.my_surface   = None
             return
         self.row_height = self.font.get_height() + self.gap
         gap_total       = self.render_gap * max(0, len(self.columns) - 1)
         total_w         = sum(self.col_widths) + gap_total
-        self.header_surface = self.render_header(total_w)
-        self.rows_surface   = self.render_rows(rows, total_w)
-        self.my_surface     = None
+        self.grid_header.my_surface = self.render_header(total_w)
+        self.grid_body.my_surface   = self.render_rows(rows, total_w)
 
     # ── Header ────────────────────────────────────────────────────
 
@@ -330,112 +402,48 @@ class PowerGrid(_BaseWidget):
         return x
 
     # ══════════════════════════════════════════════════════════════
-    # DRAW — sticky header + scrolled rows
-    # ══════════════════════════════════════════════════════════════
-
-    def draw(self, surface):
-        if self.rect is None:
-            return
-        bg = self.resolve_bg()
-        self.draw_chrome(surface, self.rect, bg)
-        if not self.header_surface:
-            return
-        frame    = self.frame_size
-        inner    = self.rect.inflate(-frame, -frame)
-        content_x = inner.left
-        header_y  = inner.top
-        rows_y    = header_y + self.row_height
-        rows_h    = inner.height - self.row_height
-        if rows_h <= 0:
-            return
-        surface.blit(self.header_surface, (content_x, header_y))
-        if self.rows_surface:
-            old_clip  = surface.get_clip()
-            rows_clip = pygame.Rect(inner.left, rows_y, inner.width, rows_h)
-            surface.set_clip(rows_clip)
-            surface.blit(self.rows_surface, (content_x, rows_y - self.grid_scroll))
-            surface.set_clip(old_clip)
-        if self.needs_scrollbar(rows_h):
-            self.draw_grid_scrollbar(surface, inner, rows_y, rows_h)
-
-    # ══════════════════════════════════════════════════════════════
-    # SCROLLBAR
-    # ══════════════════════════════════════════════════════════════
-
-    def needs_scrollbar(self, rows_h):
-        if not self.rows_surface:
-            return False
-        return self.rows_surface.get_height() > rows_h
-
-    def draw_grid_scrollbar(self, surface, inner, rows_y, rows_h):
-        content_h    = self.rows_surface.get_height()
-        bar_x        = inner.right - self.SCROLLBAR_W
-        track_rect   = pygame.Rect(bar_x, rows_y, self.SCROLLBAR_W, rows_h)
-        pygame.draw.rect(surface, Style.COLOR_PANEL_BG, track_rect)
-        visible_ratio = rows_h / content_h
-        handle_h      = max(20, int(rows_h * visible_ratio))
-        max_scroll    = max(1, content_h - rows_h)
-        scroll_ratio  = self.grid_scroll / max_scroll
-        handle_y      = rows_y + int((rows_h - handle_h) * scroll_ratio)
-        handle_rect   = pygame.Rect(bar_x, handle_y, self.SCROLLBAR_W, handle_h)
-        pygame.draw.rect(surface, Style.COLOR_BUTTON_BG, handle_rect)
-
-    # ══════════════════════════════════════════════════════════════
-    # SCROLL EVENTS
-    # ══════════════════════════════════════════════════════════════
-
-    def handle_scroll(self, pos, button):
-        if not self.rect or not self.rect.collidepoint(pos):
-            return False
-        if not self.rows_surface:
-            return False
-        rows_h = self.rect.inflate(-self.frame_size, -self.frame_size).height - self.row_height
-        if rows_h <= 0:
-            return False
-        content_h  = self.rows_surface.get_height()
-        max_scroll = max(0, content_h - rows_h)
-        if max_scroll <= 0:
-            return False
-        direction        = -1 if button == 4 else 1
-        self.grid_scroll += direction * self.row_height
-        self.grid_scroll  = max(0, min(self.grid_scroll, max_scroll))
-        return True
-
-    # ══════════════════════════════════════════════════════════════
     # CLICK HANDLING
     # ══════════════════════════════════════════════════════════════
 
     def process_click(self):
         if not self.rect:
             return super().process_click()
-        mx, my  = pygame.mouse.get_pos()
-        local_x = mx - self.rect.left - self.pad - self.border
-        local_y = my - self.rect.top  - self.pad - self.border
-        if self.hit_test_header(local_x, local_y):
+        mx, my = pygame.mouse.get_pos()
+        if self.hit_test_header(mx, my):
             return True
         if self.row_click_callback:
-            return self.hit_test_row(local_y)
+            return self.hit_test_row(mx, my)
         return super().process_click()
 
-    def hit_test_header(self, x, y):
+    def hit_test_header(self, mx, my):
+        hr = self.grid_header.rect
+        if not hr or not hr.collidepoint(mx, my):
+            return False
+        local_x = mx - hr.left
+        local_y = my - hr.top
         for i, rect in enumerate(self.header_col_rects):
-            if rect.collidepoint(x, y):
+            if rect.collidepoint(local_x, local_y):
                 self.toggle_sort(i)
                 return True
         return False
 
-    def hit_test_row(self, local_y):
+    def hit_test_row(self, mx, my):
+        sr = self.grid_scroller.rect
+        if not sr or not sr.collidepoint(mx, my):
+            return False
         if self.row_height <= 0:
             return False
-        scrolled_y = local_y - self.row_height + self.grid_scroll
-        row_idx    = int(scrolled_y // self.row_height)
-        if row_idx < 0 or row_idx >= len(self.rows_sorted):
+        local_y    = my - self.grid_body.rect.top
+        row_idx    = int(local_y // self.row_height)
+        rows       = self.rows_page()
+        if row_idx < 0 or row_idx >= len(rows):
             return False
         self.fire_row_click(row_idx)
         return True
 
     def fire_row_click(self, row_idx):
-        row  = self.rows_sorted[row_idx]
+        rows = self.rows_page()
+        row  = rows[row_idx]
         data = self.build_row_dict(row)
         val  = self.extract_click_value(data, row)
         self.row_click_callback(val)
@@ -545,12 +553,13 @@ class Normalizer:
 class SortHelper:
     """Provides a stable sort key that handles None, numbers, and strings."""
 
+
     @staticmethod
     def sort_key(row, col):
         val = row[col] if col < len(row) else None
-        if val is None:                   return (1, "")
+        if val is None:                   return (2, "")
         if CellFormatter.is_numeric(val): return (0, CellFormatter.to_number(val))
-        return (0, str(val).lower())
+        return (1, str(val).lower())
 
 
 # ══════════════════════════════════════════════════════════════════

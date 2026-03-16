@@ -33,9 +33,10 @@ class WidgetsDict(dict):
             f"Registered names: {list(self.keys())}\n\n"
             f""
             f"# =========================\n"
-            f"# TWO EASY WAYS TO FIX\n"
-            f"# 1) Name a widget '{key}'.  \n\tIt will be synchronized with that pipeline field.\n"
-            f"# 2) REMOVE: Stop setting pipeline key: **{key}**\n"
+            f"# THREE EASY WAYS TO FIX\n"
+            f"# 1) In DECLARATION_UPDATES change {key} to one of the above registered names.'\n"
+            f"# 2) Name a widget '{key}'.  \n\tIt will be synchronized with that pipeline field.\n"
+            f"# 3) REMOVE: Remove: **{key}** from DECLARATION_UPDATES\n"
             f"# =========================\n",
             RuntimeError
         )

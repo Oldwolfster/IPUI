@@ -18,7 +18,7 @@ class FormNeuroForge(_BaseForm):
         "Armory"    : ["match_hints"                , "match_settings"                  , None],
         "Forge"     : ["info"                       , "workbench"                       , "preview"],
         "Colosseum" : ["status"                     , "runs"                            , "analysis"],
-        "Pro"       : ["match_settings"             , "workbench"                       ,"preview"],
+        "Pro"       : ["Armory.match_settings"      , "Forge.workbench"                 , "Forge.preview"],
         "Export"    : ["build"],
         "Log"       : ["log"],
     }

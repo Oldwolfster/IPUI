@@ -4,13 +4,14 @@ from ipui import *
 
 class Form_ParticleLife(BaseForm):
 
-    TAB_LAYOUT = {
-        "Rules": ["world_rules", "interaction_rules", "dynamics_rules"],
-        "Particles": [("particles",1),( "matrix",3)],
-        "Settings": ["settings"],
-        "Particle Life": ["particle_life"],
-        "Stats": ["stats"],
-        "Iamnothere":["ifnone"]
+    TAB_LAYOUT  =       {
+        "Rules"         : ["world_rules"    , "interaction_rules", "dynamics_rules"],
+        "Particles"     : [("particles",1)  ,( "matrix",3)],
+        "Settings"      : ["settings"],
+        "ParticleLife"  : ["particle_life",None,None],
+        "ParticleLife2" : ["particle_life", "p2", "p3"],
+        "Stats"         : ["stats"],
+
     }
 
     def build(self):

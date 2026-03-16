@@ -5,7 +5,6 @@ from ipui.widgets.CodeBox import CodeBox
 
 class EZ_Pane(_basePane):
     """
-    name:        Widgets Showcase
     desc:        Auto-discovers every widget in IPUI and displays its docstring and source.
     when_to_use: The Showcase tab. Never goes stale — add a widget, it appears.
     best_for:    Proving that self-documenting frameworks aren't a myth.
@@ -34,6 +33,11 @@ class EZ_Pane(_basePane):
         Title(parent, "Widget Detail", glow=True)
         Body(parent, "Click a widget to inspect it.", name="lbl_widget_detail")
 
+    def code(self, parent):
+        """Right pane — selected widget detail card."""
+        Title(parent, "Source Code", glow=True)
+        Body(parent, "Click a widget to inspect it.", name="lbl_widget_detail")
+
     # ══════════════════════════════════════════════════════════════
     # INTERACTION
     # ══════════════════════════════════════════════════════════════
@@ -44,9 +48,8 @@ class EZ_Pane(_basePane):
         if not entry:
             return
 
-        self.form.set_pane(1, self.show_detail, entry)
-
-    # Widgets.py method: show_detail  Update: Organized cards + CodeBox + live indicator
+        self.form.set_pane(1, self.show_detail  , entry)
+        self.form.set_pane(2, self.show_code    , entry)
 
     def show_detail(self, parent, entry):
         """Build the detail pane for a selected widget."""
@@ -70,6 +73,13 @@ class EZ_Pane(_basePane):
 
         sub = CardCol(parent, height_flex=True, scrollable=True)
         Heading(sub, "Source:")
+        CodeBox(sub, data=entry.get("source", ""))
+
+    def show_code(self, parent, entry):
+        parent.pad=0
+        Title(parent, "  Source Code:", glow=True)
+        Body(parent, f"  {entry['lines']} lines")
+        sub = Col(parent,  scrollable=True, color_bg=Style.COLOR_PAL_GRAY_950)
         CodeBox(sub, data=entry.get("source", ""))
 
     def field(self, parent, label, value):

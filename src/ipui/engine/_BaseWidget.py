@@ -72,24 +72,23 @@ class _BaseWidget:
                  enabled=True, start= None, end = None, font=None,
                  text_align='l', wrap=False, color_bg=None, glow=False, data=None, single_select=False,
                  placeholder=None, initial_value=None, on_submit=None, on_change=None, on_click=None,
-                 pipeline_key=None, tooltip_class=None, scrollable=False, early_load =None):
+                 pipeline_key=None, tooltip_class=None, scrollable=False, scroll_glow=.369, early_load =None):
 
         # Identity
-        self.name       = name
-        self.my_name    = "unnamed"
+        self.name               = name
+        self.widget_type        = None #automatically set after build
+        _BaseWidget             ._next_id += 1  # NEW
+        self.widget_id          = _BaseWidget._next_id
 
-        _BaseWidget     ._next_id += 1  # NEW
-        self.widget_id  = _BaseWidget._next_id
         # Tree
-        self.children = []
-        self.parent   = parent
-        self.form     = parent.form if parent else getattr(self, 'form', None)
+        self.children           = []
+        self.parent             = parent
+        self.form               = parent.form if parent else getattr(self, 'form', None)
 
         # Content
-        self.text       = text
-        self.my_surface = None
-        self.data       = data
-
+        self.text               = text
+        self.my_surface         = None
+        self.data               = data
 
         # Layout
         self.rect               = None
@@ -98,10 +97,15 @@ class _BaseWidget:
         self.border             = border if border is not None else Style.TOKEN_BORDER
         self.justify_center     = justify_center
         self.justify_spread     = justify_spread
-        self.width_flex         = int(width_flex)
-        self.width_flex_actual  = int(width_flex) #if there is not enough space to honr the width_flex it may be set to zero (renders at minimum(intrinsic) size)
-        self.height_flex        = int(height_flex)
-        self.height_flex        = int(height_flex) #if there is not enough space to honor the height_flex it may be set to zero (renders at minimum(intrinsic) size)
+        self.width_flex         = width_flex
+        self.width_flex_actual  = width_flex #if there is not enough space to honr the width_flex it may be set to zero (renders at minimum(intrinsic) size)
+        self.height_flex        = height_flex
+        self.height_flex        = height_flex #if there is not enough space to honor the height_flex it may be set to zero (renders at minimum(intrinsic) size)
+        #self.width_flex         = int(width_flex)
+        #self.width_flex_actual  = int(width_flex) #if there is not enough space to honr the width_flex it may be set to zero (renders at minimum(intrinsic) size)
+        #self.height_flex        = int(height_flex)
+        #self.height_flex        = int(height_flex) #if there is not enough space to honor the height_flex it may be set to zero (renders at minimum(intrinsic) size)
+
         self.horizontal         = False
         self.wrap               = wrap
         self.text_align         = text_align.lower()
@@ -124,6 +128,17 @@ class _BaseWidget:
         self.scrollable         = scrollable
         self.scroll_offset      = 0
         self.scroll_active      = False
+        self.scroll_glow        = scroll_glow
+        self.scroll_top_inset       = 0
+        self.private_handle_rect    = None # drag_hit_testing
+        self.private_handle_rect    = None             #  handle rect for drag hit-testing
+        self.private_track_top      = 0                #  top of scrollbar track
+        self.private_track_h        = 0                #  height of scrollbar track
+        self.private_handle_h       = 0                #  height of handle
+        self.private_max_scroll     = 0                #  max scroll value
+        self.private_dragging       = False            #  currently dragging?
+        self.private_drag_anchor    = 0                # mouse offset from handle top
+
 
         # Events
         self.on_click           = on_click
@@ -136,6 +151,7 @@ class _BaseWidget:
         self.hover_bright       = True
         self.is_pressed         = False
         self.enabled            = enabled
+        self.private_enabled    = enabled
         self.is_focused         = False
         self.locked_to_list     = True
         self.tool_tip_huge      = None
@@ -155,26 +171,45 @@ class _BaseWidget:
         if self.form            : self.form.widget_registry[self.widget_id] = self  # NEW
         if parent               : parent.children.append(self)
         if name and self.form   : self.form.widgets[name] = self
-        if hasattr(self,'build'): self.build()
+        self.private_build_comp = False                 #Track if build has run at least once
+
+        #=============================================================
+        # ================== Hook to Widget' Build  ==================
+        if hasattr(self, 'build'): self.build()
+        # =============================================================
+
+        if self.widget_type is None: self.widget_type =  type(self).__name__
+
+        self.private_build_comp = True
 
     def validate(self) -> None:
-        """Guard against contradictory constructor arguments."""
-        if self.justify_center and self.justify_spread:
-            EZ.err("Cannot set both justify_center and justify_spread\nPlease pick on or the other.",ValueError)
 
-        if self.text_align not in ('l', 'c', 'r'):
-            EZ.err(f"text_align must be 'l', 'c', or 'r' — got '{self.text_align}'",ValueError)
+        self.validate_contradictory_arg()
+        self.validate_no_parent()
 
-        if self.parent and self.parent.scrollable and self.height_flex > 0 and 1==3:
-            EZ.err(
-                f"""{type(self).__name__} has height_flex inside scrollable {type(self.parent).__name__}.
-    TO FIX: Remove height_flex from the child, or remove scrollable from the parent.
-    Flex expands to fill space; scrollable needs content bigger than viewport. Contradictory!"""
+    def validate_no_parent(self):
+        if self.parent is None and self.form is None:
+            EZ.err(  # NEW
+                f"{type(self).__name__}() has no parent!\n"  
+                f"A widget's first arg is always the parent widget.\n"  
+                f"Example 1: {type(self).__name__}(my_card, ...)\n"
+                f"Example 2: {type(self).__name__}(parent, ...) # if it's the first widget in a pane"
             )
+
+    def validate_contradictory_arg(self):
+        """Guard against contradictory constructor arguments."""
+        if self.justify_center and self.justify_spread: EZ.err("Cannot set both justify_center and justify_spread\nPlease pick on or the other.",ValueError)
+        if self.text_align not in ('l', 'c', 'r'):      EZ.err(f"text_align must be 'l', 'c', or 'r' — got '{self.text_align}'",ValueError)
+        if self.parent and self.parent.scrollable and self.height_flex > 0 and 1==3: #1==3 becaues i don't think this is actually wrong
+            EZ.err( f"""{type(self).__name__} has height_flex inside scrollable {type(self.parent).__name__}. TO FIX: Remove height_flex from the child, or remove scrollable from the parent.  Flex expands to fill space; scrollable needs content bigger than viewport. Contradictory!""")
 
     # ==============================================================
     # PROPERTIES
     # ==============================================================
+
+    @property
+    def display_name(self):
+        return self.name or str(self.text or "")[:30] or self.widget_type
 
     @property
     def frame_size(self) -> int:
@@ -237,10 +272,10 @@ class _BaseWidget:
 
 
 
-    def draw_chrome(self, surface: pygame.Surface, r: pygame.Rect, bg_color: Optional[tuple]) -> None:
+    def draw_chrome(self, surface: pygame.Surface, r: pygame.Rect, color_bg: Optional[tuple]) -> None:
         """Draw background fill and bevel borders. Inverts bevel on press."""
-        if bg_color:
-            pygame.draw.rect(surface, bg_color, r)
+        if color_bg:
+            pygame.draw.rect(surface, color_bg, r)
         if not hasattr(self, 'border_top') or not self.border_top: return
         if self.is_pressed: top, left, bottom, right = self.border_bottom, self.border_right, self.border_top, self.border_left
         else:               top, left, bottom, right = self.border_top,    self.border_left,  self.border_bottom, self.border_right
@@ -256,27 +291,6 @@ class _BaseWidget:
         r      = self.rect
         glow_y = r.bottom - 4
         pygame.draw.line(surface, Style.COLOR_TAB_INDICATOR, (r.left + 4, glow_y), (r.right - 4, glow_y), 2)
-
-    def draw_scrollbar(self, surface: pygame.Surface) -> None:
-        """Draw a vertical scrollbar track and handle."""
-        if not self.scroll_active: return
-        frame        = self.frame_size
-        inner        = self.rect.inflate(-frame, -frame)
-        bar_w        = Style.TOKEN_SCROLLBAR
-        bar_x        = inner.right - bar_w
-        #content      = self.compute_content_size()
-        #content = self.height_minimum if not self.horizontal else self.width_minimum
-        content = getattr(self, 'content_size', self.height_minimum)
-        track_h      = inner.height
-        track_rect   = pygame.Rect(bar_x, inner.top, bar_w, track_h)
-        pygame.draw.rect(surface, Style.COLOR_PANEL_BG, track_rect)
-        visible_ratio = track_h / content
-        handle_h      = max(20, int(track_h * visible_ratio))
-        max_scroll    = max(1, content - track_h)
-        scroll_ratio  = self.scroll_offset / max_scroll
-        handle_y      = inner.top + int((track_h - handle_h) * scroll_ratio)
-        handle_rect   = pygame.Rect(bar_x, handle_y, bar_w, handle_h)
-        pygame.draw.rect(surface, Style.COLOR_BUTTON_BG, handle_rect)
 
     def draw_overlay(self, surface: pygame.Surface) -> None:
         """Override to draw floating content outside normal layout.
@@ -423,6 +437,12 @@ class _BaseWidget:
         self.is_pressed = False
         for child in self.children: child.handle_mouse_up(pos)
 
+    def handle_mouse_move(self, pos):
+        for child in self.children:
+            if child.handle_mouse_move(pos):
+                return True
+        return False
+
     # ==============================================================
     # EVENTS — Keyboard
     # ==============================================================
@@ -473,6 +493,50 @@ class _BaseWidget:
     # EVENTS — Scroll
     # ==============================================================
 
+    def draw_scrollbar(self, surface: pygame.Surface) -> None:
+        """Draw a vertical scrollbar track and handle."""
+        if not self.scroll_active: return
+        frame        = self.frame_size
+        inner        = self.rect.inflate(-frame, -frame)
+        bar_w        = Style.TOKEN_SCROLLBAR
+        bar_x        = inner.right - bar_w
+        content      = getattr(self, 'content_size', self.height_minimum)
+        track_top    = inner.top + self.scroll_top_inset
+        track_h      = inner.height - self.scroll_top_inset
+        track_rect   = pygame.Rect(bar_x, track_top, bar_w, track_h)
+        pygame.draw.rect(surface, Style.COLOR_PANEL_BG, track_rect)
+        visible_ratio = track_h / content
+        handle_h      = max(20, int(track_h * visible_ratio))
+        max_scroll    = max(1, content - track_h)
+        scroll_ratio  = self.scroll_offset / max_scroll
+        handle_y      = track_top + int((track_h - handle_h) * scroll_ratio)
+        handle_rect   = pygame.Rect(bar_x, handle_y, bar_w, handle_h)
+        self.private_handle_rect = handle_rect
+        self.private_track_top   = track_top
+        self.private_track_h     = track_h
+        self.private_handle_h    = handle_h
+        self.private_max_scroll  = max_scroll
+        self.draw_scroll_handle(surface, handle_rect)
+
+    def draw_scroll_handle(self, surface, rect):
+        if self.scroll_glow <= 0:
+            pygame.draw.rect(surface, (120, 120, 120), rect)
+            return
+        alpha         = self.scroll_glow
+        bg            = Style.COLOR_BUTTON_BG
+        pygame.draw.rect(surface, bg, rect)
+        lt            = Style.COLOR_BEVEL_HOT_LT
+        dk            = Style.COLOR_BEVEL_HOT_DK
+        if alpha < 1:
+            lt = tuple(int(c * alpha + bg[i] * (1 - alpha)) for i, c in enumerate(lt))
+            dk = tuple(int(c * alpha + bg[i] * (1 - alpha)) for i, c in enumerate(dk))
+        w = 2
+        r = rect
+        pygame.draw.line(surface, lt, (r.left,      r.top),        (r.right - 1, r.top),        w)
+        pygame.draw.line(surface, lt, (r.left,      r.top),        (r.left,      r.bottom - 1), w)
+        pygame.draw.line(surface, dk, (r.left,      r.bottom - 1), (r.right - 1, r.bottom - 1), w)
+        pygame.draw.line(surface, dk, (r.right - 1, r.top),        (r.right - 1, r.bottom - 1), w)
+
     def handle_scroll(self, pos: tuple[int, int], button: int) -> bool:
         """Dispatch scroll events to the deepest scrollable widget under pos."""
         for child in self.children:
@@ -488,6 +552,46 @@ class _BaseWidget:
             self.scroll_offset = max(0, min(self.scroll_offset, max_scroll))
             return True
         return False
+
+    # ==============================================================
+    # Dragging Scrollbar
+    # ==============================================================
+
+
+    def handle_scroll_drag_start(self, pos):
+        """Check if click is on a scroll handle; start drag if so."""
+        for child in self.children:
+            if child.handle_scroll_drag_start(pos):
+                return True
+        if self.private_handle_rect and self.private_handle_rect.collidepoint(pos):
+            self.private_dragging    = True
+            self.private_drag_anchor = pos[1] - self.private_handle_rect.top
+            return True
+        return False
+
+# _BaseWidget.py method: handle_scroll_drag_move  NEW: Update scroll during drag
+    def handle_scroll_drag_move(self, pos):
+        """Update scroll offset based on mouse position during drag."""
+        if self.private_dragging:
+            usable = self.private_track_h - self.private_handle_h
+            if usable <= 0:
+                return True
+            relative   = pos[1] - self.private_track_top - self.private_drag_anchor
+            ratio      = max(0.0, min(1.0, relative / usable))
+            self.scroll_offset = int(ratio * self.private_max_scroll)
+            return True
+        for child in self.children:
+            if child.handle_scroll_drag_move(pos):
+                return True
+        return False
+
+# _BaseWidget.py method: handle_scroll_drag_end  NEW: Stop scrollbar drag
+    def handle_scroll_drag_end(self, pos):
+        """Release drag state down the tree."""
+        self.private_dragging = False
+        for child in self.children:
+            child.handle_scroll_drag_end(pos)
+
 
     # ==============================================================
     # STATE
@@ -507,3 +611,13 @@ class _BaseWidget:
         """Re-enable this widget."""
         self.enabled = True                                # REPLACE self.is_disabled = None
         self.build()
+
+    @property
+    def enabled(self):
+        return self.private_enabled
+
+    @enabled.setter
+    def enabled(self, value):
+        self.private_enabled = value
+        if hasattr(self, 'private_build_comp'):  # REPLACE
+            self.build()

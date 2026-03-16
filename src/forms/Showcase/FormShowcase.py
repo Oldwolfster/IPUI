@@ -10,16 +10,21 @@ from ipui.widgets.Label import Banner
 
 
 class FormShowcase(_BaseForm):
+
     TAB_LAYOUT = {
-        "FixScroll" : [("pane1"  ,1)    ,("pane2"        ,3)]             ,
-        "Welcome"   : ["welcome"        ,"select_project"   ,"metaphor"]     ,
-        "Pygame"    : ["welcome"        ,"select_project"   ,"metaphor"]     ,
-        "Designer"  : [("tab_map",1)    ,("preview"      ,3),("toolbox", 1)] ,
-        "Freebies"  : ["the_pitch"      ,"pipeline_demo"    , "widgets_demo"] ,
-        "Widgets"   : ["catalog_grid"   ,"detail"]                         ,
-        "Tree"      : ["widget_tree"    ,("widget_detail",2)]              ,
-        "Paradigm"  : ["reactive"       ,"imperative"]                     ,
-        "Showcase"  : ["the_pitch"      ,"pipeline_live"]                  ,
+        "Welcome"       : ["welcome"        ,"select_project"   ,"metaphor"     ],
+        "FixScroll"     : [("pane1"  ,1)    ,("pane2", 3)                       ],
+        "Your Choice"   : ["reactive"       ,"imperative"                       ],
+        "Breakout_clone": ["greet"          ,"game"             ,"scoreboard"   ],
+        "Breakout"      : ["greet"          , None              ,"code"   ],
+        "SQL"           : [("tables", .5)   ,("query", .7)      ,("results", 1) ],
+        "PygameBall2"   : [("overview",2)   ,(None, 3)          ,("code",2)     ],
+        "Designer"      : [("tab_map",1)    ,("preview" ,3)     ,("toolbox", 1) ],
+        "Freebies"      : ["the_pitch"      ,"pipeline_demo"    ,"widgets_demo" ],
+        "Widgets"       : ["catalog_grid"   ,"detail"           ,"code"         ],
+        "Tree"          : ["widget_tree"    ,"widget_detail"                    ],
+
+        "Showcase"  : ["the_pitch"      ,"pipeline_live"]                    ,
     }
     def build(self):
         self.build_header()

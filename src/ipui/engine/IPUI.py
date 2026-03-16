@@ -1,4 +1,4 @@
-# IPUI.py  NEW: Public API and form manager (absorbs MgrUI)
+# IPUI.py  Update: process_events returns consumed bool for unhandled tracking
 
 class IPUI:
     screen      = None
@@ -76,8 +76,10 @@ class IPUI:
     def process_events(cls, event):
         form = cls.active()
         if form:
-            form.process_events(event)
+            consumed = form.process_events(event)
             form.check_hover()
+            return consumed
+        return False
 
     @classmethod
     def update(cls):

@@ -44,17 +44,30 @@ class Tree(_basePane):
         grid.on_row_click(self.on_tree_row_clicked, "wid")
 
     def walk(self, widget, depth, rows):
-        indent = "  " * depth + self.node_icon(widget)
-        wtype = type(widget).__name__
-        reg_name = self.registry_name(widget)
-        label = reg_name or str(widget.text or "")[:30]
-        kids = len(widget.children)
-        rect = widget.rect
-        size = f"{rect.width}x{rect.height}" if rect else "—"
+        indent      = "  " * depth + self.node_icon(widget)
+        wtype       = widget.widget_type
+        reg_name    = self.registry_name(widget)
+        label       = reg_name or str(widget.text or "")[:30]
+        kids        = len(widget.children)
+        rect        = widget.rect
+        size        = f"{rect.width}x{rect.height}" if rect else "—"
         rows.append([indent, wtype, label, kids, size, widget.widget_id])
         for child in widget.children:
             self.walk(child, depth + 1, rows)
 
+
+
+    def walk(self, widget, depth, rows):
+        indent      = "  " * depth + self.node_icon(widget)
+        wtype       = widget.widget_type
+        reg_name    = self.registry_name(widget)
+        label       = reg_name or str(widget.text or "")[:30]
+        kids        = len(widget.children)
+        rect        = widget.rect
+        size        = f"{rect.width}x{rect.height}" if rect else "—"
+        rows.append([indent, wtype, label, kids, size, widget.widget_id])
+        for child in widget.children:
+            self.walk(child, depth + 1, rows)
 
     def registry_name(self, widget):
         for key, val in self.form.widgets.items():
@@ -88,7 +101,7 @@ class Tree(_basePane):
         rect = widget.rect
         props = [
             ["type",        type(widget).__name__],
-            ["name",        getattr(widget, 'my_name', '—')],
+            ["name",        self.registry_name(widget)],
             ["text",        str(widget.text or '—')[:40],],
             ["visible",     str(widget.visible)],
             ["enabled",     str(widget.enabled)],
@@ -126,3 +139,10 @@ class Tree(_basePane):
         if pipe_val is not None:
             derives.append(["pipeline value", str(pipe_val)[:40]])
         return derives
+
+
+    # ══════════════════════════════════════════════════════════════
+    # Auto Refresh
+    def ip_think(self, ip):
+        if ip.is_active_pane: self.refresh_tree()
+    # ══════════════════════════════════════════════════════════════

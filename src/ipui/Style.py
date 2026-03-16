@@ -27,13 +27,14 @@ class Style:
     COLOR_PAL_GRAY_200      = (200, 200, 205)   # Primary text
     COLOR_PAL_GRAY_100      = (230, 230, 235)   # Bright text
     COLOR_PAL_WHITE         = (255, 255, 255)   # Pure white
+    COLOR_PAL_BLACK         = (  0,   0,   0)   # Pure Black
 
     # Orange - Brand/Focus/Selection ("glow of the forge")
-    COLOR_PAL_ORANGE_DEEP   = (180, 90, 20)     # Dark accent
-    COLOR_PAL_ORANGE_FORGE  = (230, 140, 30)    # Primary brand orange
-    COLOR_PAL_ORANGE_BRIGHT = (255, 180, 60)    # Highlighted/glow
-    COLOR_PAL_ORANGE_MOLTEN = (255, 50, 0)      # Red-orange for text
-    COLOR_PAL_ORANGE_GLOW   = (255, 150, 50)    # Glow effect
+    COLOR_PAL_ORANGE_DEEP   = (180,  90,  20)     # Dark accent
+    COLOR_PAL_ORANGE_FORGE  = (230, 140,  30)    # Primary brand orange
+    COLOR_PAL_ORANGE_BRIGHT = (255, 180,  60)    # Highlighted/glow
+    COLOR_PAL_ORANGE_MOLTEN = (255,  50,   0)      # Red-orange for text
+    COLOR_PAL_ORANGE_GLOW   = (255, 150,  50)    # Glow effect
 
     # Green - Primary Actions
     COLOR_PAL_GREEN_DARK    = (45, 120, 45)     # Button background

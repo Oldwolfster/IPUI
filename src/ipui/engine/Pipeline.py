@@ -5,8 +5,9 @@ from ipui.utils.EZ import EZ
 
 class Pipeline:
 
-    def __init__(self, widgets):
-        self.widgets = widgets
+    def __init__(self, widgets, widget_registry):
+        self.widgets = widgets                  #only named widgets
+        self.widget_registry = widget_registry  #all widgets with wid
         self.data     = {}
         self.derives  = {}
         self.debug    = False
@@ -16,6 +17,20 @@ class Pipeline:
         if self.debug:
             print(f"[pipeline] '{key}' set to '{value}'")
         self.fire_derives(key)
+        self.notify_source(key)
+
+    def notify_sourceOld(self, key):
+        for widget in self.widgets.values():
+            if getattr(widget, 'pipeline_key', None) == key:
+                if hasattr(widget, 'sync_from_pipeline'):
+                    widget.sync_from_pipeline()
+
+
+    def notify_source(self, key):
+        for widget in self.widget_registry.values():        # REPLACE (was: self.widgets.values())
+            if getattr(widget, 'pipeline_key', None) == key:
+                if hasattr(widget, 'sync_from_pipeline'):
+                    widget.sync_from_pipeline()
 
     def read(self, key):
         return self.data.get(key)

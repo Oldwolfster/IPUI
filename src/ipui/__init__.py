@@ -20,11 +20,11 @@ __all__ = [
     # Widgets
     "Button", "Card", "ChartWidget", "DropDown",
     "NetworkDiagram", "NeuronCell", "PowerGrid",
-    "ProjectListItem", "Row", "CardCol", "CardRow",
+    "ProjectListItem", "Row", "CardCol", "CardRow", "Col",
     "SelectableListItem", "SelectionList", "Spacer",
-    "TabStrip", "TextBox",
+    "TabStrip", "TextBox", "TextArea",
     # Label family
-    "Title", "Heading", "Body", "Banner",
+    "Title", "Heading", "Body", "Banner", "Detail",
     # Utilities
     "smart_format", "WidgetCatalog",
 ]
@@ -56,34 +56,32 @@ def active():
 
 # ── Re-exports (so users can do: from ipui import Button) ──
 
-from ipui.engine._BaseForm          import _BaseForm
-BaseForm= _BaseForm #alias to preventexception
-from ipui.engine._BasePane          import _basePane
-BasePane = _basePane  # alias so `from ipui import *` grabs it
-from ipui.engine._BaseWidget      import _BaseWidget
-from ipui.engine._BaseHugeTooltip import _BaseHugeTooltip
-
-from ipui.engine.MgrColor         import MgrColor
-from ipui.engine.MgrFont          import MgrFont
-from ipui.engine.WidgetsDict     import WidgetsDict
-
-
-from ipui.engine.Log              import Log
-from ipui.widgets.Button          import Button
-from ipui.widgets.Card            import Card
-from ipui.widgets.ChartWidget     import ChartWidget
-from ipui.widgets.DropDown        import DropDown
-from ipui.widgets.NetworkDiagram  import NetworkDiagram
-from ipui.widgets.NeuronCell      import NeuronCell
-from ipui.widgets.PowerGrid       import PowerGrid
-from ipui.widgets.ProjectListItem import ProjectListItem
-from ipui.widgets.Row             import Row, CardCol, CardRow
-from ipui.widgets.SelectableListItem import SelectableListItem
-from ipui.widgets.SelectionList   import SelectionList
-from ipui.widgets.Spacer          import Spacer
-from ipui.widgets.TabStrip        import TabStrip
-from ipui.widgets.Label            import  Title, Heading, Body, Banner
-from ipui.widgets.TextBox         import TextBox
-
-from ipui.utils.general_text      import smart_format
-from ipui.utils.WidgetCatalog     import WidgetCatalog
+from ipui.engine._BaseForm              import _BaseForm
+from ipui.engine._BasePane              import _basePane
+BaseForm =                              _BaseForm               # alias to preventexception
+BasePane =                              _basePane               # alias so `from ipui import *` grabs it
+from ipui.engine._BaseWidget            import _BaseWidget
+from ipui.engine._BaseHugeTooltip       import _BaseHugeTooltip
+from ipui.engine.MgrColor               import MgrColor
+from ipui.engine.MgrFont                import MgrFont
+from ipui.engine.WidgetsDict            import WidgetsDict
+from ipui.engine.Log                    import Log
+from ipui.widgets.Button                import Button
+from ipui.widgets.Card                  import Card
+from ipui.widgets.ChartWidget           import ChartWidget
+from ipui.widgets.DropDown              import DropDown
+from ipui.widgets.NetworkDiagram        import NetworkDiagram
+from ipui.widgets.NeuronCell            import NeuronCell
+from ipui.widgets.PowerGrid             import PowerGrid
+from ipui.widgets.ProjectListItem       import ProjectListItem
+from ipui.widgets.Row                   import Row,  CardRow, CardCol, Col
+from ipui.widgets.SelectableListItem    import SelectableListItem
+from ipui.widgets.SelectionList         import SelectionList
+from ipui.widgets.Spacer                import Spacer
+from ipui.widgets.TabStrip              import TabStrip
+from ipui.widgets.Label                 import Title, Heading, Body, Banner, Detail
+#from ipui.widgets.TextBox               import TextBox
+from ipui.widgets.TextBox               import TextBox
+from ipui.widgets.TextArea               import TextArea
+from ipui.utils.general_text            import smart_format
+from ipui.utils.WidgetCatalog           import WidgetCatalog

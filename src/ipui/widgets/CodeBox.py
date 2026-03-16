@@ -29,13 +29,19 @@ class CodeBox(_BaseWidget):
             return
 
         lines              = self.extract_lines()
-        print(f"DEBUG CodeBox: {len(lines)} lines")                    # NEW
-        if lines: print(f"  FIRST: {lines[0]}")                        # NEW
-        if lines: print(f"  LAST:  {lines[-1]}")
+        #print(f"DEBUG CodeBox: {len(lines)} lines")                    # NEW
+        #if lines: print(f"  FIRST: {lines[0]}")                        # NEW
+        #if lines: print(f"  LAST:  {lines[-1]}")
 
         self.my_surface    = self.render_code(lines)
         self.scroll_offset = self.find_scroll(lines)
 
+
+
+    def set_text(self, text):
+        self.data = text
+        self.clear_children()
+        self.build()
 
     def extract_lines(self):
         import inspect

@@ -109,46 +109,122 @@ Clean up list
 110)  DONE: README:IPUI.show() vs IPUI(MyApp, "...") — the Quick Start uses one form, the "Launching Your App" section shows another. Which is canonical?
 111)  DONE: Cap Tabl Layout like Declaration updates.
 
+
 ######################################################################
+3/10
 ######################################################################
+99) DONE: Move docs\forms to src\ipui\forms)
+94) DONE: ensure no reference to _ipui or _BaseForm
+77) DONE:add email to metadata
+78) DONE:add alpha classifier to package info.
+119) DONE: remove name from doc strings.
+98)  DONE: Move docs\popups to ipui\popups
+51) DONE: is frmPro needed?  If not, delete.
+156) DONE: Make NeuroForge Pro a combo of armory and Forge.
+133) DONE: Both widget references must be changed to ignore name and use the class name.
+100) DONE: add to benfits in read me framework takes responsibility of flutters super.initstate and reacts dependency array.
+134) DONE: matplotlib widget needs to be added to readme
+131) DONE: on neuroforge demo createback button
+118) DONE: fix issue with space in tabname.
+160) DONE: scroll bar must be draggable
+162) DONE: Fixed Pipeline → TextBox sync (Clear button works)
+163) DONE: Trimmed the Paradigm tab
+164) DONE: Added scroll_top_inset + private_handle_rect to base scroll
+165) DONE: Built PowerGrid2 with proper child architecture — header, scroller, body, record selector all as real widgets
+166) DONE: Unified scrollbar — deleted all custom scroll code from PowerGrid
+167) DONE: Added scrollbar drag to _BaseWidget — every scrollable widget gets it for free
+######################################################################
+3/11
+######################################################################
+105) DONE: add hooks for user to pygame updateloop
+132) DONE:  DP on particle life demo create back button
+157) DONE: Grid blows up when sorting mixed data types.  Name in tree for example.
+162)  DONE: in ctx reverse events.... we want to encourage the small list.
+159) DONE: BEFORE ANYTHING.  Standardize label and textbox printing.
+135. DONE:Click-to-position cursor — ours always puts cursor at the end
+136. DONE:Left/Right arrow keys to move cursor within text
+137. DONE:Home/End keys to jump to start/end
+138. DONE:Ctrl+Left/Right to jump word-by-word
+139) DONE:Shift+Arrow to select a range
+140) DONE:Shift+Home/End for select-to-boundary
+141) DONE:Ctrl+A to select all
+142) DONE:Click-and-drag to select with mouse
+143) DONE:Double-click to select a word
+144) DONE:Visual highlight rendering of selected text
+145) DONE:Ctrl+C copy selection
+146) DONE:Ctrl+V paste (replacing selection if any)
+147) DONE:Ctrl+X cut selection
+148) DONE: (Cross-platform — currently Windows-only)
+149) DONE:Delete key (forward delete)
+150) DONE:Ctrl+Backspace delete word backward
+151) DONE:Typing replaces selection when text is selected
+152) DONE:Overflowing text scrolls horizontally — currently text just renders off the right edge
+153) DONE:Text clipping — long text shouldn't bleed outside the box
+154) Scroll offset so cursor is always visible when text exceeds box width
+######################################################################
+3/12
+######################################################################
+169) Created IP.   One stop shopping for IPUI api
+######################################################################
+3/13
+######################################################################
+168) DONE: Created TabArea  as first class widget
+169) DONE: Created Pane as first class widget
+171) DONE: None gaps work — renderpre shows through
+172) DONE: Tab switching works
+173) DONE: set_pane with args works
+174) DONE: Data is cleaned once at startup
+175) DONE: 4th pane bug fixed — deleted the rogue Col in TabStrip's None branch that was giving Armory (and Breakout) an extra phantom pane
+176) DONE: Full Breakout game — arcade game running inside a None pane, all normalized coordinates, every method under 10 lines, playable and fun
+177) DONE: Tree debugger widget_type fix — self.widget_type → widget.widget_type
+178) DONE: display_name property — single source of truth on _BaseWidget for human-readable identity, kills my_name references everywhere
+179) DONE: gather_properties cleanup — my_name → widget_type + class + proper registry name
+180) DONE: ix — same my_name / type() drift issue
+181) DONE: draw_diagnostic_widget fix — uses display_name now
+182) DONE: TabButtons naming — "TabButtons Border" / "TabButtons Content" for debugger clarity
+183) DONE: Auto-refresh Tree — ip_think refreshes when active, no stale data
+184) DONE: PowerGrid scroll preservation — commented out the reset-to-top in set_data
+185) DONE: API design work — ip.every_seconds(0.5, callback) designed, ready to build
+
+
 ######################################################################
 
 
 
 
-
-48) Colosseum has manual list of config cats
-51) is frmPro needed?  If not, delete.
 60) PART OF LAMBDA ELIMINATION: investigate swap_pane in forge and more generic alternatives uch as Button(header, "+New", on_click_args=(self.form.set_pane, 1, self.name_project))
 76) Set Pane, instead of requiring lambda, use kwargs for params aka instead of #self.form.set_pane(1, lambda p: self.show_detail(p, item))   - how does this play with on_click_me
-77) add email to metadata
-78) add alpha classifier to package info.
 83) we need TemplateShowcase.py OR FIX Button to temporarily show other file.
 92) Fix readme in doc tools
-
-94) ensure no reference to _ipui or _BaseForm
 95) wid in widget overlay from tree is wrong - look at other example of tree where it is correct
-
-
-98) Move docs\popups to ipui\popups
-99) Move docs\forms to src\ipui\forms)
-100) add to benfits in read me framework takes responsibility of flutters super.initstate and reacts dependency array.
 101) Remember what 101 was...
-
 103) add troubleshoot buttons on magic debugger tool.
 104  Detail widget not working with 2 standard imports.............
-105) add hooks for user to pygame updateloop
+
 106) on freebies replace developer tools.
 107) on tab map green indicator does not follow selected button
 
-118) fix issue with space in tabname.
-119) remove name drom doc strings.
+
+
+155) Armory needs 3rd pane.
 120) add  third pane to paradigm explaining it.
 130) Error on Percy's story
-131) on neuroforge demo createback button
-132) on particle life demo create back button
-133) Both widget references must be changed to ignore name and use the class name.
-134) matplotlib widget needs to be added to readme
+158) Tab Order
+159) 86 the friggen set_enable set_disable.
+
+161) debug tools must auto-refresh
+
+
+163) move double click detect to base wid
+164) If autoscaffold tab with space in name itmesses up file and class
+165 screw our shitty text align... create string :(
+167) SQL recordselector behaving off. compare it to tree
+170) Remove all the references to my_name
+
+##########################################################
+Text Selection
+##########################################################
+
 
 ######################
 ##########################################################
@@ -171,6 +247,7 @@ Punting until after IPUI is on PIP
 84) Switch font Roboto → Noto Sans - better unicode coverage
 85) in widget catalog name is redundnant.
 112) network diagram must let it's children propogate down.
+48) Colosseum has manual list of config cats
 ##########################################################
 Punting to phase 2 of NeuroForge
 ##########################################################

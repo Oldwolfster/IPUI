@@ -1,3 +1,4 @@
+# _BaseForm.py  Update: ip service portal with geometry context
 import pygame
 
 from ipui.Style import Style
@@ -21,7 +22,7 @@ class _BaseForm(_BaseWidget):
     declares:    TAB_LAYOUT(dict), tab_early_load(list), tab_on_change(str), tab_hidden(list), tab_border(int)
     """
 
-    _allow_init = True # this allows base form to inherit from base widget
+    _allow_init = True
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if '__init__' in cls.__dict__ and not cls.__dict__.get('_allow_init', False):
@@ -31,14 +32,13 @@ class _BaseForm(_BaseWidget):
         self.title          = title
         self.widgets       = WidgetsDict()
         self.widget_registry= {}
-        self.pipeline       = Pipeline(self.widgets)
-        self.pipeline.debug = getattr(self.__class__, 'pipeline_debug', False) #TODO DOUBLE CHECK - possible timing issue.  then add to api docs
+        self.pipeline       = Pipeline(self.widgets, self.widget_registry)
+        self.pipeline.debug = getattr(self.__class__, 'pipeline_debug', False)
         self.form           = self
         self.modal_msg      = None
         self.tab_strip      = None
-        self.pinned_tooltip = None  
-        super().__init__    ( parent=None)                  #Call _BaseWidget
-        #self.rect           = self.compute_root_rect()
+        self.pinned_tooltip = None
+        super().__init__    ( parent=None)
         self                . setup_tabs()
         self                . build_footer()
         self.MEASUREDRAWLAY = MeasureAndWrap(self)
@@ -51,11 +51,8 @@ class _BaseForm(_BaseWidget):
 
 
     def render(self, surface):
-        if 1==1 or self.dirty : #TODO get dirty flag working and use it.
-            #self.MEASUREDRAWLAY.Runallthree()
+        if 1==1 or self.dirty :
             self.MEASUREDRAWLAY.Runallthree()
-            #self.measure()
-            #self.layout(self.rect)
             self.dirty = False
         self.draw(surface)
         self.draw_overlays(surface)
@@ -63,25 +60,23 @@ class _BaseForm(_BaseWidget):
         if getattr(self, 'show_diagnostics', False):   self.draw_diagnostics(surface)
 
     def draw_overlays(self, surface: pygame.Surface) -> None:
-        """Walk the widget tree, letting any widget draw floating content."""
         self.walk_overlays(surface, self)
 
     def walk_overlays(self, surface: pygame.Surface, widget) -> None:
-        """Recursive overlay walk — depth first, same pattern as tooltips."""
         for child in widget.children:
             self.walk_overlays(surface, child)
         widget.draw_overlay(surface)
 
     def draw_tooltips(self, surface):
-        if self.pinned_tooltip:                                
-            self.pinned_tooltip.draw_docked(surface)           
-            return                                             
-        tooltip = self.find_hovered_tooltip()                  
-        if tooltip:                                            
-            tooltip.show_me(surface)                           
-        else:                                                  
-            short = self.find_hovered_short_desc()             
-            if short:                                          
+        if self.pinned_tooltip:
+            self.pinned_tooltip.draw_docked(surface)
+            return
+        tooltip = self.find_hovered_tooltip()
+        if tooltip:
+            tooltip.show_me(surface)
+        else:
+            short = self.find_hovered_short_desc()
+            if short:
                 self.draw_short_tooltip(surface, short)
 
     def draw_short_tooltip(self, surface, text):
@@ -90,11 +85,9 @@ class _BaseForm(_BaseWidget):
         surfs   = [font.render(l, True, Style.COLOR_TEXT) for l in lines]
         tw      = max(s.get_width() for s in surfs)
         th      = sum(s.get_height() for s in surfs)
-
         pad     = Style.TOKEN_PAD
         box_w   = tw + pad * 2
         box_h   = th + pad * 2
-
         mouse_x, mouse_y = pygame.mouse.get_pos()
         sw, sh  = surface.get_size()
         if mouse_x < sw // 2:  x = mouse_x + 15
@@ -102,7 +95,6 @@ class _BaseForm(_BaseWidget):
         x       = max(10, min(x, sw - box_w - 10))
         y       = mouse_y - box_h - 10
         if y < 10:              y = mouse_y + 20
-
         pygame.draw.rect(surface, Style.COLOR_CARD_BG, (x, y, box_w, box_h))
         pygame.draw.rect(surface, Style.COLOR_BORDER,  (x, y, box_w, box_h), 1)
         cy = y + pad
@@ -113,42 +105,91 @@ class _BaseForm(_BaseWidget):
     def mark_dirty(self):
         self.dirty = True
 
-    def on_event(self, event):
-        pass
+    # ══════════════════════════════════════════════════════════════
+    # LIFECYCLE HOOKS
+    # ══════════════════════════════════════════════════════════════
 
-    def on_update(self, dt):
-        pass
+    def ip_think(self, ip):
+        self.dispatch_ip_think(ip)
 
-    def on_draw(self, surface):
-        pass
+    def ip_renderpre(self, ip):
+        self.dispatch_ip_render(ip, "ip_renderpre")
+
+    def ip_renderpost(self, ip):
+        self.dispatch_ip_render(ip, "ip_renderpost")
+
+    # ══════════════════════════════════════════════════════════════
+    # HOOK DISPATCH — routes to panes with geometry context
+    # ══════════════════════════════════════════════════════════════
+
+    def dispatch_ip_think(self, ip):
+        if not self.tab_strip:
+            return
+        active_name  = self.tab_strip.active_tab
+        cache        = self.tab_strip.pane_cache
+        content_widget = self.tab_strip.content if self.tab_strip else None
+        for name, pane in cache.items():
+            policy    = getattr(pane, 'IP_LIFECYCLE', 'persist')
+            is_active = (name == active_name)
+            ip.set_pane_context(pane, name, is_active, content_widget if is_active else None)
+            pane.ip = ip
+            if is_active:
+                pane.ip_think(ip)
+            elif policy == 'persist':
+                pane.ip_think(ip)
+
+    def dispatch_ip_render(self, ip, hook_name):
+        if not self.tab_strip:
+            return
+        active_name    = self.tab_strip.active_tab
+        pane           = self.tab_strip.pane_cache.get(active_name)
+        content_widget = self.tab_strip.content if self.tab_strip else None
+        if pane:
+            ip.set_pane_context(pane, active_name, True, content_widget)
+            getattr(pane, hook_name)(ip)
+
+    # ══════════════════════════════════════════════════════════════
+    # EVENT PROCESSING
+    # ══════════════════════════════════════════════════════════════
 
     def process_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if self.handle_tooltip_click(event.pos):  
-                return  
+            if self.handle_tooltip_click(event.pos):
+                return True
+            if self.handle_scroll_drag_start(event.pos):
+                return True
             self.handle_click(event.pos)
+            return True
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            self.handle_scroll_drag_end(event.pos)
             self.handle_mouse_up(event.pos)
+            return True
+        elif event.type == pygame.MOUSEMOTION:
+            self.handle_scroll_drag_move(event.pos)
+            self.handle_mouse_move(event.pos)
+            return False
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button in (4, 5):
-            if self.handle_tooltip_scroll(event.pos, event.button):  
-                return  
+            if self.handle_tooltip_scroll(event.pos, event.button):
+                return True
             self.handle_scroll(event.pos, event.button)
+            return True
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_F11:
                 self.show_diagnostics = not getattr(self, 'show_diagnostics', False)
-            elif event.key == pygame.K_ESCAPE and self.pinned_tooltip:  
-                self.pinned_tooltip.unpin() 
-                self.pinned_tooltip = None  
+            elif event.key == pygame.K_ESCAPE and self.pinned_tooltip:
+                self.pinned_tooltip.unpin()
+                self.pinned_tooltip = None
             elif event.key == pygame.K_F12:
                 from forms.Debugger.FormDebugger import FormDebugger
-                if isinstance(self, FormDebugger):                   
-                    IPUI.back()                                      
-                else:                                                
+                if isinstance(self, FormDebugger):
+                    IPUI.back()
+                else:
                     IPUI.debug_target = self
                     IPUI.switch(FormDebugger, "IPUI X-Ray and Diagnostic Tools")
-
             else:
                 self.handle_keydown(event)
+            return True
+        return False
 
     def handle_tooltip_click(self, pos):
         if self.pinned_tooltip:
@@ -175,24 +216,19 @@ class _BaseForm(_BaseWidget):
     def handle_tooltip_scroll(self, pos, button):
         if not self.pinned_tooltip:
             return False
-        if self.pinned_tooltip.content_rect and self.pinned_tooltip.content_rect.collidepoint(pos):
+        if self.pinned_tooltip.rect_pane and self.pinned_tooltip.rect_pane.collidepoint(pos):
             self.pinned_tooltip.handle_pin_scroll(button)
             return True
         return False
 
-
-
     def check_hover(self):
-        """Update hover state from mouse position."""
         self.update_hover(pygame.mouse.get_pos())
 
     def update(self):
         pass
 
     def pipeline_set(self, key, value):    self.pipeline.set(key, value)
-
-
-    def pipeline_read(self, key): return self.pipeline.read(key)
+    def pipeline_read(self, key):          return self.pipeline.read(key)
 
     # ============================================================
     # Modal handling
@@ -210,7 +246,6 @@ class _BaseForm(_BaseWidget):
         self.modal_msg = None
 
     def force_render_modal(self):
-
         surface = IPUI.screen
         surface.fill(Style.COLOR_BACKGROUND)
         self.render(surface)
@@ -222,22 +257,18 @@ class _BaseForm(_BaseWidget):
         overlay = pygame.Surface((sw, sh), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 200))
         surface.blit(overlay, (0, 0))
-
         font = Style.FONT_TITLE
         text_surf = font.render(self.modal_msg, True, Style.COLOR_TEXT)
         tw, th = text_surf.get_size()
-
         pad = Style.TOKEN_PAD * 4
         box_w = tw + pad * 2
         box_h = th + pad * 2
         box_x = (sw - box_w) // 2
         box_y = (sh - box_h) // 2
         box_rect = pygame.Rect(box_x, box_y, box_w, box_h)
-
         pygame.draw.rect(surface, Style.COLOR_CARD_BG, box_rect)
         pygame.draw.rect(surface, Style.COLOR_BEVEL_LIGHT, box_rect, 2)
         surface.blit(text_surf, (box_x + (box_w - tw) // 2, box_y + (box_h - th) // 2))
-
 
     # ============================================================
     # Diagnostic
@@ -250,33 +281,26 @@ class _BaseForm(_BaseWidget):
         if widget.rect is None:
             return
         r = widget.rect
-        # Color by role
         if (widget.width_flex > 0
-        or widget.height_flex > 0):         color = (255, 160, 40)   # orange: flex
-        elif r.width == 0 or r.height == 0: color = (255, 40, 40)    # red: zero-size
-        elif widget.children:               color = (80, 140, 255)   # blue: container
-        else:                               color = (80, 220, 80)    # green: leaf
-        # Rect outline
+        or widget.height_flex > 0):         color = (255, 160, 40)
+        elif r.width == 0 or r.height == 0: color = (255, 40, 40)
+        elif widget.children:               color = (80, 140, 255)
+        else:                               color = (80, 220, 80)
         pygame.draw.rect(surface, color, r, 1)
-        # Pad boundary (dotted effect via smaller rect)
         if widget.pad > 0 or widget.border > 0:
             inset = widget.pad + widget.border
             inner = r.inflate(-inset * 2, -inset * 2)
             pygame.draw.rect(surface, (color[0]//2, color[1]//2, color[2]//2), inner, 1)
-        # Name label
         font = Style.FONT_DETAIL or pygame.font.SysFont("monospace", 11)
         label = font.render(widget.my_name, True, color)
         surface.blit(label, (r.left + 2, r.top + 1))
-        # Size label
         size_text = f"{r.width}x{r.height}"
         size_surf = font.render(size_text, True, color)
         surface.blit(size_surf, (r.right - size_surf.get_width() - 2, r.bottom - size_surf.get_height() - 1))
-        # Recurse
         for child in widget.children:
             self.draw_diagnostic_widget(surface, child)
 
     def setup_tabs(self):
-        """auto-create TabStrip from class attribute"""
         import copy
         cls = self.__class__
         if not hasattr(cls, 'TAB_LAYOUT'):
@@ -294,12 +318,8 @@ class _BaseForm(_BaseWidget):
                                   )
         for name in getattr(cls, 'tab_hidden', []):
             self.tab_strip.hide_tab(name)
-    # ==============================================================
-    # Make tabstrip and helpers first class members of form.
-    # ==============================================================
 
     def build_footer(self):
-        """ override point for content below tabs"""
         pass
 
     def switch_tab(self, name):
@@ -325,4 +345,3 @@ class _BaseForm(_BaseWidget):
 
     def register_derive(self, control_name, property, compute, triggers):
         self.pipeline.register_derive(control_name, property, compute, triggers)
-        #self.pipeline.fire_all_derives()

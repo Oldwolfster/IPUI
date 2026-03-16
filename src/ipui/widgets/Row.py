@@ -22,7 +22,6 @@ class Row(_BaseWidget):
 
 class Col(_BaseWidget):
     """
-    name:        Col
     desc:        Vertical layout. No background, no border. Pure structure.
     when_to_use: Stacking widgets top to bottom without visual chrome.
     best_for:    Invisible grouping when CardCol is too heavy.
@@ -37,7 +36,6 @@ class Col(_BaseWidget):
 
 class CardRow(_BaseWidget):
     """
-    name:        CardRow
     desc:        Horizontal card. Beveled, background-filled, feels like a tray.
     when_to_use: Horizontal grouping that needs visual presence.
     best_for:    Tab button rows, toolbar areas, side-by-side panels.
@@ -47,13 +45,12 @@ class CardRow(_BaseWidget):
     def build(self):
         self.my_name    = "CardRow"
         self.horizontal = True
-        self.color_bg   = Style.COLOR_CARD_BG
+        if self.color_bg is None: self.color_bg   = Style.COLOR_CARD_BG
         MgrColor.apply_bevel(self, "sunken")
 
 
 class CardCol(_BaseWidget):
     """
-    name:        CardCol
     desc:        Vertical card. The most-used container in IPUI. Scrollable on demand.
     when_to_use: Almost everywhere. It's the default "put stuff here" container.
     best_for:    Pane content, settings groups, scrollable lists, form sections.
@@ -62,5 +59,7 @@ class CardCol(_BaseWidget):
     """
     def build(self):
         self.my_name  = "CardCol"
-        self.color_bg = Style.COLOR_CARD_BG
+        if self.color_bg is None: self.color_bg = Style.COLOR_CARD_BG
         MgrColor.apply_bevel(self, "sunken")
+
+

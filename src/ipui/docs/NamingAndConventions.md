@@ -32,14 +32,14 @@ CardCol.py     → class CardCol       ✓
 
 ---
 
-### 2. `_base` Prefix for Abstract Base Classes
+### 2. `_Base` Prefix for Abstract Base Classes
 
-Classes meant for subclassing — never direct instantiation — get the `_base` prefix. The underscore means *structural base*, not "private."
+Classes meant for subclassing — never direct instantiation — get the `_Base` prefix. The underscore means *structural base*, not "private."
 
 ```python
-class _baseWidget:   ...   # Inherit for custom widgets
-class _baseForm:     ...   # Inherit for app screens
-class _basePane:     ...   # Inherit for tab content
+class _BaseWidget:   ...   # Inherit for custom widgets
+class _BaseForm:     ...   # Inherit for app screens
+class _BasePane:     ...   # Inherit for tab content
 ```
 
 ---

@@ -87,7 +87,6 @@ class Label(_BaseWidget):
 ##################################################
 class Banner(Label):
     """
-    name:        Banner
     desc:        The biggest voice in the room. One per screen, max.
     when_to_use: App title, hero text.
     best_for:    The thing you see from across the room.
@@ -100,7 +99,6 @@ class Banner(Label):
 
 class Title(Label):
     """
-    name:        Title
     desc:        Section header. Starts a new topic.
     when_to_use: Top of every pane or major section.
     best_for:    Pane headers, card titles, dialog headings.
@@ -113,7 +111,6 @@ class Title(Label):
 
 class Heading(Label):
     """
-    name:        Heading
     desc:        Subsection label. Groups related content below it.
     when_to_use: Logical groupings within a pane.
     best_for:    Field group labels, list headers, settings categories.
@@ -126,7 +123,6 @@ class Heading(Label):
 
 class Body(Label):
     """
-    name:        Body
     desc:        The workhorse. Most text on screen is this.
     when_to_use: Any readable content that isn't a label or title.
     best_for:    Descriptions, instructions, data display, multiline content.
@@ -139,7 +135,6 @@ class Body(Label):
 
 class Detail(Label):
     """
-    name:        Detail
     desc:        Fine print. Small but still readable.
     when_to_use: Secondary info, timestamps, counts, footnotes.
     best_for:    Status bars, metadata, supplementary labels.
