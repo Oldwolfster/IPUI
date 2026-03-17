@@ -70,13 +70,13 @@ class EZ:
         return "Unknown Location"
 
     @staticmethod
-    def err(*args, exc_type: type[Exception] = ValueError) -> None:
+    def err(*args, exc_type: type[Exception] = ValueError, origin=None) -> None:
         if args and isinstance(args[-1], type) and issubclass(args[-1], Exception):
-            exc_type = args[-1]
-            args = args[:-1]
+            exc_type    = args[-1]
+            args        = args[:-1]
 
-        origin = EZ._get_origin_info()
-        formatted = EZ.format_message(*args)
+        origin          = origin or EZ._get_origin_info()
+        formatted       = EZ.format_message(*args)
 
         # Inject the origin into the box so the developer knows exactly where to look
         #title = f"{EZ.PREFIX_ERR}\n    LOCATED AT: {origin}"

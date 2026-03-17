@@ -22,6 +22,7 @@ class TemplateStarterKit(_basePane):
     # ══════════════════════════════════════════════════════════════
 
     def method_1_IPUI_TAB_BUILDER(self, parent):
+        self.squish_extras(3)
         Title(parent, "Reactive", glow=True)
         card = Card(parent)
         Heading(card, "The Derives Approach", glow=True)

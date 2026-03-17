@@ -16,7 +16,7 @@ IPUI names follow three principles:
 
 ---
 
-## The Rules
+## How i choose names in Python(99% of the time):
 
 ### 1. One Class Per File, Named Identically
 

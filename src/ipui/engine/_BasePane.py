@@ -93,3 +93,8 @@ class _basePane:
     def ip_renderpost(self, ctx):
         """Draw after UI. Override for overlays, cursors, effects."""
         pass
+
+
+    def squish_extras(self, keep_count):
+        for pane in self.form.tab_strip.panes[keep_count:]:
+            pane.visible = False

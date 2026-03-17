@@ -224,8 +224,9 @@ class TabStrip(_BaseWidget):
                     import inspect
                     mod      = inspect.getmodule(instance.__class__)
                     file_path = getattr(mod, '__file__', None) or getattr(instance.__class__, '__module__', 'unknown file')
+                    full_path =  f'File "{Path(inspect.getfile(self.form.__class__)).parent / (tab_name + ".py")}", line 1'
                     EZ.err(f"Method '{method_name}' not found in '{file_path}.py'. "
-                           f"Add def {method_name}(self, parent): to that file.")
+                           f"Add def {method_name}(self, parent): to that file.", origin=full_path)
                 getattr(instance, method_name)(pane, *args, **kwargs)
         else:
             raise TypeError(f"Tab '{tab_name}': expected string or callable, got {type(builder)}")

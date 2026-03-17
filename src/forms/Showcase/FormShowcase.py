@@ -13,7 +13,9 @@ class FormShowcase(_BaseForm):
 
     TAB_LAYOUT = {
         "Welcome"       : ["welcome"        ,"select_project"   ,"metaphor"     ],
-        "FixScroll"     : [("pane1"  ,1)    ,("pane2", 3)                       ],
+            "DeleTemeTest"  : ["test1","test2","test3","test4","test45","test46",("test47",0),],
+
+        "FixScroll"     : ["pane1"          ,"pane2"            ,"pane3"        ],
         "Your Choice"   : ["reactive"       ,"imperative"                       ],
         "Breakout_clone": ["greet"          ,"game"             ,"scoreboard"   ],
         "Breakout"      : ["greet"          , None              ,"code"   ],
@@ -74,3 +76,5 @@ class FormShowcase(_BaseForm):
         x = int(getattr(self, 'ball_x', 100))
         y = int(getattr(self, 'ball_y', 100))
         pygame.draw.circle(surface, Style.COLOR_PAL_ORANGE_BRIGHT, (x, y), 12)
+
+

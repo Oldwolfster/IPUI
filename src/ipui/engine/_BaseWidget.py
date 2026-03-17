@@ -12,6 +12,7 @@ from ipui.Style import Style
 from ipui.engine.MgrColor import MgrColor
 from ipui.utils.EZ import EZ
 
+
 if TYPE_CHECKING:
     from ipui.engine._BaseForm import _BaseForm
 
@@ -168,7 +169,7 @@ class _BaseWidget:
         self.tooltip_class      = tooltip_class
         if self.scrollable      and self.height_flex == 0: self.height_flex = 1 # must occur before validate
         self.validate()
-        if self.form            : self.form.widget_registry[self.widget_id] = self  # NEW
+        if self.form            : self.form.widget_registry[self.widget_id] = self
         if parent               : parent.children.append(self)
         if name and self.form   : self.form.widgets[name] = self
         self.private_build_comp = False                 #Track if build has run at least once
@@ -203,12 +204,21 @@ class _BaseWidget:
             EZ.err( f"""{type(self).__name__} has height_flex inside scrollable {type(self.parent).__name__}. TO FIX: Remove height_flex from the child, or remove scrollable from the parent.  Flex expands to fill space; scrollable needs content bigger than viewport. Contradictory!""")
 
     # ==============================================================
+    # Reparent if scroller needed
+    # ==============================================================
+
+
+
+
+    # ==============================================================
     # PROPERTIES
     # ==============================================================
 
     @property
     def display_name(self):
-        return self.name or str(self.text or "")[:30] or self.widget_type
+        raw = self.name or str(self.text or "")[:30] or self.widget_type
+        raw = raw.replace("\n", " ")
+        return "".join(ch for ch in raw if ch.isalnum() or ch == " ")[:24].strip()
 
     @property
     def frame_size(self) -> int:
@@ -620,3 +630,10 @@ class _BaseWidget:
         self.private_enabled = value
         if hasattr(self, 'private_build_comp'):  # REPLACE
             self.build()
+
+    # _BaseWidget.py method: tap  NEW: inline post-construction helper
+    def tap(self, func):
+        func(self)
+        return self
+
+

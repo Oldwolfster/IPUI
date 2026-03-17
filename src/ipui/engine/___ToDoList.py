@@ -229,13 +229,12 @@ Clean up list
 188) MD viewer should respect bold tag.
 189) MD viewer shuold render table.
 196) create table widget.
-
-##########################################################
-Text Selection
-##########################################################
+197) Scrollbar should not honor the token to the right.(leaves a gap)
 
 
-######################
+
+
+
 ##########################################################
 Punting until after IPUI is on PIP
 ##########################################################

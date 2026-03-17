@@ -16,7 +16,7 @@ class MissingTabUI(_basePane):
         tab_name = self.form.pipeline_read("missing_tab_name") or "???"
         file_name = f"{tab_name}.py"
 
-        Banner(card, "Whoa there, Pilgrim!", glow=True)
+        Banner(card, "Houston, do you read?", glow=True)
         Spacer(card, height_flex=2)
         Title(card, f"The '{tab_name}' tab needs a home.",name="title_home")
         Title(card, f"AKA No {file_name} file found",name="title_aka")
@@ -92,7 +92,8 @@ class MissingTabUI(_basePane):
             Path(file_path).write_text(self.generate_bare())
         else:
             here = Path(__file__).parent
-            template = here / "templates" / f"Template{level.title()}.py"
+            template = here / "templates" / f"Template{level}.py"
+            print(f"template={template}")
             self.generate_from_template(template)
         self.form.tab_strip.pane_cache.pop("__missing__", None)
         self.form.tab_strip.pane_cache.pop(self.form.pipeline_read("missing_tab_name"), None)
@@ -155,7 +156,7 @@ class MissingTabUI(_basePane):
         print(f"SWAPS: {swaps}")                   # NEW
         print(f"FIRST LINE: {lines[0]!r}")
         print(f"WRITING TO: {file_path}")          # NEW
-
+        # We should decompose this section out to a discrete method
         out = []
         for line in lines:
             for old, new in swaps.items():
@@ -163,3 +164,18 @@ class MissingTabUI(_basePane):
                     line = line.replace(old, new)
             out.append(line)
         Path(file_path).write_text("".join(out), encoding="utf-8")
+
+        self.append_extra_stubs(file_path, methods, 3)
+
+
+    def append_extra_stubs(self, file_path, methods, covered):
+        extras = methods[covered:]
+        if not extras:
+            return
+        lines = []
+        for m in extras:
+            lines.append(f"\n    def {m}(self, parent):")
+            lines.append(f"        Body(parent, 'Method: {m}')")
+            lines.append(f"        Body(parent, 'Add content here!')")
+        with open(file_path, "a", encoding="utf-8") as f:
+            f.write("\n" + "\n".join(lines) + "\n")
