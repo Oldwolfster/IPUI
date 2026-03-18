@@ -191,6 +191,13 @@ Clean up list
 193) DONE: general_text.py — Added EMOJI_PATTERN, strip_emojis(), and strip_for_md_toc() as shared utilities.
 194) DONE: Slug matching system — TOC display titles and ## headings matched via GitHub-style slug generation. Handles emoji stripping, backtick stripping, and leading dash edge case.
 195) DONE: Deprecated MarkdownView
+198) DONE: copy buttons on debugger tree.
+199) DONE:  change debugger tree to use display_name
+200) DONE:  fix nl bug on debugger tree.
+201) DONE: add multiplatform support for copy.
+202) DONE: Consolidated tree columns (Flex, Min, Pos, Size instead of separate fx/fh/minX/minY/rX/rY/rW/rH)
+203) DONE: Killed reg_name and clean_widget_tree from Tree.py
+
 ######################################################################
 
 
@@ -230,7 +237,6 @@ Clean up list
 189) MD viewer shuold render table.
 196) create table widget.
 197) Scrollbar should not honor the token to the right.(leaves a gap)
-
 
 
 

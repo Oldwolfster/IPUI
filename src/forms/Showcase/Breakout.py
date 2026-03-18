@@ -1,6 +1,8 @@
 # Breakout.py  Update: merged greet, HUD in canvas, CodeBox on right
 
 import pygame
+
+from ipui import Spacer
 from ipui.Style import Style
 from ipui.engine._BasePane import _basePane
 from ipui.widgets.Row import Row
@@ -29,45 +31,13 @@ class Breakout(_basePane):
         self.score      = 0
         self.lives      = 3
 
-    # ══════════════════════════════════════════════════════════════
-    # PANE BUILDERS
-    # ══════════════════════════════════════════════════════════════
-
-    def greet(self, parent):
-        Banner(parent, "BREAKOUT", glow=True)
-        Body(parent, "A None pane in TAB_LAYOUT creates a "
-                     "transparent canvas for pygame drawing.")
-        card = Card(parent)
-        Heading(card, "Please insert a quarter", glow=True)
-        Body(card, "OR press Q")
-        Button(card, "Insert Quarter",
-               color_bg=Style.COLOR_PAL_GREEN_DARK,
-               on_click=self.start_game)
-        card = Card(parent)
-        Heading(card, "Think You Can Build This?", glow=True)
-        Body(card, "A real Breakout game. Right here. Right now.\n"
-                  "5 minutes if you're fast.\n"
-                  "20 minutes if you just learned what a keyboard is.\n"
-                  "Either way, you'll be smashing bricks before lunch.")
-        card = Card(parent)
-        Heading(card, "The Game")
-        Body(card, "1. A paddle that follows your mouse\n"
-                  "2. A ball that bounces off everything\n"
-                  "3. Colorful bricks waiting to be smashed\n"
-                  "4. Score goes up when bricks explode\n"
-                  "5. Miss the ball? Three strikes you're out.")
-        card = Card(parent)
-        Heading(card, "What You Get For Free")
-        Body(card, "6. A big empty space to draw in\n"
-                  "7. A thinking loop for physics\n"
-                  "8. A drawing loop for painting\n"
-                  "9. Score as IPUI widgets in the canvas\n"
-                  "10. All coordinates normalized 0-1")
 
     def game_hud(self, parent):
         """Score and lives as real IPUI widgets floating over the game."""
-        Title(parent, "Score: 0", name="lbl_score", glow=True)
-        Body(parent, "Lives: 3", name="lbl_lives")
+        row=Row(parent)
+        Title(row, "Score: 0", name="lbl_score", glow=True)
+        Spacer(row )
+        Body(row, "Lives: 3", name="lbl_lives")
 
     def code(self, parent):
         Title(parent, "The Source", glow=True)
@@ -75,7 +45,7 @@ class Breakout(_basePane):
         card = Card(parent, scrollable=True, height_flex=99)
         CodeBox(card,
             data  = __file__,
-            start = "# ══ LIFECYCLE",
+            start = "class Breakout",
             end   = "# ══ PANE BUILDERS",)
 
     # ══════════════════════════════════════════════════════════════
@@ -159,9 +129,7 @@ class Breakout(_basePane):
     def ip_renderpost(self, ip):
         pass
 
-    # ══════════════════════════════════════════════════════════════
-    # PANE BUILDERS — (CodeBox reads up to here)
-    # ══════════════════════════════════════════════════════════════
+
 
     # ══════════════════════════════════════════════════════════════
     # PHYSICS
@@ -255,3 +223,32 @@ class Breakout(_basePane):
         pos = ip.to_screen(self.ball_x, self.ball_y)
         r   = ip.scale_y(self.ball_r)
         pygame.draw.circle(ip.surface, (255, 255, 255), pos, r)
+
+
+    # ══════════════════════════════════════════════════════════════
+    # PANE BUILDERS
+    # ══════════════════════════════════════════════════════════════
+
+    def greet(self, parent):
+        Banner(parent, "BREAKOUT", glow=True)
+        Body(parent, "A None pane in TAB_LAYOUT creates a "
+                     "transparent canvas for pygame drawing.")
+        card = Card(parent)
+        Heading(card, "Please insert a quarter", glow=True)
+        Body(card, "OR press Q")
+        Button(card, "Insert Quarter",
+               color_bg=Style.COLOR_PAL_GREEN_DARK,
+               on_click=self.start_game)
+        card = Card(parent)
+        Heading(card, "You Can Build This!", glow=True)
+        Body(card, "A real Breakout game. Right here. Right now.\n"
+                  "10 minutes if you're fast.\n"
+                  "60 minutes if you just learned what a keyboard is.\n"
+                  "Either way, you'll be smashing bricks before lunch.")
+        card = Card(parent)
+        Heading(card, "What You Get For Free")
+        Body(card, "A big empty space to draw in\n"
+                  "7. A thinking loop for physics\n"
+                  "8. A drawing loop for painting\n"
+                  "9. Score as IPUI widgets in the canvas\n"
+                  "10. All coordinates normalized 0-1")

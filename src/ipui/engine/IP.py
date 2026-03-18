@@ -126,8 +126,9 @@ class IP:
             self.rect_tab_area = None
         self.rect_pane         = self.find_canvas_rect()
 
+
     def find_canvas_rect(self):
-        """Locate the None pane's rect for the active tab.
+        """Locate the combined rect of all None panes for the active tab.
         Falls back to rect_tab_area if no None pane exists."""
         if not self.form or not hasattr(self.form, 'tab_strip'):
             return None
@@ -135,13 +136,16 @@ class IP:
         if not strip or not strip.active_tab:
             return None
         entries = strip.tab_layout.get(strip.active_tab, [])
+        result = None
         for i, entry in enumerate(entries):
             if entry[0] is None and i < len(strip.panes):
                 pane = strip.panes[i]
                 if pane and pane.rect:
-                    return pane.rect
-        return self.rect_tab_area
-
+                    if result is None:
+                        result = pygame.Rect(pane.rect)
+                    else:
+                        result.union_ip(pane.rect)
+        return result or self.rect_tab_area
     # ══════════════════════════════════════════════════════════════
     # GEOMETRY — coordinate transforms
     # ══════════════════════════════════════════════════════════════

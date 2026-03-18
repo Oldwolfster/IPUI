@@ -4,27 +4,32 @@ import random
 
 class Particles(_basePane):
 
+
     def _ensure_defaults(self):
         ids = self.form.pipeline_read("pl.particle_ids")
         if ids:
             return
 
-        self.form.pipeline_set("pl.particle_ids", ["A", "B"])
+        types = [
+            ("A", "A", 255, 80,  40,  50),
+            ("B", "B", 40,  170, 255, 50),
+            ("C", "C", 50,  220, 80,  50),
+            ("D", "D", 220, 60,  220, 50),
+        ]
 
-        # A defaults
-        self.form.pipeline_set("pl.p.A.name" , "A")
-        self.form.pipeline_set("pl.p.A.r"    , 255)
-        self.form.pipeline_set("pl.p.A.g"    , 120)
-        self.form.pipeline_set("pl.p.A.b"    , 0)
-        self.form.pipeline_set("pl.p.A.count", 250)
+        ids = [t[0] for t in types]
+        self.form.pipeline_set("pl.particle_ids", ids)
 
-        # B defaults
-        self.form.pipeline_set("pl.p.B.name" , "B")
-        self.form.pipeline_set("pl.p.B.r"    , 0)
-        self.form.pipeline_set("pl.p.B.g"    , 170)
-        self.form.pipeline_set("pl.p.B.b"    , 255)
-        self.form.pipeline_set("pl.p.B.count", 250)
+        for pid, name, r, g, b, count in types:
+            self.form.pipeline_set(f"pl.p.{pid}.name",  name)
+            self.form.pipeline_set(f"pl.p.{pid}.r",     r)
+            self.form.pipeline_set(f"pl.p.{pid}.g",     g)
+            self.form.pipeline_set(f"pl.p.{pid}.b",     b)
+            self.form.pipeline_set(f"pl.p.{pid}.count", count)
 
+        for a in ids:
+            for b in ids:
+                self.form.pipeline_set(f"pl.G.{a}.{b}", round(random.uniform(-1.0, 1.0), 2))
 
     def _next_id(self, ids):
         # Simple: A, B, C... (good enough for v0.1)

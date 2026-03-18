@@ -87,9 +87,9 @@ class FormHelloWorld(BaseForm):
                 }                                       # These files don't need import.
                                                         # IPUI searches same folder as FormHelloWorld.py 
                                                         # and all descendant folders automatically) 
-# --- Hello.py
+# --- HelloWorld.py
 from ipui import *
-class Hello(_basePane):
+class HelloWorld(_basePane):                            
     def world(self, parent):                            # Semantic widgets with automatic layout
         Banner(parent, "IPUI", glow=True)       
         Body  (parent, "Because we've all spent 3 hours debugging a button.")

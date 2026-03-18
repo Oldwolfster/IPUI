@@ -1,5 +1,3 @@
-
-
 import math
 import random
 import pygame
@@ -30,6 +28,7 @@ class ParticleLife(_basePane):
         self.lbl_status            = None
         self.lbl_types             = None
 
+
         self.grid_cell_size        = 50
         self.grid_cols             = 1
         self.grid_rows             = 1
@@ -39,6 +38,7 @@ class ParticleLife(_basePane):
 
         self._ensure_sim_defaults()
         self._refresh_sim_config(respawn=True)
+        self.private_needs_respawn = True
 
     # ==========================================================
     # Build
@@ -68,6 +68,9 @@ class ParticleLife(_basePane):
     def ip_think(self, ctx):
         self._ensure_sim_defaults()
         self.world_rect = self._compute_world_rect(ctx)
+        if self.private_needs_respawn:
+            self.private_needs_respawn = False
+            self._respawn_from_config()
         self._ensure_force_lut()
         self._update_grid_geometry()
 
@@ -283,6 +286,28 @@ class ParticleLife(_basePane):
         self._set_default("pl.sim.collision_strength", 2.0)
         self._set_default("pl.sim.trail_alpha", 36)
 
+    def seed_particle_types(self):
+        ids = self.form.pipeline_read("pl.particle_ids")
+        if ids:
+            return
+        types = [
+            ("A", "A", 255, 80,  40,  50),
+            ("B", "B", 40,  170, 255, 50),
+            ("C", "C", 50,  220, 80,  50),
+            ("D", "D", 220, 60,  220, 50),
+        ]
+        ids = [t[0] for t in types]
+        self.form.pipeline_set("pl.particle_ids", ids)
+        for pid, name, r, g, b, count in types:
+            self.form.pipeline_set(f"pl.p.{pid}.name",  name)
+            self.form.pipeline_set(f"pl.p.{pid}.r",     r)
+            self.form.pipeline_set(f"pl.p.{pid}.g",     g)
+            self.form.pipeline_set(f"pl.p.{pid}.b",     b)
+            self.form.pipeline_set(f"pl.p.{pid}.count", count)
+        for a in ids:
+            for b in ids:
+                self.form.pipeline_set(f"pl.G.{a}.{b}", round(random.uniform(-1.0, 1.0), 2))
+
     def _refresh_sim_config(self, respawn=False):
         changed = False
 
@@ -412,17 +437,9 @@ class ParticleLife(_basePane):
         self.status_frame_mod += 1
 
     def _compute_world_rect(self, ctx):
-        surf_w, surf_h = ctx.surface.get_size()
-
-        left   = 320
-        top    = 118
-        right  = 24
-        bottom = 24
-
-        width  = max(220, surf_w - left - right)
-        height = max(180, surf_h - top - bottom)
-
-        return pygame.Rect(left, top, width, height)
+        if ctx.rect_pane:
+            return ctx.rect_pane
+        return pygame.Rect(320, 120, 800, 560)
 
     def _wrapped_delta(self, ax, ay, bx, by, world_w, world_h):
         dx = bx - ax
