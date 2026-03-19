@@ -1,5 +1,7 @@
 from ipui.Style import Style
 from ipui.engine._BaseWidget import _BaseWidget
+from ipui.utils.EZ import EZ
+
 
 class Label(_BaseWidget):
     """
@@ -10,7 +12,7 @@ class Label(_BaseWidget):
     api:         set_text(text)
     """
     def build(self):
-
+        EZ.warn_scroll  ( self)
         self.font       = self.font or Style.FONT_BODY
         self.color_txt  = Style.COLOR_MOLTEN if self.glow else Style.COLOR_TEXT
         self.pad        = 0

@@ -69,49 +69,41 @@ pip install ipui
 
 Tabs, banner, label, and a button with a modal message — 11 lines of code:
 
-
-
-
-
-
-
 ```python
-# --- FormHelloWorld.py                          ( Define your tab structure (Tab Name -> [Pane Methods]))
-from ipui import *                               # <======This is the only import you need for framework.
-class FormHelloWorld(BaseForm):
+# --- FormQuickStart.py                # Define your tab structure - Tab Name -> [Pane Methods]
+from ipui import *                     # <======This is the only import you need for framework files.
 
-    TAB_LAYOUT ={ # If key has a space, python objects can either skip or underscore(HelloWorld or Hello_World)
-                  "Hello World": ["world"],            # Dictionary Key is tab name.  Values are panes. 
-                  "Tab2" :       ["pane1", "pane2"],    # Ipui scaffolds a file matching tab name Hello.py
-                  "Tab3" :       ["pane1", "pane2"],    # Ipui scaffolds a method for each pane. (run and click a tab with no file)
-                }                                       # These files don't need import.
-                                                        # IPUI searches same folder as FormHelloWorld.py 
-                                                        # and all descendant folders automatically) 
-# --- HelloWorld.py
+class FormQuickStart(BaseForm):
+    TAB_LAYOUT = {                     # This dict sets up your tabs and panes
+        "Hello" : ["world"         ],  # Dictionary Key is tab name.  Values are panes.
+        "Tab2"  : ["pane1", "pane2"],  # Ipui scaffolds a file matching tab name Hello.py
+        "Tab3"  : ["pane3", "pane4"],  # (run and click a tab with no file)
+    }                                  # IPUI searches same folder as 'Form' file
+                                       # (and all descendant folders automatically)
+ 
+# --- Hello.py
 from ipui import *
-class HelloWorld(_basePane):                            
-    def world(self, parent):                            # Semantic widgets with automatic layout
-        Banner(parent, "IPUI", glow=True)       
+
+class Hello(_basePane):
+    def world(self, parent):           
+        Banner(parent, "IPUI", glow=True)
         Body  (parent, "Because we've all spent 3 hours debugging a button.")
-        
-        # Interactive modal with a 2-second timer
-        Button(parent, "Click Me", 
+        Button(parent, "Click Me",
                color_bg=Style.COLOR_PAL_GREEN_DARK,
-               on_click=lambda: self.form.show_modal("Hello World!", 2))
+               on_click=lambda: self.form.show_modal("Hello World!"))
 
 # --- Main.py 
-from forms.HelloWorld.FormHelloWorld import FormHelloWorld  # Import your form to main
+from forms.QuickStart.FormQuickStart import FormQuickStart
 from ipui import *
 
 if __name__ == "__main__":
-    
-    show(FormHelloWorld, "IPUI Documentation Guide")
+    show(FormQuickStart, "Optional Form Caption")
 ```
 
 No event loop setup. No manual sizing. No coordinate math. IPUI handles the Pygame lifecycle, layout, rendering, and event dispatch automatically.
 
 <!-- SCREENSHOT: ipui/assets/images/quick_start.png — the Hello World form with banner, body text, and green button -->
-
+![QuickStart Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/quick_start.png)
 ---
 
 ## Core Concepts
@@ -793,37 +785,37 @@ ipui.show(MyApp, "My Application")
 
 All widgets accept these parameters:
 
-| Parameter        | Type     | Default      | Description                                    |
-|-----------------|----------|--------------|------------------------------------------------|
-| `parent`        | widget   | —            | Parent widget (auto-attaches on construction)  |
-| `text`          | str      | None         | Display text                                   |
-| `name`          | str      | None         | Registers widget in `form.widgets`             |
-| `width_flex`    | int      | 0            | Flex weight horizontal (0 = natural size)      |
-| `height_flex`   | int      | 0            | Flex weight vertical (0 = natural size)        |
-| `pad`           | int      | TOKEN_PAD    | Internal padding                               |
-| `gap`           | int      | TOKEN_GAP    | Gap between children                           |
-| `border`        | int      | TOKEN_BORDER | Border thickness                               |
-| `justify_center`| bool     | False        | Center children in available space             |
-| `justify_spread`| bool     | False        | Spread children evenly                         |
-| `visible`       | bool     | True         | Show/hide widget                               |
-| `enabled`       | bool/str | True         | False or reason string to disable              |
-| `font`          | Font     | None         | Override font                                  |
-| `text_align`    | str      | `'l'`        | `'l'`, `'c'`, or `'r'`                        |
-| `color_bg`      | tuple    | None         | Background RGB tuple                           |
-| `glow`          | bool     | False        | Molten-orange glow effect                      |
-| `data`          | any      | None         | Arbitrary data payload                         |
-| `single_select` | bool     | False        | Enforce single selection (lists/dropdowns)     |
-| `placeholder`   | str      | None         | TextBox placeholder text                       |
-| `initial_value` | any      | None         | Starting value                                 |
-| `on_submit`     | callable | None         | Submit callback                                |
-| `on_change`     | callable | None         | Change callback                                |
-| `on_click`      | callable | None         | Click callback                                 |
-| `pipeline_key`  | str      | None         | Pipeline read/write key                        |
-| `tooltip_class` | class    | None         | Custom tooltip class                           |
-| `scrollable`    | bool     | False        | Enable scrolling for this container            |
-| `scroll_glow`   | float    | 0.369        | Scrollbar bevel intensity (0 = flat)           |
-| `start`         | str      | None         | CodeBox: start-of-range marker                 |
-| `end`           | str      | None         | CodeBox: end-of-range marker                   |
+| Parameter        | Type     | Default      | Description                                   |
+|-----------------|----------|--------------|-----------------------------------------------|
+| `parent`        | widget   | —            | Parent widget (auto-attaches on construction) |
+| `text`          | str      | None         | Display text                                  |
+| `name`          | str      | None         | Registers widget in `form.widgets`            |
+| `width_flex`    | int      | 0            | Flex weight horizontal (0 = natural size)     |
+| `height_flex`   | int      | 0            | Flex weight vertical (0 = natural size)       |
+| `pad`           | int      | TOKEN_PAD    | Internal padding                              |
+| `gap`           | int      | TOKEN_GAP    | Gap between children                          |
+| `border`        | int      | TOKEN_BORDER | Border thickness                              |
+| `justify_center`| bool     | False        | Center children in available space            |
+| `justify_spread`| bool     | False        | Spread children evenly                        |
+| `visible`       | bool     | True         | Show/hide widget                              |
+| `enabled`       | bool/str | True         | False or reason string to disable             |
+| `font`          | Font     | None         | Override font                                 |
+| `text_align`    | str      | LEFT         | LEFT, RIGHT, CENTER                           |
+| `color_bg`      | tuple    | None         | Background RGB tuple                          |
+| `glow`          | bool     | False        | Molten-orange glow effect                     |
+| `data`          | any      | None         | Arbitrary data payload                        |
+| `single_select` | bool     | False        | Enforce single selection (lists/dropdowns)    |
+| `placeholder`   | str      | None         | TextBox placeholder text                      |
+| `initial_value` | any      | None         | Starting value                                |
+| `on_submit`     | callable | None         | Submit callback                               |
+| `on_change`     | callable | None         | Change callback                               |
+| `on_click`      | callable | None         | Click callback                                |
+| `pipeline_key`  | str      | None         | Pipeline read/write key                       |
+| `tooltip_class` | class    | None         | Custom tooltip class                          |
+| `scrollable`    | bool     | False        | Enable scrolling for this container           |
+| `scroll_glow`   | float    | 0.369        | Scrollbar bevel intensity (0 = flat)          |
+| `start`         | str      | None         | CodeBox: start-of-range marker                |
+| `end`           | str      | None         | CodeBox: end-of-range marker                  |
 
 ### _BaseWidget Methods
 

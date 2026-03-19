@@ -1,16 +1,9 @@
 # paneHome.py  NEW FILE  (replaces frmHome.py)
 
 
-from ipui.Style import Style
-from ipui.docs.ProjectManager import ProjectManager
-from ipui.engine._BasePane import _basePane
-from ipui.widgets.Button import Button
-from ipui.widgets.ProjectListItem import ProjectListItem
-from ipui.widgets.Row import Row, CardCol
-from ipui.widgets.Spacer import Spacer
-from ipui.widgets.Label import Title, Heading, Body
-from ipui.widgets.TextBox import TextBox
 
+from forms.NeuroForge.custom_widgets.ProjectManager import ProjectManager
+from ipui import *
 
 class EZ_Pane(_basePane):
 
@@ -117,7 +110,7 @@ class EZ_Pane(_basePane):
             ProjectManager.set_active_project(path)
             self.form.active_project = ProjectManager.get_project_info(path)
 
-        self.form.show_modal("Loading Project...", do_load, min_seconds=0.1)
+        self.form.show_modal("Loading Project...", 0.1, do_load)
         btn = self.form.widgets["btnLaunch"]
         if btn:
             btn.set_enabled()

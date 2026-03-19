@@ -2,14 +2,7 @@
 
 import pygame
 
-from ipui import Spacer
-from ipui.Style import Style
-from ipui.engine._BasePane import _basePane
-from ipui.widgets.Row import Row
-from ipui.widgets.Label import Title, Body, Heading, Banner
-from ipui.widgets.Card import Card
-from ipui.widgets.Button import Button
-from ipui.widgets.CodeBox import CodeBox
+from ipui import *
 
 
 class Breakout(_basePane):
@@ -44,9 +37,9 @@ class Breakout(_basePane):
         Body(parent, "This pane reads its own file.")
         card = Card(parent, scrollable=True, height_flex=99)
         CodeBox(card,
-            data  = __file__,
-            start = "class Breakout",
-            end   = "# ══ PANE BUILDERS",)
+            data  = __file__,)
+            #start = "class Breakout",
+            #end   = "# ══ PANE BUILDERS",)
 
     # ══════════════════════════════════════════════════════════════
     # GAME CONTROLS

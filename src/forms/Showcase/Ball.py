@@ -1,13 +1,7 @@
 # PygameBall2.py  Update: ball bounces in None gap via ip_renderpre
 
 import pygame
-from ipui.Style import Style
-from ipui.engine._BasePane import _basePane
-from ipui.widgets.Row import Row
-from ipui.widgets.Label import Title, Body, Detail, Heading
-from ipui.widgets.CodeBox import CodeBox
-from ipui.widgets.Card import Card
-from ipui.widgets.Button import Button
+from ipui import *
 
 
 class PygameBall(_basePane):

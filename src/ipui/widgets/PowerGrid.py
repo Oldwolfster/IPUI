@@ -17,7 +17,6 @@ from ipui.widgets.RecordSelector import RecordSelector
 
 class GridHeader(_BaseWidget):
     def build(self):
-        self.my_name  = "GridHeader"
         self.pad      = 0
         self.border   = 0
 
@@ -33,7 +32,6 @@ class GridHeader(_BaseWidget):
 
 class GridBody(_BaseWidget):
     def build(self):
-        self.my_name  = "GridBody"
         self.pad      = 0
         self.border   = 0
 
@@ -86,7 +84,6 @@ class PowerGrid(_BaseWidget):
             print("[PowerGrid2] Note: height_flex forced to 1 — PowerGrid2 scrolls internally.")
         self.height_flex        = 1
         self.pad                = 0
-        self.my_name            = "DataGrid"
         self.font               = self.font or Style.FONT_BODY
         self.color_txt          = Style.COLOR_TEXT
         self.color_header       = Style.COLOR_TEXT_ACCENT

@@ -3,9 +3,30 @@ from ipui import *
 import random
 
 class Particles(_basePane):
+    PARTY_COLORS = [
+        (255,  80,  80),   # C  - Red
+        (  0, 230, 118),   # D  - Emerald
+        (255, 215,   0),   # E  - Gold
+        (138,  43, 226),   # F  - Violet
+        (  0, 206, 209),   # G  - Turquoise
+        (255, 105, 180),   # H  - Hot Pink
+        (124, 252,   0),   # I  - Lawn Green
+        (255, 140,   0),   # J  - Dark Orange
+        ( 30, 144, 255),   # K  - Dodger Blue
+        (220,  20,  60),   # L  - Crimson
+        (  0, 255, 255),   # M  - Cyan
+        (255,  20, 147),   # N  - Deep Pink
+        (173, 255,  47),   # O  - Green Yellow
+        (255,  99,  71),   # P  - Tomato
+        (  0, 191, 255),   # Q  - Deep Sky Blue
+        (250, 128, 114),   # R  - Salmon
+        (127, 255, 212),   # S  - Aquamarine
+        (218, 112, 214),   # T  - Orchid
+        (240, 230, 140),   # U  - Khaki
+        ( 64, 224, 208),   # V  - Turquoise 2
+    ]
 
-
-    def _ensure_defaults(self):
+    def _ensure_defaultsDELETEME(self):
         ids = self.form.pipeline_read("pl.particle_ids")
         if ids:
             return
@@ -45,15 +66,13 @@ class Particles(_basePane):
 
         # sensible defaults
         self.form.pipeline_set(f"pl.p.{pid}.name" , pid)
-        self.form.pipeline_set(f"pl.p.{pid}.r"    , 180)
-        self.form.pipeline_set(f"pl.p.{pid}.g"    , 180)
-        self.form.pipeline_set(f"pl.p.{pid}.b"    , 180)
-        self.form.pipeline_set(f"pl.p.{pid}.count", 200)
+        color_index = max(0, len(ids) - 1) % len(self.PARTY_COLORS)
+        r, g, b = self.PARTY_COLORS[color_index]
+        self.form.pipeline_set(f"pl.p.{pid}.r"    , r)
+        self.form.pipeline_set(f"pl.p.{pid}.g"    , g)
+        self.form.pipeline_set(f"pl.p.{pid}.b"    , b)
+        self.form.pipeline_set(f"pl.p.{pid}.count", 50)
 
-        # Rebuild THIS pane (pane index 0 inside "Particles" tab)
-        # self.form.set_pane(0, self.particles)   # particles defined in TAB_LAYOUT as a method (pane) of the tab
-        # Rebuild Matrix
-        # self.form.set_pane(1, self.matrix)      # matrix defined in TAB_LAYOUT as a method (pane) of the tab
 
         self.form.refresh_pane(0)
         self.form.refresh_pane(1)
@@ -67,10 +86,7 @@ class Particles(_basePane):
 
 
     def particles(self, parent):
-        self._ensure_defaults()
-
         root = Card(parent, scrollable=True)
-
         header = CardRow(root, width_flex=True, justify_spread=True)
         Heading(header, "Particles", glow=True)
         Button(header, "Add",

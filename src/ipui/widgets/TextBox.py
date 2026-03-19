@@ -8,7 +8,7 @@
 
 import time
 import pygame
-
+from ipui.utils.EZ import EZ
 from ipui.utils import MgrClipboard
 from ipui.widgets.Label import Label
 from ipui.Style import Style
@@ -28,6 +28,7 @@ class TextBox(Label):
     # ══════════════════════════════════════════════════════════════
 
     def build(self):
+        EZ.warn_scroll             ( self)
         self.font                  = self.font or Style.FONT_BODY
         self.wrap                  = False
         self.color_bg              = Style.COLOR_CARD_BG
@@ -46,6 +47,8 @@ class TextBox(Label):
         self.private_last_click    = 0
         self.rebuild_surface()
         self.sync_from_pipeline()
+
+
 
     # ══════════════════════════════════════════════════════════════
     # SURFACE — rebuild my_surface from current text or placeholder

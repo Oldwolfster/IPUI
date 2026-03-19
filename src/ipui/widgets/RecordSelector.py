@@ -17,7 +17,6 @@ class RecordSelector(_BaseWidget):
     """
 
     def build(self):
-        self.my_name      = "RecordSelector"
         self.horizontal   = True
         self.color_bg     = Style.COLOR_PANEL_BG
         self.current_page = 1

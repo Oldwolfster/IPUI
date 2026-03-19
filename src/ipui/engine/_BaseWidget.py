@@ -70,7 +70,7 @@ class _BaseWidget:
     def __init__(self, parent=None, text=None, name=None,
                  width_flex=0, height_flex=0,
                  pad=None, gap=None, border=None,justify_center=False, justify_spread=False, visible = True,
-                 enabled=True, start= None, end = None, font=None,
+                 enabled=True, start= None, end = None, font=None, fit_content=False, border_radius=None,
                  text_align='l', wrap=False, color_bg=None, glow=False, data=None, single_select=False,
                  placeholder=None, initial_value=None, on_submit=None, on_change=None, on_click=None,
                  pipeline_key=None, tooltip_class=None, scrollable=False, scroll_glow=.369, early_load =None):
@@ -102,11 +102,7 @@ class _BaseWidget:
         self.width_flex_actual  = width_flex #if there is not enough space to honr the width_flex it may be set to zero (renders at minimum(intrinsic) size)
         self.height_flex        = height_flex
         self.height_flex        = height_flex #if there is not enough space to honor the height_flex it may be set to zero (renders at minimum(intrinsic) size)
-        #self.width_flex         = int(width_flex)
-        #self.width_flex_actual  = int(width_flex) #if there is not enough space to honr the width_flex it may be set to zero (renders at minimum(intrinsic) size)
-        #self.height_flex        = int(height_flex)
-        #self.height_flex        = int(height_flex) #if there is not enough space to honor the height_flex it may be set to zero (renders at minimum(intrinsic) size)
-
+        self.fit_content        = fit_content
         self.horizontal         = False
         self.wrap               = wrap
         self.text_align         = text_align.lower()
@@ -121,6 +117,7 @@ class _BaseWidget:
         self.color_disabled     = None
         self.color_txt          = Style.COLOR_TEXT
         self.glow               = glow
+        self.border_radius      = border_radius
         self.single_select      = single_select
         self.visible            = visible
         self.do_not_allocate    = False
@@ -279,10 +276,12 @@ class _BaseWidget:
         for child in self.visible_children: child.draw(surface)
         surface.set_clip(old_clip)
 
-
-
     def draw_chrome(self, surface: pygame.Surface, r: pygame.Rect, color_bg: Optional[tuple]) -> None:
         """Draw background fill and bevel borders. Inverts bevel on press."""
+        radius = getattr(self, 'border_radius', 0)
+        if radius and color_bg and hasattr(self, 'border_top') and self.border_top:
+            self.draw_chrome_rounded(surface, r, color_bg, radius)
+            return
         if color_bg:
             pygame.draw.rect(surface, color_bg, r)
         if not hasattr(self, 'border_top') or not self.border_top: return
@@ -293,6 +292,19 @@ class _BaseWidget:
         pygame.draw.line(surface, left,   (r.left,      r.top),        (r.left,      r.bottom - 1), w)
         pygame.draw.line(surface, bottom, (r.left,      r.bottom - 1), (r.right - 1, r.bottom - 1), w)
         pygame.draw.line(surface, right,  (r.right - 1, r.top),        (r.right - 1, r.bottom - 1), w)
+
+    def draw_chrome_rounded(self, surface, r, color_bg, radius):
+        """Rounded bevel: light rect behind, dark rect offset, main rect on top."""
+        if self.is_pressed: light, dark = self.border_bottom, self.border_top
+        else:               light, dark = self.border_top,    self.border_bottom
+        # Light highlight peeks out top-left
+        pygame.draw.rect(surface, light, r, border_radius=radius)
+        # Dark shadow peeks out bottom-right
+        shadow = pygame.Rect(r.left + 2, r.top + 2, r.width - 2, r.height - 2)
+        pygame.draw.rect(surface, dark, shadow, border_radius=radius)
+        # Main fill covers the middle
+        inset = pygame.Rect(r.left + 1, r.top + 1, r.width - 2, r.height - 2)
+        pygame.draw.rect(surface, color_bg, inset, border_radius=radius)
 
     def draw_inboard_glow(self, surface: pygame.Surface) -> None:
         """Draw the bottom-edge glow indicator for active tabs."""
@@ -386,7 +398,7 @@ class _BaseWidget:
         """Register a validated click handler."""
         if not callable(callback):
             raise TypeError(
-                f"{self.my_name}.on_click_me expects a callable, "
+                f"{self.display_name}.on_click_me expects a callable, "
                 f"got {type(callback).__name__}"
             )
         import inspect
@@ -400,7 +412,7 @@ class _BaseWidget:
                           inspect.Parameter.VAR_KEYWORD)]
             if len(params) != 0:
                 raise ValueError(
-                    f"{self.my_name}.on_click_me: callback must accept "
+                    f"{self.display_name}.on_click_me: callback must accept "
                     f"0 parameters, got {len(params)}: "
                     f"{[p.name for p in params]}"
                 )

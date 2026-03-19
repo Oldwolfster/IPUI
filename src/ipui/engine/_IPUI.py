@@ -1,7 +1,7 @@
 # _IPUI.py  Update: ip service portal replaces ctx
 import pygame
 from ipui.Style import Style
-from ipui.engine.Log import Logger
+from forms.NeuroForge.custom_widgets.Logger import Logger
 from ipui.engine.IPUI import IPUI
 from ipui.engine.MgrFont import MgrFont
 from ipui.engine.MgrColor import MgrColor

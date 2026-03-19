@@ -111,3 +111,15 @@ class EZ:
 
         # 3. The 'Brace' period
         time.sleep(0.5)
+
+
+    @staticmethod
+    def warn_scroll(widget):
+        if widget.scrollable:
+            name = type(widget).__name__
+            EZ.err(
+                f"{name} doesn't support scrollable=True directly.\n"
+                f"Wrap it in a scrollable Card instead:\n"
+                f"  card = Card(parent, scrollable=True)\n"
+                f"  {name}(card, ...)"
+            )

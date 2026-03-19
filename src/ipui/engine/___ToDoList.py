@@ -108,8 +108,6 @@ Clean up list
 109)  DONE: Readme: The "Two Ways to Update" section has a TODO comment left in (TODO show third way) — breaks the polished feel
 110)  DONE: README:IPUI.show() vs IPUI(MyApp, "...") — the Quick Start uses one form, the "Launching Your App" section shows another. Which is canonical?
 111)  DONE: Cap Tabl Layout like Declaration updates.
-
-
 ######################################################################
 3/10
 ######################################################################
@@ -177,9 +175,9 @@ Clean up list
 175) DONE: 4th pane bug fixed — deleted the rogue Col in TabStrip's None branch that was giving Armory (and Breakout) an extra phantom pane
 176) DONE: Full Breakout game — arcade game running inside a None pane, all normalized coordinates, every method under 10 lines, playable and fun
 177) DONE: Tree debugger widget_type fix — self.widget_type → widget.widget_type
-178) DONE: display_name property — single source of truth on _BaseWidget for human-readable identity, kills my_name references everywhere
-179) DONE: gather_properties cleanup — my_name → widget_type + class + proper registry name
-180) DONE: ix — same my_name / type() drift issue
+178) DONE: display_name property — single source of truth on _BaseWidget for human-readable identity, kills display_name references everywhere
+179) DONE: gather_properties cleanup — display_name → widget_type + class + proper registry name
+180) DONE: ix — same display_name / type() drift issue
 181) DONE: draw_diagnostic_widget fix — uses display_name now
 182) DONE: TabButtons naming — "TabButtons Border" / "TabButtons Content" for debugger clarity
 183) DONE: Auto-refresh Tree — ip_think refreshes when active, no stale data
@@ -197,50 +195,71 @@ Clean up list
 201) DONE: add multiplatform support for copy.
 202) DONE: Consolidated tree columns (Flex, Min, Pos, Size instead of separate fx/fh/minX/minY/rX/rY/rW/rH)
 203) DONE: Killed reg_name and clean_widget_tree from Tree.py
-
+204) DONE: Added error to help scroll correct widget
+######################################################################
+3/18
+######################################################################
+207) DONE: Particle life - do a color list out to 20 colors.
+208) DONE: Particle life - build settings page
+209) DONE: Added PIPELINE_DEFAULTS as new constant on form.
+83) DONE: we need TemplateShowcase.py OR FIX Button to temporarily show other file.
+92) DONE: Fix readme in doc tools
+104) DONE: Detail widget not working with 2 standard imports.............
+218) DONE: Fix name in showcase tree
+170) DONE: Remove all the references to my_name
+101) DONE: Remember what 101 was...
+120) DONE: add  third pane to paradigm explaining it.
+224) DONE: Fixed button to not expand across all area
+225) DONE: Added content_fit param to base_widget
+226) DONE: Added rounded corners to buttons.
+165) DONE: screw our shitty text align... create string :(
 ######################################################################
 
 
-
+######################################################################
+Pending for V0.1
+######################################################################
 
 60) PART OF LAMBDA ELIMINATION: investigate swap_pane in forge and more generic alternatives uch as Button(header, "+New", on_click_args=(self.form.set_pane, 1, self.name_project))
 76) Set Pane, instead of requiring lambda, use kwargs for params aka instead of #self.form.set_pane(1, lambda p: self.show_detail(p, item))   - how does this play with on_click_me
-83) we need TemplateShowcase.py OR FIX Button to temporarily show other file.
-92) Fix readme in doc tools
-95) wid in widget overlay from tree is wrong - look at other example of tree where it is correct
-101) Remember what 101 was...
-103) add troubleshoot buttons on magic debugger tool.
-104  Detail widget not working with 2 standard imports.............
 
 106) on freebies replace developer tools.
-107) on tab map green indicator does not follow selected button
-
-
-
 155) Armory needs 3rd pane.
-120) add  third pane to paradigm explaining it.
-130) Error on Percy's story
+
+
 158) Tab Order
 159) 86 the friggen set_enable set_disable.
-
 161) debug tools must auto-refresh
-
-
 163) move double click detect to base wid
 164) If autoscaffold tab with space in name itmesses up file and class
-165 screw our shitty text align... create string :(
+
 167) SQL recordselector behaving off. compare it to tree
-170) Remove all the references to my_name
+
 186) Read me should mention debug tools
 187) Read me should mention f11 - rect shower
 188) MD viewer should respect bold tag.
 189) MD viewer shuold render table.
 196) create table widget.
 197) Scrollbar should not honor the token to the right.(leaves a gap)
+206) Show optimizers by default - with msg to hover long
+205) Ensure all forms are using 'from ipui import *'
+210) update initialize_pipeline follows hook name convention
+211) Add initialize_pipeline and PIPELINE_DEFAULTS to docs - note how pipeline_default runs relative to build
+212) Investigate base_form dispatch_ip_think  - does this mean if no tab will not work.
+213) In baseform, hwo do we fix the event handling fiasco
+214) Base Form has mark dirty.  i didn't think we were using - we shuold consider if not
+215) create tabs folder for particle life and showcase
+216) In widgets remove duplicate source
+217) in debug tools, magic tab should autorefresh
+219) in armory default to optimizers
+220) stress test on non-tab (ensure pane work - should be same as screen)
+221) should show_modal have wrapper on base_pane?
+222) not using Style properly... using colors instead of semantic role.
+223) in sql run query deletes the updated text.
 
 
-
-
+##########################################################
+##########################################################
 ##########################################################
 Punting until after IPUI is on PIP
 ##########################################################
@@ -262,14 +281,16 @@ Punting until after IPUI is on PIP
 85) in widget catalog name is redundnant.
 112) network diagram must let it's children propogate down.
 48) Colosseum has manual list of config cats
+107) on tab map green indicator does not follow selected button
+103) add troubleshoot buttons on magic debugger tool.
+
+
 ##########################################################
 Punting to phase 2 of NeuroForge
 ##########################################################
 
 10) add adam parameters to config options.  Do not show in middle panel
-
-
-
+130) Error on Percy's story
 
 APPENDIX A:  Lambda-Free Callbacks for _BaseWidget
 Every widget always passes form first, then whatever that widget naturally produces. No lambdas, no closures, no timing bugs. Form resolved at fire time from self.form.

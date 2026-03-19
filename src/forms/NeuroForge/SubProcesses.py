@@ -4,7 +4,7 @@ import json
 import multiprocessing
 import subprocess
 
-from ipui.docs.ProjectManager import ProjectManager
+from forms.NeuroForge.custom_widgets.ProjectManager import ProjectManager
 
 
 #TODO rename frm is confusing as other frm are all tabs.

@@ -147,7 +147,7 @@ class Style:
     # TOKENS - Spacing (multiplier-based)
     # ============================================================
     TOKEN_MULTIPLIER        = 2
-    TOKEN_PAD               = TOKEN_MULTIPLIER * 3  # space between a widget's edge and its content (inside the border)
+    TOKEN_PAD               = TOKEN_MULTIPLIER * 2  # space between a widget's edge and its content (inside the border)
     TOKEN_PAD_TIGHT         = TOKEN_MULTIPLIER * 1  # space between a widget's edge and its content (inside the border)
     TOKEN_GAP               = TOKEN_MULTIPLIER * 3  # space between sibling children (between widgets)
     TOKEN_GAP_TIGHT         = TOKEN_MULTIPLIER * 2  # space between sibling children (between widgets)

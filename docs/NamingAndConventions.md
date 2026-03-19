@@ -186,7 +186,6 @@ These names are imperfect but changing them now costs more than it's worth:
 
 | Name | Issue | Why Wait |
 |------|-------|----------|
-| `my_name` | Unusual `my_` prefix | Disambiguates from `name` (registry key). Touches every widget. |
 | `my_surface` | Unusual `my_` prefix | Same — deep refactor, low payoff. |
 | `do_not_allocate` | Negative boolean | Rarely user-facing. Rename risks subtle bugs. |
 | `on_click_me()` | "Temporary" name | Needs design discussion: merge into `on_click`? |

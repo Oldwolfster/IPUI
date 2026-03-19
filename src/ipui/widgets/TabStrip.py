@@ -69,20 +69,6 @@ class TabStrip(_BaseWidget):
         outer          = CardRow(self, pad=2)
         self.tab_row   = CardRow(outer, width_flex=True)
 
-    def build_content_area_DeleteMe(self):
-        max_panes = max(len(v) for v in self.tab_layout.values())
-        #outer = CardCol(self, width_flex=True, height_flex=True, pad=2)
-        outer = TabArea(self, width_flex=True, height_flex=True,pad=1)
-        self.content = outer.inner
-        self.panes = []
-        for _ in range(max_panes):
-            #pane = CardCol(self.content, width_flex=True, height_flex=True)
-
-            pane = Pane(self.content, width_flex=True, height_flex=True)
-
-            self.panes.append(pane)
-        self.rebuild_tab_buttons()
-
     def build_content_area(self):
         self.content = Row(self, width_flex=True, height_flex=True)
         self.panes   = []
@@ -91,7 +77,7 @@ class TabStrip(_BaseWidget):
     def rebuild_tab_buttons(self):
         self.tab_row.children.clear()
         for tab_name in self.data:
-            btn          = Button(self.tab_row, tab_name, color_bg=Style.COLOR_TAB_BG, width_flex=True)
+            btn          = Button(self.tab_row, tab_name, color_bg=Style.COLOR_TAB_BG, width_flex=True,border_radius=0)
             btn.on_click = lambda name=tab_name: self.switch_tab(name)
 
 

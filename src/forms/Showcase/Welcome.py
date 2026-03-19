@@ -1,9 +1,4 @@
-# templates/NewTab.py  NEW: Auto-generated tab template
-from ipui.Style import Style
-from ipui.engine._BasePane import _basePane
-from ipui.widgets.Button import Button
-from ipui.widgets.Row import Row, CardCol
-from ipui.widgets.Label import Title, Heading, Body
+from ipui import *
 
 
 class NewTab(_basePane):

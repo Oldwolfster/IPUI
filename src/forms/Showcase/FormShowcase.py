@@ -13,16 +13,14 @@ class FormShowcase(_BaseForm):
 
     TAB_LAYOUT = {
         "Welcome"       : ["welcome"        ,"select_project"   ,"metaphor"     ],
-            "DeleTemeTest"  : ["test1","test2","test3","test4","test45","test46",("test47",0),],
-
-        "FixScroll"     : ["pane1"          ,"pane2"            ,"pane3"        ],
-        "Your Choice"   : ["reactive"       ,"imperative"                       ],
-        "Breakout_clone": ["greet"          ,"game"             ,"scoreboard"   ],
-        "Breakout"      : ["greet"          , None              ,"code"   ],
-        "SQL"           : [("tables", .5)   ,("query", .7)      ,("results", 1) ],
-        "PygameBall2"   : [("overview",2)   ,(None, 3)          ,("code",2)     ],
-        "Designer"      : [("tab_map",1)    ,("preview" ,3)     ,("toolbox", 1) ],
         "Freebies"      : ["the_pitch"      ,"pipeline_demo"    ,"widgets_demo" ],
+        "Wiring"        : ["reactive"       ,"imperative"                       ],
+        "Ball"          : [("overview", 2)  , (None, 3)         , ("code", 2)   ],
+        "Breakout"      : ["greet"          , None              ,"code"         ],
+        "SQL"           : [("tables", .5)   ,("query", .7)      ,("results", 1) ],
+
+        "Designer"      : [("tab_map",1)    ,("preview" ,3)     ,("toolbox", 1) ],
+
         "Widgets"       : ["catalog_grid"   ,"detail"           ,"code"         ],
         "Tree"          : ["widget_tree"    ,"widget_detail"                    ],
 

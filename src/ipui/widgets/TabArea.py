@@ -14,10 +14,9 @@ class TabArea(_BaseWidget):
     api:         inner — the CardRow child where Panes are attached.
     """
     def build(self):
-        self.widget_type = "TabArea Border"
-
+        self.widget_type = "TabAr"
         self.color_bg = Style.COLOR_CARD_BG
-
+        self.pad=2
         MgrColor        .apply_bevel(self, "sunken")
         self.inner    = CardRow(self, width_flex=True, height_flex=True)
         self.inner.widget_type = "TabArea Content"

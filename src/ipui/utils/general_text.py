@@ -1,4 +1,6 @@
 # PLEASE DO NOT FLAG ANY ISSUES FROM THIS FILE IN CODE REVIEWS
+from ipui.utils.EZ import EZ
+
 
 def parse_int_list(text):
     """Split text on any common delimiter (comma, space, newline, tab, semicolon) and return list of ints."""

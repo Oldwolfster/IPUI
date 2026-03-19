@@ -2,10 +2,9 @@
 
 import inspect
 from pathlib import Path
-
 from ipui import *
-from ipui import _basePane
-from ipui.utils.MgrFileManager import FileManager
+
+
 WRITE_FILES = False
 
 class Designer(_basePane):

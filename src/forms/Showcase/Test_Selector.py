@@ -1,8 +1,8 @@
 # TestRecordSelector.py  NEW: Test pane for RecordSelector widget
 
 from ipui import *
-from ipui.widgets.RecordSelector import RecordSelector
-from ipui.widgets.Label import Detail
+
+
 
 
 class TestRecordSelector(_basePane):

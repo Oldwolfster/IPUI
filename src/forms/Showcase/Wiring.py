@@ -1,7 +1,4 @@
-# Paradigm.py  NEW: Side-by-side reactive vs imperative showcase
-
 from ipui import *
-from ipui.widgets.CodeBox import CodeBox
 
 
 class YourChoice(_basePane):
@@ -40,12 +37,10 @@ class YourChoice(_basePane):
         Spacer  ( header)                       # spacer in middle will push title left and detail right.
                                                 # OR you could use align.  Either way works.
         Title    ( header, "Two Options", glow=True)
-        #Detail  ( header,"Not working? Hit F12 | Magic | Pipeline, Registry and DAG.")
 
     def react_column_left(self, two_cols):
         col_1    = Col(two_cols, width_flex=1)
         card     = Card(col_1)
-        #Heading  ( card, "The Derives Approach", glow=True)
         Body     ( card, "Declare relationships.")
         Body     ( card, "Pipeline handles the rest.")
         self    . reactive_name_game(col_1)
@@ -77,20 +72,19 @@ class YourChoice(_basePane):
             pipeline_key= "first",         #### DECLARATION_UPDATES has that covered.
             width_flex  = False)           ################################################
 
+        Spacer(row)
+
         TextBox(row,
             placeholder = "Last name",     ################################################
             pipeline_key= "last",          #### Reactive does not need 'on_change'.
             width_flex  = False)           #### DECLARATION_UPDATES has that covered.
-        #Spacer(card)                      ################################################
-
+                                           ################################################
 
         Button          ( card, "Clear",
             name        = "btn_react",
             color_bg    = Style.COLOR_PAL_GREEN_DARK,
             on_click    = self.reactive_clear,
-            enabled     = False,                    # CHeck is it necessary in react?
-            width_flex  = True                      # Fill the entire width
-              )
+            enabled     = False)
 
         Spacer          (card   , height_flex=.1)
         Body            (card   , YourChoice.DEFAULT_MESSAGE,
@@ -102,9 +96,9 @@ class YourChoice(_basePane):
         self.form.pipeline_set("last", "")  #### Set data and Declaration Updates does the trick.
                                             ############################################################
 
-    # No declares for imperative
     # ══════════════════════════════════════════════════════════════
     # IMPERATIVE — manual wiring
+    # No declares for imperative
     # ══════════════════════════════════════════════════════════════
     def imperative(self, parent):
         self     . imp_header(parent)           # call method to create imperative header row
@@ -113,7 +107,6 @@ class YourChoice(_basePane):
         #Spacer   ( two_cols, width_flex=.3)
         self     . imperative_right(two_cols)   #
         self     . imperative_code(parent)
-
 
     def imp_header(self, pane_root):           # you can name the 2nd param whatever helps you
         header  = Row(pane_root)               # create a row to put multiple widgets horizontally
@@ -151,6 +144,8 @@ class YourChoice(_basePane):
                                  on_change=self.imp_name_changed,
                                  width_flex=False)
 
+        Spacer(row)
+
         self.txt_last = TextBox(row,
                                 placeholder="Last name",
                                 on_change=self.imp_name_changed,
@@ -159,8 +154,7 @@ class YourChoice(_basePane):
         self.btn_clear = Button(card, "Clear",
                                 color_bg=Style.COLOR_PAL_GREEN_DARK,
                                 on_click=self.imp_clear,
-                                enabled=False,
-                                width_flex=True)
+                                enabled=False)
 
         Spacer(card, height_flex=.1)
 

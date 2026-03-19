@@ -210,7 +210,7 @@ class LayoutEngine:
         inner  = rect.inflate(-frame, -frame)
         if w.scrollable:
             inner = LayoutEngine.apply_scroll(w, inner)
-            print(f"LAYOUT SCROLLABLE: {w.my_name:20} type={type(w).__name__:15} has_children={bool(w.children)}")
+            print(f"LAYOUT SCROLLABLE: {w.display_name:20} type={type(w).__name__:15} has_children={bool(w.children)}")
         LayoutEngine.layout_children(w, inner)
 
     @staticmethod
@@ -222,10 +222,10 @@ class LayoutEngine:
         content = LayoutEngine.compute_content_size(w)
         main_size = inner.width if w.horizontal else inner.height
         # LayoutEngine.py method: apply_scroll  Update: Show class type too
-        print(          f"SCROLL DEBUG: {w.my_name:20} type={type(w).__name__:15} content={content:5} viewport={main_size:5} kids={len(LayoutEngine.visible_kids(w))} scrollable={w.scrollable}")
-        #print(            f"SCROLL DEBUG: {w.my_name:20} content={content:5} viewport={main_size:5} kids={len(LayoutEngine.visible_kids(w))}")
+        print(          f"SCROLL DEBUG: {w.display_name:20} type={type(w).__name__:15} content={content:5} viewport={main_size:5} kids={len(LayoutEngine.visible_kids(w))} scrollable={w.scrollable}")
+        #print(            f"SCROLL DEBUG: {w.display_name:20} content={content:5} viewport={main_size:5} kids={len(LayoutEngine.visible_kids(w))}")
         #for c in LayoutEngine.visible_kids(w):
-            #print(                f"  child: {getattr(c, 'my_name', '?'):20} text={getattr(c, 'text', '')!r:20} fh={c.height_flex} measure={LayoutEngine.measure(c)}")
+            #print(                f"  child: {getattr(c, 'display_name', '?'):20} text={getattr(c, 'text', '')!r:20} fh={c.height_flex} measure={LayoutEngine.measure(c)}")
 
         w.scroll_active = content > main_size
         if w.scroll_active:

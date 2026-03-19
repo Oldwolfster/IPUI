@@ -1,17 +1,7 @@
 import math
 import random
 import pygame
-import ipui
 from ipui import *
-
-
-# NOTE:
-# Save this in the pane file your TAB_LAYOUT resolver expects for:
-#     "Particle Life" : ["particle_life"]
-#
-# I used class ParticleLife because Python class names cannot contain spaces.
-# If your resolver normalizes tab names differently, adjust the filename/class
-# name to match your framework's lookup convention.
 
 
 class ParticleLife(_basePane):
@@ -36,7 +26,7 @@ class ParticleLife(_basePane):
         self.force_lut_resolution  = 2
         self.force_lut_signature   = None
 
-        self._ensure_sim_defaults()
+
         self._refresh_sim_config(respawn=True)
         self.private_needs_respawn = True
 
@@ -66,7 +56,7 @@ class ParticleLife(_basePane):
     # Lifecycle hooks
     # ==========================================================
     def ip_think(self, ctx):
-        self._ensure_sim_defaults()
+
         self.world_rect = self._compute_world_rect(ctx)
         if self.private_needs_respawn:
             self.private_needs_respawn = False
@@ -275,17 +265,6 @@ class ParticleLife(_basePane):
     # ==========================================================
     # Config / cache
     # ==========================================================
-    def _ensure_sim_defaults(self):
-        self._set_default("pl.sim.paused", False)
-        self._set_default("pl.sim.r_min", 10.0)
-        self._set_default("pl.sim.r_mid", 40.0)
-        self._set_default("pl.sim.r_max", 90.0)
-        self._set_default("pl.sim.damping", 0.05)
-        self._set_default("pl.sim.v_max", 180.0)
-        self._set_default("pl.sim.force_scale", 120.0)
-        self._set_default("pl.sim.collision_strength", 2.0)
-        self._set_default("pl.sim.trail_alpha", 36)
-
     def seed_particle_types(self):
         ids = self.form.pipeline_read("pl.particle_ids")
         if ids:

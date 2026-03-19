@@ -78,6 +78,10 @@ class _basePane:
             self.form.set_pane(index, builder)
         return do_swap
 
+    def squish_extras(self, keep_count):
+        for pane in self.form.tab_strip.panes[keep_count:]:
+            pane.visible = False
+
     # ══════════════════════════════════════════════════════════════
     # LIFECYCLE HOOKS — override in your pane
     # ══════════════════════════════════════════════════════════════
@@ -95,6 +99,3 @@ class _basePane:
         pass
 
 
-    def squish_extras(self, keep_count):
-        for pane in self.form.tab_strip.panes[keep_count:]:
-            pane.visible = False

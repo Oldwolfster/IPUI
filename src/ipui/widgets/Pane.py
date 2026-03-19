@@ -13,6 +13,5 @@ class Pane(_BaseWidget):
     api:         (layout only — no custom methods)
     """
     def build(self):
-        self.my_name    = "Pane"
         self.color_bg   = Style.COLOR_CARD_BG
         MgrColor        . apply_bevel(self, "sunken")

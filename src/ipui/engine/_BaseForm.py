@@ -30,11 +30,13 @@ class _BaseForm(_BaseWidget):
 
     def __init__(self, title=None):
         self.title          = title
-        self.widgets       = WidgetsDict()
+        self.widgets        = WidgetsDict()
         self.widget_registry= {}
         self.pipeline       = Pipeline(self.widgets, self.widget_registry)
         self.pipeline.debug = getattr(self.__class__, 'pipeline_debug', False)
         self.form           = self
+        self                . seed_pipeline_defaults()
+        self                . initialize_pipeline()
         self.modal_msg      = None
         self.tab_strip      = None
         self.pinned_tooltip = None
@@ -44,11 +46,12 @@ class _BaseForm(_BaseWidget):
         self.MEASUREDRAWLAY = MeasureAndWrap(self)
 
 
-    def compute_root_rectHopefullyIamDeprecated(self):
-        screen_rect         = pygame.display.get_surface().get_rect()
-        margin              = Style.TOKEN_GAP
-        return screen_rect  . inflate(-margin * 2, -margin * 2)
-
+    def seed_pipeline_defaults(self):
+        defaults = getattr(self.__class__, 'PIPELINE_DEFAULTS', None)
+        if not defaults:
+            return
+        for key, value in defaults.items():
+            self.pipeline.set(key, value)
 
     def render(self, surface):
         if 1==1 or self.dirty :
@@ -108,7 +111,8 @@ class _BaseForm(_BaseWidget):
     # ══════════════════════════════════════════════════════════════
     # LIFECYCLE HOOKS
     # ══════════════════════════════════════════════════════════════
-
+    def initialize_pipeline(self):
+        pass
     def ip_think(self, ip):
         self.dispatch_ip_think(ip)
 
@@ -234,7 +238,7 @@ class _BaseForm(_BaseWidget):
     # Modal handling
     # ============================================================
 
-    def show_modal(self, msg, work_func=None, min_seconds=0):
+    def show_modal(self, msg, min_seconds=2, work_func=None):
         import time
         self.modal_msg = msg
         self.force_render_modal()
@@ -292,7 +296,7 @@ class _BaseForm(_BaseWidget):
             inner = r.inflate(-inset * 2, -inset * 2)
             pygame.draw.rect(surface, (color[0]//2, color[1]//2, color[2]//2), inner, 1)
         font = Style.FONT_DETAIL or pygame.font.SysFont("monospace", 11)
-        label = font.render(widget.my_name, True, color)
+        label = font.render(widget.display_name, True, color)
         surface.blit(label, (r.left + 2, r.top + 1))
         size_text = f"{r.width}x{r.height}"
         size_surf = font.render(size_text, True, color)

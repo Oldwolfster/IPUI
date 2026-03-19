@@ -191,7 +191,7 @@ class MeasureAndLayout:
         content   = getattr(node, 'content_size', node.height_minimum)
         getattr(node, 'content_size', node.height_minimum)
         main_size = inner.width if node.horizontal else inner.height
-        #print(f"SCROLL: {node.my_name} content={content} main_size={main_size} kids={len(node.visible_children)}")    # NEW
+        #print(f"SCROLL: {node.display_name} content={content} main_size={main_size} kids={len(node.visible_children)}")    # NEW
         node.scroll_active = content > main_size
         if not node.scroll_active:
             node.scroll_offset = 0
@@ -287,7 +287,7 @@ class MeasureAndLayout:
         for i, child in enumerate(kids):
             if i > 0:
                 pos += node.gap + extra
-            rect = self.build_child_rect(horiz, inner, pos, sizes[i])
+            rect = self.build_child_rect(horiz, inner, pos, sizes[i],child)
             self.layout_node(child, rect)
             pos += sizes[i]
 
@@ -306,12 +306,16 @@ class MeasureAndLayout:
             return (leftover / 2, 0)
         return (0, 0)
 
-    def build_child_rect(self, horiz, inner, pos, size):
+    def build_child_rect(self, horiz, inner, pos, size, child=None):
         """Build a pygame.Rect for one child."""
         if horiz:
             return pygame.Rect(int(pos), inner.top, int(size), inner.height)
-        return pygame.Rect(inner.left, int(pos), inner.width, int(size))
-
+        w = inner.width
+        x = inner.left
+        if child and getattr(child, 'fit_content', False) and child.width_flex == 0:
+            w = min(w, child.width_minimum)
+            x = inner.left + (inner.width - w) // 2
+        return pygame.Rect(x, int(pos), w, int(size))
     # ══════════════════════════════════════════════════════════════
     # DEBUG
     # ══════════════════════════════════════════════════════════════
@@ -321,7 +325,7 @@ class MeasureAndLayout:
         if node is None:
             node = self.trunk
         indent = "  " * depth
-        name   = node.name or node.my_name
+        name   = node.name or node.display_name
         rect   = node.rect if node.rect else 'None'
         width_minimum  = getattr(node, 'width_minimum', '?')
         height_minimum  = getattr(node, 'height_minimum', '?')

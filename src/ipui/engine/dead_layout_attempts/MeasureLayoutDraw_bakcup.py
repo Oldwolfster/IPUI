@@ -92,7 +92,7 @@ class MeasureAndLayout:
 
     def dump_tree(self, w, depth=0):
         indent = "  " * depth
-        name = getattr(w, 'name', None) or getattr(w, 'my_name', '?')
+        name = getattr(w, 'name', None) or getattr(w, 'display_name', '?')
         text = getattr(w, 'text', '') or ''
         rect = w.rect if w.rect else 'None'
         print(f"depth={depth}\twidth_minimum={w.width_minimum} {indent}{type(w).__name__:15} name={name:20} text={text!r:20} rect={rect}")

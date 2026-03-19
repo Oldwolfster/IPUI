@@ -3,20 +3,8 @@
 import multiprocessing
 import time
 
-import pygame
-
-
-from ipui.Style              import Style
-from ipui.docs.ProjectManager import ProjectManager
-from ipui.engine._BasePane import _basePane
-from ipui.utils.general_text import smart_format
-from ipui.widgets.Button     import Button
-from ipui.widgets.ChartWidget import ChartWidget
-from ipui.widgets.PowerGrid  import PowerGrid
-from ipui.widgets.Row        import Row, CardCol
-from ipui.widgets.Spacer     import Spacer
-from ipui.widgets.Label       import Title, Heading, Body
-from ipui.widgets.TextBox    import TextBox
+from forms.NeuroForge.custom_widgets.ProjectManager import ProjectManager
+from ipui import *
 
 
 NUM_CORES = multiprocessing.cpu_count() - 1

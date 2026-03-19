@@ -1,7 +1,4 @@
-# Tree.py  NEW: Live widget tree inspector
-
 from ipui import *
-
 
 class Tree(_basePane):
 
@@ -46,8 +43,7 @@ class Tree(_basePane):
     def walk(self, widget, depth, rows):
         indent      = "  " * depth + self.node_icon(widget)
         wtype       = widget.widget_type
-        reg_name    = self.registry_name(widget)
-        label       = reg_name or str(widget.text or "")[:30]
+        label       = widget.display_name
         kids        = len(widget.children)
         rect        = widget.rect
         size        = f"{rect.width}x{rect.height}" if rect else "—"
@@ -60,7 +56,7 @@ class Tree(_basePane):
     def walk(self, widget, depth, rows):
         indent      = "  " * depth + self.node_icon(widget)
         wtype       = widget.widget_type
-        reg_name    = self.registry_name(widget)
+        reg_name    = widget.display_name
         label       = reg_name or str(widget.text or "")[:30]
         kids        = len(widget.children)
         rect        = widget.rect
@@ -69,11 +65,7 @@ class Tree(_basePane):
         for child in widget.children:
             self.walk(child, depth + 1, rows)
 
-    def registry_name(self, widget):
-        for key, val in self.form.widgets.items():
-            if val is widget:
-                return key
-        return ""
+
     def node_icon(self, widget):
         if widget.children:
             return "▼ "
@@ -101,7 +93,7 @@ class Tree(_basePane):
         rect = widget.rect
         props = [
             ["type",        type(widget).__name__],
-            ["name",        self.registry_name(widget)],
+            ["name",        str(widget.display_name)],
             ["text",        str(widget.text or '—')[:40],],
             ["visible",     str(widget.visible)],
             ["enabled",     str(widget.enabled)],
@@ -123,7 +115,7 @@ class Tree(_basePane):
 
     def gather_derives(self, widget):
         derives = []
-        reg_name = self.registry_name(widget)
+        reg_name = widget.display_name
         if not reg_name:
             return derives
         entry = self.form.pipeline.derives.get(reg_name)

@@ -10,7 +10,7 @@ class NeuronCell(_BaseWidget):
     CELL_SIZE = 24
 
     def build(self):
-        self.my_name     = "NeuronCell"
+        self.widget_type = "NeuronCell"
         self.color_bg    = Style.COLOR_CARD_BG
         self.highlighted = False
         self.pad         = 0

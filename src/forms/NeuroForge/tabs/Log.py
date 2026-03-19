@@ -1,12 +1,5 @@
-# Log.py  NEW FILE  (replaces frmLog.py — _basePane migration)
-
-from ipui.engine.Log      import Logger
-from ipui.engine.MgrColor  import MgrColor
-from ipui.engine._BasePane import _basePane
-from ipui.widgets.Button   import Button
-from ipui.widgets.Row      import Row, CardCol
-from ipui.widgets.Label     import Title, Body
-from ipui.widgets.TextBox  import TextBox
+from ipui import *
+from forms.NeuroForge.custom_widgets.Logger import Logger
 
 
 class EZ_Pane(_basePane):

@@ -1,15 +1,9 @@
 # Armory.py  NEW FILE  (replaces frmMatch.py — _basePane migration)
 from ipui.popups.TooltipArena import TooltipArena
 from ipui.popups.TooltipGladiator import TooltipGladiator
-from ipui.Style                   import Style
-from ipui.engine._BasePane      import _basePane
-from ipui.utils.general_text      import parse_int_list
-from ipui.widgets.Button          import Button
-from ipui.widgets.Row             import Row, CardCol
-from ipui.widgets.SelectionList   import SelectionList
-from ipui.widgets.Spacer          import Spacer
-from ipui.widgets.Label            import Title, Heading, Body
-from ipui.widgets.TextBox         import TextBox
+
+
+from ipui import *
 
 
 

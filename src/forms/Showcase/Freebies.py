@@ -1,7 +1,7 @@
 # Freebies.py  NEW: Showcase what _BaseForm gives you for free
 
 from ipui import *
-from ipui.widgets.CodeBox import CodeBox
+
 
 
 class EZ_Pane(_basePane):

@@ -1,8 +1,8 @@
 from ipui import IPUI
 from ipui.Style import Style
-from ipui.docs.ProjectManager import ProjectManager
+from forms.NeuroForge.custom_widgets.ProjectManager import ProjectManager
 from forms.NeuroForge.SubProcesses import SubProcesses
-from ipui.engine.Log import Logger
+from forms.NeuroForge.custom_widgets.Logger import Logger
 from ipui.engine._BaseForm import _BaseForm
 from ipui.widgets.Button import Button
 from ipui.widgets.Row import Row
@@ -56,7 +56,7 @@ class FormNeuroForge(_BaseForm):
 
     def guard_tab_switch(self, name, current):
         if name != "Home" and self.active_project is None:
-            self.show_modal("Please select or create a project first", lambda: None, min_seconds=.15)
+            self.show_modal("Please select or create a project first", min_seconds=.69)
             return False
 
     def build_header_row(self):
@@ -71,7 +71,7 @@ class FormNeuroForge(_BaseForm):
     def launch_colosseum(self):
         self.widgets["btnLaunch"].text = ("Launch")
         self.widgets["btnLaunch"].set_disabled("Running...")
-        self.show_modal("Preparing the Arena...", self.launch_training, min_seconds=0.5)
+        self.show_modal("Preparing the Arena...",  0.5, self.launch_training,)
 
     def launch_training(self):
         guid = SubProcesses.write_launch_config(self)

@@ -202,7 +202,7 @@ class MeasureAndLayout:
         content   = getattr(node, 'content_size', node.height_minimum)
         getattr(node, 'content_size', node.height_minimum)
         main_size = inner.width if node.horizontal else inner.height
-        #print(f"SCROLL: {node.my_name} content={content} main_size={main_size} kids={len(node.visible_children)}")    # NEW
+        #print(f"SCROLL: {node.display_name} content={content} main_size={main_size} kids={len(node.visible_children)}")    # NEW
         node.scroll_active = content > main_size
         if not node.scroll_active:
             node.scroll_offset = 0
@@ -332,7 +332,7 @@ class MeasureAndLayout:
         if node is None:
             node = self.trunk
         indent = "  " * depth
-        name   = node.name or node.my_name
+        name   = node.name or node.display_name
         rect   = node.rect if node.rect else 'None'
         width_minimum  = getattr(node, 'width_minimum', '?')
         height_minimum  = getattr(node, 'height_minimum', '?')

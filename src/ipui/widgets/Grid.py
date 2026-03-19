@@ -16,7 +16,6 @@ class Grid(_BaseWidget):
         if self.data is None and isinstance(self.text, list):
             self.data = self.text
             self.text = None
-        self.my_name        = "Grid"
         self.font           = self.font or Style.FONT_BODY
         self.color_txt      = Style.COLOR_TEXT
         self.rows           = self.data or []

@@ -165,4 +165,4 @@ class Reference(_basePane):
     # ══════════════════════════════════════════════════════════════
 
     def show_stub(self):
-        self.form.show_modal("Coming Soon", None, min_seconds=1.69)
+        self.form.show_modal("Coming Soon")

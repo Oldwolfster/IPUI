@@ -1,13 +1,6 @@
 # Workbench.py  NEW FILE  (replaces frmArchitecture.py — _basePane migration)
 
-from ipui.Style              import Style
-from ipui.engine._BasePane import _basePane
-from ipui.widgets.Button     import Button
-from ipui.widgets.Row        import Row, CardCol
-from ipui.widgets.Spacer     import Spacer
-from ipui.widgets.Label       import Title, Heading, Body
-from ipui.widgets.NetworkDiagram import NetworkDiagram
-
+from ipui import *
 
 PERCY_STORY = (
     "Imagine you have a tiny robot friend named Percy.",
@@ -150,7 +143,7 @@ class EZ_Pane(_basePane):
             placeholder = "Learn More...",
             data        = LESSONS,
             on_change   = lambda sel: self.form.show_modal(  # TODO: NIP — DropDown callback
-                f"Coming Soon:    {sel[0]}", lambda: None, 1
+                f"Coming Soon:    {sel[0]}"
             ) if sel else None,
         )
 

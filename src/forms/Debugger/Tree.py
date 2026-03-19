@@ -81,7 +81,7 @@ class Tree(_basePane):
         from ipui.Style import Style                                      
         header = Row(parent, justify_spread=True)                         
         Title(header, "Widget Tree", glow=True, name="dbg_tree_title")   
-        Button(header, "Copy1", color_bg=Style.COLOR_PAL_GREEN_DARK,
+        Button(header, "Copy", color_bg=Style.COLOR_PAL_GREEN_DARK,
         on_click=self.copy_tree)
         #on_click=lambda: self.form.show_modal("Coming Soon!", min_seconds=1.69))
         PowerGrid(parent, name="dbg_tree_grid", height_flex=True)
@@ -125,7 +125,8 @@ class Tree(_basePane):
         if not grid or not grid.rows_all:        # REPLACE
             return
         lines = []
-        for row in grid.rows_all:                # REPLACE
+        lines.append("  ".join(grid.columns))
+        for row in grid.rows_all:
             lines.append("  ".join(str(c) for c in row))
         Clipboard.copy("\n".join(lines))
 
@@ -188,8 +189,6 @@ class Tree(_basePane):
     # ══════════════════════════════════════════════════════════════
     # HELPERS
     # ══════════════════════════════════════════════════════════════
-
-
 
     def get_target(self):
         return getattr(IPUI, 'debug_target', None)

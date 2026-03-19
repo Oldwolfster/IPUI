@@ -1,7 +1,5 @@
 # Widgets.py  NEW: Self-documenting widget showcase pane
 from ipui import *
-from ipui.widgets.CodeBox import CodeBox
-
 
 class EZ_Pane(_basePane):
     """
