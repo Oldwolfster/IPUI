@@ -10,7 +10,7 @@ class EZ_Pane(_basePane):
     api:         (none — it just works)
     """
 
-    def initialize(self):
+    def ip_setup_pane(self):
         self.catalog = WidgetCatalog()
 
     def catalog_grid(self, parent):

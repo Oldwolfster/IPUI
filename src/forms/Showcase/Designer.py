@@ -9,7 +9,7 @@ WRITE_FILES = False
 
 class Designer(_basePane):
 
-    def initialize(self):
+    def ip_setup_pane(self):
         self.selected_tab  = None
         self.selected_pane = None
 

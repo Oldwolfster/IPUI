@@ -213,7 +213,40 @@ Clean up list
 225) DONE: Added content_fit param to base_widget
 226) DONE: Added rounded corners to buttons.
 165) DONE: screw our shitty text align... create string :(
+106) DONE: on freebies replace developer tools.
+225) DONE: Button no longer jams the reason into its surface (no layout shift)
+225) DONE: Hovering a disabled widget with a reason string shows it as a tooltip
+159) DONE: 86 the friggen set_enable set_disable.
+205) DONE: Ensure all forms are using 'from ipui import *'
+215) DONE: create tabs folder for particle life and Showcase.(moved showcase back)
+164) DONE: If autoscaffold tab with space in name itmesses up file and class
+186) DONE: Read me should mention debug tools
+187) DONE: Read me should mention f11 - rect shower
+215) DONE: Create tabs folder for particle life and showcase — just file moves
+226) DONE: Added border radius to base widget with custom crome.
+197) DONE: Scrollbar gap on right — probably one token offset in draw_scrollbar
+210) Rename ip_setup_pipeline to follow hook convention — grep and replace
+226)  Rename basepane's ip_setup_pane() to follow hook convention — grep and replace
 ######################################################################
+3/25
+######################################################################
+
+
+
+TEMP HIT LIST
+227) add
+161) Debug tools auto-refresh — probably just call refresh() in ip_think
+188/189) MD viewer bold and tables — could get hairy
+196) Table widget — new widget, probably post-v0.1
+158) Tab order — real feature, post-v0.1
+
+228) rename _basePane to BaseTab - no aliases they cause drift.
+229) rema,e _baseform to BaseForm. - improve showcase
+230) add renders per second
+231) RENAME IP_LIFCYCLE to each version bool
+232) Rename ip_renderpre to ip_draw
+233) Rename ip_renderpost to ip_draw_HUD
+
 
 
 ######################################################################
@@ -222,33 +255,20 @@ Pending for V0.1
 
 60) PART OF LAMBDA ELIMINATION: investigate swap_pane in forge and more generic alternatives uch as Button(header, "+New", on_click_args=(self.form.set_pane, 1, self.name_project))
 76) Set Pane, instead of requiring lambda, use kwargs for params aka instead of #self.form.set_pane(1, lambda p: self.show_detail(p, item))   - how does this play with on_click_me
-
-106) on freebies replace developer tools.
 155) Armory needs 3rd pane.
 
-
-158) Tab Order
-159) 86 the friggen set_enable set_disable.
-161) debug tools must auto-refresh
 163) move double click detect to base wid
-164) If autoscaffold tab with space in name itmesses up file and class
-
 167) SQL recordselector behaving off. compare it to tree
 
-186) Read me should mention debug tools
-187) Read me should mention f11 - rect shower
-188) MD viewer should respect bold tag.
-189) MD viewer shuold render table.
 196) create table widget.
-197) Scrollbar should not honor the token to the right.(leaves a gap)
+
 206) Show optimizers by default - with msg to hover long
-205) Ensure all forms are using 'from ipui import *'
-210) update initialize_pipeline follows hook name convention
-211) Add initialize_pipeline and PIPELINE_DEFAULTS to docs - note how pipeline_default runs relative to build
+
+211) Add ip_setup_pipeline and PIPELINE_DEFAULTS to docs - note how pipeline_default runs relative to build
 212) Investigate base_form dispatch_ip_think  - does this mean if no tab will not work.
 213) In baseform, hwo do we fix the event handling fiasco
 214) Base Form has mark dirty.  i didn't think we were using - we shuold consider if not
-215) create tabs folder for particle life and showcase
+
 216) In widgets remove duplicate source
 217) in debug tools, magic tab should autorefresh
 219) in armory default to optimizers
@@ -256,8 +276,8 @@ Pending for V0.1
 221) should show_modal have wrapper on base_pane?
 222) not using Style properly... using colors instead of semantic role.
 223) in sql run query deletes the updated text.
-
-
+224) ipui.docs no longer working.
+225) Heat seeking missle from debug tree
 ##########################################################
 ##########################################################
 ##########################################################

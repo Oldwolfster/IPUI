@@ -2,9 +2,6 @@
 
 import sqlite3
 from ipui import *
-from ipui import TextArea
-from ipui.widgets.CodeBox import CodeBox
-from ipui.widgets.Label import Detail, Title
 
 DB_PATH = r"src\ipui\assets\sample_db\rock_on_forever_claude.db"
 
@@ -43,7 +40,7 @@ PRESET_QUERIES = [
 class SQL(_basePane):
     """Showcase tab demonstrating PowerGrid SQL capabilities."""
 
-    def initialize(self):
+    def ip_setup_pane(self):
         self.current_query = PRESET_QUERIES[0][1]
 
     # ══════════════════════════════════════════════════════════════

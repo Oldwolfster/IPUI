@@ -47,14 +47,15 @@ class YourChoice(_basePane):
 
     def react_column_rite(self, two_cols):
         card     = Card(two_cols, width_flex=2)
-        Heading  ( card, "Steps:",text_align='r')
+        Heading  ( card, "Steps:",text_align=RIGHT)
         Spacer   ( card)
-        Body     ( card, "Create compute_snark",text_align='r')
-        Body     ( card, "Create should_clear_be_enabled",text_align='r')
+        Body     ( card, "Create compute_snark",text_align=RIGHT)
+        Body     ( card, "Create should_clear_be_enabled",text_align=RIGHT)
         Spacer   (card)
-        Body     ( card, "Add DECLARATION_UPDATES...",text_align='r')
-        Body     ( card, "Name of widget, prop to update, and method to call.",text_align='r')
-        Spacer   (card)
+        Body     ( card, "Add DECLARATION_UPDATES...",text_align=RIGHT)
+        Body     ( card, "Name of widget, prop to update, and method to call.",text_align=RIGHT)
+        Body     ( card, "Pick the right tool",text_align=RIGHT)
+
 
     def reactive_code_box(self, main_left_window):
         card     = Card(main_left_window, scrollable=True, height_flex=99)
@@ -96,10 +97,11 @@ class YourChoice(_basePane):
         self.form.pipeline_set("last", "")  #### Set data and Declaration Updates does the trick.
                                             ############################################################
 
-    # ══════════════════════════════════════════════════════════════
+    #══════════════════════════════════════════════════════════════
     # IMPERATIVE — manual wiring
     # No declares for imperative
-    # ══════════════════════════════════════════════════════════════
+    #══════════════════════════════════════════════════════════════
+
     def imperative(self, parent):
         self     . imp_header(parent)           # call method to create imperative header row
         two_cols = Row(parent)                  # create a row called two columns.
@@ -110,7 +112,7 @@ class YourChoice(_basePane):
 
     def imp_header(self, pane_root):           # you can name the 2nd param whatever helps you
         header  = Row(pane_root)               # create a row to put multiple widgets horizontally
-        #Detail  ( header, "Not working? Add a breakpoint. Run debugger; step one line at a time.")
+
         Title   (header, "Your Choice", glow=True)
         Spacer  ( header)
         Title   ( header, "Imperative", glow=True)
@@ -124,29 +126,26 @@ class YourChoice(_basePane):
         Spacer   (card)
         Body     ( card, "Populate event handler to...")
         Body     ( card, "Run methods and update widget with response")
-        Spacer   (card)
+        Body     (card,  "For the right job!!")
 
     def imperative_right(self, two_cols):         #### RIGHT = demo (faces reactive's left)
         col      = Col(two_cols, width_flex=1)
         card     = Card(col)
-        #Heading  ( card, "The Manual Approach", glow=True)
-        Body     ( card, "Wire events yourself.",text_align='r')
-        Body     ( card, "Full control and onus.",text_align='r')
+        Body     ( card, "Full control and onus."   ,text_align=RIGHT)
+        Body     ( card, "(My personal favorite ;)" ,text_align=RIGHT)
         self     . imperative_name_game(col)
 
     def imperative_name_game(self, parent):
-        card = CardCol(parent, width_flex=True)
-        row = Row(card)
+        card    = CardCol(parent, width_flex=True)
+        row     = Row    (card)
 
         # Storing direct references instead of relying on the registry
         self.txt_first = TextBox(row,
                                  placeholder="First name",
                                  on_change=self.imp_name_changed,
                                  width_flex=False)
-
         Spacer(row)
-
-        self.txt_last = TextBox(row,
+        self.txt_last  = TextBox(row,
                                 placeholder="Last name",
                                 on_change=self.imp_name_changed,
                                 width_flex=False)
@@ -155,16 +154,13 @@ class YourChoice(_basePane):
                                 color_bg=Style.COLOR_PAL_GREEN_DARK,
                                 on_click=self.imp_clear,
                                 enabled=False)
-
         Spacer(card, height_flex=.1)
-
-        self.lbl_snark = Body(card, YourChoice.DEFAULT_MESSAGE,
-                              text_align='c')
+        self.lbl_snark = Body(card, YourChoice.DEFAULT_MESSAGE, text_align=CENTER)
 
     def imp_name_changed(self, text):
         # Reading state directly from the objects
         first = self.txt_first.text  # Assuming property access, or .get_text()
-        last = self.txt_last.text
+        last  = self.txt_last.text
 
         # Updating objects directly
         self.lbl_snark.set_text(self.compute_snark(first, last))
@@ -179,10 +175,10 @@ class YourChoice(_basePane):
 
     def imperative_code(self, parent):
         card     = Card(parent, scrollable=True, height_flex=99)
-        CodeBox  ( card,                        ##################################
-            data  = __file__,                   # These 4 lines are what creates
-            start = "# No declares for imperative",      # The CodeBox you are reading now :)
-            end   = "SHARED COMPUTES", )        ##################################
+        CodeBox  ( card,                  ####################################
+            data  = __file__,             # These 3 lines are what creates
+            start = "#═════════")         # The CodeBox you are reading now :)
+                                          ####################################
 
     # ══════════════════════════════════════════════════════════════
     # Shared code - Same for Reactive and Imperative.

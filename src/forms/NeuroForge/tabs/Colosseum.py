@@ -20,7 +20,7 @@ VARYING_PRIORITY = [
 class EZ_Pane(_basePane):
     """Colosseum tab — real-time training monitoring with live charts and grids."""
 
-    def initialize(self):
+    def ip_setup_pane(self):
         """Load run details and determine varying columns for the active batch."""
         batch_id = getattr(self.form, 'active_batch_id', None)
         if batch_id:

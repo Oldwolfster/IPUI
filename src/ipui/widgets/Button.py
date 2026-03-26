@@ -19,9 +19,10 @@ class Button(_BaseWidget):
         self.color_bg       = self.color_bg or Style.COLOR_BUTTON_BG
         self.gap            = 0
         MgrColor            . apply_bevel(self, "raised")
-        reason              = self.enabled if isinstance(self.enabled, str) else None
-        final_text          = f"{self.text}\n({reason})" if reason else self.text
-        self.my_surface     = self.render_multiline(final_text)
+        #reason             = self.enabled if isinstance(self.enabled, str) else None
+        #final_text         = f"{self.text}\n({reason})" if reason else self.text
+        #self.my_surface    = self.render_multiline(final_text)
+        self.my_surface     = self.render_multiline(self.text)
 
     def set_radiate(self):
         MgrColor.apply_bevel( self, "hot")

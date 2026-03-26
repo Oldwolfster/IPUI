@@ -1,83 +1,67 @@
-# Breakout.py  Update: state machine, levels, demo mode, ready state
+# Breakout.py  Update: merged greet, HUD in canvas, CodeBox on right
 
-import random
 import pygame
 
 from ipui import *
 
 
 class Breakout(_basePane):
-    """Arcade demo with attract mode, levels, and forgiving paddle."""
+    """Arcade demo: press Q or click to start."""
 
     IP_LIFECYCLE = "persist"
 
-    STATES = {
-        "DEMO"      : {"next": "READY"  },
-        "READY"     : {"next": "PLAYING", "message": "Click to Launch!"},
-        "PLAYING"   : {"next": "LEVEL_UP"},
-        "LEVEL_UP"  : {"next": "READY",   "duration": 1.5, "message": "LEVEL UP!"},
-        "GAME_OVER" : {"next": "DEMO",    "duration": 2.5, "message": "GAME OVER"},
-    }
-
-    # ══════════════════════════════════════════════════════════════
-    # SETUP
-    # ══════════════════════════════════════════════════════════════
-
     def ip_setup_pane(self):
-        self.ball_r       = 0.015
-        self.paddle_w     = 0.15
-        self.paddle_h     = 0.02
-        self.paddle_y     = 0.95
-        self.hitbox_extra = 0.02
-        self.auto_paddle  = 0.5
-        self.base_speed   = 0.5
-        self.speed_bump   = 0.12
-        self.score        = 0
-        self.lives        = 3
-        self.level        = 1
-        self.bricks       = []
-        self.ip.state.configure(self.STATES)
-        self.start_demo()
+        self.playing    = False
+        self.ball_x     = 0.5
+        self.ball_y     = 0.5
+        self.ball_dx    = 0.4
+        self.ball_dy    = -0.5
+        self.ball_r     = 0.015
+        self.paddle_w   = 0.15
+        self.paddle_h   = 0.02
+        self.paddle_y   = 0.95
+        self.bricks     = []
+        self.score      = 0
+        self.lives      = 3
 
-    def start_demo(self):
-        self.score = 0
-        self.lives = 3
-        self.level = 1
-        self.reset_bricks()
-        self.reset_ball()
-        self.ip.state.set("DEMO")
-        self.build_hud()
+
+    def game_hud(self, parent):
+        """Score and lives as real IPUI widgets floating over the game."""
+        row=Row(parent)
+        Title(row, "Score: 0", name="lbl_score", glow=True)
+        Spacer(row )
+        Body(row, "Lives: 3", name="lbl_lives")
+
+    def code(self, parent):
+        Title(parent, "The Source", glow=True)
+        Body(parent, "This pane reads its own file.")
+        card = Card(parent, scrollable=True, height_flex=99)
+        CodeBox(card,
+            data  = __file__,)
+            #start = "class Breakout",
+            #end   = "# ══ PANE BUILDERS",)
+
+    # ══════════════════════════════════════════════════════════════
+    # GAME CONTROLS
+    # ══════════════════════════════════════════════════════════════
 
     def start_game(self):
-        self.score = 0
-        self.lives = 3
-        self.level = 1
-        self.reset_bricks()
-        self.reset_ball()
-        self.ip.state.set("READY")
-        self.build_hud()
-
-    def reset_ball(self):
-        speed        = self.base_speed + self.speed_bump * (self.level - 1)
+        self.playing = True
+        self.score   = 0
+        self.lives   = 3
         self.ball_x  = 0.5
-        self.ball_y  = self.paddle_y - self.ball_r - 0.01
-        self.ball_dx = speed * 0.8
-        self.ball_dy = -speed
-
-    # ══════════════════════════════════════════════════════════════
-    # LEVELS
-    # ══════════════════════════════════════════════════════════════
-
-    def next_level(self):
-        self.level += 1
+        self.ball_y  = 0.7
+        self.ball_dx = 0.4
+        self.ball_dy = -0.5
         self.reset_bricks()
-        self.reset_ball()
-        self.update_hud()
-        self.ip.state.set("LEVEL_UP")
+        self.build_hud()
+        self.update_score()
 
-    # ══════════════════════════════════════════════════════════════
-    # BRICKS
-    # ══════════════════════════════════════════════════════════════
+    def build_hud(self):
+        canvas = self.form.tab_strip.panes[1]
+        canvas.clear_children()
+        Title(canvas, "Score: 0", name="lbl_score", glow=True)
+        Body(canvas, "Lives: 3", name="lbl_lives")
 
     def reset_bricks(self):
         self.bricks = []
@@ -103,72 +87,24 @@ class Breakout(_basePane):
                     "color": colors[r % len(colors)],
                 })
 
-    # ══════════════════════════════════════════════════════════════
-    # HUD
-    # ══════════════════════════════════════════════════════════════
-
-    def build_hud(self):
-        canvas = self.form.tab_strip.panes[1]
-        canvas.clear_children()
-        row = Row(canvas)
-        Title(row, " ", name="lbl_score", glow=True)
-        Spacer(row)
-        Body(row, " ", name="lbl_level")
-        Spacer(row)
-        Body(row, " ", name="lbl_lives")
-        self.update_hud()
-
-    def update_hud(self):
+    def update_score(self):
         lbl = self.form.widgets.get("lbl_score")
         if lbl:
             lbl.set_text(f"Score: {self.score}")
-        lbl = self.form.widgets.get("lbl_level")
-        if lbl:
-            lbl.set_text(f"Level: {self.level}")
         lbl = self.form.widgets.get("lbl_lives")
         if lbl:
-            is_demo = self.ip.state.is_("DEMO")
-            lbl.set_text("DEMO" if is_demo else f"Lives: {self.lives}")
+            lbl.set_text(f"Lives: {self.lives}")
 
     # ══════════════════════════════════════════════════════════════
-    # LIFECYCLE HOOKS
+    # LIFECYCLE HOOKS — this is what makes the game run
     # ══════════════════════════════════════════════════════════════
 
     def ip_think(self, ip):
-        sm = ip.state
-
-        # ── Flash states — just wait ──
-        if sm.in_("LEVEL_UP", "GAME_OVER"):
-            return
-
-        # ── Insert quarter ──
         if ip.key_pressed("q") or ip.key_pressed("space"):
-            if sm.is_("DEMO"):
+            if not self.playing:
                 self.start_game()
-                return
-
-        # ── DEMO: auto-play ──
-        if sm.is_("DEMO"):
-            if not self.bricks:
-                self.start_demo()
-            self.auto_paddle = self.ball_x
-            self.run_physics(ip)
+        if not self.playing:
             return
-
-        # ── READY: ball stuck to paddle ──
-        if sm.is_("READY"):
-            self.ball_x = self.paddle_x(ip)
-            self.ball_y = self.paddle_y - self.ball_r - 0.01
-            if ip.key_pressed("space"):
-                sm.set("PLAYING")
-            if ip.mouse_pressed("left") and ip.mouse_inside_pane():
-                sm.set("PLAYING")
-            return
-
-        # ── PLAYING: normal game ──
-        self.run_physics(ip)
-
-    def run_physics(self, ip):
         self.move_ball(ip.dt)
         self.bounce_walls()
         self.bounce_paddle(ip)
@@ -176,7 +112,7 @@ class Breakout(_basePane):
         self.check_ball_lost()
 
     def ip_renderpre(self, ip):
-        if not ip.rect_pane:
+        if not self.playing or not ip.rect_pane:
             return
         self.draw_arena(ip)
         self.draw_bricks(ip)
@@ -186,17 +122,7 @@ class Breakout(_basePane):
     def ip_renderpost(self, ip):
         pass
 
-    # ══════════════════════════════════════════════════════════════
-    # PADDLE
-    # ══════════════════════════════════════════════════════════════
 
-    def paddle_x(self, ip):
-        if self.ip.state.is_("DEMO"):
-            return max(0.0, min(1.0, self.auto_paddle))
-        r = ip.rect_pane
-        if not r or r.width == 0:
-            return 0.5
-        return max(0.0, min(1.0, (ip.mouse_x - r.left) / r.width))
 
     # ══════════════════════════════════════════════════════════════
     # PHYSICS
@@ -218,22 +144,23 @@ class Breakout(_basePane):
             self.ball_y  = r
             self.ball_dy = abs(self.ball_dy)
 
+    def paddle_x(self, ip):
+        r = ip.rect_pane
+        if not r or r.width == 0:
+            return 0.5
+        return max(0.0, min(1.0, (ip.mouse_x - r.left) / r.width))
+
     def bounce_paddle(self, ip):
         px    = self.paddle_x(ip)
-        extra = self.hitbox_extra
-        left  = px - self.paddle_w / 2 - extra
-        right = px + self.paddle_w / 2 + extra
+        left  = px - self.paddle_w / 2
+        right = px + self.paddle_w / 2
         top   = self.paddle_y - self.paddle_h
-        bot   = self.paddle_y + self.ball_r + 0.02
         if (self.ball_dy > 0
-        and top <= self.ball_y + self.ball_r <= bot
+        and top <= self.ball_y + self.ball_r <= self.paddle_y
         and left <= self.ball_x <= right):
             self.ball_dy = -abs(self.ball_dy)
-            if self.ip.state.is_("DEMO"):
-                self.ball_dx = random.uniform(-0.5, 0.5)
-            else:
-                offset       = (self.ball_x - px) / (self.paddle_w / 2)
-                self.ball_dx = offset * 0.6
+            offset       = (self.ball_x - px) / (self.paddle_w / 2)
+            self.ball_dx = offset * 0.6
 
     def bounce_bricks(self):
         hit = None
@@ -246,21 +173,19 @@ class Breakout(_basePane):
             self.bricks.remove(hit)
             self.ball_dy = -self.ball_dy
             self.score  += 10
-            self.update_hud()
-            if not self.bricks:
-                self.next_level()
+            self.update_score()
 
     def check_ball_lost(self):
         if self.ball_y + self.ball_r < 1.0:
             return
         self.lives -= 1
-        self.update_hud()
+        self.update_score()
         if self.lives <= 0:
-            self.ip.state.set("GAME_OVER")
+            self.playing = False
             return
-        self.reset_ball()
-        if not self.ip.state.is_("DEMO"):
-            self.ip.state.set("READY")
+        self.ball_x  = 0.5
+        self.ball_y  = 0.7
+        self.ball_dy = -abs(self.ball_dy)
 
     # ══════════════════════════════════════════════════════════════
     # DRAWING
@@ -292,6 +217,7 @@ class Breakout(_basePane):
         r   = ip.scale_y(self.ball_r)
         pygame.draw.circle(ip.surface, (255, 255, 255), pos, r)
 
+
     # ══════════════════════════════════════════════════════════════
     # PANE BUILDERS
     # ══════════════════════════════════════════════════════════════
@@ -319,17 +245,3 @@ class Breakout(_basePane):
                   "8. A drawing loop for painting\n"
                   "9. Score as IPUI widgets in the canvas\n"
                   "10. All coordinates normalized 0-1")
-
-    def game_hud(self, parent):
-        """Score and lives as real IPUI widgets floating over the game."""
-        row = Row(parent)
-        Title(row, "Score: 0", name="lbl_score", glow=True)
-        Spacer(row)
-        Body(row, "Lives: 3", name="lbl_lives")
-
-    def code(self, parent):
-        Title(parent, "The Source", glow=True)
-        Body(parent, "This pane reads its own file.")
-        card = Card(parent, scrollable=True, height_flex=99)
-        CodeBox(card,
-            data  = __file__,)

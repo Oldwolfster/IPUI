@@ -65,45 +65,175 @@ pip install ipui
 
 ---
 
+## quick start
+IPUI is meant to be organized across multiple files.
+But it's easiest to start with one 'seed' and let IPUI set them up for you.
+
+
 ## Quick Start
 
-Tabs, banner, label, and a button with a modal message — 11 lines of code:
+# README.md section: Quick Start  Update: Replace lines 69-113 with new single-file-first Quick Start
 
+## Quick Start
+
+IPUI is built to grow across files, but the fastest way to start is with **one file**.
+
+Get it running first. Then let IPUI help you split things out as your app grows.
+
+---
+
+### Step 1: 30-Second Smoke Test
+
+Save this as `SmokeTest.py`:
 ```python
-# --- FormQuickStart.py                # Define your tab structure - Tab Name -> [Pane Methods]
-from ipui import *                     # <======This is the only import you need for framework files.
-
-class FormQuickStart(BaseForm):
-    TAB_LAYOUT = {                     # This dict sets up your tabs and panes
-        "Hello" : ["world"         ],  # Dictionary Key is tab name.  Values are panes.
-        "Tab2"  : ["pane1", "pane2"],  # Ipui scaffolds a file matching tab name Hello.py
-        "Tab3"  : ["pane3", "pane4"],  # (run and click a tab with no file)
-    }                                  # IPUI searches same folder as 'Form' file
-                                       # (and all descendant folders automatically)
- 
-# --- Hello.py
 from ipui import *
 
-class Hello(_basePane):
-    def world(self, parent):           
-        Banner(parent, "IPUI", glow=True)
-        Body  (parent, "Because we've all spent 3 hours debugging a button.")
-        Button(parent, "Click Me",
-               color_bg=Style.COLOR_PAL_GREEN_DARK,
-               on_click=lambda: self.form.show_modal("Hello World!"))
+class QuickTest(BaseForm):
+    TAB_LAYOUT = {
+        "Smoke Test": ["go"]
+    }
 
-# --- Main.py 
-from forms.QuickStart.FormQuickStart import FormQuickStart
-from ipui import *
+class SmokeTest(_basePane):
+    def go(self, parent):
+        Banner(parent, "IPUI", glow=True, text_align=CENTER)
+        Title(parent, "Easy to get right!", text_align=CENTER)
+        Body(parent, "Hard to get wrong.", text_align=CENTER)
+        Button(
+            parent,
+            "Click Me →",
+            color_bg=Style.COLOR_PAL_GREEN_DARK,
+            on_click=lambda: self.form.show_modal("Hello World!")
+        )
 
 if __name__ == "__main__":
-    show(FormQuickStart, "Optional Form Caption")
+    show(QuickTest)
 ```
+
+Run `python SmokeTest.py` — one tab, clean UI, button + modal ready.
+
+---
+
+### Step 2: Add Tabs — Let IPUI Do the Heavy Lifting
+
+Now change only the `TAB_LAYOUT`:
+```python
+TAB_LAYOUT = {
+    "Smoke Test" : ["go"],
+    "Widgets"    : ["showcase1", "showcase2", "showcase3"],
+    "Relax"      : ["chill", "out"],
+}
+```
+
+That tiny change does a lot.
+
+**Smoke Test** already points to working pane content.
+**Widgets** and **Relax** do not have tab files yet.
+
+Problem? Not even a little. Run it.
+
+Instead of throwing an error, IPUI steps in with a helper card:
+
+<!-- SCREENSHOT: ipui/assets/images/houston_card.png — the Houston helper card offering to scaffold a missing tab -->
+
+Pick **Full Showcase** and IPUI hot-swaps a complete, interactive widget playground:
+- Every major control (Button, TextBox, Card, Grid, etc.) already running and responding
+- Live demos of glow, disable reasons, scrolling, reactivity, tooltips
+- Real code you can immediately rearrange, tweak, or copy-paste into your own panes
+
+It's not a dead template — it's a working mini-app you can steal from like a pro.
+
+---
+
+### Step 3: Customize and Scale
+
+After generating `Widgets.py`, edit it however you want:
+```python
+from ipui import *
+
+class Widgets(_basePane):
+    def showcase1(self, parent):
+        Title(parent, "Widget Playground")
+        Button(parent, "Test Me", on_click=lambda: self.form.show_modal("Nice"))
+```
+
+Save the file. Your tab picks up the new content, and you keep building from there.
+
+That becomes the workflow:
+
+1. Add a tab name to `TAB_LAYOUT`
+2. Let IPUI discover or generate the file
+3. Edit the pane builders
+4. Save and continue
+
+Start small. Split only when it helps.
+
+---
+
+### How Tab Discovery Works
+
+Given this layout:
+```python
+TAB_LAYOUT = {
+    "Welcome": ["hello", "select_project", "metaphor"],
+    "Relax":   ["our_goal", "pipeline_demo", "widgets_demo"],
+}
+```
+
+IPUI uses the **tab name** to find the file:
+
+- `"Welcome"` → `Welcome.py`
+- `"Relax"` → `Relax.py`
+
+If the tab name contains spaces, IPUI also checks normalized file names:
+
+- `"Test Disabled"` → `TestDisabled.py` or `Test_Disabled.py`
+
+Inside that file, IPUI looks for **any class inheriting from `_basePane`**. The class name does not matter. What matters is:
+
+- ✅ The file name matches the tab name (spaces are normalized)
+- ✅ The class inherits from `_basePane`
+- ✅ The builder methods named in `TAB_LAYOUT` exist
+```python
+from ipui import *
+
+class TotallyWhateverNameYouWant(_basePane):
+    def hello(self, parent):
+        Title(parent, "Hello from Welcome.py")
+```
+
+Completely valid.
+
+---
+
+### Why the `__name__` Guard Stays
+
+The smoke test ends with:
+```python
+if __name__ == "__main__":
+    show(QuickTest)
+```
+
+Keep it. In the one-file smoke test, the same file can be both the file you run directly and the file IPUI inspects while resolving tabs. That guard prevents accidental re-entry during import. Tiny line — real protection.
+
+---
+
+### The Philosophy
+
+IPUI makes the right path the easy path.
+
+- Simple things should be trivial
+- Missing structure should be fixable, not fatal
+- Scaling out should feel natural
+- Boilerplate should be forged, not copied around by hand
+- Learning should happen by playing with real, running examples
+
+> That's why the **Full Showcase** template gives you a fully functional widget gallery — click, rearrange, copy-paste, and keep building. Start stealing code before you've written your first line.
 
 No event loop setup. No manual sizing. No coordinate math. IPUI handles the Pygame lifecycle, layout, rendering, and event dispatch automatically.
 
 <!-- SCREENSHOT: ipui/assets/images/quick_start.png — the Hello World form with banner, body text, and green button -->
 ![QuickStart Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/quick_start.png)
+
 ---
 
 ## Core Concepts
@@ -336,6 +466,89 @@ Help topics: `identity`, `timing`, `geometry`, `mouse`, `keyboard`, `render`, `c
 Currently IPUI renders every frame, so these are effectively no-ops. They exist so your code will work unchanged when dirty-flag optimization lands.
 
 ---
+### State Machine
+
+`ip.state` is a built-in state machine available everywhere — panes, forms, hooks. No setup required for basic use; declare a `STATES` dict for auto-transitions and flash messages.
+
+**Zero-config — just track state:**
+
+```python
+def ip_think(self, ip):
+    ip.state.set("LOADING")
+    print(ip.state.current)     # "LOADING"
+```
+
+**Configured — declare states with transitions, durations, and messages:**
+
+```python
+class Breakout(_basePane):
+    STATES = {
+        "DEMO"      : {"next": "READY"  },
+        "READY"     : {"next": "PLAYING", "message": "Click to Launch!"},
+        "PLAYING"   : {"next": "LEVEL_UP"},
+        "LEVEL_UP"  : {"next": "READY",   "duration": 1.5, "message": "LEVEL UP!"},
+        "GAME_OVER" : {"next": "DEMO",    "duration": 2.5, "message": "GAME OVER"},
+    }
+
+    def ip_setup_pane(self):
+        ip.state.configure(self.STATES)
+        ip.state.set("DEMO")
+```
+
+When a state has `duration`, the engine counts down automatically and transitions to `next` when the timer expires. When a state has `message`, the engine draws it centered over the canvas with a dark overlay — no drawing code needed.
+
+**API:**
+
+| Method / Property | Description |
+|-------------------|-------------|
+| `ip.state.current` | Current state name (or None) |
+| `ip.state.message` | Current flash message (or None) |
+| `ip.state.timer` | Seconds remaining on current flash |
+| `ip.state.is_flash` | True if current state has a duration |
+| `ip.state.set("NAME")` | Transition to a specific state |
+| `ip.state.next()` | Follow the `next` chain to the next state |
+| `ip.state.is_("NAME")` | True if current state matches |
+| `ip.state.in_("A", "B")` | True if current state is any of these |
+| `ip.state.configure({...})` | Load a STATES dict (sets first key as initial state) |
+
+**Usage pattern — branch your logic cleanly:**
+
+```python
+def ip_think(self, ip):
+    sm = ip.state
+
+    if sm.in_("LEVEL_UP", "GAME_OVER"):    # flash states — engine handles it
+        return
+
+    if sm.is_("READY"):                     # waiting for player
+        self.ball_x = self.paddle_x(ip)     # ball tracks paddle
+        if ip.mouse_pressed("left"):
+            sm.set("PLAYING")
+        return
+
+    if sm.is_("PLAYING"):                   # normal game
+        self.run_physics(ip)
+```
+
+**Multiple state machines** — the default covers 99% of cases, but named machines are available:
+
+```python
+ip.state("combat").configure({...})
+ip.state("combat").set("ATTACKING")
+ip.state("ui").set("MENU_OPEN")
+```
+
+`ip.state` and `ip.state()` both return the default machine. `ip.state("name")` returns a named one, created on first access.
+
+**STATES dict keys:**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `"next"` | str | State to transition to (via `next()` or after `duration` expires) |
+| `"duration"` | float | Seconds to hold this state before auto-transitioning to `next` |
+| `"message"` | str | Text drawn centered over the canvas during this state |
+
+
 
 ## Using Hooks on a Pane
 
@@ -343,7 +556,7 @@ Override any hook directly on your `_basePane` subclass:
 
 ```python
 class MySimulation(_basePane):
-    def initialize(self):
+    def ip_setup_pane(self):
         self.ball_x  = 0.5
         self.ball_y  = 0.5
         self.ball_dx = 0.4
@@ -387,7 +600,7 @@ class MySimulation(_basePane):
 |--------|----------------------|-----------|
 | `"persist"` | Keeps running | Normal (default) |
 | `"pause"` | Stops | Resumes |
-| `"restart"` | Stops | Re-runs `initialize()` |
+| `"restart"` | Stops | Re-runs `ip_setup_pane()` |
 | `"kill"` | Stops, pane destroyed | Rebuilt from scratch |
 
 Render hooks (`ip_renderpre`, `ip_renderpost`) only fire for the **active** tab regardless of policy — no point drawing to a tab nobody can see.
@@ -408,7 +621,7 @@ IPUI scales text proportionally to your physical screen. You pick semantic roles
 | `Body`    | The workhorse. Most text is this. | `Body(parent, "Configure your model.")`    |
 | `Detail`  | Fine print, timestamps.           | `Detail(parent, "Last updated: 2:30pm")`   |
 
-All text widgets support `glow=True` (molten-orange forge effect) and `text_align='c'` or `'r'`.
+All text widgets support `glow=True` (molten-orange forge effect) and `text_align=CENTER` or `RIGHT`.
 
 ### Layout Containers
 
@@ -737,6 +950,31 @@ Body(parent,   "Status", font=Style.FONT_BODY)
 
 ---
 
+## Debug Tools
+
+IPUI ships with built-in developer tools so you never have to guess what the layout engine is doing.
+
+**F12 — Professional Grade Debug Tools**
+
+Press F12 to open the IPUI X-Ray — a full debug overlay with:
+
+- **Widget Tree** — Live view of every widget, its flex settings, minimum sizes, and actual rects. Click any row to inspect all properties. Copy the full tree to clipboard for sharing.
+- **Reference** — Searchable framework documentation with table of contents, built from the source code itself.
+- **Pipeline** — Live view of all reactive keys, their values, and registered derives.
+- **Layout** — Coming soon: flex budget visualization and constraint solver details.
+
+<!-- SCREENSHOT: ipui/assets/images/widget_tree_debug.png — F12 debug mode showing the live widget tree inspector -->
+
+**F11 — Layout Overlay**
+
+Press F11 to toggle a translucent overlay that draws every widget's rect directly on your running app. Instantly see padding, gaps, and alignment without opening the inspector.
+
+<!-- SCREENSHOT: ipui/assets/images/layout_overlay.png — F11 layout overlay showing widget rects -->
+
+Both tools work on any IPUI app with zero setup — no flags, no config, no imports.
+
+---
+
 ## Launching Your App
 
 ```python
@@ -816,7 +1054,8 @@ All widgets accept these parameters:
 | `scroll_glow`   | float    | 0.369        | Scrollbar bevel intensity (0 = flat)          |
 | `start`         | str      | None         | CodeBox: start-of-range marker                |
 | `end`           | str      | None         | CodeBox: end-of-range marker                  |
-
+| `fit_content`   | bool     | False        | Size to content width instead of stretching |
+| `border_radius` | int      | None         | Rounded corner radius (pixels)             |
 ### _BaseWidget Methods
 
 | Method                    | Description                                       |
@@ -839,7 +1078,7 @@ All widgets accept these parameters:
 
 | Method | Description |
 |--------|-------------|
-| `initialize()` | One-time setup (runs once when pane is first created) |
+| `ip_setup_pane()` | One-time setup (runs once when pane is first created) |
 | `ip_think(ip)` | Per-frame logic. State, physics, AI. |
 | `ip_renderpre(ip)` | Draw before UI. Game worlds, backgrounds. |
 | `ip_renderpost(ip)` | Draw after UI. Overlays, cursors, effects. |

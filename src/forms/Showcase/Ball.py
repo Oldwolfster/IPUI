@@ -9,7 +9,7 @@ class PygameBall(_basePane):
 
     IP_LIFECYCLE = "persist"       # Ball keeps bouncing even when tab is hidden
 
-    def initialize(self):
+    def ip_setup_pane(self):
         self.ball_x     = 200.0
         self.ball_y     = 200.0
         self.ball_dx    = 220.0

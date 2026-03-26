@@ -17,11 +17,12 @@ class _IPUI:
         pygame.key.set_repeat(350, 35)  # delay ms, interval ms (enables KEYDOWN repeats)
         print("pygame loop constructor")
 
-        self    .init_pygame    ( title)
+        self    .init_pygame( title)
         IPUI    .screen     = _IPUI.screen
-        IPUI    .switch     ( form_class, title)
-        self    .clock      = pygame.time.Clock()
         self    .ip         = IP()
+        IPUI    .ip         = self.ip
+        self    .clock      = pygame.time.Clock()
+        IPUI    .switch     ( form_class, title)
         self    .frame_count= 0
         self    .run_loop()
         pygame  .quit()
@@ -69,8 +70,9 @@ class _IPUI:
         IPUI.render(_IPUI.screen)
 
         # ── RENDER POST ───────────────────────────────────────
-        if form: form.ip_renderpost(ip)
 
+        if form: form.ip_renderpost(ip)
+        ip.state.draw_flash(ip)
         # ── Flip ──────────────────────────────────────────────
         pygame.display.flip()
 

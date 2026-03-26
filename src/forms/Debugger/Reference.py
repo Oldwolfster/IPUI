@@ -9,7 +9,7 @@ from ipui.utils.WidgetCatalog import WidgetCatalog
 
 class Reference(_basePane):
 
-    def initialize(self):
+    def ip_setup_pane(self):
         self.catalog           = WidgetCatalog()
         self.catalog_loaded_at = datetime.now()
         self.active_mode       = "widgets"

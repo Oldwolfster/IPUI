@@ -7,7 +7,7 @@ from ipui import *
 class ParticleLife(_basePane):
     IP_LIFECYCLE = "pause"
 
-    def initialize(self):
+    def ip_setup_pane(self):
         self.particles             = []
         self.type_specs            = []
         self.g_lookup              = {}

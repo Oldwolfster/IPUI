@@ -62,6 +62,7 @@ class _BaseWidget:
     # CONSTRUCTION
     # ==============================================================
     _next_id = 0 # For global widget resgistry
+    private_next_tab_order=1
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if '__init__' in cls.__dict__ and cls.__name__ != '_BaseForm':
@@ -72,7 +73,7 @@ class _BaseWidget:
                  pad=None, gap=None, border=None,justify_center=False, justify_spread=False, visible = True,
                  enabled=True, start= None, end = None, font=None, fit_content=False, border_radius=None,
                  text_align='l', wrap=False, color_bg=None, glow=False, data=None, single_select=False,
-                 placeholder=None, initial_value=None, on_submit=None, on_change=None, on_click=None,
+                 placeholder=None, initial_value=None, on_submit=None, on_change=None, on_click=None, tab_order=None,
                  pipeline_key=None, tooltip_class=None, scrollable=False, scroll_glow=.369, early_load =None):
 
         # Identity
@@ -156,6 +157,7 @@ class _BaseWidget:
         self.hover_start_time   = 0
         self.start              = start
         self.end                = end
+        self.tab_order          = tab_order
 
 
         # Subclass storage
@@ -176,6 +178,10 @@ class _BaseWidget:
         if hasattr(self, 'build'): self.build()
         # =============================================================
 
+
+        if self.tab_order == 0:
+            _BaseWidget.private_next_tab_order += 1
+            self.tab_order = _BaseWidget.private_next_tab_order
         if self.widget_type is None: self.widget_type =  type(self).__name__
         self.private_build_comp = True
 
@@ -504,6 +510,9 @@ class _BaseWidget:
         for child in self.visible_children:
             result = child.find_hovered_short_desc()
             if result: return result
+        if self.is_hovered and isinstance(self.enabled, str):
+            if time.time() - self.hover_start_time >= .69: return self.enabled
+
         if self.is_hovered and self.data and isinstance(self.data, dict):
             if time.time() - self.hover_start_time >= .69:
                 desc = self.data.get("short_desc")
@@ -520,10 +529,10 @@ class _BaseWidget:
         frame        = self.frame_size
         inner        = self.rect.inflate(-frame, -frame)
         bar_w        = Style.TOKEN_SCROLLBAR
-        bar_x        = inner.right - bar_w
+        bar_x        = self.rect.right - bar_w
         content      = getattr(self, 'content_size', self.height_minimum)
-        track_top    = inner.top + self.scroll_top_inset
-        track_h      = inner.height - self.scroll_top_inset
+        track_top    = self.rect.top + self.border + self.scroll_top_inset
+        track_h      = self.rect.height - self.border * 2 - self.scroll_top_inset
         track_rect   = pygame.Rect(bar_x, track_top, bar_w, track_h)
         pygame.draw.rect(surface, Style.COLOR_PANEL_BG, track_rect)
         visible_ratio = track_h / content

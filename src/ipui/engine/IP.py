@@ -13,6 +13,7 @@
 # ╚══════════════════════════════════════════════════════════════╝
 
 import pygame
+from ipui.engine.StateMachine import StateMachine
 
 
 class IP:
@@ -69,8 +70,9 @@ class IP:
 
         # ── Cache (local scratch pad — NOT pipeline) ──────────
         self.private_cache      = {}
+        self.state              = StateMachine()
 
-    # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════════
     # FRAME UPDATE — called by _IPUI each frame, NOT by user code
     # ══════════════════════════════════════════════════════════════
 
@@ -110,7 +112,7 @@ class IP:
         self.mod_shift       = bool(mods & pygame.KMOD_SHIFT)
         self.mod_ctrl        = bool(mods & pygame.KMOD_CTRL)
         self.mod_alt         = bool(mods & pygame.KMOD_ALT)
-
+        self.state.tick(dt)
     # ══════════════════════════════════════════════════════════════
     # PANE CONTEXT — called before dispatching to each pane's hook
     # ══════════════════════════════════════════════════════════════

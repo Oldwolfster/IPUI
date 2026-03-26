@@ -1,6 +1,5 @@
 from ipui import *
-from ipui.widgets.CodeBox import CodeBox
-from ipui.widgets.Label import Detail
+
 
 
 class Showcase(_basePane):
@@ -73,5 +72,6 @@ class Showcase(_basePane):
         return "IPUI: The Forge"
 
     def is_valid_name(self, name):
-        # Logic: Name must be at least 3 chars to enable the button
-        return len(name.strip()) >= 3
+        print(f"is_valid_name called with: '{name}'")
+        if len(name.strip()) >= 3: return True
+        return "Enter at least 3 characters to proceed"

@@ -1,8 +1,6 @@
-# Freebies.py  NEW: Showcase what _BaseForm gives you for free
+from numpy.f2py.capi_maps import c2buildvalue_map
 
 from ipui import *
-
-
 
 class EZ_Pane(_basePane):
 
@@ -11,15 +9,49 @@ class EZ_Pane(_basePane):
         "lbl_keystrokes"    : {"property": "text", "compute":  "compute_keystrokes" ,"triggers": ["demo_key"],},
     }
 
+    # ══════════════════════════════════════════════════════════════
+    # PANE 1 — The Pitch
+    # ══════════════════════════════════════════════════════════════
 
+    def our_goal(self, parent):
+        Spacer  ( parent, height_flex=1)
+        Title   ( parent, "We have your back!", glow=True)
+        Spacer  ( parent, height_flex=1)
+
+        card    = Card(parent)
+        Heading ( card, "Our goal:")
+        Title   ( card, "Help you reach your goals!", glow=True)
+        Spacer  ( parent, height_flex=1)
+
+        card    = Card(parent)
+        Heading ( card, "Reactive Pipeline", glow=True)
+        Body    ( card, "Set a value. Everything downstream updates.")
+        Body    ( card, "Zero wiring. Zero callbacks. Just declare.")
+
+        Spacer  ( parent, height_flex=1)
+        card    = Card(parent)
+        Heading ( card, "Widgets Registry", glow=True)
+        Body    ( card, "Name a widget. Access it from anywhere.")
+        Body    ( card, "No self.btn_save_ref_copy_backup_final.")
+
+        Spacer  ( parent, height_flex=1)
+        card    = Card(parent)
+        Heading ( card, "Professional grade debug tools.", glow=False)
+        Body    ( card, "Designed to help you solve problems.")
+        Spacer  ( card)
+        Body    ( card, "Press F12 Now!  Take a look.", glow=True)
+
+        Spacer  ( parent, height_flex=2)
+        Body    ( parent, "Try the demos next door  →", text_align='r')
+        Spacer  ( parent, height_flex=1)
 
     # ══════════════════════════════════════════════════════════════
     # PANE 2 — Live Pipeline Demo
     # ══════════════════════════════════════════════════════════════
 
     def pipeline_demo(self, parent):
-        Title(parent, "Pipeline — Live", glow=True)
 
+        Title   ( parent, "Pipeline — Live", glow=True)
         card = Card(parent)
         Heading(card, "Type below. Watch the magic.", glow=True)
         Body(card, "The TextBox writes to the pipeline.")
@@ -57,42 +89,6 @@ class EZ_Pane(_basePane):
         Body(card, "Result is applied to the named widget")
         Spacer(parent, height_flex=1)
 
-
-    # ══════════════════════════════════════════════════════════════
-    # PANE 1 — The Pitch
-    # ══════════════════════════════════════════════════════════════
-
-    def the_pitch(self, parent):
-        Spacer(parent, height_flex=1)
-        Banner(parent, "Wait... this is FREE?", glow=True)
-        Spacer(parent, height_flex=1)
-
-        card = Card(parent)
-        Title(card, "Every Form comes loaded.", glow=True)
-        Title(card, "With Extras to make your life easy.", glow=True)
-        Spacer(parent, height_flex=1)
-
-        card = Card(parent)
-        Heading(card, "Reactive Pipeline", glow=True)
-        Body(card, "Set a value. Everything downstream updates.")
-        Body(card, "Zero wiring. Zero callbacks. Just declare.")
-
-        Spacer(parent, height_flex=1)
-        card = Card(parent)
-        Heading(card, "Widgets Registry", glow=True)
-        Body(card, "Name a widget. Access it from anywhere.")
-        Body(card, "No self.btn_save_ref_copy_backup_final.")
-
-        Spacer(parent, height_flex=1)
-        card = Card(parent)
-        Heading(card, "Professional grade debug tools.", glow=False)
-        Body(card, "Designed to help you solve problems.")
-        Spacer(card)
-        Body(card, "Press F12 Now!  Take a look.", glow=True)
-
-        Spacer(parent, height_flex=2)
-        Body(parent, "Try the demos next door  →", text_align='r')
-        Spacer(parent, height_flex=1)
 
     # ══════════════════════════════════════════════════════════════
     # PANE 3 — Source behind the demo

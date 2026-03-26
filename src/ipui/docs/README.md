@@ -65,6 +65,11 @@ pip install ipui
 
 ---
 
+## new quick start
+IPUI is meant to be organized across a few files.
+But it's easiest to start with one and let it set them up for you.
+
+
 ## Quick Start
 
 Tabs, banner, label, and a button with a modal message — 11 lines of code:
@@ -85,13 +90,14 @@ class FormQuickStart(BaseForm):
 from ipui import *
 
 class Hello(_basePane):
-    def world(self, parent):           
-        Banner(parent, "IPUI", glow=True)
-        Body  (parent, "Because we've all spent 3 hours debugging a button.")
-        Button(parent, "Click Me",
-               color_bg=Style.COLOR_PAL_GREEN_DARK,
-               on_click=lambda: self.form.show_modal("Hello World!"))
-
+    def world(self, parent):  # Semantic widgets with declarative layout
+        Banner  (parent, "IPUI"                 , glow=True,text_align=CENTER)
+        Title   (parent, "Easy to get right!"   ,text_align=CENTER)
+        Body    (parent, "Hard to get wrong!"   , text_align=CENTER)
+        Heading (parent, "Because we've all spent 3 hours debugging a button.",text_align=CENTER,glow=True)
+        Button  (parent, "Click Me"             ,justify_spread=False,
+                         color_bg=Style.COLOR_PAL_GREEN_DARK,
+                         on_click=lambda: self.form.show_modal("Hello World!"))
 # --- Main.py 
 from forms.QuickStart.FormQuickStart import FormQuickStart
 from ipui import *
@@ -103,7 +109,7 @@ if __name__ == "__main__":
 No event loop setup. No manual sizing. No coordinate math. IPUI handles the Pygame lifecycle, layout, rendering, and event dispatch automatically.
 
 <!-- SCREENSHOT: ipui/assets/images/quick_start.png — the Hello World form with banner, body text, and green button -->
-
+![QuickStart Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/quick_start.png)
 ---
 
 ## Core Concepts
@@ -343,7 +349,7 @@ Override any hook directly on your `_basePane` subclass:
 
 ```python
 class MySimulation(_basePane):
-    def initialize(self):
+    def ip_setup_pane(self):
         self.ball_x  = 0.5
         self.ball_y  = 0.5
         self.ball_dx = 0.4
@@ -387,7 +393,7 @@ class MySimulation(_basePane):
 |--------|----------------------|-----------|
 | `"persist"` | Keeps running | Normal (default) |
 | `"pause"` | Stops | Resumes |
-| `"restart"` | Stops | Re-runs `initialize()` |
+| `"restart"` | Stops | Re-runs `ip_setup_pane()` |
 | `"kill"` | Stops, pane destroyed | Rebuilt from scratch |
 
 Render hooks (`ip_renderpre`, `ip_renderpost`) only fire for the **active** tab regardless of policy — no point drawing to a tab nobody can see.
@@ -408,7 +414,7 @@ IPUI scales text proportionally to your physical screen. You pick semantic roles
 | `Body`    | The workhorse. Most text is this. | `Body(parent, "Configure your model.")`    |
 | `Detail`  | Fine print, timestamps.           | `Detail(parent, "Last updated: 2:30pm")`   |
 
-All text widgets support `glow=True` (molten-orange forge effect) and `text_align='c'` or `'r'`.
+All text widgets support `glow=True` (molten-orange forge effect) and `text_align=CENTER` or `RIGHT`.
 
 ### Layout Containers
 
@@ -737,6 +743,31 @@ Body(parent,   "Status", font=Style.FONT_BODY)
 
 ---
 
+## Debug Tools
+
+IPUI ships with built-in developer tools so you never have to guess what the layout engine is doing.
+
+**F12 — Professional Grade Debug Tools**
+
+Press F12 to open the IPUI X-Ray — a full debug overlay with:
+
+- **Widget Tree** — Live view of every widget, its flex settings, minimum sizes, and actual rects. Click any row to inspect all properties. Copy the full tree to clipboard for sharing.
+- **Reference** — Searchable framework documentation with table of contents, built from the source code itself.
+- **Pipeline** — Live view of all reactive keys, their values, and registered derives.
+- **Layout** — Coming soon: flex budget visualization and constraint solver details.
+
+<!-- SCREENSHOT: ipui/assets/images/widget_tree_debug.png — F12 debug mode showing the live widget tree inspector -->
+
+**F11 — Layout Overlay**
+
+Press F11 to toggle a translucent overlay that draws every widget's rect directly on your running app. Instantly see padding, gaps, and alignment without opening the inspector.
+
+<!-- SCREENSHOT: ipui/assets/images/layout_overlay.png — F11 layout overlay showing widget rects -->
+
+Both tools work on any IPUI app with zero setup — no flags, no config, no imports.
+
+---
+
 ## Launching Your App
 
 ```python
@@ -816,7 +847,8 @@ All widgets accept these parameters:
 | `scroll_glow`   | float    | 0.369        | Scrollbar bevel intensity (0 = flat)          |
 | `start`         | str      | None         | CodeBox: start-of-range marker                |
 | `end`           | str      | None         | CodeBox: end-of-range marker                  |
-
+| `fit_content`   | bool     | False        | Size to content width instead of stretching |
+| `border_radius` | int      | None         | Rounded corner radius (pixels)             |
 ### _BaseWidget Methods
 
 | Method                    | Description                                       |
@@ -839,7 +871,7 @@ All widgets accept these parameters:
 
 | Method | Description |
 |--------|-------------|
-| `initialize()` | One-time setup (runs once when pane is first created) |
+| `ip_setup_pane()` | One-time setup (runs once when pane is first created) |
 | `ip_think(ip)` | Per-frame logic. State, physics, AI. |
 | `ip_renderpre(ip)` | Draw before UI. Game worlds, backgrounds. |
 | `ip_renderpost(ip)` | Draw after UI. Overlays, cursors, effects. |

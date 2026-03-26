@@ -47,7 +47,7 @@ class Form_ParticleLife(BaseForm):
         "pl.p.D.count"              : 151,
     }
 
-    def initialize_pipeline(self):
+    def ip_setup_pipeline(self):
         import random
         ids = self.pipeline_read("pl.particle_ids") or []
         for a in ids:

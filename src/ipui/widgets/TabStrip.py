@@ -202,7 +202,9 @@ class TabStrip(_BaseWidget):
                 instance = self.prepare(source_tab)
             else:
                 instance = self.resolve_pane(tab_name)
-                method_name = builder
+                method_name = builder.replace(" ", "_")                        # NEW
+                if instance and not hasattr(instance, method_name):            # NEW
+                    method_name = builder.replace(" ", "")
             if instance is None:
                 self.build_missing_pane(tab_name, pane)
             else:

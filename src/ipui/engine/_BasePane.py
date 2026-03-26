@@ -1,11 +1,11 @@
 # _basePane.py  Update: ip_ lifecycle hooks and IP_LIFECYCLE policy
 from ipui.utils.EZ import EZ
-
+from ipui.engine.IPUI import IPUI
 
 class _basePane:
     """Base class for pane builders.
     Gives self.form to all methods.
-    Override initialize() for one-time setup.
+    Override ip_setup_pane() for one-time setup.
 
     ══════════════════════════════════════════════════════════════
     LIFECYCLE HOOKS — override these in your Pane subclass
@@ -28,7 +28,7 @@ class _basePane:
     IP_LIFECYCLE controls what happens when the tab is not active:
         "persist"  — ip_think keeps running (default)
         "pause"    — ip_think stops, resumes on return
-        "restart"  — ip_think stops, initialize() re-runs on return
+        "restart"  — ip_think stops, ip_setup_pane() re-runs on return
         "kill"     — pane destroyed, rebuilt on return
     ══════════════════════════════════════════════════════════════
     """
@@ -39,12 +39,14 @@ class _basePane:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if '__init__' in cls.__dict__:
-            raise TypeError(f"{cls.__name__}: Don't override __init__, use initialize() instead")
+            raise TypeError(f"{cls.__name__}: Don't override __init__, use ip_setup_pane() instead")
 
     def __init__(self, form):
         self.form = form
+
+        self.ip = IPUI.ip
         self.register_derives()
-        self.initialize()
+        self.ip_setup_pane()
 
 
 # _basePane.py method: register_derives  Update: use EZ.err
@@ -70,7 +72,7 @@ class _basePane:
             )
         #self.form.pipeline.fire_all_derives()
 
-    def initialize(self): #If writing documentation DOCUMENT THIS IOC HOOK
+    def ip_setup_pane(self):
         pass
 
     def swap_pane(self, index, builder, *args, **kwargs):

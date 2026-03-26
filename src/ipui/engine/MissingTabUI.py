@@ -16,7 +16,7 @@ class MissingTabUI(_basePane):
         tab_name = self.form.pipeline_read("missing_tab_name") or "???"
         file_name = f"{tab_name}.py"
 
-        Banner(card, "Houston, do you read?", glow=True)
+        Banner(card, "Houston, can you read me?", glow=True)
         Spacer(card, height_flex=2)
         Title(card, f"The '{tab_name}' tab needs a home.",name="title_home")
         Title(card, f"AKA No {file_name} file found",name="title_aka")

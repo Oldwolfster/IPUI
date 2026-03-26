@@ -30,6 +30,7 @@ class TextBox(Label):
     def build(self):
         EZ.warn_scroll             ( self)
         self.font                  = self.font or Style.FONT_BODY
+        if self.tab_order is None  : self.tab_order=0 # Will be set in base_widget
         self.wrap                  = False
         self.color_bg              = Style.COLOR_CARD_BG
         self.color_txt             = Style.COLOR_TEXT

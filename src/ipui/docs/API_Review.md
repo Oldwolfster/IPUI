@@ -79,7 +79,7 @@ show(MyForm, "My App")
 
 | Hook | When |
 |------|------|
-| `initialize()` | One-time setup |
+| `ip_setup_pane()` | One-time setup |
 | `ip_think(ip)` | Every frame — logic |
 | `ip_renderpre(ip)` | **⚠️** Before UI draws |
 | `ip_renderpost(ip)` | **⚠️** After UI draws |

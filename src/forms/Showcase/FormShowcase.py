@@ -1,30 +1,20 @@
-# FormShowcase.py  NEW: PIP demo entry form
 from forms.ParticleLife.Form_ParticleLife import Form_ParticleLife
-from ipui import Spacer
-from ipui.engine._BaseForm import _BaseForm
-from ipui.engine.IPUI import IPUI
-from ipui.Style import Style
-from ipui.widgets.Button import Button
-from ipui.widgets.Row import Row
-from ipui.widgets.Label import Banner
-
+from ipui import *
 
 class FormShowcase(_BaseForm):
 
     TAB_LAYOUT = {
         "Welcome"       : ["welcome"        ,"select_project"   ,"metaphor"     ],
-        "Freebies"      : ["the_pitch"      ,"pipeline_demo"    ,"widgets_demo" ],
+        "TestDisabled"  : ["test_disabled"] ,
+        "Relax"         : ["our_goal"       ,"pipeline_demo"    ,"widgets_demo" ],
         "Wiring"        : ["reactive"       ,"imperative"                       ],
         "Ball"          : [("overview", 2)  , (None, 3)         , ("code", 2)   ],
         "Breakout"      : ["greet"          , None              ,"code"         ],
         "SQL"           : [("tables", .5)   ,("query", .7)      ,("results", 1) ],
-
         "Designer"      : [("tab_map",1)    ,("preview" ,3)     ,("toolbox", 1) ],
-
         "Widgets"       : ["catalog_grid"   ,"detail"           ,"code"         ],
         "Tree"          : ["widget_tree"    ,"widget_detail"                    ],
-
-        "Showcase"  : ["the_pitch"      ,"pipeline_live"]                    ,
+        "Showcase"      : ["the_pitch"      ,"pipeline_live"                    ],
     }
     def build(self):
         self.build_header()

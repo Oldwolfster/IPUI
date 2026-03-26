@@ -62,7 +62,7 @@ HYPERPARAMS_LIST = {
 class EZ_Pane(_basePane):
     """Armory tab — configure gladiators, arenas, hyperparams, and seeds."""
 
-    def initialize(self):
+    def ip_setup_pane(self):
         self.load_legos(self.form.active_project.path)
 
 

@@ -30,13 +30,14 @@ class _BaseForm(_BaseWidget):
 
     def __init__(self, title=None):
         self.title          = title
+        self.ip             = IPUI.ip
         self.widgets        = WidgetsDict()
         self.widget_registry= {}
         self.pipeline       = Pipeline(self.widgets, self.widget_registry)
         self.pipeline.debug = getattr(self.__class__, 'pipeline_debug', False)
         self.form           = self
         self                . seed_pipeline_defaults()
-        self                . initialize_pipeline()
+        self                . ip_setup_pipeline()
         self.modal_msg      = None
         self.tab_strip      = None
         self.pinned_tooltip = None
@@ -111,7 +112,7 @@ class _BaseForm(_BaseWidget):
     # ══════════════════════════════════════════════════════════════
     # LIFECYCLE HOOKS
     # ══════════════════════════════════════════════════════════════
-    def initialize_pipeline(self):
+    def ip_setup_pipeline(self):
         pass
     def ip_think(self, ip):
         self.dispatch_ip_think(ip)
@@ -136,7 +137,7 @@ class _BaseForm(_BaseWidget):
             policy    = getattr(pane, 'IP_LIFECYCLE', 'persist')
             is_active = (name == active_name)
             ip.set_pane_context(pane, name, is_active, content_widget if is_active else None)
-            pane.ip = ip
+            #Removed when ip moved to IPUI.ip >> pane.ip = ip
             if is_active:
                 pane.ip_think(ip)
             elif policy == 'persist':

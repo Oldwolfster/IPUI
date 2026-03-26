@@ -12,7 +12,7 @@ class TemplateShowcase(_basePane):
     # PANE 1 — Scrollable widget gallery
     # ══════════════════════════════════════════════════════════════
 
-    def method_1_IPUI_TAB_BUILDER(self, parent):
+    def welcome(self, parent):
         self.squish_extras(3)
         self.form.tab_strip.panes[1].width_flex = 2
         Title(parent, "Widget Showcase", glow=True)
@@ -209,7 +209,7 @@ class TemplateShowcase(_basePane):
     # PANE 2 — Documentation viewer
     # ══════════════════════════════════════════════════════════════
 
-    def method_2_IPUI_TAB_BUILDER(self, parent):
+    def select_project(self, parent):
         Title(parent, "Widget Docs", glow=True)
         Body(parent, "← Click a 'Docs' button to inspect any widget.")
 
@@ -245,7 +245,7 @@ class TemplateShowcase(_basePane):
         Heading(card, f"{label}:")
         Body(card, value)
 
-    def method_3_IPUI_TAB_BUILDER(self, parent):
+    def metaphor(self, parent):
         Spacer(parent, height_flex=2)
         Title(parent, "Your Turn, Champ", glow=True)
         Spacer(parent, height_flex=1)
