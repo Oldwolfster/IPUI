@@ -37,7 +37,7 @@ PRESET_QUERIES = [
 ]
 
 
-class SQL(_basePane):
+class SQL(_BaseTab):
     """Showcase tab demonstrating PowerGrid SQL capabilities."""
 
     def ip_setup_pane(self):

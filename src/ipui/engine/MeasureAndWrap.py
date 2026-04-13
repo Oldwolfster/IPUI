@@ -16,12 +16,12 @@ class MeasureAndWrap:
         rect assignment, and scrollbar math.
 
     What we do:
-        1) Run MeasureAndLayout.Runallthree() once to establish node.rect widths.
+        1) Run MeasureAndLayout.RunLayout() once to establish node.rect widths.
         2) Bottom-up pass: for leaf text widgets that overflow horizontally,
            greedily wrap into lines constrained by rect.width (minus frame).
            If wrapping still overflows vertically, and scrollable is enabled,
            allow MeasureAndLayout's existing scrollbar path to handle it.
-        3) If anything changed (surface or scrollable state), re-run Runallthree()
+        3) If anything changed (surface or scrollable state), re-run RunLayout()
            so MeasureAndLayout recomputes mins/rects/scrollbars correctly.
     """
 
@@ -29,19 +29,19 @@ class MeasureAndWrap:
         self.trunk = trunk
         self.engine = MeasureAndLayout(trunk)
 
-    def Runallthree(self) -> None:
+    def RunLayout(self) -> None:
         """
-        Drop-in compatible with MeasureAndLayout.Runallthree().
+        Drop-in compatible with MeasureAndLayout.RunLayout().
         """
         # Pass 1: establish rects using trusted engine
-        self.engine.Runallthree()
+        self.engine.RunLayout()
 
         # Pass 2: post-pass wrap/scroll decisions (bottom-up)
         changed = self.measure_after_wrap_and_scroll(self.trunk)
 
         # Pass 3: let MeasureAndLayout recompute mins/rects/scrollbars using new surfaces
         if changed:
-            self.engine.Runallthree()
+            self.engine.RunLayout()
 
     def measure_after_wrap_and_scroll(self, node) -> bool:
         """

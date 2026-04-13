@@ -66,7 +66,8 @@ class _BaseWidget:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if '__init__' in cls.__dict__ and cls.__name__ != '_BaseForm':
-            raise TypeError(f"{cls.__name__}: Don't override __init__, use build() instead")
+            EZ.err(f"{cls.__name__}: Don't override __init__, use build() instead",exc_type=TypeError)
+
 
     def __init__(self, parent=None, text=None, name=None,
                  width_flex=0, height_flex=0,
@@ -139,10 +140,11 @@ class _BaseWidget:
         self.private_drag_anchor    = 0                # mouse offset from handle top
 
 
-        # Events
+        # Events — declare, don't handle. MgrInput reads these.
         self.on_click           = on_click
         self.on_change          = on_change
         self.on_hover           = None
+        self.focusable          = False
         self.early_load         = early_load
 
         # State
@@ -396,9 +398,13 @@ class _BaseWidget:
         else                                            : return self.color_bg
 
     # ==============================================================
-    # EVENTS — Click
+    # EVENTS — MgrInput handles all dispatch. Widgets just declare.
     # ==============================================================
-
+    # on_click       → any widget becomes a button
+    # focusable      → any widget receives text input
+    # scrollable     → any widget scrolls
+    # toggle_selected → any widget toggles
+    # See MgrInput.py for the single dispatch point.
 
     def on_click_me(self, callback):
         """Register a validated click handler."""
@@ -426,75 +432,9 @@ class _BaseWidget:
             pass
         self.on_click = callback
 
-    def handle_click(self, pos: tuple[int, int]) -> bool:
-        """Top-level click entry point: clear focus, then dispatch."""
-        self.clear_focus()
-        return self.dispatch_click(pos)
-
-    def dispatch_click(self, pos: tuple[int, int]) -> bool:
-        """Walk children depth-first; if none claim the click, try self."""
-        for child in self.visible_children:
-            if child.dispatch_click(pos): return True
-        if self.rect and self.rect.collidepoint(pos):
-            self.handle_focus(pos)
-            return self.process_click()
-        return False
-
-    def process_click(self) -> bool:
-        """Handle the click action for this widget."""
-        if self.enabled is not True: return True
-        if hasattr(self, 'toggle_selected'): self.toggle_selected()
-        if self.on_click:
-            self.is_pressed = True
-            self.on_click()
-            return True
-        return False
-
-    def handle_focus(self, pos: tuple[int, int]) -> bool:
-        """Override in focusable widgets (e.g. TextBox)."""
-        return False
-
-    def clear_focus(self) -> None:
-        """Recursively clear focus state down the tree."""
-        self.is_focused = False
-        for child in self.children: child.clear_focus()
-
-    def handle_mouse_up(self, pos: tuple[int, int]) -> None:
-        """Release press state down the tree."""
-        self.is_pressed = False
-        for child in self.children: child.handle_mouse_up(pos)
-
-    def handle_mouse_move(self, pos):
-        for child in self.children:
-            if child.handle_mouse_move(pos):
-                return True
-        return False
-
     # ==============================================================
-    # EVENTS — Keyboard
+    # HOVER TOOLTIP FINDERS — used by _BaseForm draw pass
     # ==============================================================
-
-    def handle_keydown(self, event: pygame.event.Event) -> bool:
-        """Walk children first; if none claim the key, try self."""
-        for child in self.children:
-            if child.handle_keydown(event): return True
-        return self.handle_key(event)
-
-    def handle_key(self, event: pygame.event.Event) -> bool:
-        """Override in widgets that handle keyboard input."""
-        return False
-
-    # ==============================================================
-    # EVENTS — Hover
-    # ==============================================================
-
-    def update_hover(self, mouse_pos: tuple[int, int]) -> None:
-        """Recursively update hover state for this widget and children."""
-        self.was_hovered = self.is_hovered
-        self.is_hovered  = self.rect.collidepoint(mouse_pos) if self.rect else False
-        if self.is_hovered and not self.was_hovered: self.hover_start_time = time.time()
-        if self.is_hovered != self.was_hovered and self.on_hover: self.on_hover(self.is_hovered)
-        for child in self.visible_children: child.update_hover(mouse_pos)
 
     def find_hovered_tooltip(self) -> object:
         """Walk tree to find the deepest hovered widget with a tooltip ready to show."""
@@ -566,62 +506,6 @@ class _BaseWidget:
         pygame.draw.line(surface, lt, (r.left,      r.top),        (r.left,      r.bottom - 1), w)
         pygame.draw.line(surface, dk, (r.left,      r.bottom - 1), (r.right - 1, r.bottom - 1), w)
         pygame.draw.line(surface, dk, (r.right - 1, r.top),        (r.right - 1, r.bottom - 1), w)
-
-    def handle_scroll(self, pos: tuple[int, int], button: int) -> bool:
-        """Dispatch scroll events to the deepest scrollable widget under pos."""
-        for child in self.children:
-            if child.handle_scroll(pos, button): return True
-        if self.scroll_active and self.rect and self.rect.collidepoint(pos):
-            direction         = -1 if button == 4 else 1
-            self.scroll_offset += direction * 30
-            frame              = self.frame_size
-            inner              = self.rect.inflate(-frame, -frame)
-
-            content            = getattr(self, 'content_size', self.height_minimum)
-            max_scroll         = max(0, content - inner.height)
-            self.scroll_offset = max(0, min(self.scroll_offset, max_scroll))
-            return True
-        return False
-
-    # ==============================================================
-    # Dragging Scrollbar
-    # ==============================================================
-
-
-    def handle_scroll_drag_start(self, pos):
-        """Check if click is on a scroll handle; start drag if so."""
-        for child in self.children:
-            if child.handle_scroll_drag_start(pos):
-                return True
-        if self.private_handle_rect and self.private_handle_rect.collidepoint(pos):
-            self.private_dragging    = True
-            self.private_drag_anchor = pos[1] - self.private_handle_rect.top
-            return True
-        return False
-
-# _BaseWidget.py method: handle_scroll_drag_move  NEW: Update scroll during drag
-    def handle_scroll_drag_move(self, pos):
-        """Update scroll offset based on mouse position during drag."""
-        if self.private_dragging:
-            usable = self.private_track_h - self.private_handle_h
-            if usable <= 0:
-                return True
-            relative   = pos[1] - self.private_track_top - self.private_drag_anchor
-            ratio      = max(0.0, min(1.0, relative / usable))
-            self.scroll_offset = int(ratio * self.private_max_scroll)
-            return True
-        for child in self.children:
-            if child.handle_scroll_drag_move(pos):
-                return True
-        return False
-
-# _BaseWidget.py method: handle_scroll_drag_end  NEW: Stop scrollbar drag
-    def handle_scroll_drag_end(self, pos):
-        """Release drag state down the tree."""
-        self.private_dragging = False
-        for child in self.children:
-            child.handle_scroll_drag_end(pos)
-
 
     # ==============================================================
     # STATE

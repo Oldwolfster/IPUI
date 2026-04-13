@@ -1,7 +1,7 @@
 import ipui
 from ipui import *
 
-class Rules(_basePane):
+class Rules(_BaseTab):
 
     def world_rules(self, parent):
         root = CardCol(parent, scrollable=True)

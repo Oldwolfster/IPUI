@@ -3,7 +3,7 @@
 from ipui import *
 
 
-class Settings(_basePane):
+class Settings(_BaseTab):
 
     def settings(self, parent):
         root = CardCol(parent, scrollable=True)

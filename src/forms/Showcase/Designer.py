@@ -7,7 +7,7 @@ from ipui import *
 
 WRITE_FILES = False
 
-class Designer(_basePane):
+class Designer(_BaseTab):
 
     def ip_setup_pane(self):
         self.selected_tab  = None

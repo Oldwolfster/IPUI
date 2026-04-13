@@ -1,4 +1,4 @@
-# Armory.py  NEW FILE  (replaces frmMatch.py — _basePane migration)
+# Armory.py  NEW FILE  (replaces frmMatch.py — _BaseTab migration)
 from ipui.popups.TooltipArena import TooltipArena
 from ipui.popups.TooltipGladiator import TooltipGladiator
 
@@ -59,7 +59,7 @@ HYPERPARAMS_LIST = {
 }
 
 
-class EZ_Pane(_basePane):
+class EZ_Pane(_BaseTab):
     """Armory tab — configure gladiators, arenas, hyperparams, and seeds."""
 
     def ip_setup_pane(self):

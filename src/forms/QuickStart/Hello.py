@@ -1,6 +1,6 @@
 from ipui import *
 
-class Hello(_basePane):
+class Hello(_BaseTab):
     def world(self, parent):  # Semantic widgets with declarative layout
         Banner  (parent, "IPUI"                 , glow=True,text_align=CENTER)
         Title   (parent, "Easy to get right!"   ,text_align=CENTER)

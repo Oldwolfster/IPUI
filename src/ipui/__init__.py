@@ -10,13 +10,15 @@ __all__ = [
     "show", "docs", "back", "destroy", "active",
     # Core engine
     "IPUI", "Style",
-    "_BaseForm", "BaseForm",
+    "_BaseForm",
     "_BaseWidget",
     "_BaseHugeTooltip",
-    "_basePane",
+    "_BaseTab",
     "WidgetsDict",
     # Managers
     "MgrColor", "MgrFont", "Log",
+    # Input constants
+    "Key", "Mouse",
     # Widgets
     "Button", "Card", "ChartWidget", "DropDown",
     "NetworkDiagram", "NeuronCell", "PowerGrid",
@@ -58,13 +60,13 @@ def active():
 # ── Re-exports (so users can do: from ipui import Button) ──
 
 from ipui.engine._BaseForm              import _BaseForm
-from ipui.engine._BasePane              import _basePane
-BaseForm =                              _BaseForm               # alias to preventexception
-BasePane =                              _basePane               # alias so `from ipui import *` grabs it
+from ipui.engine._BaseTab               import _BaseTab
 from ipui.engine._BaseWidget            import _BaseWidget
 from ipui.engine._BaseHugeTooltip       import _BaseHugeTooltip
 from ipui.engine.MgrColor               import MgrColor
 from ipui.engine.MgrFont                import MgrFont
+from ipui.engine.Key                    import Key
+from ipui.engine.Mouse                  import Mouse
 from ipui.engine.WidgetsDict            import WidgetsDict
 
 from ipui.widgets.Button                import Button

@@ -24,7 +24,7 @@ pip install ipui
 - [Lifecycle Hooks](#using-hooks-on-a-pane)
 - [Widget Catalog](#widget-catalog)
 - [Layout System](#layout-system)
-- [Tabs and Panes](#tabs-and-basepanes)
+- [Tabs and Panes](#tabs-and-panes)
 - [Reactive Pipeline](#reactive-pipeline)
 - [Imperative Approach](#imperative-approach)
 - [Construction-Time Safety](#construction-time-safety)
@@ -53,7 +53,7 @@ pip install ipui
 - 🔗 **Construction IS Attachment:** No floating widgets or `add()` calls. If you build it inside a container, it's attached automatically.
 - 🔄 **Multiple Update Styles:** Use DAG-based reactivity, pipeline-driven synchronization, or direct widget access—whichever fits the job best.
 - ⛓️ **Data Pipeline:** Bind widgets to a Pipeline Key and let IPUI propagate updates automatically. Derives stay in sync with zero manual update code.
-- 🎮 **Pygame Lifecycle Hooks:** `ip_think`, `ip_renderpre`, and `ip_renderpost` give you full access to the game loop without fighting the framework.
+- 🎮 **Pygame Lifecycle Hooks:** `ip_think`, `ip_draw`, and `ip_draw_hud` give you full access to the game loop without fighting the framework.
 - 💡 **Multi-Tier Tooltips:** Choose between standard hover tips or "Super Tooltips"—pinnable, scrollable windows capable of displaying deep technical data.
 - 🗃️ **Automatic Widget Registry:** When DAG or pipeline isn't the right fit, named widgets stay easy to reach across tabs and panes—no globals, no reference plumbing required.
 - 🐞 **Pro Debug Mode:** Includes a live Widget Tree and layout overlays to make positioning issues easy to diagnose.
@@ -65,51 +65,171 @@ pip install ipui
 
 ---
 
-## new quick start
-IPUI is meant to be organized across a few files.
-But it's easiest to start with one and let it set them up for you.
-
-
 ## Quick Start
 
-Tabs, banner, label, and a button with a modal message — 11 lines of code:
+IPUI is built to grow across files, but the fastest way to start is with **one file**.
+
+Get it running first. Then let IPUI help you split things out as your app grows.
+
+---
+
+### Step 1: First Taste — Run in 30 Seconds
+
+Save this as `SmokeTest.py` (or any name you like):
+```python
+# SmokeTest.py  New: one-class smoke test using form-as-pane
+from ipui import *
+
+class SmokeTest(_BaseForm):
+    TAB_LAYOUT = {
+        "Smoke Test"    :["go"],            # ← This one works immediately
+        "Widgets"       :["demo"],          # ← Will trigger template picker
+        "Relax"         :["sit", "chill"],  # ← Will trigger template picker
+    }
+
+    def go(self, parent):                    # ← matches "go" in TAB_LAYOUT
+        Banner  (parent, "IPUI"              , text_align=CENTER, glow=True)
+        Title   (parent, "Easy to get right!", text_align=CENTER)
+        Body    (parent, "Hard to get wrong.", text_align=CENTER)
+        Button  (parent, "Click Me :)"       , on_click=self.show_hello,
+                 color_bg=Style.COLOR_PAL_GREEN_DARK)
+
+    def show_hello(self): self.show_modal("Hello World!\nWelcome to IPUI")
+
+if __name__ == "__main__": show(SmokeTest)
+```
+
+```bash
+python SmokeTest.py
+```
+
+Three tabs appear immediately:
+  - **Smoke Test**  — fully working with banner, text, and button
+  - **Widgets**     — show IPUI’s friendly Houston helper card with template options
+  - **Relax**       — show IPUI’s friendly Houston helper card with template options
+
+---
+
+### Step 2: Open Widgets — Let IPUI Forge the File
+
+Change to the 'Widgets' tab.
+
+
+> Smoke Test already has real content.
+> Widgets and Relax do not have matching .py files yet.
+
+Problem? Not even a little.
+
+Instead of throwing an error or even showing an empty tab, IPUI steps in with a helper card:
+
+<!-- SCREENSHOT: ipui/assets/images/houston_card.png — the Houston helper card offering to scaffold a missing tab -->
+
+Pick Full Showcase on the Widgets tab. IPUI will create Widgets.py and hot-swap in a complete, interactive widget playground with real working controls (buttons, textboxes, cards, grids, etc.).
+
+It’s not a dead stub — it’s live code you can immediately click, rearrange, and copy-paste from.
+
+---
+
+### Step 3: Customize and Scale
+
+After IPUI generates the file (e.g. Widgets.py), it's packed with working examples. Trim it down to just what you need:
 
 ```python
-# --- FormQuickStart.py                # Define your tab structure - Tab Name -> [Pane Methods]
-from ipui import *                     # <======This is the only import you need for framework files.
-
-class FormQuickStart(BaseForm):
-    TAB_LAYOUT = {                     # This dict sets up your tabs and panes
-        "Hello" : ["world"         ],  # Dictionary Key is tab name.  Values are panes.
-        "Tab2"  : ["pane1", "pane2"],  # Ipui scaffolds a file matching tab name Hello.py
-        "Tab3"  : ["pane3", "pane4"],  # (run and click a tab with no file)
-    }                                  # IPUI searches same folder as 'Form' file
-                                       # (and all descendant folders automatically)
- 
-# --- Hello.py
 from ipui import *
 
-class Hello(_basePane):
-    def world(self, parent):  # Semantic widgets with declarative layout
-        Banner  (parent, "IPUI"                 , glow=True,text_align=CENTER)
-        Title   (parent, "Easy to get right!"   ,text_align=CENTER)
-        Body    (parent, "Hard to get wrong!"   , text_align=CENTER)
-        Heading (parent, "Because we've all spent 3 hours debugging a button.",text_align=CENTER,glow=True)
-        Button  (parent, "Click Me"             ,justify_spread=False,
-                         color_bg=Style.COLOR_PAL_GREEN_DARK,
-                         on_click=lambda: self.form.show_modal("Hello World!"))
-# --- Main.py 
-from forms.QuickStart.FormQuickStart import FormQuickStart
-from ipui import *
-
-if __name__ == "__main__":
-    show(FormQuickStart, "Optional Form Caption")
+class Widgets(_BaseTab):
+    def demo(self, parent):
+        Title(parent, "Widget Playground")
+        Button(parent, "Test Me", on_click=lambda: self.form.show_modal("Nice"))
 ```
+
+Save the file — changes appear instantly.
+
+This is the normal workflow:
+
+1) Add (or modify) entries in TAB_LAYOUT
+2) Let IPUI discover or generate the file(s)
+3) Edit the builder methods on your _BaseTab class
+4) Save and keep going
+
+You can define pane methods directly inside _BaseForm (as in the smoke test) or in separate files — both work seamlessly.
+
+---
+
+### How Tab Discovery Works
+
+The `TAB_LAYOUT` dictionary is the blueprint for your application. 
+* **The Keys** define the names of your tabs.
+* **The Values** are lists that divide that tab into one or more **Panes**.
+* You can size panes by including a flex number (below, `chill` gets 2/3 and `None` gets 1/3)
+
+```python
+TAB_LAYOUT = {
+    "Smoke Test"    :["go"],                        # Tab 'Smoke Test'  with one pane 'go'            
+    "Widgets"       :["demo"],                      # Tab 'Widgets'     with one pane 'demo'
+    "Relax"         :[("chill", 2)  , (None, 1)],   # Tab 'Relax'       with two panes 'chill' and a blank Pygame area
+}
+```
+(Note: A pane value of None creates a blank region for you to draw directly to with Pygame!)
+
+### What Panes Do
+
+Each pane name in your TAB_LAYOUT maps to a builder method with the exact same name. 
+**IPUI is highly flexible** and will look for that builder method in two places:
+
+1. **The Main Form File** (Fastest)
+Just like in SmokeTest.py, you can define the builder method directly inside your _BaseForm class. Perfect for quick prototypes.
+
+2. **A Dedicated Tab File** (Most Scalable)
+When a tab grows, you can move it to its own file. If you have a tab named "Hey There", IPUI will scan your project folder (and subfolders) for a file named Hey_There.py and HeyThere.py. 
+Inside that file, IPUI looks for any class inheriting from _BaseTab. The actual class name doesn't matter!
+
+```python
+# Widgets.py
+from ipui import *
+
+# The class name can be anything, as long as it inherits from _BaseTab
+class TotallyWhateverNameYouWant(_BaseTab):
+    
+    # This matches the 'demo' pane in TAB_LAYOUT
+    def demo(self, parent):
+        Title(parent, "Hello from Widgets.py")
+```
+
+### The Golden Rule: _BaseTab Wins
+
+What happens if IPUI finds a demo() pane builder in both your main _BaseForm and an external Widgets.py file?
+
+**The external** _BaseTab **file always wins**. This is deliberate. The main form is great for a fast start, but once a tab earns its own file, that file becomes the boss. If you extract a method into a new file and leave the old one behind, IPUI gracefully switches over to the new dedicated file.
+
+### Why the `__name__` Guard Is Necessary
+
+Your main file should always end with:
+```python
+if __name__ == "__main__": show(SmokeTest)    
+```
+
+Don't skip this! In a one-file setup, this standard Python guard prevents accidental re-entry during import.
+
+---
+
+### The Philosophy
+
+IPUI makes the right path the easy path.
+
+- Simple things should be trivial
+- Missing structure should be fixable, not fatal
+- Scaling out should feel natural
+- Boilerplate should be forged, not copied around by hand
+- Learning should happen by playing with real, running examples
+
+> That's why the **Full Showcase** template gives you a fully functional widget gallery — click, rearrange, copy-paste, and keep building. Start stealing code before you've written your first line.
 
 No event loop setup. No manual sizing. No coordinate math. IPUI handles the Pygame lifecycle, layout, rendering, and event dispatch automatically.
 
 <!-- SCREENSHOT: ipui/assets/images/quick_start.png — the Hello World form with banner, body text, and green button -->
 ![QuickStart Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/quick_start.png)
+
 ---
 
 ## Core Concepts
@@ -139,10 +259,10 @@ By the time `build()` runs, `self.parent`, `self.form`, and `self.children` are 
 
 ### Three Ways to Update the UI
 
-**Reactive** — Declare relationships at the top of your _basePane. The pipeline handles propagation:
+**Reactive** — Declare relationships at the top of your _BaseTab. The pipeline handles propagation:
 
 ```python
-class MyPane(_basePane):
+class MyPane(_BaseTab):
     DECLARATION_UPDATES = {
         "lbl_status": {
             "property": "text",
@@ -187,16 +307,16 @@ Mix all three freely. The reactive approach requires less code and eliminates up
 Every lifecycle hook receives a single argument: `ip`. It's the IPUI Service Portal — one object that gives you everything you need. Type `ip.` in your IDE and autocomplete shows every attribute and method, organized by family.
 
 ```python
-class MySimulation(_basePane):
+class MySimulation(_BaseTab):
     def ip_think(self, ip):
         self.ball_x += self.ball_dx * ip.dt
 
-    def ip_renderpre(self, ip):
+    def ip_draw(self, ip):
         pos = ip.to_screen(self.ball_x, self.ball_y)
         r   = ip.scale_y(self.ball_r)
         pygame.draw.circle(ip.surface, (255, 160, 40), pos, r)
 
-    def ip_renderpost(self, ip):
+    def ip_draw_hud(self, ip):
         font = Style.FONT_DETAIL
         surf = font.render(f"FPS: {ip.fps}", True, Style.COLOR_TEXT_ACCENT)
         ip.surface.blit(surf, (10, 10))
@@ -208,7 +328,7 @@ class MySimulation(_basePane):
 |-----------|------|-------------|
 | `ip.form` | BaseForm | Active Form instance |
 | `ip.form_name` | str | Name of the active form |
-| `ip.pane` | _basePane | Active pane instance |
+| `ip.pane` | _BaseTab | Active pane instance |
 | `ip.pane_name` | str | Name of the active tab/pane |
 | `ip.is_active_pane` | bool | Is this the visible pane? |
 
@@ -229,7 +349,7 @@ class MySimulation(_basePane):
 | `ip.rect_tab_area` | Rect | The entire tab content row (all pane slots combined) |
 | `ip.rect_screen` | Rect | The full pygame surface |
 
-Use `ip.rect_pane` for all custom rendering in `ip_renderpre` and `ip_renderpost`. No spelunking through the widget tree — the framework finds your canvas for you.
+Use `ip.rect_pane` for all custom rendering in `ip_draw` and `ip_draw_hud`. No need for spelunking through the widget tree — the framework finds your canvas for you.
 
 ### Coordinate Helpers
 
@@ -342,13 +462,95 @@ Help topics: `identity`, `timing`, `geometry`, `mouse`, `keyboard`, `render`, `c
 Currently IPUI renders every frame, so these are effectively no-ops. They exist so your code will work unchanged when dirty-flag optimization lands.
 
 ---
+### State Machine
+
+`ip.state` is a built-in state machine available everywhere — panes, forms, hooks. No setup required for basic use; declare a `STATES` dict for auto-transitions and flash messages.
+
+**Zero-config — just track state:**
+
+```python
+def ip_think(self, ip):
+    ip.state.set("LOADING")
+    print(ip.state.current)     # "LOADING"
+```
+
+**Configured — declare states with transitions, durations, and messages:**
+
+```python
+class Breakout(_BaseTab):
+    STATES = {
+        "DEMO"      : {"next": "READY"  },
+        "READY"     : {"next": "PLAYING", "message": "Click to Launch!"},
+        "PLAYING"   : {"next": "LEVEL_UP"},
+        "LEVEL_UP"  : {"next": "READY",   "duration": 1.5, "message": "LEVEL UP!"},
+        "GAME_OVER" : {"next": "DEMO",    "duration": 2.5, "message": "GAME OVER"},
+    }
+
+    def ip_setup_pane(self):
+        ip.state.configure(self.STATES)
+        ip.state.set("DEMO")
+```
+
+When a state has `duration`, the engine counts down automatically and transitions to `next` when the timer expires. When a state has `message`, the engine draws it centered over the canvas with a dark overlay — no drawing code needed.
+
+**API:**
+
+| Method / Property | Description |
+|-------------------|-------------|
+| `ip.state.current` | Current state name (or None) |
+| `ip.state.message` | Current flash message (or None) |
+| `ip.state.timer` | Seconds remaining on current flash |
+| `ip.state.is_flash` | True if current state has a duration |
+| `ip.state.set("NAME")` | Transition to a specific state |
+| `ip.state.next()` | Follow the `next` chain to the next state |
+| `ip.state.is_("NAME")` | True if current state matches |
+| `ip.state.in_("A", "B")` | True if current state is any of these |
+| `ip.state.configure({...})` | Load a STATES dict (sets first key as initial state) |
+
+**Usage pattern — branch your logic cleanly:**
+
+```python
+def ip_think(self, ip):
+    sm = ip.state
+
+    if sm.in_("LEVEL_UP", "GAME_OVER"):    # flash states — engine handles it
+        return
+
+    if sm.is_("READY"):                     # waiting for player
+        self.ball_x = self.paddle_x(ip)     # ball tracks paddle
+        if ip.mouse_pressed("left"):
+            sm.set("PLAYING")
+        return
+
+    if sm.is_("PLAYING"):                   # normal game
+        self.run_physics(ip)
+```
+
+**Multiple state machines** — the default covers 99% of cases, but named machines are available:
+
+```python
+ip.state("combat").configure({...})
+ip.state("combat").set("ATTACKING")
+ip.state("ui").set("MENU_OPEN")
+```
+
+`ip.state` and `ip.state()` both return the default machine. `ip.state("name")` returns a named one, created on first access.
+
+**STATES dict keys:**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `"next"` | str | State to transition to (via `next()` or after `duration` expires) |
+| `"duration"` | float | Seconds to hold this state before auto-transitioning to `next` |
+| `"message"` | str | Text drawn centered over the canvas during this state |
+
 
 ## Using Hooks on a Pane
 
-Override any hook directly on your `_basePane` subclass:
+Override any hook directly on your `_BaseTab` subclass:
 
 ```python
-class MySimulation(_basePane):
+class MySimulation(_BaseTab):
     def ip_setup_pane(self):
         self.ball_x  = 0.5
         self.ball_y  = 0.5
@@ -359,11 +561,11 @@ class MySimulation(_basePane):
         self.ball_x += self.ball_dx * ip.dt
         self.ball_y += self.ball_dy * ip.dt
 
-    def ip_renderpre(self, ip):
+    def ip_draw(self, ip):
         pos = ip.to_screen(self.ball_x, self.ball_y)
         pygame.draw.circle(ip.surface, (255, 160, 40), pos, 12)
 
-    def ip_renderpost(self, ip):
+    def ip_draw_hud(self, ip):
         font = Style.FONT_DETAIL
         surf = font.render(f"FPS: {ip.fps}", True, Style.COLOR_TEXT_ACCENT)
         ip.surface.blit(surf, (10, 10))
@@ -380,23 +582,7 @@ class MyApp(_BaseForm):
         # app-wide logic here
 ```
 
-### IP_LIFECYCLE — What Happens When the Tab Isn't Active
-
-Each pane can declare a lifecycle policy:
-
-```python
-class MySimulation(_basePane):
-    IP_LIFECYCLE = "persist"     # default — ip_think keeps running in background
-```
-
-| Policy | ip_think when inactive | On return |
-|--------|----------------------|-----------|
-| `"persist"` | Keeps running | Normal (default) |
-| `"pause"` | Stops | Resumes |
-| `"restart"` | Stops | Re-runs `ip_setup_pane()` |
-| `"kill"` | Stops, pane destroyed | Rebuilt from scratch |
-
-Render hooks (`ip_renderpre`, `ip_renderpost`) only fire for the **active** tab regardless of policy — no point drawing to a tab nobody can see.
+Render hooks (`ip_draw`, `ip_draw_hud`) only fire for the **active** tab regardless of policy — no point drawing to a tab nobody can see.
 
 ---
 
@@ -526,12 +712,12 @@ Scrollable containers clip and scroll their children automatically. Scrollbars s
 
 ---
 
-## Tabs and _basePanes
+## Tabs and Panes
 
 Tab layout is declared in one dict on your form:
 
 ```python
-class MyApp(BaseForm):
+class MyApp(_BaseForm):
     TAB_LAYOUT = {
         "Config":  ["settings", "hyperparams"],
         "Results": ["chart",    "grid"],
@@ -539,11 +725,11 @@ class MyApp(BaseForm):
     }
 ```
 
-Each value is a list of method names. IPUI discovers the corresponding `_basePane` subclass by tab name (matching a Python file in the same directory), calls those methods to build each pane, and arranges them side-by-side.
+Each value is a list of method names. IPUI discovers the corresponding `_BaseTab` subclass by tab name (matching a Python file in the same directory), calls those methods to build each pane, and arranges them side-by-side.
 
 ```python
 # Config.py
-class Config(_basePane):
+class Config(_BaseTab):
     def settings(self, parent):
         Title(parent, "Settings")
         ...
@@ -563,7 +749,7 @@ TAB_LAYOUT = {
 }
 ```
 
-The `None` slot becomes `ip.rect_pane` — your game's arena. Draw in `ip_renderpre`, read mouse position with `ip.mouse_local_x()`, convert coordinates with `ip.to_screen()`. Zero framework spelunking required.
+The `None` slot becomes `ip.rect_pane` — your game's arena. Draw in `ip_draw`, read mouse position with `ip.mouse_local_x()`, convert coordinates with `ip.to_screen()`. Zero framework spelunking required.
 
 <!-- SCREENSHOT: ipui/assets/images/breakout_canvas.png — Breakout game running in the None pane with bricks, paddle, and ball -->
 
@@ -603,16 +789,126 @@ self.form.refresh_pane(1)
 **Early-load tabs** (pre-built at startup instead of on first click):
 
 ```python
-class MyApp(BaseForm):
+class MyApp(_BaseForm):
     tab_early_load = ["Config", "Results"]
 ```
 
 **Hidden tabs** (initially hidden, shown later via `show_tab`):
 
 ```python
-class MyApp(BaseForm):
+class MyApp(_BaseForm):
     tab_hidden = ["Colosseum"]
 ```
+
+
+
+---
+## Tabless Mode
+
+Not every app needs tabs. Games, visualizations, single-screen tools — sometimes you just want a window and some widgets.
+
+Skip `TAB_LAYOUT` entirely. Build widgets in `build()`. Use the same lifecycle hooks you already know.
+
+---
+
+### Minimal Example
+
+    from ipui import *
+
+    class MyApp(_BaseForm):
+        def build(self):
+            Banner(self, "My App", glow=True, text_align=CENTER)
+            Title(self, "No tabs. No panes. Just widgets.", text_align=CENTER)
+            Body(self, "Everything lives right here.", text_align=CENTER)
+            Button(self, "Do Something",
+                color_bg=Style.COLOR_PAL_GREEN_DARK,
+                on_click=self.do_something)
+
+        def do_something(self):
+            self.show_modal("It works!")
+
+    if __name__ == "__main__":
+        show(MyApp)
+
+No `TAB_LAYOUT`. No `_BaseTab`. One class, one file, name it whatever you want.
+
+---
+
+### Using Lifecycle Hooks
+
+The same hooks work on a tabless form as on any `_BaseTab` pane:
+
+    from ipui import *
+    import pygame
+
+    class Asteroids(_BaseForm):
+        STATES = {
+            "READY"     : {"next": "PLAYING", "message": "Click to Start!"},
+            "PLAYING"   : {"next": "GAME_OVER"},
+            "GAME_OVER" : {"next": "READY", "duration": 2.5, "message": "GAME OVER"},
+        }
+
+        def build(self):
+            self.lbl_score = Title(self, "Score: 0")
+
+        def ip_setup_pane(self):
+            self.ship_x  = 0.5
+            self.ship_y  = 0.5
+            self.speed   = 0.4
+            self.bullets = []
+            ip.state.configure(self.STATES)
+
+        def ip_think(self, ip):
+            if ip.state.is_("PLAYING"):
+                self.ship_x += self.speed * ip.dt
+                self.lbl_score.set_text(f"Score: {len(self.bullets)}")
+
+        def ip_draw(self, ip):
+            pos = ip.to_screen(self.ship_x, self.ship_y)
+            pygame.draw.circle(ip.surface, (255, 160, 40), pos, ip.scale_y(0.02))
+
+        def ip_draw_hud(self, ip):
+            font = Style.FONT_DETAIL
+            surf = font.render(f"FPS: {ip.fps}", True, Style.COLOR_TEXT_ACCENT)
+            ip.surface.blit(surf, (10, 10))
+
+    if __name__ == "__main__":
+        show(Asteroids)
+
+Every hook — `ip_setup_pane`, `ip_think`, `ip_draw`, `ip_draw_hud` — works identically whether it lives on a `_BaseForm` or a `_BaseTab`. Move code between the two freely.
+
+---
+
+### When to Use Tabless vs Tabbed
+
+| Scenario | Approach |
+|----------|----------|
+| Quick prototype, single screen | Tabless — one class, `build()` |
+| Game or visualization | Tabless — full hook access, no tab chrome |
+| Multi-view app | Tabbed — `TAB_LAYOUT` with `_BaseTab` files |
+| One-file demo with tabs | Tabbed — builder methods on the form |
+
+Tabless is the on-ramp. Tabs are the highway. Both use the same engine.
+
+---
+
+### Layout Without Panes
+
+In tabbed mode, panes give you automatic side-by-side columns. In tabless mode, use `Row` and `Col` directly:
+
+    class Dashboard(_BaseForm):
+        def build(self):
+            row = Row(self, width_flex=1, height_flex=1)
+
+            sidebar = CardCol(row, width_flex=1)
+            Title(sidebar, "Controls")
+            Button(sidebar, "Reset", on_click=self.reset)
+
+            main = CardCol(row, width_flex=3)
+            Title(main, "Output")
+            self.lbl_result = Body(main, "Ready")
+
+You get the same layout flexibility — just with explicit containers instead of pane slots.
 
 ---
 
@@ -628,10 +924,10 @@ self.form.pipeline_set("training_active", True)
 active = self.form.pipeline_read("training_active")
 ```
 
-Declare widget reactions in `DECLARATION_UPDATES` at the top of your _basePane:
+Declare widget reactions in `DECLARATION_UPDATES` at the top of your _BaseTab:
 
 ```python
-class TrainingPane(_basePane):
+class TrainingPane(_BaseTab):
     DECLARATION_UPDATES = {
         "btn_start": {
             "property": "enabled",
@@ -665,7 +961,7 @@ The pipeline also pushes values back to source widgets — if you call `pipeline
 Store widget references and drive them yourself:
 
 ```python
-class MyPane(_basePane):
+class MyPane(_BaseTab):
     def widgets(self, parent):
         self.lbl_count = Body(parent, "0 selected", name="lbl_count")
         self.btn_run   = Button(parent, "Run",
@@ -805,12 +1101,12 @@ ipui.show(MyApp, "My Application")
 | `refresh_pane(index)`                | Rebuild current pane from its existing builder |
 | `hide_tab(name)`                     | Hide a tab button                          |
 | `show_tab(name)`                     | Show a hidden tab button                   |
-| `get_tab(name)`                      | Return cached _basePane instance           |
-| `prepare(name)`                      | Force-load a tab's _basePane               |
+| `get_tab(name)`                      | Return cached _BaseTab instance           |
+| `prepare(name)`                      | Force-load a tab's _BaseTab               |
 | `show_modal(msg, func, min_sec=0)`   | Show modal while running func              |
 | `ip_think(ip)`                       | Per-frame logic hook (override for app-wide state) |
-| `ip_renderpre(ip)`                   | Pre-render hook (override for backgrounds) |
-| `ip_renderpost(ip)`                  | Post-render hook (override for overlays)   |
+| `ip_draw(ip)`                   | Pre-render hook (override for backgrounds) |
+| `ip_draw_hud(ip)`                  | Post-render hook (override for overlays)   |
 
 ### _BaseWidget Constructor Parameters
 
@@ -860,27 +1156,26 @@ All widgets accept these parameters:
 | `on_click_me(callback)`   | Register validated click handler (zero-arg)       |
 | `display_name`            | Property: human-readable identity (name → text → type) |
 
-### _basePane
+### _BaseTab
 
 | Attribute             | Type   | Description                                  |
 |-----------------------|--------|----------------------------------------------|
 | `DECLARATION_UPDATES` | dict   | Reactive derive declarations (see below)     |
-| `IP_LIFECYCLE`        | str    | Tab lifecycle policy: `"persist"` (default), `"pause"`, `"restart"`, `"kill"` |
 
 **Lifecycle hooks** (override on your pane):
 
-| Method | Description |
-|--------|-------------|
-| `ip_setup_pane()` | One-time setup (runs once when pane is first created) |
-| `ip_think(ip)` | Per-frame logic. State, physics, AI. |
-| `ip_renderpre(ip)` | Draw before UI. Game worlds, backgrounds. |
-| `ip_renderpost(ip)` | Draw after UI. Overlays, cursors, effects. |
+| Method               | Description                                            |
+|----------------------|--------------------------------------------------------|
+| `ip_setup_pane()`    | One-time setup (runs once when pane is first created)  |
+| `ip_think(ip)`       | Per-frame logic. State, physics, AI.                   |
+| `ip_draw(ip)`        | Draw before UI. Game worlds, backgrounds.              |
+| `ip_draw_hud(ip)`    | Draw after UI. Overlays, cursors, effects.             |
 
 **DECLARATION_UPDATES entry format:**
 ```python
 "widget_name": {
     "property": "text",          # or "enabled", or any widget attribute
-    "compute":  "method_name",   # method on this _basePane
+    "compute":  "method_name",   # method on this _BaseTab
     "triggers": ["key1", "key2"] # pipeline keys that trigger recompute
 }
 ```
@@ -957,7 +1252,7 @@ Every frame, the widget tree executes four phases top-down:
 4. DRAW     Each widget draws itself into its assigned rect, then
             recurses into children. Clipping ensures nothing leaks.
 
-This is NOT a virtual DOM. There's no diffing, no reconciliation.
+This is NOT a virtual DOM. There's no need for diffing, no reconciliation.
 Each phase runs once per frame in a single top-down pass.
 State changes (set_text, pipeline updates) just re-run build() on
 the affected widget. The next frame's layout pass picks up the new
@@ -969,17 +1264,20 @@ measurements automatically.
 IPUI manages the pygame loop. Each frame executes in this order:
 
 ```
-1. Snapshot input state (ip.dt, ip.mouse_*, ip.key_*)
-2. Process pygame events → UI consumes what it needs
-3. ip_think(ip)        → Form, then all panes (per IP_LIFECYCLE)
-4. Layout pass         → Measure, flex solve, assign rects
+1. Snapshot input state     ( ip.dt, ip.mouse_*, ip.key_*)
+2. Process pygame events    → UI consumes what it needs
+3. ip_think(ip)             → Form, then all panes 
+4. Layout pass              → Measure, flex solve, assign rects
 5. Screen clear
-6. ip_renderpre(ip)    → Form, then active pane only
-7. UI render           → Widget tree draws
-8. ip_renderpost(ip)   → Form, then active pane only
+6. ip_draw(ip)              → Form, then active pane only
+7. UI render                → Widget tree draws
+8. ip_draw_hud(ip)          → Form, then active pane only
 9. Display flip
 ```
 
 <!-- SCREENSHOT: ipui/assets/images/widget_tree_debug.png — F12 debug mode showing the live widget tree inspector -->
 
 *IPUI — Because life's too short for layout bugs.*
+
+
+

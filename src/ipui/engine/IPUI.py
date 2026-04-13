@@ -73,15 +73,6 @@ class IPUI:
         if form: form.render(surface)
 
     @classmethod
-    def process_events(cls, event):
-        form = cls.active()
-        if form:
-            consumed = form.process_events(event)
-            form.check_hover()
-            return consumed
-        return False
-
-    @classmethod
     def update(cls):
         form = cls.active()
         if form: form.update()

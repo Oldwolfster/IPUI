@@ -1,18 +1,18 @@
-# _basePane.py  Update: ip_ lifecycle hooks and IP_LIFECYCLE policy
 from ipui.utils.EZ import EZ
 from ipui.engine.IPUI import IPUI
 
-class _basePane:
+class _BaseTab:
     """Base class for pane builders.
     Gives self.form to all methods.
     Override ip_setup_pane() for one-time setup.
 
     ══════════════════════════════════════════════════════════════
     LIFECYCLE HOOKS — override these in your Pane subclass
+    all run when pane is visible - THINK_ALWAYS=True makes think run regardless.
     ══════════════════════════════════════════════════════════════
-    ip_think(ctx)      — Every frame. State, math, physics, logic.
-    ip_renderpre(ctx)  — Before UI draws. Game world, backgrounds.
-    ip_renderpost(ctx) — After UI draws. Custom cursors, overlays.
+    ip_think(ctx)      — Recommended uses. State, math, physics, logic, etc.
+    ip_draw(ctx)       — Before UI widget tree draws. Game world, backgrounds.
+    ip_draw_hud(ctx)   — After UI widget tree draws. Custom cursors, overlays, scores.
 
     ctx fields:
         ctx.dt         — Seconds since last frame.
@@ -22,20 +22,11 @@ class _basePane:
         ctx.events     — All pygame events this frame.
         ctx.unhandled  — Events the UI did not consume.
 
-    DRAW IN ip_think AT YOUR OWN RISK.
-    ══════════════════════════════════════════════════════════════
-
-    IP_LIFECYCLE controls what happens when the tab is not active:
-        "persist"  — ip_think keeps running (default)
-        "pause"    — ip_think stops, resumes on return
-        "restart"  — ip_think stops, ip_setup_pane() re-runs on return
-        "kill"     — pane destroyed, rebuilt on return
-    ══════════════════════════════════════════════════════════════
+    DRAW IN ip_think AT YOUR OWN RISK.(feels a bit melodramatic)
     """
+    THINK_ALWAYS = False
 
-    IP_LIFECYCLE = "persist"
-
-    # _basePane.py method: __init_subclass__  NEW: guard against __init__ override
+    #  guard against __init__ override
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if '__init__' in cls.__dict__:
@@ -43,13 +34,9 @@ class _basePane:
 
     def __init__(self, form):
         self.form = form
-
         self.ip = IPUI.ip
         self.register_derives()
         self.ip_setup_pane()
-
-
-# _basePane.py method: register_derives  Update: use EZ.err
 
     def register_derives(self):
         derives = getattr(self.__class__, 'DECLARATION_UPDATES', None)
@@ -80,7 +67,7 @@ class _basePane:
             self.form.set_pane(index, builder)
         return do_swap
 
-    def squish_extras(self, keep_count):
+    def hide_extra_panes(self, keep_count):
         for pane in self.form.tab_strip.panes[keep_count:]:
             pane.visible = False
 
@@ -88,15 +75,15 @@ class _basePane:
     # LIFECYCLE HOOKS — override in your pane
     # ══════════════════════════════════════════════════════════════
 
-    def ip_think(self, ctx):
+    def ip_think    (self, ctx):
         """Per-frame logic. Override for state, physics, AI."""
         pass
 
-    def ip_renderpre(self, ctx):
+    def ip_draw     (self, ctx):
         """Draw before UI. Override for game worlds, backgrounds."""
         pass
 
-    def ip_renderpost(self, ctx):
+    def ip_draw_hud (self, ctx):
         """Draw after UI. Override for overlays, cursors, effects."""
         pass
 

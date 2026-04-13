@@ -1,6 +1,6 @@
 from ipui import *
 
-class Tree(_basePane):
+class Tree(_BaseTab):
 
     # ══════════════════════════════════════════════════════════════
     # PANE 1 — The Tree

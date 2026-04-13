@@ -1,4 +1,4 @@
-# TextArea.py  NEW: Multi-line text editor. TextBox that wraps and scrolls.
+# TextArea.py  Multi-line text editor. TextBox that wraps and scrolls.
 #
 # Inherits from TextBox: cursor, selection, clipboard, key handling, chrome.
 # Adds:                  Multi-line editing, vertical cursor navigation,
@@ -9,6 +9,7 @@ import pygame
 from ipui.utils import MgrClipboard
 from ipui.widgets.TextBox import TextBox
 from ipui.Style import Style
+from ipui.engine.Key import Key
 
 
 class TextArea(TextBox):
@@ -186,62 +187,40 @@ class TextArea(TextBox):
                 best_col = c
         return self.line_col_to_pos(line_idx, best_col)
 
-    def handle_focus(self, pos):
-        import time
-        if self.rect and self.rect.collidepoint(pos):
-            self.is_focused            = True
-            self.cursor_timer          = 0
-            now                        = time.time()
-            clicked_pos                = self.pos_from_pixel(pos[0], pos[1])
-            if now - self.private_last_click < 0.4:
-                self.select_word_at(clicked_pos)
-                self.private_text_dragging = False
-            else:
-                self.cursor_pos            = clicked_pos
-                self.selection_anchor      = clicked_pos
-                self.private_text_dragging = True
-            self.private_last_click = now
-            return True
-        self.is_focused = False
-        return False
+    # ══════════════════════════════════════════════════════════════
+    # MgrInput PROTOCOL — overrides for 2D coordinates
+    # ══════════════════════════════════════════════════════════════
 
-    def handle_mouse_move(self, pos):
-        if self.private_text_dragging and self.rect:
+    def handle_focus_click(self, pos):
+        """Called by MgrInput when this widget gains focus via click."""
+        if self.rect and self.rect.collidepoint(pos):
+            self.cursor_timer     = 0
+            clicked_pos           = self.pos_from_pixel(pos[0], pos[1])
+            self.cursor_pos       = clicked_pos
+            self.selection_anchor = clicked_pos
+
+    def handle_double_click(self, pos):
+        """Called by MgrInput on double-click."""
+        clicked_pos = self.pos_from_pixel(pos[0], pos[1])
+        self.select_word_at(clicked_pos)
+
+    def handle_drag_move(self, pos):
+        """Called by MgrInput during mouse drag (text selection)."""
+        if self.rect:
             self.cursor_pos   = self.pos_from_pixel(pos[0], pos[1])
             self.cursor_timer = 0
-            return True
-        return super(TextBox, self).handle_mouse_move(pos)
 
     # ══════════════════════════════════════════════════════════════
-    # KEY HANDLING — override Enter behavior, add Up/Down
+    # MgrInput PROTOCOL — keyboard override for multiline
     # ══════════════════════════════════════════════════════════════
 
-    def handle_key(self, event):
-        if not self.is_focused:
-            return False
-        mods  = pygame.key.get_mods()
-        ctrl  = mods & pygame.KMOD_CTRL
-        shift = mods & pygame.KMOD_SHIFT
-
-        if   event.key == pygame.K_RETURN:    self.insert_newline();          return True
-        elif event.key == pygame.K_ESCAPE:    self.is_focused = False;        return True
-        elif event.key == pygame.K_UP:        self.move_up(shift);            return True
-        elif event.key == pygame.K_DOWN:      self.move_down(shift);          return True
-        elif event.key == pygame.K_LEFT:      self.move_left(ctrl, shift);    return True
-        elif event.key == pygame.K_RIGHT:     self.move_right(ctrl, shift);   return True
-        elif event.key == pygame.K_HOME:      self.move_home(shift);          return True
-        elif event.key == pygame.K_END:       self.move_end(shift);           return True
-        elif event.key == pygame.K_BACKSPACE: self.delete_back(ctrl);         return True
-        elif event.key == pygame.K_DELETE:    self.delete_forward();          return True
-        elif ctrl and event.key == pygame.K_a:self.select_all();              return True
-        elif ctrl and event.key == pygame.K_c:self.copy();                    return True
-        elif ctrl and event.key == pygame.K_v:self.paste();                   return True
-        elif ctrl and event.key == pygame.K_x:self.cut();                     return True
-        elif event.key == pygame.K_TAB:       self.insert_tab();              return True
-        elif event.unicode and event.unicode.isprintable():
-            self.insert_char(event.unicode)
-            return True
-        return False
+    def handle_text_input(self, key, char, ctrl, shift):
+        """Multiline: Enter inserts newline, adds Up/Down/Tab."""
+        if   key == Key.RETURN:    self.insert_newline();          return True
+        elif key == Key.UP:        self.move_up(shift);            return True
+        elif key == Key.DOWN:      self.move_down(shift);          return True
+        elif key == Key.TAB:       self.insert_tab();              return True
+        return super().handle_text_input(key, char, ctrl, shift)
 
     # ══════════════════════════════════════════════════════════════
     # MULTI-LINE EDITING

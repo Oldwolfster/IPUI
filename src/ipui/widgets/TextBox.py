@@ -1,10 +1,17 @@
-# TextBox.py  NEW: Label-based text input. A Label that accepts keyboard input.
+# TextBox.py  Single-line text input.
 #
 # Inherits from Label:  my_surface, compute_intrinsic, measure_constrained,
 #                        render_multiline, composite_glow, text_align, wrapping.
 # Adds:                 Chrome (bg, border, focus glow), cursor, key handling,
 #                        click-to-position, arrow navigation, text clipping,
 #                        selection, clipboard, double-click, drag-to-select.
+#
+# MgrInput protocol:
+#   handle_text_input(key, char, ctrl, shift)  — keyboard when focused
+#   handle_focus_click(pos)                    — click while gaining focus
+#   handle_drag_move(pos)                      — drag-select
+#   handle_drag_end()                          — end drag-select
+#   handle_double_click(pos)                   — select word
 
 import time
 import pygame
@@ -12,6 +19,7 @@ from ipui.utils.EZ import EZ
 from ipui.utils import MgrClipboard
 from ipui.widgets.Label import Label
 from ipui.Style import Style
+from ipui.engine.Key import Key
 
 
 class TextBox(Label):
@@ -32,6 +40,7 @@ class TextBox(Label):
         self.font                  = self.font or Style.FONT_BODY
         if self.tab_order is None  : self.tab_order=0 # Will be set in base_widget
         self.wrap                  = False
+        self.focusable             = True
         self.color_bg              = Style.COLOR_CARD_BG
         self.color_txt             = Style.COLOR_TEXT
         self.color_placeholder     = Style.COLOR_TEXT_MUTED
@@ -44,8 +53,6 @@ class TextBox(Label):
         self.selection_anchor      = len(self.text)
         self.cursor_timer          = 0
         self.scroll_x              = 0
-        self.private_text_dragging = False
-        self.private_last_click    = 0
         self.rebuild_surface()
         self.sync_from_pipeline()
 
@@ -197,66 +204,56 @@ class TextBox(Label):
         return best_pos
 
     # ══════════════════════════════════════════════════════════════
-    # FOCUS + CLICK
+    # MgrInput PROTOCOL — focus click, drag, double-click
     # ══════════════════════════════════════════════════════════════
 
-    def process_click(self):
-        return True
-
-    def handle_focus(self, pos):
+    def handle_focus_click(self, pos):
+        """Called by MgrInput when this widget gains focus via click."""
         if self.rect and self.rect.collidepoint(pos):
-            self.is_focused   = True
-            self.cursor_timer = 0
-            now               = time.time()
-            clicked_pos       = self.pos_from_pixel(pos[0])
-            if now - self.private_last_click < 0.4:
-                self.select_word_at(clicked_pos)
-                self.private_text_dragging = False
-            else:
-                self.cursor_pos            = clicked_pos
-                self.selection_anchor      = clicked_pos
-                self.private_text_dragging = True
-            self.private_last_click = now
-            return True
-        self.is_focused = False
-        return False
+            self.cursor_timer     = 0
+            clicked_pos           = self.pos_from_pixel(pos[0])
+            self.cursor_pos       = clicked_pos
+            self.selection_anchor = clicked_pos
 
-    def handle_mouse_up(self, pos):
-        self.private_text_dragging = False
-        super().handle_mouse_up(pos)
+    def handle_double_click(self, pos):
+        """Called by MgrInput on double-click."""
+        clicked_pos = self.pos_from_pixel(pos[0])
+        self.select_word_at(clicked_pos)
 
-    def handle_mouse_move(self, pos):
-        if self.private_text_dragging and self.rect:
+    def handle_drag_move(self, pos):
+        """Called by MgrInput during mouse drag (text selection)."""
+        if self.rect:
             self.cursor_pos   = self.pos_from_pixel(pos[0])
             self.cursor_timer = 0
-            return True
-        return super().handle_mouse_move(pos)
+
+    def handle_drag_end(self):
+        """Called by MgrInput when mouse is released."""
+        pass  # Nothing to clean up for single-line
 
     # ══════════════════════════════════════════════════════════════
-    # KEY HANDLING
+    # MgrInput PROTOCOL — keyboard input
     # ══════════════════════════════════════════════════════════════
 
-    def handle_key(self, event):
-        if not self.is_focused:
-            return False
-        mods  = pygame.key.get_mods()
-        ctrl  = mods & pygame.KMOD_CTRL
-        shift = mods & pygame.KMOD_SHIFT
-
-        if   event.key == pygame.K_RETURN:    self.submit();                  return True
-        elif event.key == pygame.K_ESCAPE:    self.is_focused = False;        return True
-        elif event.key == pygame.K_LEFT:      self.move_left(ctrl, shift);    return True
-        elif event.key == pygame.K_RIGHT:     self.move_right(ctrl, shift);   return True
-        elif event.key == pygame.K_HOME:      self.move_home(shift);          return True
-        elif event.key == pygame.K_END:       self.move_end(shift);           return True
-        elif event.key == pygame.K_BACKSPACE: self.delete_back(ctrl);         return True
-        elif event.key == pygame.K_DELETE:    self.delete_forward();          return True
-        elif ctrl and event.key == pygame.K_a:self.select_all();              return True
-        elif ctrl and event.key == pygame.K_c:self.copy();                    return True
-        elif ctrl and event.key == pygame.K_v:self.paste();                   return True
-        elif ctrl and event.key == pygame.K_x:self.cut();                     return True
-        elif event.unicode and event.unicode.isprintable():
-            self.insert_char(event.unicode)
+    def handle_text_input(self, key, char, ctrl, shift):
+        """Called by MgrInput when a key is pressed and this widget is focused.
+        key:   Key.* constant (int)
+        char:  printable character or None
+        ctrl:  bool
+        shift: bool
+        Returns True if consumed."""
+        if   key == Key.RETURN:    self.submit();                  return True
+        elif key == Key.LEFT:      self.move_left(ctrl, shift);    return True
+        elif key == Key.RIGHT:     self.move_right(ctrl, shift);   return True
+        elif key == Key.HOME:      self.move_home(shift);          return True
+        elif key == Key.END:       self.move_end(shift);           return True
+        elif key == Key.BACKSPACE: self.delete_back(ctrl);         return True
+        elif key == Key.DELETE:    self.delete_forward();          return True
+        elif ctrl and key == Key.A:self.select_all();              return True
+        elif ctrl and key == Key.C:self.copy();                    return True
+        elif ctrl and key == Key.V:self.paste();                   return True
+        elif ctrl and key == Key.X:self.cut();                     return True
+        elif char:
+            self.insert_char(char)
             return True
         return False
 

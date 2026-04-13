@@ -22,10 +22,11 @@ class _BaseForm(_BaseWidget):
     declares:    TAB_LAYOUT(dict), tab_early_load(list), tab_on_change(str), tab_hidden(list), tab_border(int)
     """
 
-    _allow_init = True
+    private_allow_init  = True
+    THINK_ALWAYS        = False
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        if '__init__' in cls.__dict__ and not cls.__dict__.get('_allow_init', False):
+        if '__init__' in cls.__dict__ and not cls.__dict__.get('private_allow_init', False):
             raise TypeError(f"{cls.__name__}: Don't override __init__, use build() instead")
 
     def __init__(self, title=None):
@@ -42,9 +43,9 @@ class _BaseForm(_BaseWidget):
         self.tab_strip      = None
         self.pinned_tooltip = None
         super().__init__    ( parent=None)
-        self                . setup_tabs()
+        self                . setup()
         self                . build_footer()
-        self.MEASUREDRAWLAY = MeasureAndWrap(self)
+        self.layout_engine = MeasureAndWrap(self)
 
 
     def seed_pipeline_defaults(self):
@@ -56,7 +57,7 @@ class _BaseForm(_BaseWidget):
 
     def render(self, surface):
         if 1==1 or self.dirty :
-            self.MEASUREDRAWLAY.Runallthree()
+            self.layout_engine.RunLayout()
             self.dirty = False
         self.draw(surface)
         self.draw_overlays(surface)
@@ -114,87 +115,71 @@ class _BaseForm(_BaseWidget):
     # ══════════════════════════════════════════════════════════════
     def ip_setup_pipeline(self):
         pass
-    def ip_think(self, ip):
+    def ip_thinkdead(self, ip):
         self.dispatch_ip_think(ip)
 
-    def ip_renderpre(self, ip):
-        self.dispatch_ip_render(ip, "ip_renderpre")
+    def ip_drawdead(self, ip):
+        self.dispatch_ip_render(ip, "ip_draw")
 
-    def ip_renderpost(self, ip):
-        self.dispatch_ip_render(ip, "ip_renderpost")
+    def ip_draw_huddead(self, ip):
+        self.dispatch_ip_render(ip, "ip_draw_hud")
 
     # ══════════════════════════════════════════════════════════════
     # HOOK DISPATCH — routes to panes with geometry context
     # ══════════════════════════════════════════════════════════════
 
     def dispatch_ip_think(self, ip):
-        if not self.tab_strip:
-            return
-        active_name  = self.tab_strip.active_tab
-        cache        = self.tab_strip.pane_cache
-        content_widget = self.tab_strip.content if self.tab_strip else None
+        if self.dispatch_tabs_think(ip): return
+        self.dispatch_form_think(ip)
+
+    def dispatch_tabs_think(self, ip):
+        """active-tab only, THINK_ALWAYS opt-in"""
+        #if not self.tab_strip:   return False
+        if self.tabless_mode: return False
+        active_name    = self.tab_strip.active_tab
+        cache          = self.tab_strip.pane_cache
+        content_widget = self.tab_strip.content
         for name, pane in cache.items():
-            policy    = getattr(pane, 'IP_LIFECYCLE', 'persist')
-            is_active = (name == active_name)
-            ip.set_pane_context(pane, name, is_active, content_widget if is_active else None)
-            #Removed when ip moved to IPUI.ip >> pane.ip = ip
-            if is_active:
-                pane.ip_think(ip)
-            elif policy == 'persist':
-                pane.ip_think(ip)
+            is_active  = (name == active_name)
+            if is_active or pane.THINK_ALWAYS:
+                ip.set_pane_context(pane, name, is_active, content_widget)
+                if hasattr(pane, 'ip_think'):pane.ip_think(ip)
+        return True
+
+    def dispatch_form_think(self, ip):
+        if not hasattr(type(self), 'ip_think'):
+            return
+        ip.set_pane_context(self, type(self).__name__, True, self)
+        self.ip_think(ip)
 
     def dispatch_ip_render(self, ip, hook_name):
-        if not self.tab_strip:
-            return
+        if self.dispatch_tabs_render(ip, hook_name): return
+        self.dispatch_form_render(ip, hook_name)
+
+    def dispatch_tabs_render(self, ip, hook_name):
+        if self.form.tabless_mode: return False
         active_name    = self.tab_strip.active_tab
         pane           = self.tab_strip.pane_cache.get(active_name)
         content_widget = self.tab_strip.content if self.tab_strip else None
         if pane:
             ip.set_pane_context(pane, active_name, True, content_widget)
             getattr(pane, hook_name)(ip)
+        return True
+
+    def dispatch_form_render(self, ip, hook_name):
+        if not hasattr(type(self), hook_name):
+            return
+        ip.set_pane_context(self, type(self).__name__, True, self)
+        getattr(self, hook_name)(ip)
+
+
+    def ip_think(self, ip):     pass
+    def ip_draw(self, ip):      pass
+    def ip_draw_hud(self, ip):  pass
 
     # ══════════════════════════════════════════════════════════════
-    # EVENT PROCESSING
+    # TOOLTIP HELPERS — called by MgrInput, not by widgets
     # ══════════════════════════════════════════════════════════════
-
-    def process_events(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if self.handle_tooltip_click(event.pos):
-                return True
-            if self.handle_scroll_drag_start(event.pos):
-                return True
-            self.handle_click(event.pos)
-            return True
-        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-            self.handle_scroll_drag_end(event.pos)
-            self.handle_mouse_up(event.pos)
-            return True
-        elif event.type == pygame.MOUSEMOTION:
-            self.handle_scroll_drag_move(event.pos)
-            self.handle_mouse_move(event.pos)
-            return False
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button in (4, 5):
-            if self.handle_tooltip_scroll(event.pos, event.button):
-                return True
-            self.handle_scroll(event.pos, event.button)
-            return True
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_F11:
-                self.show_diagnostics = not getattr(self, 'show_diagnostics', False)
-            elif event.key == pygame.K_ESCAPE and self.pinned_tooltip:
-                self.pinned_tooltip.unpin()
-                self.pinned_tooltip = None
-            elif event.key == pygame.K_F12:
-                from forms.Debugger.FormDebugger import FormDebugger
-                if isinstance(self, FormDebugger):
-                    IPUI.back()
-                else:
-                    IPUI.debug_target = self
-                    IPUI.switch(FormDebugger, "IPUI X-Ray and Diagnostic Tools")
-            else:
-                self.handle_keydown(event)
-            return True
-        return False
 
     def handle_tooltip_click(self, pos):
         if self.pinned_tooltip:
@@ -225,9 +210,6 @@ class _BaseForm(_BaseWidget):
             self.pinned_tooltip.handle_pin_scroll(button)
             return True
         return False
-
-    def check_hover(self):
-        self.update_hover(pygame.mouse.get_pos())
 
     def update(self):
         pass
@@ -305,6 +287,12 @@ class _BaseForm(_BaseWidget):
         for child in widget.children:
             self.draw_diagnostic_widget(surface, child)
 
+    def setup(self):
+        if hasattr(self.__class__, 'TAB_LAYOUT'):  self.setup_tabs()
+        if hasattr(type(self), 'ip_setup_pane') :  self.ip_setup_pane(self.ip )
+
+    def ip_setup_pane(self, ip ): pass #available to be overwritten by base class.
+
     def setup_tabs(self):
         import copy
         cls = self.__class__
@@ -350,3 +338,7 @@ class _BaseForm(_BaseWidget):
 
     def register_derive(self, control_name, property, compute, triggers):
         self.pipeline.register_derive(control_name, property, compute, triggers)
+
+    @property
+    def tabless_mode(self):
+        return self.tab_strip is None

@@ -7,6 +7,7 @@ class Style:
     # ============================================================
     # SCREEN
     # ============================================================
+    SCREEN_WIDTH            = 500
     SCREEN_WIDTH            = 1900
     SCREEN_HEIGHT           = 900
 
@@ -165,7 +166,7 @@ class Style:
     FONT_RATIO_MONO         = .0396
 
     # User preference (0.0 to 1.0, future slider target)
-    font_scale              = .369
+    FONT_SCALE              = .369
 
     # Initialized by MgrFont
     FONT_BANNER             = None

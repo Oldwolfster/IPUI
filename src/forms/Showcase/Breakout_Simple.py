@@ -3,12 +3,12 @@
 import pygame
 
 from ipui import *
+from ipui.engine.Key import Key
+from ipui.engine.Mouse import Mouse
 
 
-class Breakout(_basePane):
+class Breakout(_BaseTab):
     """Arcade demo: press Q or click to start."""
-
-    IP_LIFECYCLE = "persist"
 
     def ip_setup_pane(self):
         self.playing    = False
@@ -23,7 +23,6 @@ class Breakout(_basePane):
         self.bricks     = []
         self.score      = 0
         self.lives      = 3
-
 
     def game_hud(self, parent):
         """Score and lives as real IPUI widgets floating over the game."""
@@ -100,7 +99,7 @@ class Breakout(_basePane):
     # ══════════════════════════════════════════════════════════════
 
     def ip_think(self, ip):
-        if ip.key_pressed("q") or ip.key_pressed("space"):
+        if ip.key_pressed(Key.Q) or ip.key_pressed(Key.SPACE):
             if not self.playing:
                 self.start_game()
         if not self.playing:
@@ -111,7 +110,7 @@ class Breakout(_basePane):
         self.bounce_bricks()
         self.check_ball_lost()
 
-    def ip_renderpre(self, ip):
+    def ip_draw(self, ip):
         if not self.playing or not ip.rect_pane:
             return
         self.draw_arena(ip)
@@ -119,7 +118,7 @@ class Breakout(_basePane):
         self.draw_paddle(ip)
         self.draw_ball(ip)
 
-    def ip_renderpost(self, ip):
+    def ip_draw_hud(self, ip):
         pass
 
 

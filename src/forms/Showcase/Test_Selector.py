@@ -5,7 +5,7 @@ from ipui import *
 
 
 
-class TestRecordSelector(_basePane):
+class TestRecordSelector(_BaseTab):
     """Drop this into any tab to test RecordSelector standalone."""
 
     def test_pager(self, parent):

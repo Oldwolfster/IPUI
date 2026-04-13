@@ -2,7 +2,7 @@ from ipui import *
 from ipui.widgets.Label import Detail
 
 
-class TemplateStarterKit(_basePane):
+class TemplateStarterKit(_BaseTab):
 
     DECLARATION_UPDATES= {
         "lbl_snark": {
@@ -22,7 +22,7 @@ class TemplateStarterKit(_basePane):
     # ══════════════════════════════════════════════════════════════
 
     def method_1_IPUI_TAB_BUILDER(self, parent):
-        self.squish_extras(3)
+        self.hide_extra_panes(3)
         Title(parent, "Reactive", glow=True)
         card = Card(parent)
         Heading(card, "The Derives Approach", glow=True)

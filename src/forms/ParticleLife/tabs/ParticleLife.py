@@ -1,11 +1,14 @@
+import json
 import math
 import random
+from datetime import datetime
+from pathlib import Path
+
 import pygame
 from ipui import *
 
 
-class ParticleLife(_basePane):
-    IP_LIFECYCLE = "pause"
+class ParticleLife(_BaseTab):
 
     def ip_setup_pane(self):
         self.particles             = []
@@ -34,23 +37,31 @@ class ParticleLife(_basePane):
     # Build
     # ==========================================================
     def particle_life(self, parent):
-        root = Card(parent)
+        root = Card(parent, height_flex=1)
 
-        header = CardRow(root, width_flex=True, justify_spread=True)
-        Heading(header, "Particle Life", glow=True)
+        buttons = CardRow(root, width_flex=True, justify_spread=True)
 
-        buttons = CardRow(header)
+        #buttons = CardCol(header)
         Button(buttons, "Pause / Resume", on_click=self._toggle_pause)
         Button(buttons, "Respawn",        color_bg=Style.COLOR_PAL_GREEN_DARK, on_click=self._respawn_from_config)
         Button(buttons, "Shuffle Vel",    on_click=self._randomize_velocities)
         Button(buttons, "Center Burst",   on_click=self._center_burst)
 
-        Body(root, "Simulation uses the Particles tab as its live config source.")
-        Body(root, "Edit particle types or matrix values, then come back here — the sim auto-syncs.")
-        Body(root, "World draws behind the UI. The left card is control/status; the right side is the playground.")
-
         self.lbl_status = Body(root, "")
         self.lbl_types  = Body(root, "")
+
+        Body(root,"CLAUDE!   THE  Below code  collapses to height only the tokens")
+        saves_card = Card(root, scrollable=True)
+
+        header = CardRow(saves_card, width_flex=True, justify_spread=True)
+        Heading(header, "Saves")
+        Button(header, "Save", color_bg=Style.COLOR_PAL_GREEN_DARK, on_click=self._save_and_refresh)
+
+        for save_path in self._list_saves():
+            row = CardRow(saves_card, width_flex=True, justify_spread=True)
+            Body(row, save_path.stem)
+            Button(row, "Load",   color_bg=Style.COLOR_PAL_GREEN_DARK, on_click=lambda p=save_path: self._load_save(p))
+            Button(row, "Delete", color_bg=Style.COLOR_PAL_RED_DARK,   on_click=lambda p=save_path: self._delete_save(p))
 
     # ==========================================================
     # Lifecycle hooks
@@ -211,7 +222,7 @@ class ParticleLife(_basePane):
 
         self._publish_runtime_metrics(ctx)
 
-    def ip_renderpre(self, ctx):
+    def ip_draw(self, ctx):
         self.world_rect = self._compute_world_rect(ctx)
 
         trail_alpha = self._read_int("pl.sim.trail_alpha", 36)
@@ -228,7 +239,7 @@ class ParticleLife(_basePane):
             py = self.world_rect.top  + int(p["y"])
             pygame.draw.circle(ctx.surface, p["color"], (px, py), p["radius"])
 
-    def ip_renderpost(self, ctx):
+    def ip_draw_hud(self, ctx):
         font = Style.FONT_DETAIL
         surf = font.render(f"FPS: {ctx.fps}", True, Style.COLOR_TEXT_ACCENT)
         x    = self.world_rect.left + 10
@@ -261,6 +272,73 @@ class ParticleLife(_basePane):
             p["y"] = cy + random.uniform(-40.0, 40.0)
             p["vx"] = random.uniform(-v_max * 0.45, v_max * 0.45)
             p["vy"] = random.uniform(-v_max * 0.45, v_max * 0.45)
+
+    # ==========================================================
+    # Save / Load
+    # ==========================================================
+    def _save_dir(self):
+        d = Path.home() / "particle_life_saves"
+        d.mkdir(exist_ok=True)
+        return d
+
+    def _list_saves(self):
+        return sorted(self._save_dir().glob("*.json"), reverse=True)
+
+    def _build_snapshot(self):
+        ids = self.form.pipeline_read("pl.particle_ids") or []
+
+        sim = {
+            key: self.form.pipeline_read(f"pl.sim.{key}")
+            for key in ("r_min", "r_mid", "r_max", "damping", "v_max",
+                        "force_scale", "collision_strength", "trail_alpha")
+        }
+
+        particles = {
+            pid: {
+                attr: self.form.pipeline_read(f"pl.p.{pid}.{attr}")
+                for attr in ("name", "r", "g", "b", "count")
+            }
+            for pid in ids
+        }
+
+        matrix = {
+            f"{a}.{b}": self.form.pipeline_read(f"pl.G.{a}.{b}")
+            for a in ids
+            for b in ids
+        }
+
+        return {"version": 1, "sim": sim, "particle_ids": ids,
+                "particles": particles, "matrix": matrix}
+
+    def _save_and_refresh(self):
+        name     = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        path     = self._save_dir() / f"{name}.json"
+        snapshot = self._build_snapshot()
+        path.write_text(json.dumps(snapshot, indent=2))
+        self.form.refresh_pane(0)
+
+    def _load_save(self, path):
+        data = json.loads(path.read_text())
+        ids  = data.get("particle_ids", [])
+
+        for key, val in data.get("sim", {}).items():
+            self.form.pipeline_set(f"pl.sim.{key}", val)
+
+        self.form.pipeline_set("pl.particle_ids", ids)
+
+        for pid, attrs in data.get("particles", {}).items():
+            for attr, val in attrs.items():
+                self.form.pipeline_set(f"pl.p.{pid}.{attr}", val)
+
+        for cell_key, val in data.get("matrix", {}).items():
+            self.form.pipeline_set(f"pl.G.{cell_key}", val)
+
+        self.private_needs_respawn = True
+        self.form.refresh_pane(0)
+
+    def _delete_save(self, path):
+        path.unlink(missing_ok=True)
+        self.form.refresh_pane(0)
 
     # ==========================================================
     # Config / cache

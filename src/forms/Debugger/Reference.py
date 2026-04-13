@@ -7,7 +7,7 @@ from ipui.widgets.CodeBox import CodeBox
 from ipui.utils.WidgetCatalog import WidgetCatalog
 
 
-class Reference(_basePane):
+class Reference(_BaseTab):
 
     def ip_setup_pane(self):
         self.catalog           = WidgetCatalog()

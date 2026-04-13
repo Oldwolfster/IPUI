@@ -1,15 +1,12 @@
-# PygameBall2.py  Update: ball bounces in None gap via ip_renderpre
+# PygameBall2.py  Update: ball bounces in None gap via ip_draw
 
 import pygame
 from ipui import *
 
-
-class PygameBall(_basePane):
-    """Live demo of IPUI lifecycle hooks: ip_think, ip_renderpre, ip_renderpost."""
-
-    IP_LIFECYCLE = "persist"       # Ball keeps bouncing even when tab is hidden
-
+class PygameBall(_BaseTab):
+    """Live demo of IPUI lifecycle hooks: ip_think, ip_draw, ip_draw_hud."""
     def ip_setup_pane(self):
+        THINK_ALWAYS    = True
         self.ball_x     = 200.0
         self.ball_y     = 200.0
         self.ball_dx    = 220.0
@@ -25,18 +22,18 @@ class PygameBall(_basePane):
     def overview(self, parent):
         """Left pane — explanation and speed controls."""
         Title(parent, "Pygame + IPUI", glow=True)
-        Body(parent, "IPUI takes over the pygame loop so you "
-                      "don't have to. But you still get full access.")
+        Body(parent, "IPUI does the grunt work for you "
+                      "Access it through ip!")
 
         card = Card(parent)
         Heading(card, "Three Hooks:", glow=True)
         Body(card, "ip_think(ip)\n"
                    "  Every frame. State, physics, logic.\n"
                    "  The ball's position updates here.")
-        Body(card, "ip_renderpre(ip)\n"
+        Body(card, "ip_draw(ip)\n"
                    "  Before UI draws. Backgrounds, game world.\n"
                    "  The ball and trail draw here.")
-        Body(card, "ip_renderpost(ip)\n"
+        Body(card, "ip_draw_hud(ip)\n"
                    "  After UI draws. Overlays, cursors.\n"
                    "  The FPS counter draws here.")
 
@@ -102,8 +99,9 @@ class PygameBall(_basePane):
         if arena:
             self.bounce_off_walls(arena)
         self.update_trail()
+        print(f"thinking{self.ip.frame}")
 
-    def ip_renderpre(self, ip):
+    def ip_draw(self, ip):
         """Draw trail and ball into the None gap, BEFORE UI renders."""
         arena = ip.rect_pane
         if not arena:
@@ -111,7 +109,7 @@ class PygameBall(_basePane):
         self.draw_trail(ip.surface, arena)
         self.draw_ball(ip.surface, arena)
 
-    def ip_renderpost(self, ip):
+    def ip_draw_hud(self, ip):
         """Draw FPS overlay AFTER UI renders."""
         arena = ip.rect_pane
         if not arena:

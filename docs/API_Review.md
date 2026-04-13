@@ -25,10 +25,10 @@ show(MyForm, "My App")
 |-------|------|---------|
 | `_BaseForm` | `_BaseForm.py` | App root. Manages tabs, pipeline, modals |
 | `_BaseWidget` | `_BaseWidget.py` | All widgets inherit from this |
-| `_basePane` | `_BasePane.py` | Tab content builder |
+| `_BaseTab` | `_BaseTab.py` | Tab content builder |
 
 **⚠️ CASING INCONSISTENCY:** `_BaseForm`, `_BaseWidget` are PascalCase.  
-`_basePane` is camelCase. Docs and code are mixed. NamingConventions.md says `_Base` prefix for all three.
+`_BaseTab` is camelCase. Docs and code are mixed. NamingConventions.md says `_Base` prefix for all three.
 
 ---
 
@@ -61,19 +61,18 @@ show(MyForm, "My App")
 | `show_modal(msg, func, min_sec)` | Show modal dialog |
 | `register_derive(...)` | Register a reactive derivation |
 | `ip_think(ip)` | Per-frame logic hook |
-| `ip_renderpre(ip)` | **⚠️** Pre-UI drawing hook |
-| `ip_renderpost(ip)` | **⚠️** Post-UI drawing hook |
+| `ip_draw(ip)` | **⚠️** Pre-UI drawing hook |
+| `ip_draw_hud(ip)` | **⚠️** Post-UI drawing hook |
 
-**⚠️ `ip_renderpre` / `ip_renderpost`:** You flagged these as names you hate.
+**⚠️ `ip_draw` / `ip_draw_hud`:** You flagged these as names you hate.
 
 ---
 
-## 5. _basePane — Attributes & Hooks
+## 5. _BaseTab — Attributes & Hooks
 
 | Name | Type | What |
 |------|------|------|
 | `DECLARATION_UPDATES` | dict | Reactive derive declarations |
-| `IP_LIFECYCLE` | str | `"persist"`, `"pause"`, `"restart"`, `"kill"` |
 | `form` | ref | Parent form (auto-set) |
 | `ip` | ref | IP service portal (set each frame) |
 
@@ -81,13 +80,13 @@ show(MyForm, "My App")
 |------|------|
 | `ip_setup_pane()` | One-time setup |
 | `ip_think(ip)` | Every frame — logic |
-| `ip_renderpre(ip)` | **⚠️** Before UI draws |
-| `ip_renderpost(ip)` | **⚠️** After UI draws |
+| `ip_draw(ip)` | **⚠️** Before UI draws |
+| `ip_draw_hud(ip)` | **⚠️** After UI draws |
 
 | Helper | What |
 |--------|------|
 | `swap_pane(index, builder)` | Returns a lambda for pane swapping |
-| `squish_extras(keep_count)` | **⚠️** Hides panes beyond keep_count. Unclear name. |
+| `hide_extra_panes(keep_count)` | **⚠️** Hides panes beyond keep_count. Unclear name. |
 
 **⚠️ NamingConventions.md says `hook_` prefix** for lifecycle hooks.  
 Actual code uses `ip_` prefix. The doc is stale or the decision changed.
@@ -243,7 +242,7 @@ All support: `set_text()`, `glow=True`, `text_align`, word wrap.
 
 ## 10. `ip` — Service Portal
 
-Passed to `ip_think(ip)`, `ip_renderpre(ip)`, `ip_renderpost(ip)`.
+Passed to `ip_think(ip)`, `ip_draw(ip)`, `ip_draw_hud(ip)`.
 
 ### Identity
 `ip.form`, `ip.form_name`, `ip.pane`, `ip.pane_name`, `ip.is_active_pane`
@@ -305,7 +304,7 @@ Passed to `ip_think(ip)`, `ip_renderpre(ip)`, `ip_renderpost(ip)`.
 `TOKEN_BORDER`, `TOKEN_SCROLLBAR`, `TOKEN_CORNER_RADIUS`, `TOKEN_MULTIPLIER`
 
 ### ⚠️ Casing
-`font_scale` is lowercase. Should be `FONT_SCALE` per naming conventions.
+`FONT_SCALE` is lowercase. Should be `FONT_SCALE` per naming conventions.
 
 ---
 
@@ -327,21 +326,21 @@ DECLARATION_UPDATES = {
 
 | # | Item | Issue |
 |---|------|-------|
-| 1 | `ip_renderpre` / `ip_renderpost` | **You hate these.** Candidates: `ip_draw_before`/`ip_draw_after`, `ip_predraw`/`ip_postdraw`, `ip_background`/`ip_overlay` |
-| 2 | `_basePane` vs `_BaseForm` / `_BaseWidget` | Casing inconsistency. Should be `_BasePane` |
+| 1 | `ip_draw` / `ip_draw_hud` | **You hate these.** Candidates: `ip_draw_before`/`ip_draw_after`, `ip_predraw`/`ip_postdraw`, `ip_background`/`ip_overlay` |
+| 2 | `_BaseTab` vs `_BaseForm` / `_BaseWidget` | Casing inconsistency. Should be `_BaseTab` |
 | 3 | `on_click_me(callback)` | Awkward. Marked "temporary" in NamingConventions. Merge into `on_click`? |
 | 5 | `tool_tip_huge` | Uses `_` separator and "huge". Inconsistent with `tooltip_class` (no separator). `super_tooltip`? |
 | 6 | `do_not_allocate` | Negative boolean. `hidden_from_layout`? `excluded`? |
-| 7 | `font_scale` | lowercase instance style, but it's a class-level config. Should be `FONT_SCALE` |
-| 8 | `squish_extras(keep_count)` | Unclear name. `hide_extra_panes()`? |
+| 7 | `FONT_SCALE` | lowercase instance style, but it's a class-level config. Should be `FONT_SCALE` |
+| 8 | `hide_extra_panes(keep_count)` | Unclear name. `hide_extra_panes()`? |
 | 9 | `hover_bright` | Unclear purpose from name alone |
 | 10 | `locked_to_list` | What does this control? No docs |
 | 11 | `tap(func)` | Undocumented in README |
 | 12 | `early_load` on _BaseWidget | Seems tab-specific, lives on generic widget constructor |
 | 13 | NamingConventions says `hook_` prefix | Actual code uses `ip_` prefix. Doc is stale |
 | 14 | `set_radiate()` on Button | Undocumented in README |
-| 15 | `MEASUREDRAWLAY` | Internal but screaming. `layout_engine` per your own todo |
-| 16 | `Runallthree()` | Internal but awful. `run()` per your own todo |
+| 15 | `layout_engine` | Internal but screaming. `layout_engine` per your own todo |
+| 16 | `RunLayout()` | Internal but awful. `run()` per your own todo |
 | 17 | `private_build_comp` | Unclear name. `private_build_complete`? |
 | 18 | `compute_root_rectHopefullyIamDeprecated` | Still in code. Delete? |
 | 19 | `scroll_glow` default `0.369` | Magic number. Consistent with brand but undocumented |
@@ -354,7 +353,7 @@ DECLARATION_UPDATES = {
 | README Says | Code Actually Has |
 |-------------|-------------------|
 | `hook_` prefix (NamingConventions) | `ip_` prefix |
-| `_basePane` consistent casing | `_basePane` (lowercase b) |
+| `_BaseTab` consistent casing | `_BaseTab` (lowercase b) |
 | `show_modal(msg, func, min_sec=0)` | `show_modal(msg, work_func=None, min_seconds=0)` |
 | Pipeline `fire_all_derives()` | Commented out |
 | `register_derive` on _BaseForm | Present but not in README API table |

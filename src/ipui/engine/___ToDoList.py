@@ -50,7 +50,7 @@ Clean up list
 59) DONE Moved tabstrip to be first class member of form
 52) DONE tabstrip border = -5.  ugly in the api.
 37) DONE show less tabs on startup.
-47) Done: add init guard to _basePane
+47) Done: add init guard to _BaseTab
 45) Done: remove closure factory from log
 63) Done: Reorganize folders and package for PIP TOML, __init... all that bullshit
 65) Done: on base widget is_disabled is not consistent with visible... prefer enabled
@@ -228,26 +228,40 @@ Clean up list
 210) Rename ip_setup_pipeline to follow hook convention — grep and replace
 226)  Rename basepane's ip_setup_pane() to follow hook convention — grep and replace
 ######################################################################
-3/25
+4/7
 ######################################################################
+235) Initialize pygame with scaled mode which appeared to fix the lag issue.
+231) IP_LIFECYCLE — deleted entirely
+232) ip_renderpre → ip_draw
+233) ip_renderpost → ip_draw_hud
+228) _basePane → _BaseTab
+229) _BaseForm alias killed, __all__ enforcing visibility
+236) squish_extras → hide_extra_panes
+237) MEASUREDRAWLAY → layout_engine
+238) Runallthree() → RunLayout()
+239) font_scale → FONT_SCALE
+240) README cleaned up
+241) dt clamp for safety
 
 
+######################################################################
+4/11
+######################################################################
+245) Made the quickstart smoketest super simple by building single class mode... pane logic can be in baseForm instead of separate file
+246) ip_think / ip_draw / ip_draw_hud all dispatch correctly to either file or method in baseform
+247) setup ip context to work in both modes
+248) Added 'Tabless' mode... if you don't define tab_layout it just gives entire screen
+
+249)created tabless_mode property on _BaseForm
 
 TEMP HIT LIST
-227) add
+
 161) Debug tools auto-refresh — probably just call refresh() in ip_think
 188/189) MD viewer bold and tables — could get hairy
-196) Table widget — new widget, probably post-v0.1
-158) Tab order — real feature, post-v0.1
 
-228) rename _basePane to BaseTab - no aliases they cause drift.
-229) rema,e _baseform to BaseForm. - improve showcase
-230) add renders per second
-231) RENAME IP_LIFCYCLE to each version bool
-232) Rename ip_renderpre to ip_draw
-233) Rename ip_renderpost to ip_draw_HUD
-
-
+234) Or shorter: "Split resolve_pane — discovery vs instantiation — so ip_setup_pane never fires before panes exist."
+242) Default ip_think to active-tab only — Change dispatch_ip_think to only call the active pane's ip_think. Remove the loop over all cached panes.
+243) Make ip.state per-tab — Each _BaseTab gets its own StateMachine. Tick only fires for the active tab's machine. ip.state routes to the current tab's machine automatically.
 
 ######################################################################
 Pending for V0.1
@@ -256,14 +270,9 @@ Pending for V0.1
 60) PART OF LAMBDA ELIMINATION: investigate swap_pane in forge and more generic alternatives uch as Button(header, "+New", on_click_args=(self.form.set_pane, 1, self.name_project))
 76) Set Pane, instead of requiring lambda, use kwargs for params aka instead of #self.form.set_pane(1, lambda p: self.show_detail(p, item))   - how does this play with on_click_me
 155) Armory needs 3rd pane.
-
 163) move double click detect to base wid
 167) SQL recordselector behaving off. compare it to tree
-
-196) create table widget.
-
 206) Show optimizers by default - with msg to hover long
-
 211) Add ip_setup_pipeline and PIPELINE_DEFAULTS to docs - note how pipeline_default runs relative to build
 212) Investigate base_form dispatch_ip_think  - does this mean if no tab will not work.
 213) In baseform, hwo do we fix the event handling fiasco
@@ -278,6 +287,13 @@ Pending for V0.1
 223) in sql run query deletes the updated text.
 224) ipui.docs no longer working.
 225) Heat seeking missle from debug tree
+244) Clean up logic when autoscaffolding a tab and the tab name has a space in it.
+249) rename ip_setup_pane to ip_setup
+250) rename ip_setup_pipeline to ip_setup
+
+
+
+
 ##########################################################
 ##########################################################
 ##########################################################
@@ -303,7 +319,9 @@ Punting until after IPUI is on PIP
 48) Colosseum has manual list of config cats
 107) on tab map green indicator does not follow selected button
 103) add troubleshoot buttons on magic debugger tool.
-
+230) add renders per second
+196) Table widget — new widget, probably post-v0.1
+158) Tab order — real feature, post-v0.1
 
 ##########################################################
 Punting to phase 2 of NeuroForge

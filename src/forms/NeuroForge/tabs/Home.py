@@ -5,7 +5,7 @@
 from forms.NeuroForge.custom_widgets.ProjectManager import ProjectManager
 from ipui import *
 
-class EZ_Pane(_basePane):
+class EZ_Pane(_BaseTab):
 
     def welcome(self, parent):
         card = CardCol(parent, width_flex=True, height_flex=True)

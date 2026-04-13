@@ -1,4 +1,4 @@
-# Colosseum.py  NEW FILE  (replaces frmColosseum.py — _basePane migration)
+# Colosseum.py  NEW FILE  (replaces frmColosseum.py — _BaseTab migration)
 
 import multiprocessing
 import time
@@ -17,7 +17,7 @@ VARYING_PRIORITY = [
 ]
 
 
-class EZ_Pane(_basePane):
+class EZ_Pane(_BaseTab):
     """Colosseum tab — real-time training monitoring with live charts and grids."""
 
     def ip_setup_pane(self):

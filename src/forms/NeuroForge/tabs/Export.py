@@ -1,7 +1,7 @@
-# Export.py  class: Export  New: _basePane migration from frmExport.py
+# Export.py  class: Export  New: _BaseTab migration from frmExport.py
 from ipui import *
 
-class EZ_PANE(_basePane):
+class EZ_PANE(_BaseTab):
     """Pane builder for the Export tab."""
 
     def build(self, parent: CardCol) -> None:

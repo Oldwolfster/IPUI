@@ -2,7 +2,7 @@ from ipui import *
 
 
 
-class Showcase(_basePane):
+class Showcase(_BaseTab):
     """
     A 'Signature' Tab designed by Gemini to sell the IPUI Aesthetic.
     """

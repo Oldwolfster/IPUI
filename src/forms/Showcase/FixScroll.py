@@ -2,7 +2,7 @@ from ipui import *
 
 
 
-class FixScroll(_basePane):
+class FixScroll(_BaseTab):
 
     @staticmethod
     def pane1(parent):

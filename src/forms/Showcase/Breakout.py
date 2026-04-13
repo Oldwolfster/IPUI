@@ -1,24 +1,15 @@
-# Breakout.py  Update: state machine, levels, demo mode, ready state
+# Breakout.py  Update: delegate-based state machine
 
 import random
 import pygame
 
 from ipui import *
+from ipui.engine.Key import Key
+from ipui.engine.Mouse import Mouse
 
 
-class Breakout(_basePane):
+class Breakout(_BaseTab):
     """Arcade demo with attract mode, levels, and forgiving paddle."""
-
-    IP_LIFECYCLE = "persist"
-
-    STATES = {
-        "DEMO"      : {"next": "READY"  },
-        "READY"     : {"next": "PLAYING", "message": "Click to Launch!"},
-        "PLAYING"   : {"next": "LEVEL_UP"},
-        "LEVEL_UP"  : {"next": "READY",   "duration": 1.5, "message": "LEVEL UP!"},
-        "GAME_OVER" : {"next": "DEMO",    "duration": 2.5, "message": "GAME OVER"},
-    }
-
     # ══════════════════════════════════════════════════════════════
     # SETUP
     # ══════════════════════════════════════════════════════════════
@@ -36,7 +27,12 @@ class Breakout(_basePane):
         self.lives        = 3
         self.level        = 1
         self.bricks       = []
-        self.ip.state.configure(self.STATES)
+        self.ip.state.add ("DEMO"        , self.state_demo)
+        self.ip.state.add ("READY"       , self.state_ready)
+        self.ip.state.add ("PLAYING"     , self.state_playing)
+        self.ip.state.add ("LEVEL_UP"    , self.state_level_up, "READY", 1.5)
+        self.ip.state.add ("GAME_OVER"   , self.state_game_over, "DEMO", 1.5)
+        self.ip.state.debug()
         self.start_demo()
 
     def start_demo(self):
@@ -45,8 +41,9 @@ class Breakout(_basePane):
         self.level = 1
         self.reset_bricks()
         self.reset_ball()
-        self.ip.state.set("DEMO")
+        self.ip.state.go("DEMO")
         self.build_hud()
+
 
     def start_game(self):
         self.score = 0
@@ -54,7 +51,7 @@ class Breakout(_basePane):
         self.level = 1
         self.reset_bricks()
         self.reset_ball()
-        self.ip.state.set("READY")
+        self.ip.state.go("READY")
         self.build_hud()
 
     def reset_ball(self):
@@ -65,6 +62,39 @@ class Breakout(_basePane):
         self.ball_dy = -speed
 
     # ══════════════════════════════════════════════════════════════
+    # STATE DELEGATES
+    # ══════════════════════════════════════════════════════════════
+
+    def state_demo(self):
+        if not self.bricks or self.lives <= 0:
+            self.start_demo()
+            return
+        if self.ip.key_pressed(Key.Q) or self.ip.key_pressed(Key.SPACE):
+            self.start_game()
+            return
+        self.auto_paddle = self.ball_x
+        self.run_physics(self.ip)
+
+    def state_ready(self):
+        ip = self.ip
+        self.ball_x = self.paddle_x(ip)
+        self.ball_y = self.paddle_y - self.ball_r - 0.01
+        if ip.key_pressed(Key.SPACE):
+            ip.state.go("PLAYING")
+            return
+        if ip.mouse_pressed(Mouse.LEFT) and ip.mouse_inside_pane():
+            ip.state.go("PLAYING")
+
+    def state_playing(self):
+        self.run_physics(self.ip)
+
+    def state_level_up(self):
+        pass
+
+    def state_game_over(self):
+        pass
+
+    # ══════════════════════════════════════════════════════════════
     # LEVELS
     # ══════════════════════════════════════════════════════════════
 
@@ -73,7 +103,7 @@ class Breakout(_basePane):
         self.reset_bricks()
         self.reset_ball()
         self.update_hud()
-        self.ip.state.set("LEVEL_UP")
+        self.ip.state.go("LEVEL_UP")
 
     # ══════════════════════════════════════════════════════════════
     # BRICKS
@@ -127,46 +157,13 @@ class Breakout(_basePane):
             lbl.set_text(f"Level: {self.level}")
         lbl = self.form.widgets.get("lbl_lives")
         if lbl:
-            is_demo = self.ip.state.is_("DEMO")
-            lbl.set_text("DEMO" if is_demo else f"Lives: {self.lives}")
+            lbl.set_text("DEMO" if self.ip.state.is_("DEMO") else f"Lives: {self.lives}")
 
     # ══════════════════════════════════════════════════════════════
     # LIFECYCLE HOOKS
     # ══════════════════════════════════════════════════════════════
 
-    def ip_think(self, ip):
-        sm = ip.state
 
-        # ── Flash states — just wait ──
-        if sm.in_("LEVEL_UP", "GAME_OVER"):
-            return
-
-        # ── Insert quarter ──
-        if ip.key_pressed("q") or ip.key_pressed("space"):
-            if sm.is_("DEMO"):
-                self.start_game()
-                return
-
-        # ── DEMO: auto-play ──
-        if sm.is_("DEMO"):
-            if not self.bricks:
-                self.start_demo()
-            self.auto_paddle = self.ball_x
-            self.run_physics(ip)
-            return
-
-        # ── READY: ball stuck to paddle ──
-        if sm.is_("READY"):
-            self.ball_x = self.paddle_x(ip)
-            self.ball_y = self.paddle_y - self.ball_r - 0.01
-            if ip.key_pressed("space"):
-                sm.set("PLAYING")
-            if ip.mouse_pressed("left") and ip.mouse_inside_pane():
-                sm.set("PLAYING")
-            return
-
-        # ── PLAYING: normal game ──
-        self.run_physics(ip)
 
     def run_physics(self, ip):
         self.move_ball(ip.dt)
@@ -175,7 +172,7 @@ class Breakout(_basePane):
         self.bounce_bricks()
         self.check_ball_lost()
 
-    def ip_renderpre(self, ip):
+    def ip_draw(self, ip):
         if not ip.rect_pane:
             return
         self.draw_arena(ip)
@@ -183,8 +180,13 @@ class Breakout(_basePane):
         self.draw_paddle(ip)
         self.draw_ball(ip)
 
-    def ip_renderpost(self, ip):
-        pass
+    def ip_draw_hud(self, ip):
+        if ip.state.is_("LEVEL_UP"):
+            self.draw_state_message(ip, "LEVEL UP!")
+        elif ip.state.is_("GAME_OVER"):
+            self.draw_state_message(ip, "GAME OVER")
+        elif ip.state.is_("READY"):
+            self.draw_state_message(ip, "Click to Launch!")
 
     # ══════════════════════════════════════════════════════════════
     # PADDLE
@@ -256,11 +258,11 @@ class Breakout(_basePane):
         self.lives -= 1
         self.update_hud()
         if self.lives <= 0:
-            self.ip.state.set("GAME_OVER")
+            self.ip.state.go("GAME_OVER")
             return
         self.reset_ball()
         if not self.ip.state.is_("DEMO"):
-            self.ip.state.set("READY")
+            self.ip.state.go("READY")
 
     # ══════════════════════════════════════════════════════════════
     # DRAWING
@@ -291,6 +293,20 @@ class Breakout(_basePane):
         pos = ip.to_screen(self.ball_x, self.ball_y)
         r   = ip.scale_y(self.ball_r)
         pygame.draw.circle(ip.surface, (255, 255, 255), pos, r)
+
+    def draw_state_message(self, ip, msg):
+        rect = ip.rect_pane
+        if not rect:
+            return
+        overlay = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 140))
+        ip.surface.blit(overlay, (rect.left, rect.top))
+        font      = Style.FONT_BANNER or pygame.font.SysFont("monospace", 48)
+        color     = Style.COLOR_PAL_ORANGE_BRIGHT
+        text_surf = font.render(msg, True, color)
+        x         = rect.centerx - text_surf.get_width()  // 2
+        y         = rect.centery - text_surf.get_height() // 2
+        ip.surface.blit(text_surf, (x, y))
 
     # ══════════════════════════════════════════════════════════════
     # PANE BUILDERS

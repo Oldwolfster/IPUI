@@ -8,7 +8,7 @@ class Pane(_BaseWidget):
     """
     desc:        A single pane slot inside a TabArea. Named in the widget tree by its TAB_LAYOUT builder string.
     when_to_use: Created automatically by TabStrip. Not intended for direct use.
-    best_for:    Internal framework use — hosts pane content built by _basePane methods.
+    best_for:    Internal framework use — hosts pane content built by _BaseTab methods.
     example:     (created by TabStrip from TAB_LAYOUT declarations)
     api:         (layout only — no custom methods)
     """

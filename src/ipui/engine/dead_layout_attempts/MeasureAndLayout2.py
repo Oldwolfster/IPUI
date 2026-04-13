@@ -76,7 +76,7 @@ class MeasureAndLayout:
     # PUBLIC — called by _BaseForm.render()
     # ══════════════════════════════════════════════════════════════
 
-    def Runallthree(self):
+    def RunLayout(self):
         self.measure_tree(self.trunk)
         root = self.compute_root_rect()
         self.layout_node(self.trunk, root)

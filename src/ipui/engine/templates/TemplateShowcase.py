@@ -3,7 +3,7 @@ from ipui.widgets.CodeBox import CodeBox
 from ipui.widgets.Label import Detail
 
 
-class TemplateShowcase(_basePane):
+class TemplateShowcase(_BaseTab):
 
     def ip_setup_pane(self):
         self.catalog = WidgetCatalog()
@@ -13,7 +13,7 @@ class TemplateShowcase(_basePane):
     # ══════════════════════════════════════════════════════════════
 
     def method_1_IPUI_TAB_BUILDER(self, parent):
-        self.squish_extras(3)
+        self.hide_extra_panes(3)
         self.form.tab_strip.panes[1].width_flex = 2
         Title(parent, "Widget Showcase", glow=True)
         Body(parent, "Click any 'Docs' button to see documentation →")

@@ -18,7 +18,7 @@ import pygame
 class IP:
     """IPUI Service Portal — one object, everything you need.
 
-    Passed to ip_think(ip), ip_renderpre(ip), ip_renderpost(ip).
+    Passed to ip_think(ip), ip_draw(ip), ip_draw_hud(ip).
     Type ip.help() for a guided tour.
 
     ═══════════════════════════════════════════
@@ -31,7 +31,7 @@ class IP:
         # ── Identity (set per-dispatch by framework) ──────────
         self.form               = None      # active Form instance
         self.form_name          = ""        # name of active form
-        self.pane               = None      # active _basePane instance
+        self.pane               = None      # active _BaseTab instance
         self.pane_name          = ""        # name of active pane/tab
         self.is_active_pane     = False     # is the current pane the visible one?
 
@@ -411,7 +411,7 @@ class IP:
   ip.mouse_inside_pane()     Is mouse inside pane?
   ip.mouse_inside_content()  Is mouse inside content area?
 
-  Use pane_rect for custom rendering in ip_renderpre/post.
+  Use pane_rect for custom rendering in ip_draw/post.
   All coordinates are pane-relative when using local_to_screen.
 """
 
@@ -464,8 +464,8 @@ class IP:
   ip.unhandled        Events the UI did not consume
 
   DRAW IN ip_think AT YOUR OWN RISK.
-  Use ip_renderpre for backgrounds/game world.
-  Use ip_renderpost for overlays/HUD.
+  Use ip_draw for backgrounds/game world.
+  Use ip_draw_hud for overlays/HUD.
 """
 
     @staticmethod

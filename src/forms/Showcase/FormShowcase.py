@@ -5,7 +5,7 @@ class FormShowcase(_BaseForm):
 
     TAB_LAYOUT = {
         "Welcome"       : ["welcome"        ,"select_project"   ,"metaphor"     ],
-        "TestDisabled"  : ["test_disabled"] ,
+        "TestDisabled"  : ["test_disabled"                                      ] ,
         "Relax"         : ["our_goal"       ,"pipeline_demo"    ,"widgets_demo" ],
         "Wiring"        : ["reactive"       ,"imperative"                       ],
         "Ball"          : [("overview", 2)  , (None, 3)         , ("code", 2)   ],

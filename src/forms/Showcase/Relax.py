@@ -2,7 +2,7 @@ from numpy.f2py.capi_maps import c2buildvalue_map
 
 from ipui import *
 
-class EZ_Pane(_basePane):
+class EZ_Pane(_BaseTab):
 
     DECLARATION_UPDATES= {
         "lbl_pipeline_echo" : {"property": "text", "compute":  "compute_echo"       ,"triggers": ["demo_key"],},

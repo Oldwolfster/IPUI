@@ -39,7 +39,7 @@ Classes meant for subclassing — never direct instantiation — get the `_Base`
 ```python
 class _BaseWidget:   ...   # Inherit for custom widgets
 class _BaseForm:     ...   # Inherit for app screens
-class _BasePane:     ...   # Inherit for tab content
+class _BaseTab:     ...   # Inherit for tab content
 ```
 
 ---
@@ -167,7 +167,7 @@ Before release: delete all `aaa_` methods, `*Old` methods, and duplicates.  Dele
 | What | Pattern                | Examples                              |
 |------|------------------------|---------------------------------------|
 | Widget classes | `PascalCase`           | `Button`, `CardCol`, `PowerGrid`      |
-| Base classes | `_base` + `PascalCase` | `_baseWidget`, `_baseForm`, `_basePane` |
+| Base classes | `_base` + `PascalCase` | `_baseWidget`, `_baseForm`, `_BaseTab` |
 | Service singletons | `Mgr` + `PascalCase`   | `MgrFont`, `MgrColor`, `MgrLog`       |
 | Form subclasses | `Form` + `PascalCase`  | `FormShowcase`, `FormParticleLife`    |
 | Methods | `snake_case`           | `set_data()`, `pipeline_read()`       |
@@ -237,24 +237,24 @@ from ipui.widgets.Label import Label, Banner, Title, Heading, Body, Detail
 from ipui.widgets.Label import *
 ```
 
-### 2. `_basePane` → `_basePane` (class + file rename)
+### 2. `_BaseTab` → `_BaseTab` (class + file rename)
 
 **What changes for users:** Class they inherit from.
 
 ```python
 # OLD
-class MyTab(_basePane):
+class MyTab(_BaseTab):
 
 # NEW
-class MyTab(_basePane):
+class MyTab(_BaseTab):
 ```
 
-**Files that reference `_basePane`:**
+**Files that reference `_BaseTab`:**
 
 | File | Reference |
 |------|-----------|
-| `TabStrip.py` | `from ipui.engine._basePane import _basePane`, `issubclass(obj, _basePane)` |
-| `Overview.py` | `from ipui import *` (gets _basePane) |
+| `TabStrip.py` | `from ipui.engine._BaseTab import _BaseTab`, `issubclass(obj, _BaseTab)` |
+| `Overview.py` | `from ipui import *` (gets _BaseTab) |
 | `Settings.py` | same |
 | `TemplateStarterKit.py` | same |
 | `Iamnothere.py` | same |
@@ -269,12 +269,12 @@ class MyTab(_basePane):
 | `Tree.py` | (likely) |
 | `Welcome.py` | explicit import |
 | `FormDebugger.py` | (likely via tabs) |
-| `MissingTabUI.py` | `from ipui.engine._basePane import _basePane` |
+| `MissingTabUI.py` | `from ipui.engine._BaseTab import _BaseTab` |
 | `__init__.py` | Re-export |
 
-**Mitigation:** Add alias in `_basePane.py`:
+**Mitigation:** Add alias in `_BaseTab.py`:
 ```python
-_basePane = _basePane  # backward compat, remove in v0.2
+_BaseTab = _BaseTab  # backward compat, remove in v0.2
 ```
 
 ### 3. `Form_ParticleLife` → `FormParticleLife` (class + file rename)
@@ -290,7 +290,7 @@ _basePane = _basePane  # backward compat, remove in v0.2
 
 Small blast radius — only 2 files.
 
-### 4. `_basePane.py` file rename (consequence of #2)
+### 4. `_BaseTab.py` file rename (consequence of #2)
 
 Covered above. Same files as #2.
 
@@ -314,7 +314,7 @@ Covered above. Same files as #2.
 ### API Renames (do before v0.1, add backward-compat shims)
 
 - [x ] **RENAME FILE** `Text.py` → `Label.py` (add re-export shim in old path)
-- [x ] **RENAME FILE+CLASS** `_basePane.py` → `_basePane.py`, class `_basePane` (add alias)
+- [x ] **RENAME FILE+CLASS** `_BaseTab.py` → `_BaseTab.py`, class `_BaseTab` (add alias)
 - [s ] **RENAME FILE+CLASS** `Form_ParticleLife.py` → `FormParticleLife.py`, class `FormParticleLife`
 - [ x] **DOCSTRING** `Label`: Change `name: Text` → `name: Label`
 - [x ] **DOCSTRING** `Grid`: Change "use DataGrid" → "use PowerGrid"
@@ -326,9 +326,9 @@ Covered above. Same files as #2.
 - [ x] **RENAME FILE** `Overlay.py` → `DebugOverlay.py`
 - [x ] **RENAME FILE** `Layout.py` → `DebugLayout.py`
 - [x ] **RENAME FILE** `PygameBall.py` → `Welcome.py`
-- [s ] **RENAME METHOD** `Runallthree()` → `run()` on `MeasureAndLayout` and `MeasureAndWrap`
+- [s ] **RENAME METHOD** `RunLayout()` → `run()` on `MeasureAndLayout` and `MeasureAndWrap`
 - [x ] **RENAME METHOD** `init_pygame()` → `init_pygame()` on `_IPUI`
-- [ ] **RENAME ATTR** `MEASUREDRAWLAY` → `layout_engine` on `_baseForm`
+- [ ] **RENAME ATTR** `layout_engine` → `layout_engine` on `_baseForm`
 - [ ] **RENAME ATTR** `_active_tab` → `active_tab_name` on `TabStrip`
 
 ### Guido Underscore Cleanup (safe, grep-and-replace)
@@ -352,7 +352,7 @@ Covered above. Same files as #2.
 
 ### Style Constant Fix
 
-- [ ] `Style.font_scale` → `Style.FONT_SCALE`
+- [ ] `Style.FONT_SCALE` → `Style.FONT_SCALE`
 
 ### Housekeeping (nice to have before v0.1)
 

@@ -5,7 +5,7 @@ from datetime import datetime
 from ipui import *
 
 
-class EZ_Pane(_basePane):
+class EZ_Pane(_BaseTab):
     """Ludus tab — historical batch and run analysis across the project."""
 
     MAX_COMPARE = 4

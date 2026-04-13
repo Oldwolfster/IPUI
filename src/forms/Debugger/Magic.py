@@ -4,7 +4,7 @@ from ipui import *
 from ipui.widgets.Label import Detail
 
 
-class Magic(_basePane):
+class Magic(_BaseTab):
 
     def ip_setup_pane(self):
         if self.form.pipeline_read("magic_mode") is None:

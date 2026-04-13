@@ -1,7 +1,7 @@
 from ipui import *
 
 
-class NewTab(_basePane):
+class NewTab(_BaseTab):
     """Three-pane tab template — rename methods to match your tab_data strings."""
 
     def the_name_from_dict(self,parent):

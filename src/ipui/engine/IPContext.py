@@ -1,11 +1,11 @@
-# IPContext.py  NEW: Frame context for ip_think / ip_renderpre / ip_renderpost
+# IPContext.py  NEW: Frame context for ip_think / ip_draw / ip_draw_hud
 #
 # ╔══════════════════════════════════════════════════════════════╗
 # ║  DRAW IN ip_think AT YOUR OWN RISK                         ║
 # ║                                                             ║
 # ║  ip_think    = THINK.  State, math, physics, logic.        ║
-# ║  ip_renderpre  = Draw your world BEFORE the UI paints.     ║
-# ║  ip_renderpost = Draw overlays AFTER the UI paints.        ║
+# ║  ip_draw  = Draw your world BEFORE the UI paints.     ║
+# ║  ip_draw_hud = Draw overlays AFTER the UI paints.        ║
 # ║                                                             ║
 # ║  The surface is on ctx for all three, but ip_think runs    ║
 # ║  before the screen is cleared. Anything you draw there     ║

@@ -99,7 +99,7 @@ class MeasureAndLayout:
         for child in w.children:
             self.dump_tree(child, depth + 1)
 
-    def Runallthree(self):
+    def RunLayout(self):
         self.MeasureAndLayout(self.myTrunk)
         self.dump_tree(self.myTrunk)
 

@@ -2,16 +2,13 @@ import ipui
 from ipui import *
 
 
-class Form_ParticleLife(BaseForm):
+class Form_ParticleLife(_BaseForm):
 
     TAB_LAYOUT  =       {
         "Rules"         : ["world_rules"    , "interaction_rules", "dynamics_rules"],
         "Particles"     : [("particles",1)  ,( "matrix",3)],
         "Settings"      : ["settings"],
-        "ParticleLife"  : ["particle_life",None,None],
-        "ParticleLife2" : ["particle_life", "p2", "p3"],
-        "Stats"         : ["stats"],
-
+        "ParticleLife"  : [("particle_life",2.7),None,None],
     }
 
     PIPELINE_DEFAULTS = {

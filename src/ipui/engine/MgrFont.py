@@ -57,7 +57,7 @@ class MgrFont:
         cls.light_font_source = cls.load_font_source(cls.FONT_LIGHT, cls.SYSTEM_FONTS_LIGHT, "Light")
         cls.mono_font_source = cls.load_font_source("", cls.SYSTEM_FONTS_MONO, "Mono")
 
-        scale = Style.font_scale
+        scale = Style.FONT_SCALE
 
         Style.FONT_BANNER = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_BANNER, 'bold')
         Style.FONT_HEADING = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_HEADING, 'bold')

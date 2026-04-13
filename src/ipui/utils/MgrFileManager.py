@@ -96,7 +96,7 @@ class FileManager:
         path  = Path(file_path)
         lines = [
             "from ipui import *\n\n\n",
-            f"class {tab_name}(_basePane):\n",
+            f"class {tab_name}(_BaseTab):\n",
         ]
         for entry in methods:
             m = entry[0] if isinstance(entry, tuple) else entry

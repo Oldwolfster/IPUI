@@ -1,7 +1,7 @@
 # MissingTabUI.py  NEW: Badass missing-tab wizard
 from pathlib import Path
 
-from ipui.engine._BasePane import _basePane
+from ipui.engine._BaseTab import _BaseTab
 from ipui.widgets.Row import CardCol, CardRow
 from ipui.widgets.Label import Title, Body, Detail, Banner
 from ipui.widgets.Button import Button
@@ -9,7 +9,7 @@ from ipui.widgets.Spacer import Spacer
 from ipui.Style import Style
 
 
-class MissingTabUI(_basePane):
+class MissingTabUI(_BaseTab):
 
     def pitch(self, parent):
         card = parent
@@ -116,7 +116,7 @@ class MissingTabUI(_basePane):
         tab_name = self.form.pipeline_read("missing_tab_name")
         lines = [
             "from ipui import *\n\n\n",
-            f"class {tab_name}(_basePane):\n",
+            f"class {tab_name}(_BaseTab):\n",
         ]
         for m in methods:
             lines.append(f"\n    def {m}(self, parent):\n")

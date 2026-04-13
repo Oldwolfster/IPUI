@@ -2,7 +2,7 @@ from ipui import *
 from forms.NeuroForge.custom_widgets.Logger import Logger
 
 
-class EZ_Pane(_basePane):
+class EZ_Pane(_BaseTab):
     """Log tab — searchable, filterable log viewer."""
 
     # ══════════════════════════════════════════════════════════════

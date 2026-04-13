@@ -25,6 +25,7 @@ class DropDown(_BaseWidget):
     def build(self):
         self.is_open       = False
         self.max_visible   = self.MAX_VISIBLE
+        self.on_click      = self.toggle_panel
 
         self.textbox       = TextBox(self,
             placeholder    = self.placeholder,
@@ -46,6 +47,10 @@ class DropDown(_BaseWidget):
     # OPEN / CLOSE
     # ==============================================================
 
+    def toggle_panel(self):
+        if self.is_open: self.close_panel()
+        else:            self.open_panel()
+
     def open_panel(self):
         if self.is_open: return
         self.is_open           = True
@@ -58,40 +63,9 @@ class DropDown(_BaseWidget):
         self.list.visible      = False
 
     # ==============================================================
-    # EVENTS
+    # EVENTS — PUNTED: DropDown rebuild is a separate effort.
+    # Click toggles open/close. ESC not yet wired. Panel click TODO.
     # ==============================================================
-
-
-    def dispatch_click(self, pos):
-        """Intercept clicks on the floating panel before normal dispatch."""
-        if self.is_open and self.list.rect and self.list.rect.collidepoint(pos):
-            self.list.dispatch_click(pos)
-            return True
-        if self.is_open and self.rect and self.rect.collidepoint(pos):
-            return super().dispatch_click(pos)
-        self.close_panel()
-        return super().dispatch_click(pos)
-
-    def handle_focus(self, pos):
-        """Click on textbox area toggles the panel."""
-        if self.rect and self.rect.collidepoint(pos):
-            if self.is_open: self.close_panel()
-            else:            self.open_panel()
-            self.textbox.handle_focus(pos)
-            return True
-        return False
-
-
-    def clear_focus(self):
-        """Let dispatch_click decide whether to close — not clear_focus."""
-        self.textbox.is_focused = False
-
-    def handle_key(self, event):
-        """Escape closes the panel."""
-        if event.key == 27 and self.is_open:
-            self.close_panel()
-            return True
-        return False
 
     def on_text_changed(self, text):
         """Typing filters the list and opens the panel."""
@@ -118,7 +92,7 @@ class DropDown(_BaseWidget):
         if self.textbox.rect is None: return
         panel_rect = self.compute_panel_rect()
         #self.list.layout(panel_rect)
-        self.form.MEASUREDRAWLAY.layout_node(self.list, panel_rect)
+        self.form.layout_engine.layout_node(self.list, panel_rect)
         self.list.rect = panel_rect
         self.list.draw(surface)
 

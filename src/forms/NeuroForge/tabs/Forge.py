@@ -1,4 +1,4 @@
-# Workbench.py  NEW FILE  (replaces frmArchitecture.py — _basePane migration)
+# Workbench.py  NEW FILE  (replaces frmArchitecture.py — _BaseTab migration)
 
 from ipui import *
 
@@ -25,7 +25,7 @@ PERCY_STORY = (
 )
 
 
-class EZ_Pane(_basePane):
+class EZ_Pane(_BaseTab):
     """Workbench tab — architecture builder with Percy educational content."""
 
     # ══════════════════════════════════════════════════════════════

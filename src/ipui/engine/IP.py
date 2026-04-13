@@ -19,7 +19,7 @@ from ipui.engine.StateMachine import StateMachine
 class IP:
     """IPUI Service Portal — one object, everything you need.
 
-    Passed to ip_think(ip), ip_renderpre(ip), ip_renderpost(ip).
+    Passed to ip_think(ip), ip_draw(ip), ip_draw_hud(ip).
     Type ip.help() for a guided tour.
 
     ═══════════════════════════════════════════
@@ -32,7 +32,7 @@ class IP:
         # ── Identity (set per-dispatch by framework) ──────────
         self.form               = None      # active Form instance
         self.form_name          = ""        # name of active form
-        self.pane               = None      # active _basePane instance
+        self.pane               = None      # active _BaseTab instance
         self.pane_name          = ""        # name of active pane/tab
         self.is_active_pane     = False     # is the current pane the visible one?
 
@@ -52,13 +52,14 @@ class IP:
         self.mouse_y            = 0
         self.mouse_pos          = (0, 0)
         self.private_mouse_prev = (0, 0)    # previous frame for delta
-        self.private_buttons    = [False, False, False]  # left, middle, right held
-        self.private_prev_btns  = [False, False, False]  # previous frame buttons
+        self.private_buttons    = (False, False, False)  # left, middle, right held
+        self.private_prev_btns  = (False, False, False)  # previous frame buttons
         self.mouse_wheel        = 0
 
         # ── Keyboard — one snapshot per frame ─────────────────
-        self.private_keys       = set()     # keys held this frame
-        self.private_prev_keys  = set()     # keys held last frame
+        # ScancodeWrapper from pygame.key.get_pressed() — supports indexing, NOT iteration
+        self.private_keys       = None      # keys held this frame
+        self.private_prev_keys  = None      # keys held last frame
         self.mod_shift          = False
         self.mod_ctrl           = False
         self.mod_alt            = False
@@ -72,7 +73,7 @@ class IP:
         self.private_cache      = {}
         self.state              = StateMachine()
 
-        # ══════════════════════════════════════════════════════════════
+    # ══════════════════════════════════════════════════════════════
     # FRAME UPDATE — called by _IPUI each frame, NOT by user code
     # ══════════════════════════════════════════════════════════════
 
@@ -100,19 +101,19 @@ class IP:
         self.mouse_wheel     = 0
 
         # Mouse buttons — save previous, snapshot current
-        self.private_prev_btns = list(self.private_buttons)
+        self.private_prev_btns = self.private_buttons
         btns                 = pygame.mouse.get_pressed(3)
-        self.private_buttons = [btns[0], btns[1], btns[2]]
+        self.private_buttons = (btns[0], btns[1], btns[2])
 
-        # Keyboard — save previous, snapshot current
-        self.private_prev_keys = set(self.private_keys)
-        pressed              = pygame.key.get_pressed()
-        self.private_keys    = {i for i in range(len(pressed)) if pressed[i]}
+        # Keyboard — store ScancodeWrapper directly. Supports indexing, not iteration.
+        self.private_prev_keys = self.private_keys
+        self.private_keys    = pygame.key.get_pressed()
         mods                 = pygame.key.get_mods()
         self.mod_shift       = bool(mods & pygame.KMOD_SHIFT)
         self.mod_ctrl        = bool(mods & pygame.KMOD_CTRL)
         self.mod_alt         = bool(mods & pygame.KMOD_ALT)
         self.state.tick(dt)
+
     # ══════════════════════════════════════════════════════════════
     # PANE CONTEXT — called before dispatching to each pane's hook
     # ══════════════════════════════════════════════════════════════
@@ -132,11 +133,10 @@ class IP:
     def find_canvas_rect(self):
         """Locate the combined rect of all None panes for the active tab.
         Falls back to rect_tab_area if no None pane exists."""
-        if not self.form or not hasattr(self.form, 'tab_strip'):
-            return None
+        if not self.form or not hasattr(self.form, 'tab_strip'):   return None
+        if self.form.tabless_mode: return self.rect_tab_area # if tabless return entire screen
+
         strip = self.form.tab_strip
-        if not strip or not strip.active_tab:
-            return None
         entries = strip.tab_layout.get(strip.active_tab, [])
         result = None
         for i, entry in enumerate(entries):
@@ -148,6 +148,7 @@ class IP:
                     else:
                         result.union_ip(pane.rect)
         return result or self.rect_tab_area
+
     # ══════════════════════════════════════════════════════════════
     # GEOMETRY — coordinate transforms
     # ══════════════════════════════════════════════════════════════
@@ -196,22 +197,17 @@ class IP:
     # MOUSE — methods (derived queries, explicit targets)
     # ══════════════════════════════════════════════════════════════
 
-    BUTTON_MAP = {"left": 0, "middle": 1, "right": 2}
+    def mouse_down(self, button=0):
+        """Is the button held this frame? Use Mouse.LEFT / Mouse.RIGHT."""
+        return self.private_buttons[button]
 
-    def mouse_down(self, button="left"):
-        """Is the button held this frame?"""
-        idx = self.BUTTON_MAP.get(button, 0)
-        return self.private_buttons[idx]
-
-    def mouse_pressed(self, button="left"):
+    def mouse_pressed(self, button=0):
         """Was the button just pressed this frame? (edge: not held last frame)"""
-        idx = self.BUTTON_MAP.get(button, 0)
-        return self.private_buttons[idx] and not self.private_prev_btns[idx]
+        return self.private_buttons[button] and not self.private_prev_btns[button]
 
-    def mouse_released(self, button="left"):
+    def mouse_released(self, button=0):
         """Was the button just released this frame?"""
-        idx = self.BUTTON_MAP.get(button, 0)
-        return not self.private_buttons[idx] and self.private_prev_btns[idx]
+        return not self.private_buttons[button] and self.private_prev_btns[button]
 
     def mouse_inside(self, widget):
         """Is the mouse inside this widget's rect?"""
@@ -250,30 +246,35 @@ class IP:
         return self.mouse_y - ref.top if ref else self.mouse_y
 
     # ══════════════════════════════════════════════════════════════
-    # KEYBOARD — methods
+    # KEYBOARD — O(1) array index. Use Key.* constants.
     # ══════════════════════════════════════════════════════════════
 
     def key_down(self, key):
-        """Is this key held this frame? Accepts pygame key constant or string."""
-        k = self.resolve_key(key)
-        return k in self.private_keys
+        """Is this key held this frame? Use Key.LEFT, Key.SPACE, etc."""
+        if key is None or self.private_keys is None:
+            return False
+        try:
+            return bool(self.private_keys[key])
+        except (IndexError, TypeError):
+            return False
 
     def key_pressed(self, key):
         """Was this key just pressed this frame?"""
-        k = self.resolve_key(key)
-        return k in self.private_keys and k not in self.private_prev_keys
+        if key is None or self.private_keys is None or self.private_prev_keys is None:
+            return False
+        try:
+            return bool(self.private_keys[key]) and not bool(self.private_prev_keys[key])
+        except (IndexError, TypeError):
+            return False
 
     def key_released(self, key):
         """Was this key just released this frame?"""
-        k = self.resolve_key(key)
-        return k not in self.private_keys and k in self.private_prev_keys
-
-    @staticmethod
-    def resolve_key(key):
-        """Accept pygame constant (int) or string like 'space', 'a', 'left'."""
-        if isinstance(key, int):
-            return key
-        return getattr(pygame, f"K_{key}", None)
+        if key is None or self.private_keys is None or self.private_prev_keys is None:
+            return False
+        try:
+            return not bool(self.private_keys[key]) and bool(self.private_prev_keys[key])
+        except (IndexError, TypeError):
+            return False
 
     # ══════════════════════════════════════════════════════════════
     # CACHE — local scratch pad, NOT pipeline
@@ -306,12 +307,6 @@ class IP:
 
     # ══════════════════════════════════════════════════════════════
     # INVALIDATION — scaffolded for future optimization
-    # ══════════════════════════════════════════════════════════════
-    #
-    # Currently IPUI renders every frame. These methods exist so
-    # pane authors write code that will work when we optimize.
-    # For now they are no-ops. When dirty-flag rendering lands,
-    # these will start mattering — and your code won't change.
     # ══════════════════════════════════════════════════════════════
 
     def request_redraw(self):
@@ -437,7 +432,7 @@ class IP:
   ip.mouse_inside_pane()     Is mouse inside pane?
   ip.mouse_inside_content()  Is mouse inside tab content area?
 
-  Use rect_pane for custom rendering in ip_renderpre/post.
+  Use rect_pane for custom rendering in ip_draw/post.
   All coordinates are pane-relative when using local_to_screen.
 """
 
@@ -450,18 +445,18 @@ class IP:
   ip.mouse_pos        Mouse (x, y) tuple
   ip.mouse_wheel      Scroll wheel delta this frame
 
-  ip.mouse_down("left")       Is button held?
-  ip.mouse_pressed("left")    Just pressed this frame?
-  ip.mouse_released("left")   Just released this frame?
-  ip.mouse_inside(widget)     Is mouse inside widget?
-  ip.mouse_hits(rect)         Is mouse inside rect?
+  ip.mouse_down(Mouse.LEFT)       Is button held?
+  ip.mouse_pressed(Mouse.LEFT)    Just pressed this frame?
+  ip.mouse_released(Mouse.LEFT)   Just released this frame?
+  ip.mouse_inside(widget)         Is mouse inside widget?
+  ip.mouse_hits(rect)             Is mouse inside rect?
 
   ip.mouse_local_pos()        Mouse relative to pane
   ip.mouse_local_pos(widget)  Mouse relative to widget
   ip.mouse_local_x()          Mouse x relative to pane
   ip.mouse_local_y()          Mouse y relative to pane
 
-  Buttons: "left", "middle", "right"
+  Constants: Mouse.LEFT, Mouse.MIDDLE, Mouse.RIGHT
 """
 
     @staticmethod
@@ -472,13 +467,14 @@ class IP:
   ip.mod_ctrl         Ctrl held?
   ip.mod_alt          Alt held?
 
-  ip.key_down("space")     Is key held this frame?
-  ip.key_pressed("space")  Just pressed this frame?
-  ip.key_released("space") Just released this frame?
+  ip.key_down(Key.SPACE)     Is key held this frame?
+  ip.key_pressed(Key.SPACE)  Just pressed this frame?
+  ip.key_released(Key.SPACE) Just released this frame?
 
-  Keys: use pygame names without K_ prefix:
-    "space", "a", "left", "right", "up", "down",
-    "return", "escape", "tab", "backspace", etc.
+  Constants: Key.LEFT, Key.RIGHT, Key.UP, Key.DOWN,
+    Key.SPACE, Key.RETURN, Key.ESCAPE, Key.TAB,
+    Key.A .. Key.Z, Key.NUM_0 .. Key.NUM_9,
+    Key.F1 .. Key.F12, Key.HOME, Key.END, etc.
 """
 
     @staticmethod
@@ -490,8 +486,8 @@ class IP:
   ip.unhandled        Events the UI did not consume
 
   DRAW IN ip_think AT YOUR OWN RISK.
-  Use ip_renderpre for backgrounds/game world.
-  Use ip_renderpost for overlays/HUD.
+  Use ip_draw for backgrounds/game world.
+  Use ip_draw_hud for overlays/HUD.
 """
 
     @staticmethod

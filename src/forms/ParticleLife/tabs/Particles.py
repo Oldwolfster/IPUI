@@ -2,7 +2,7 @@ import ipui
 from ipui import *
 import random
 
-class Particles(_basePane):
+class Particles(_BaseTab):
     PARTY_COLORS = [
         (255,  80,  80),   # C  - Red
         (  0, 230, 118),   # D  - Emerald

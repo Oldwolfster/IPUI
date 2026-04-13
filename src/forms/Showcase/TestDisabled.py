@@ -2,7 +2,7 @@
 from ipui import *
 
 
-class TestDisabled(_basePane):
+class TestDisabled(_BaseTab):
 
     def test_disabled(self, parent):
         Title(parent, "Disabled Tooltip Test", glow=True)

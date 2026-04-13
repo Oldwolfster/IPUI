@@ -1,7 +1,7 @@
 from ipui import *
 
 
-class YourChoice(_basePane):
+class YourChoice(_BaseTab):
     # ══════════════════════════════════════════════════════════════
     # Declare reactive bindings: when a trigger key changes, compute
     # fires and result is applied to the named widget's property.

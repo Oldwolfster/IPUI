@@ -1,22 +1,20 @@
-### Step 1: 30-Second Smoke Test – See It Work Instantly
-
-# Save as **SmokeTest.py**:
-
-
+# SmokeTest.py  New: one-class smoke test using form-as-pane
 from ipui import *
 
-class QuickTest(BaseForm):
-    TAB_LAYOUT = {"Smoke Test": ["go"]}
+class SmokeTest(_BaseForm):
+    TAB_LAYOUT = {
+        "Smoke Test": ["go"],           # ← This one works immediately
+        "Widgets":    ["demo"],         # ← Will trigger template picker
+        "Relax":      ["sit", "chill"], # ← Will trigger template picker
+    }
 
-class SmokeTest(_basePane):
+    def go(self, parent):               # ← named go to match value of above dictionary
+        Banner  (parent, "IPUI"              , text_align=CENTER, glow=True)
+        Title   (parent, "Easy to get right!", text_align=CENTER)
+        Body    (parent, "Hard to get wrong.", text_align=CENTER)
+        Button  (parent, "Click Me :)"       , on_click=self.show_hello,
+                 color_bg=Style.COLOR_PAL_GREEN_DARK)
 
-    def go(self, parent):
-        Banner(parent, "IPUI", glow=True, text_align=CENTER)
-        Body (parent, "Easy to get right!", text_align=CENTER)
-        Title  (parent, "Hard to get wrong.", text_align=CENTER, glow=True)
-        Button(parent, "Click Me",
-               color_bg=Style.COLOR_PAL_GREEN_DARK,
-               on_click=lambda: self.form.show_modal("Hello World!"))
+    def show_hello(self): self.show_modal("Hello World!\nWelcome to IPUI")
 
-if __name__ == "__main__":
-    show(QuickTest)
+if __name__ == "__main__": show(SmokeTest)

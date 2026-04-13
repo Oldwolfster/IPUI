@@ -7,7 +7,7 @@ from pathlib import Path
 from ipui.widgets.Row import Row
 from ipui.Style import Style
 from ipui.engine.MgrColor import MgrColor
-from ipui.engine._BasePane import _basePane
+from ipui.engine._BaseTab import _BaseTab
 from ipui.engine._BaseWidget import _BaseWidget
 from ipui.utils.EZ import EZ
 from ipui.widgets.Button import Button
@@ -23,7 +23,7 @@ from ipui.widgets.TabArea import TabArea
 
 class TabStrip(_BaseWidget):
     """
-    desc:        String-based tab manager. Auto-discovers _basePane files, lazy-loads on first visit, caches everything.
+    desc:        String-based tab manager. Auto-discovers _BaseTab files, lazy-loads on first visit, caches everything.
     when_to_use: Any multi-view interface. Define tabs as a dict, drop matching .py files, done.
     best_for:    The entire app navigation. One dict = single source of truth.
     example:     TabStrip(parent, data={"Home": ["welcome", "details"], "Log": ["log"]})
@@ -82,7 +82,7 @@ class TabStrip(_BaseWidget):
 
 
     def prepare(self, name):
-        """Resolve, cache, and initialize a tab's _basePane on demand."""
+        """Resolve, cache, and initialize a tab's _BaseTab on demand."""
         if name not in self.pane_cache:  self.resolve_pane(name)
         return self.pane_cache[name]
 
@@ -103,12 +103,22 @@ class TabStrip(_BaseWidget):
         self.fill_panes(name, entries)
 
     def needs_missing_page(self, name, entries):
-        if self.resolve_pane(name) is not None:
-            return False
+        if self.form_has_builders(entries):     return False
+        if self.resolve_pane(name) is not None: return False
         return any(
             isinstance(b, str) and "." not in b
             for b, w in entries if b is not None
         )
+
+    def form_has_builders(self, entries):
+        for builder, weight in entries:
+            if builder is None:
+                continue
+            if isinstance(builder, str) and "." not in builder:
+                method_name = builder.replace(" ", "_")
+                if not hasattr(self.form, method_name):
+                    return False
+        return True
 
     def update_button_visuals(self):
         for btn in self.tab_row.children:
@@ -181,7 +191,7 @@ class TabStrip(_BaseWidget):
         methods = [e[0] if isinstance(e, tuple) else e for e in self.tab_layout[tab_name]]
         self.form.pipeline_set("missing_tab_methods", methods)
         form_dir = Path(inspect.getfile(self.form.__class__)).parent  # NEW
-        self.form.pipeline_set("missing_tab_path", str(form_dir / (tab_name + ".py")))
+        self.form.pipeline_set("missing_tab_path", str(form_dir / (tab_name.replace(" ", "") + ".py")))
         self.pane_cache["__missing__"] = MissingTabUI(self.form)
         return [("__missing__.pitch", 2), ("__missing__.choices",1)]
 
@@ -201,7 +211,7 @@ class TabStrip(_BaseWidget):
                 source_tab, method_name = builder.split(".", 1)
                 instance = self.prepare(source_tab)
             else:
-                instance = self.resolve_pane(tab_name)
+                instance = self.resolve_pane_or_form(tab_name, builder)
                 method_name = builder.replace(" ", "_")                        # NEW
                 if instance and not hasattr(instance, method_name):            # NEW
                     method_name = builder.replace(" ", "")
@@ -219,11 +229,19 @@ class TabStrip(_BaseWidget):
         else:
             raise TypeError(f"Tab '{tab_name}': expected string or callable, got {type(builder)}")
 
+
+    def resolve_pane_or_form(self, tab_name, builder):
+        method_name = builder.replace(" ", "_")
+        if hasattr(self.form, method_name):
+            self.pane_cache[tab_name] = self.form  # to support the 'one pager' version.
+            return self.form
+        return self.resolve_pane(tab_name)
+
     # ============================================================
     # Mutation and visibility
     # ============================================================
     def get_tab(self, name):
-        """Return the cached _basePane instance for a tab, or None."""
+        """Return the cached _BaseTab instance for a tab, or None."""
         return self.pane_cache.get(name)
 
     def hide_tab(self, name):
@@ -236,6 +254,8 @@ class TabStrip(_BaseWidget):
 
 
     def set_pane(self, index, builder, *args, tab_name=None, **kwargs):
+
+
         tab_name                            = tab_name or self.active_tab
         entry                               = self.tab_layout[tab_name][index]
         weight                              = entry[1]
@@ -244,8 +264,9 @@ class TabStrip(_BaseWidget):
             pane                            = self.panes[index]
             if pane is None: return
             pane.children.clear()
-            pane.children.clear()
             self.invoke_builder             ( tab_name, builder, pane, *args, **kwargs)
+            print(f"SET_PANE: pane.rect={pane.rect}, kids={len(pane.children)}")  # DEBUG
+            self.form.layout_engine.RunLayout()
 
 
     def refresh_pane(self, index, tab_name=None):
@@ -279,16 +300,16 @@ class TabStrip(_BaseWidget):
         return instance
 
     def load_pane_class(self, file_path, tab_name):
-        """Import a file and find the _basePane subclass inside."""
+        """Import a file and find the _BaseTab subclass inside."""
         spec   = importlib.util.spec_from_file_location(tab_name, file_path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
         for attr_name, obj in inspect.getmembers(module, inspect.isclass):
-            if issubclass(obj, _basePane) and obj is not _basePane:
+            if issubclass(obj, _BaseTab) and obj is not _BaseTab:
                 return obj
 
-        raise ImportError(f"No _basePane subclass found in {file_path}")
+        raise ImportError(f"No _BaseTab subclass found in {file_path}")
 
     # ============================================================
     # Property
@@ -308,7 +329,7 @@ class TabStrip(_BaseWidget):
 
 
         form_dir = Path(inspect.getfile(self.form.__class__)).parent
-        file_path = form_dir / (tab_name + ".py")
+        file_path = form_dir / (tab_name.replace(" ", "") + ".py")
 
         Title(pane, f"Tab '{tab_name}' needs a file")
         Body(pane,  f"Create:  {file_path}")
@@ -318,10 +339,10 @@ class TabStrip(_BaseWidget):
 
     def create_pane_file(self, tab_name, file_path):
         code = (
-            f"from ipui.engine._basePane import _basePane\n"
+            f"from ipui.engine._BaseTab import _BaseTab\n"
             f"from ipui.widgets.Row import CardCol\n"
             f"from ipui.widgets.Text import Title, Heading\n\n\n"
-            f"class {tab_name}(_basePane):\n\n"
+            f"class {(tab_name.replace(" ", ""))}(_BaseTab):\n\n"
             f"    def welcome(self, parent):\n"
             f"        card = CardCol(parent, width_flex=True, height_flex=True)\n"
             f"        Title(card, 'Welcome to IPUI', glow=True)\n"

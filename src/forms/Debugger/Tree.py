@@ -5,7 +5,7 @@ from ipui import *
 from ipui.utils.MgrClipboard import Clipboard
 
 
-class Tree(_basePane):
+class Tree(_BaseTab):
 
     # ══════════════════════════════════════════════════════════════
     # DAG — Reactive updates

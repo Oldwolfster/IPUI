@@ -105,6 +105,7 @@ class PowerGrid(_BaseWidget):
         self.row_click_callback = None
         self.row_click_column   = None
         self.page_size          = 50
+        self.on_click           = self.on_grid_click
         self.build_body()
         if self.data            : self.set_data(self.data)
 
@@ -402,15 +403,15 @@ class PowerGrid(_BaseWidget):
     # CLICK HANDLING
     # ══════════════════════════════════════════════════════════════
 
-    def process_click(self):
+    def on_grid_click(self):
+        """Click callback — MgrInput fires this. Does header/row hit testing."""
         if not self.rect:
-            return super().process_click()
+            return
         mx, my = pygame.mouse.get_pos()
         if self.hit_test_header(mx, my):
-            return True
+            return
         if self.row_click_callback:
-            return self.hit_test_row(mx, my)
-        return super().process_click()
+            self.hit_test_row(mx, my)
 
     def hit_test_header(self, mx, my):
         hr = self.grid_header.rect

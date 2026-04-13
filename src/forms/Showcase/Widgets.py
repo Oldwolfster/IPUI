@@ -1,7 +1,7 @@
 # Widgets.py  NEW: Self-documenting widget showcase pane
 from ipui import *
 
-class EZ_Pane(_basePane):
+class EZ_Pane(_BaseTab):
     """
     desc:        Auto-discovers every widget in IPUI and displays its docstring and source.
     when_to_use: The Showcase tab. Never goes stale — add a widget, it appears.
