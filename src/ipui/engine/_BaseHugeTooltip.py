@@ -16,25 +16,25 @@ class _BaseHugeTooltip:
     DOCK_WIDTH_PCT = 0.45
     CLOSE_BTN_W    = 50
     CLOSE_BTN_H    = 24
-    MOVE_BTN_W     = 60
+    MOVE_BTN_W     = 70
     MOVE_BTN_H     = 24
-    MOVE_BTN_W     = 40
-    MOVE_BTN_H     = 24
+    COPY_BTN_W     = 50
+    COPY_BTN_H     = 24
 
     def __init__(self):
-        self.font_header  = Style.FONT_TITLE
-        self.font_body    = Style.FONT_BODY
-        self.font_small   = Style.FONT_DETAIL
-        self.padding      = Style.TOKEN_PAD
-        self.row_height   = Style.FONT_BODY.get_height() + 4
-        self.bg_color     = Style.COLOR_CARD_BG
-        self.border_color = Style.COLOR_BORDER
-        self.text_color   = Style.COLOR_TEXT
-        self.pinned        = False
-        self.dock_right    = True
-        self.pin_scroll    = 0
-        self.appear_time   = 0
-        self.pin_btn_rect  = None
+        self.font_header    = Style.FONT_TITLE
+        self.font_body      = Style.FONT_MONO_BODY
+        self.font_small     = Style.FONT_DETAIL
+        self.padding        = Style.TOKEN_PAD
+        self.row_height     = Style.FONT_BODY.get_height()
+        self.bg_color       = Style.COLOR_CODE_BG
+        self.border_color   = Style.COLOR_BORDER
+        self.text_color     = Style.COLOR_TEXT
+        self.pinned         = False
+        self.dock_right     = True
+        self.pin_scroll     = 0
+        self.appear_time    = 0
+        self.pin_btn_rect   = None
         self.close_btn_rect = None
         self.move_btn_rect  = None
         self.content_rect   = None
@@ -128,7 +128,8 @@ class _BaseHugeTooltip:
         self.pin_btn_rect = pygame.Rect(bx, by, bw, bh)
         alpha = min(1.0, (elapsed - self.PIN_DELAY) / 0.3)
         btn_surf = pygame.Surface((bw, bh), pygame.SRCALPHA)
-        btn_color = (*Style.COLOR_PAL_GREEN_DARK[:3], int(230 * alpha))
+        #DELETE ME btn_color = (*Style.COLOR_BUTTON_CTA[:3], int(230 * alpha))
+        btn_color = (*Style.COLOR_BUTTON_CTA[:3], int(230 * alpha))
         txt_color = (*self.text_color[:3], int(255 * alpha)) if len(self.text_color) >= 3 else self.text_color
         pygame.draw.rect(btn_surf, btn_color, (0, 0, bw, bh), border_radius=4)
         label = self.font_small.render("Pin", True, txt_color)
@@ -165,28 +166,42 @@ class _BaseHugeTooltip:
 
     def draw_docked_header(self, surface, dock_rect):
         pad      = self.padding
-        header_h = self.font_header.get_height() + pad * 2
         header_surf = self.font_header.render(self.header_text(), True, self.text_color)
         surface.blit(header_surf, (dock_rect.left + pad, dock_rect.top + pad))
-        bx = dock_rect.right - pad - self.CLOSE_BTN_W
         by = dock_rect.top + pad
+        bx = dock_rect.right - pad - self.CLOSE_BTN_W
         self.close_btn_rect = pygame.Rect(bx, by, self.CLOSE_BTN_W, self.CLOSE_BTN_H)
-        pygame.draw.rect(surface, Style.COLOR_PAL_RED_DARK, self.close_btn_rect, border_radius=3)
-        label = self.font_small.render("Close", True, self.text_color)
-        surface.blit(label, (
-            bx + (self.CLOSE_BTN_W - label.get_width()) // 2,
-            by + (self.CLOSE_BTN_H - label.get_height()) // 2,
-        ))
-        mx = bx - self.MOVE_BTN_W - pad
-        my = by
-        self.move_btn_rect = pygame.Rect(mx, my, self.MOVE_BTN_W, self.MOVE_BTN_H)
+        self.draw_header_button(surface, self.close_btn_rect, "Close", Style.COLOR_BUTTON_DANGER)
+        bx -= self.MOVE_BTN_W + pad
         arrow = "<< Move" if self.dock_right else "Move >>"
-        pygame.draw.rect(surface, Style.COLOR_TAB_BG, self.move_btn_rect, border_radius=3)
-        arrow_surf = self.font_small.render(arrow, True, self.text_color)
-        surface.blit(arrow_surf, (
-            mx + (self.MOVE_BTN_W - arrow_surf.get_width()) // 2,
-            my + (self.MOVE_BTN_H - arrow_surf.get_height()) // 2,
+        self.move_btn_rect = pygame.Rect(bx, by, self.MOVE_BTN_W, self.MOVE_BTN_H)
+        self.draw_header_button(surface, self.move_btn_rect, arrow, Style.COLOR_TAB_BG)
+        bx -= self.COPY_BTN_W + pad
+        self.copy_btn_rect = pygame.Rect(bx, by, self.COPY_BTN_W, self.COPY_BTN_H)
+        self.draw_header_button(surface, self.copy_btn_rect, "Copy", Style.COLOR_TAB_BG)
+
+
+    def draw_header_button(self, surface, rect, text, color):
+        pygame.draw.rect(surface, color, rect, border_radius=3)
+        label = self.font_small.render(text, True, self.text_color)
+        surface.blit(label, (
+            rect.x + (rect.width - label.get_width()) // 2,
+            rect.y + (rect.height - label.get_height()) // 2,
         ))
+
+    def hit_test_copy(self, pos):
+        return self.copy_btn_rect and self.copy_btn_rect.collidepoint(pos)
+
+    def copy_content(self):
+        from ipui.utils.MgrClipboard import MgrClipboard
+        columns = self.content_to_display()
+        if not columns:    return
+        rows = len(columns[0])
+        lines = [self.header_text(), ""]
+        for ri in range(rows):
+            line = "  ".join(str(col[ri]) for col in columns if ri < len(col))
+            lines.append(line)
+        MgrClipboard.copy("\n".join(lines))
 
     def draw_docked_content(self, surface, dock_rect):
         pad      = self.padding

@@ -3,7 +3,7 @@
 import multiprocessing
 import time
 
-from ipui.forms.NeuroForge.custom_widgets.ProjectManager import ProjectManager
+from ipui._forms.NeuroForge.custom_widgets.ProjectManager import ProjectManager
 from ipui import *
 
 

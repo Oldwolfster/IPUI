@@ -71,11 +71,13 @@ class _BaseWidget:
 
     def __init__(self, parent=None, text=None, name=None,
                  width_flex=0, height_flex=0,
-                 pad=None, gap=None, border=None,justify_center=False, justify_spread=False, visible = True,
-                 enabled=True, start= None, end = None, font=None, fit_content=False, border_radius=None,
-                 text_align='l', wrap=False, color_bg=None, glow=False, data=None, single_select=False,
-                 placeholder=None, initial_value=None, on_submit=None, on_change=None, on_click=None, tab_order=None,
+                 pad=None, pad_x=None, pad_y=None, gap=None,  border=None,justify_center=False, justify_spread=False, visible = True,
+                 enabled=True, start= None, end = None, font=None, fit_content=False, border_radius=None,hug_parent=False,
+                 text_align=None, wrap=False, color_bg=None, glow=False, data=None, single_select=False,
+                 placeholder=None, initial_value=None, on_submit=None, on_change=None, on_click=None, tab_order=None, on_double_click=None,
                  pipeline_key=None, tooltip_class=None, scrollable=False, scroll_glow=.369, early_load =None):
+
+        self.preflight_check(parent, text_align)
 
         # Identity
         self.name               = name
@@ -85,6 +87,7 @@ class _BaseWidget:
 
         # Tree
         self.children           = []
+
         self.parent             = parent
         self.form               = parent.form if parent else getattr(self, 'form', None)
 
@@ -95,9 +98,12 @@ class _BaseWidget:
 
         # Layout
         self.rect               = None
-        self.pad                = pad    if pad    is not None else Style.TOKEN_PAD
-        self.gap                = gap    if gap    is not None else Style.TOKEN_GAP
-        self.border             = border if border is not None else Style.TOKEN_BORDER
+        self.pad_x              = Style.TOKEN_PAD
+        self.pad_y              = Style.TOKEN_PAD
+        self.gap                = Style.TOKEN_GAP
+        self.border             = Style.TOKEN_BORDER
+
+
         self.justify_center     = justify_center
         self.justify_spread     = justify_spread
         self.width_flex         = width_flex
@@ -105,13 +111,14 @@ class _BaseWidget:
         self.height_flex        = height_flex
         self.height_flex        = height_flex #if there is not enough space to honor the height_flex it may be set to zero (renders at minimum(intrinsic) size)
         self.fit_content        = fit_content
+        self.hug_parent         = hug_parent
         self.horizontal         = False
         self.wrap               = wrap
-        self.text_align         = text_align.lower()
+        self.text_align         = text_align.lower() if text_align is not None else None
         self.width_minimum      = None      #min space needed to render surface of children
         self.height_minimum     = None      #min space needed to render surface of children
 
-        if text_align.lower() in ('c', 'r') and self.width_flex == 0: self.width_flex = 1
+        #if text_align.lower() in ('c', 'r') and self.width_flex == 0: self.width_flex = 1
 
         # Appearance
         self.font               = font
@@ -122,7 +129,8 @@ class _BaseWidget:
         self.border_radius      = border_radius
         self.single_select      = single_select
         self.visible            = visible
-        self.do_not_allocate    = False
+        self.do_not_allocate    = False         # skip layout allocation
+        self.is_overlay         = False         # if do_not_allocate, still receive input (clicks, scroll)
 
         # Scrolling
         self.scrollable         = scrollable
@@ -142,6 +150,7 @@ class _BaseWidget:
 
         # Events — declare, don't handle. MgrInput reads these.
         self.on_click           = on_click
+        self.on_double_click    = on_double_click
         self.on_change          = on_change
         self.on_hover           = None
         self.focusable          = False
@@ -177,15 +186,83 @@ class _BaseWidget:
 
         #=============================================================
         # ================== Hook to Widget' Build  ==================
-        if hasattr(self, 'build'): self.build()
+        self.build()
         # =============================================================
+        if pad    is not None: self.pad    = pad      #  if user passed override then overwrite what was set in build
+        if pad_x  is not None: self.pad_x  = pad_x                                       # NEW
+        if pad_y  is not None: self.pad_y  = pad_y
+        if gap    is not None: self.gap    = gap
+        if border is not None: self.border = border
+        #self.pad                = pad    if pad    is not None else Style.TOKEN_PAD
+        #self.gap                = gap    if gap    is not None else Style.TOKEN_GAP
+        #self.border             = border if border is not None else Style.TOKEN_BORDER
 
+
+        if self.text_align is None: self.text_align = 'l'
+        self.text_align = self.text_align.lower()
+        if self.text_align in ('c', 'r') and self.width_flex == 0 and not self.fit_content and not self.hug_parent:
+            self.width_flex = 1
 
         if self.tab_order == 0:
             _BaseWidget.private_next_tab_order += 1
             self.tab_order = _BaseWidget.private_next_tab_order
         if self.widget_type is None: self.widget_type =  type(self).__name__
         self.private_build_comp = True
+
+    def build(self): pass #exists to be overwritten
+
+# _BaseWidget.py  Update: preflight_check now calls validate_text_align; new validator added; line 214 block killed
+
+    def preflight_check(self, parent, text_align):
+        """All construction-time input checks live here.
+        Runs as the first line of __init__ — before the framework
+        touches any of these inputs. Add new validators below."""
+        self.validate_parent(parent)
+        self.validate_text_align(text_align)
+
+    def validate_text_align(self, text_align):
+        """text_align must be None or one of l/c/r (case-insensitive)."""
+        if text_align is None:                                  return
+        if isinstance(text_align, str) and text_align.lower() in ('l', 'c', 'r'): return
+        EZ.err(
+            f"{type(self).__name__}() got text_align={text_align!r} — not a valid alignment.\n"
+            f"\n"
+            f"text_align needs a direction: LEFT / CENTER / RIGHT (no quotes).\n"
+            f"\n"
+            f"You wrote:  {type(self).__name__}(parent, ..., text_align={text_align!r})\n"
+            f"You meant:  {type(self).__name__}(parent, ..., text_align=CENTER)"
+        )
+
+    def validate_parent(self, parent):
+        """Catch the two ways parent goes wrong: missing, or not a widget."""
+        if parent is None and getattr(self, 'form', None) is None:
+            EZ.err(
+                f"{type(self).__name__}() was called without a parent.\n"
+                f"\n"
+                f"ROOT CAUSE: Every IPUI widget's first argument is its parent.\n"
+                f"            That's what 'construction IS attachment' means —\n"
+                f"            no floating widgets, no add() calls.\n"
+                f"\n"
+                f"Example 1:  {type(self).__name__}(my_card, ...)\n"
+                f"Example 2:  {type(self).__name__}(parent, ...)   # if it's the first widget in a pane"
+            )
+        if parent is not None and not isinstance(parent, _BaseWidget):
+            shown = repr(parent)
+            if len(shown) > 40: shown = shown[:37] + "..."
+            EZ.err(
+                f"{type(self).__name__}() got a {type(parent).__name__} where a parent widget was expected.\n"
+                f"\n"
+                f"ROOT CAUSE: Looks like you forgot the parent argument.\n"
+                f"            Every IPUI widget's first argument is its parent.\n"
+                f"\n"
+                f"You wrote:  {type(self).__name__}({shown}, ...)\n"
+                f"You meant:  {type(self).__name__}(parent, {shown}, ...)\n"
+                f"\n"
+                f"TIP: 'parent' is whatever container you want this widget to live in\n"
+                f"TIP: — usually a Card, Pane, or another widget passed into your method."
+            )
+
+    # BELOW IS POST VALIDATE
 
     def validate(self) -> None:
 
@@ -204,7 +281,9 @@ class _BaseWidget:
     def validate_contradictory_arg(self):
         """Guard against contradictory constructor arguments."""
         if self.justify_center and self.justify_spread: EZ.err("Cannot set both justify_center and justify_spread\nPlease pick on or the other.",ValueError)
-        if self.text_align not in ('l', 'c', 'r'):      EZ.err(f"text_align must be 'l', 'c', or 'r' — got '{self.text_align}'",ValueError)
+        #if self.text_align not in ('l', 'c', 'r'):      EZ.err(f"text_align must be 'l', 'c', or 'r' — got '{self.text_align}'",ValueError)
+        if self.text_align is not None and self.text_align not in ('l', 'c', 'r'): EZ.err(
+            f"text_align must be 'l', 'c', or 'r' — got '{self.text_align}'", ValueError)
         if self.parent and self.parent.scrollable and self.height_flex > 0 and 1==3: #1==3 becaues i don't think this is actually wrong
             EZ.err( f"""{type(self).__name__} has height_flex inside scrollable {type(self.parent).__name__}. TO FIX: Remove height_flex from the child, or remove scrollable from the parent.  Flex expands to fill space; scrollable needs content bigger than viewport. Contradictory!""")
 
@@ -219,23 +298,75 @@ class _BaseWidget:
     # PROPERTIES
     # ==============================================================
 
+
+    @property
+    def pad(self):
+        # 369 is a deliberate tripwire — pad_x and pad_y are the real source of truth.
+        # If you see 369 anywhere in layout math, somebody is reading self.pad and they shouldn't be.
+        return 369
+
+    @pad.setter
+    def pad(self, value):
+        if isinstance(value, tuple):
+            self.pad_x, self.pad_y = value
+        else:
+            self.pad_x = value
+            self.pad_y = value
+
+
+    @property
+    def pad_total_x(self):  return self.pad_x * 2     # left + right pad combined
+
+    @property
+    def pad_total_y(self):  return self.pad_y * 2     # top + bottom pad combined
+
+    @property
+    def frame_size(self) -> int:
+        # Legacy — kept for sites we haven't converted yet (MgrSanity, etc.)
+        # Returns symmetric value; safe while pad_x == pad_y everywhere.
+        return (self.pad_x + self.border) * 2
+
+    @property
+    def frame_x(self) -> int:
+        return (self.pad_x + self.border) * 2
+
+    @property
+    def frame_y(self) -> int:
+        return (self.pad_y + self.border) * 2
+
+
     @property
     def display_name(self):
-        raw = self.name or str(self.text or "")[:30] or self.widget_type
+        raw = self.name or str(self.text or "")[:30] or self.first_child_text or self.widget_type
         raw = raw.replace("\n", " ")
         return "".join(ch for ch in raw if ch.isalnum() or ch == " ")[:24].strip()
 
     @property
+    def first_child_text(self):
+        for child in self.children:
+            if child.text:
+                return "w/ lbl " + str(child.text)[:24] + "'"
+            for grandchild in child.children:
+                if grandchild.text:
+                    return "w/ lbl " + str(grandchild.text)[:24] + "'"
+        return None
+
+
+    @property
     def frame_size(self) -> int:
         """Total inset from edge to content: (pad + border) × 2."""
-        return (self.pad + self.border) * 2
+        return (self.pad_x + self.border) * 2
 
     @property
     def visible_children(self) -> list[_BaseWidget]:
         """Children that participate in layout and drawing."""
         return [c for c in self.children if c.visible and not c.do_not_allocate]
 
-
+    @property
+    def interactive_children(self) -> list['_BaseWidget']:
+        """Children eligible for input dispatch — visible normals plus overlays.
+        Layout uses visible_children (excludes overlays). Input uses this (includes them)."""
+        return [c for c in self.children if c.visible and (not c.do_not_allocate or c.is_overlay)]
     # ==============================================================
     # LAYOUT
     # ==============================================================
@@ -277,9 +408,10 @@ class _BaseWidget:
         """Draw visible children, clipped to content area."""
         if not self.visible_children: return
         old_clip = surface.get_clip()
-        frame = self.frame_size
-        clip = self.rect.inflate(-frame, -frame)  # REPLACE: was self.rect
-        clip = old_clip.clip(clip)  # NEW: intersect with parent's clip
+        clip = self.rect.inflate(-self.frame_x, -self.frame_y)
+        if self.scroll_active:
+            clip.width -= Style.TOKEN_SCROLLBAR
+        clip = old_clip.clip(clip)
         surface.set_clip(clip)
         for child in self.visible_children: child.draw(surface)
         surface.set_clip(old_clip)
@@ -295,24 +427,43 @@ class _BaseWidget:
         if not hasattr(self, 'border_top') or not self.border_top: return
         if self.is_pressed: top, left, bottom, right = self.border_bottom, self.border_right, self.border_top, self.border_left
         else:               top, left, bottom, right = self.border_top,    self.border_left,  self.border_bottom, self.border_right
-        w = 2
+        w = self.border
         pygame.draw.line(surface, top,    (r.left,      r.top),        (r.right - 1, r.top),        w)
         pygame.draw.line(surface, left,   (r.left,      r.top),        (r.left,      r.bottom - 1), w)
         pygame.draw.line(surface, bottom, (r.left,      r.bottom - 1), (r.right - 1, r.bottom - 1), w)
         pygame.draw.line(surface, right,  (r.right - 1, r.top),        (r.right - 1, r.bottom - 1), w)
 
     def draw_chrome_rounded(self, surface, r, color_bg, radius):
-        """Rounded bevel: light rect behind, dark rect offset, main rect on top."""
+        """Three overlapping solid rounded plates, all contained within r.
+        Highlight at top-left, shadow at bottom-right, face centered. Bevel thickness = self.border."""
         if self.is_pressed: light, dark = self.border_bottom, self.border_top
         else:               light, dark = self.border_top,    self.border_bottom
-        # Light highlight peeks out top-left
-        pygame.draw.rect(surface, light, r, border_radius=radius)
-        # Dark shadow peeks out bottom-right
-        shadow = pygame.Rect(r.left + 2, r.top + 2, r.width - 2, r.height - 2)
-        pygame.draw.rect(surface, dark, shadow, border_radius=radius)
-        # Main fill covers the middle
-        inset = pygame.Rect(r.left + 1, r.top + 1, r.width - 2, r.height - 2)
-        pygame.draw.rect(surface, color_bg, inset, border_radius=radius)
+        b         = self.border
+        inner_w   = r.width  - 2 * b
+        inner_h   = r.height - 2 * b
+        highlight = pygame.Rect(r.left,         r.top,         inner_w, inner_h)
+        pygame.draw.rect(surface, light,    highlight, border_radius=radius)
+        shadow    = pygame.Rect(r.left + 2*b,   r.top + 2*b,   inner_w, inner_h)
+        pygame.draw.rect(surface, dark,     shadow,    border_radius=radius)
+        face      = pygame.Rect(r.left + b,     r.top + b,     inner_w, inner_h)
+        pygame.draw.rect(surface, color_bg, face,      border_radius=radius)
+
+
+    def draw_chrome_rounded(self, surface, r, color_bg, radius):
+        """Three overlapping solid rounded plates, all contained within r.
+        Highlight extends behind the face plate so all face corners land on highlight or shadow — never raw background.
+        Bevel thickness = self.border."""
+        if self.is_pressed: light, dark = self.border_bottom, self.border_top
+        else:               light, dark = self.border_top,    self.border_bottom
+        b         = self.border
+        inner_w   = r.width  - 2 * b
+        inner_h   = r.height - 2 * b
+        highlight = pygame.Rect(r.left,         r.top,         inner_w + b*.5, inner_h + b*.5)
+        pygame.draw.rect(surface, light,    highlight, border_radius=radius)
+        shadow    = pygame.Rect(r.left + 2*b,   r.top + 2*b,   inner_w,     inner_h)
+        pygame.draw.rect(surface, dark,     shadow,    border_radius=radius)
+        face      = pygame.Rect(r.left + b,     r.top + b,     inner_w,     inner_h)
+        pygame.draw.rect(surface, color_bg, face,      border_radius=radius)
 
     def draw_inboard_glow(self, surface: pygame.Surface) -> None:
         """Draw the bottom-edge glow indicator for active tabs."""
@@ -336,13 +487,13 @@ class _BaseWidget:
         sw, sh   = s.get_size()
         y        = r.top + (r.height - sh) // 2
         if   self.text_align == 'c': x = r.left + (r.width - sw) // 2
-        elif self.text_align == 'r': x = r.right - sw - self.pad
-        else:                        x = r.left + self.pad
+        elif self.text_align == 'r': x = r.right - sw - self.pad_x    # NEW
+        else:                        x = r.left  + self.pad_x
         return (x, y)
 
     def wrap_lines(self, text: str, max_width: int) -> list[str]:
         """Split text into lines that fit within max_width, honoring existing newlines."""
-        max_width  = max_width - self.frame_size
+        max_width  = max_width - self.frame_x
         if max_width <= 0: return text.split("\n") if text else [""]
         result     = []
         for paragraph in (text or "").split("\n"):
@@ -392,9 +543,10 @@ class _BaseWidget:
 
     def resolve_bg(self) -> Optional[tuple]:
         """Compute effective background color considering disabled/hover state."""
-        if self.enabled is not True                      : return MgrColor.compute_disabled(self.color_bg) #NOTE DO NOT SIMPLIFY
+        if self.enabled is not True                     : return MgrColor.compute_disabled(self.color_bg) #NOTE DO NOT SIMPLIFY
         if not self.is_hovered or self.color_bg is None : return self.color_bg
-        if self.on_click                                : return MgrColor.compute_hover(self.color_bg)
+        if (self.on_click and not self.focusable
+                and self.hover_bright)                  : return MgrColor.compute_hover(self.color_bg)
         else                                            : return self.color_bg
 
     # ==============================================================
@@ -409,10 +561,7 @@ class _BaseWidget:
     def on_click_me(self, callback):
         """Register a validated click handler."""
         if not callable(callback):
-            raise TypeError(
-                f"{self.display_name}.on_click_me expects a callable, "
-                f"got {type(callback).__name__}"
-            )
+            EZ.err (                f"{self.display_name}.on_click_me expects a callable, got {type(callback).__name__}",TypeError            )
         import inspect
         try:
             sig    = inspect.signature(callback)
@@ -466,10 +615,10 @@ class _BaseWidget:
     def draw_scrollbar(self, surface: pygame.Surface) -> None:
         """Draw a vertical scrollbar track and handle."""
         if not self.scroll_active: return
-        frame        = self.frame_size
-        inner        = self.rect.inflate(-frame, -frame)
+        inner        = self.rect.inflate(-self.frame_x, -self.frame_y)
         bar_w        = Style.TOKEN_SCROLLBAR
         bar_x        = self.rect.right - bar_w
+        bar_x        = self.rect.right - self.border - bar_w
         content      = getattr(self, 'content_size', self.height_minimum)
         track_top    = self.rect.top + self.border + self.scroll_top_inset
         track_h      = self.rect.height - self.border * 2 - self.scroll_top_inset
@@ -518,12 +667,12 @@ class _BaseWidget:
 
     def set_disabled(self, reason: str = "") -> None:
         """Disable this widget with an optional reason string."""
-        self.enabled = reason if reason else False         # REPLACE self.is_disabled = reason
+        self.enabled = reason if reason else False
         self.build()
 
     def set_enabled(self) -> None:
         """Re-enable this widget."""
-        self.enabled = True                                # REPLACE self.is_disabled = None
+        self.enabled = True
         self.build()
 
     @property

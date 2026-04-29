@@ -18,7 +18,7 @@ class WidgetExplorer(_BaseTab):
         Body    ( card,   "2. Click any pattern to see it live with source code")
         Body    ( card,   "3. Hit the Copy button on the code block")
         Body    ( card,   "4. Paste it into your tab file and tweak it")
-        Body    ( card,   "5. Save — your pane (this pane right here) updates instantly")
+        Body    ( card,   "5. Save the file and re-run to see your changes")
         Spacer  ( parent)
 
         Heading ( parent, "Your _BaseTab file:",text_align=CENTER)

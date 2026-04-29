@@ -16,7 +16,7 @@
 import time
 import pygame
 from ipui.utils.EZ import EZ
-from ipui.utils import MgrClipboard
+from ipui.utils.MgrClipboard import MgrClipboard
 from ipui.widgets.Label import Label
 from ipui.Style import Style
 from ipui.engine.Key import Key
@@ -37,6 +37,8 @@ class TextBox(Label):
 
     def build(self):
         EZ.warn_scroll             ( self)
+        self.validate_params       ( )
+        self.width_flex            = True
         self.font                  = self.font or Style.FONT_BODY
         if self.tab_order is None  : self.tab_order=0 # Will be set in base_widget
         self.wrap                  = False
@@ -53,10 +55,17 @@ class TextBox(Label):
         self.selection_anchor      = len(self.text)
         self.cursor_timer          = 0
         self.scroll_x              = 0
+        self.pad_x                 = 12
+        self.pad_y                 = 4
         self.rebuild_surface()
         self.sync_from_pipeline()
 
+        self.on_click              = self.handle_click_position
+        self.on_double_click       = self.select_word_at_mouse
 
+    def validate_params(self):
+        if self.width_flex is False:
+            EZ.err("TextBox does not support width_flex=False. TextBoxes always stretch to fill available space. Remove width_flex=False.")
 
     # ══════════════════════════════════════════════════════════════
     # SURFACE — rebuild my_surface from current text or placeholder
@@ -72,7 +81,7 @@ class TextBox(Label):
     # ══════════════════════════════════════════════════════════════
 
     def measure(self):
-        h = self.font.get_height() + self.pad * 2
+        h = self.font.get_height() + self.pad_y * 2
         w = 200
         return (w, h)
 
@@ -98,11 +107,11 @@ class TextBox(Label):
 
     def draw_text(self, surface):
         r        = self.rect
-        clip     = pygame.Rect(r.left + self.pad, r.top, r.width - self.pad * 2, r.height)
-        old_clip = surface.get_clip()
-        surface.set_clip(old_clip.clip(clip))
-        self.ensure_cursor_visible()
-        tx = r.left + self.pad - self.scroll_x
+        clip = pygame.Rect(r.left + self.pad_x, r.top, r.width - self.pad_x * 2, r.height)  # NEW
+        old_clip = surface.get_clip()  # (unchanged)
+        surface.set_clip(old_clip.clip(clip))  # (unchanged)
+        self.ensure_cursor_visible()  # (unchanged)
+        tx = r.left + self.pad_x - self.scroll_x
         ty = r.centery - self.my_surface.get_height() // 2
         self.draw_selection_highlight(surface, tx, ty)
         surface.blit(self.my_surface, (tx, ty))
@@ -125,11 +134,11 @@ class TextBox(Label):
         if self.cursor_timer % 60 >= 30:
             return
         r             = self.rect
-        cx            = r.left + self.pad + self.cursor_pixel_x() - self.scroll_x
-        cy            = r.centery - self.font.get_height() // 2
-        ch            = self.font.get_height()
-        content_left  = r.left + self.pad
-        content_right = r.right - self.pad
+        cx            = r.left  + self.pad_x + self.cursor_pixel_x() - self.scroll_x   # NEW
+        cy            = r.centery - self.font.get_height() // 2                        # (unchanged)
+        ch            = self.font.get_height()                                         # (unchanged)
+        content_left  = r.left  + self.pad_x                                           # NEW
+        content_right = r.right - self.pad_x
         if cx < content_left or cx > content_right:
             return
         pygame.draw.line(surface, self.color_txt, (cx, cy), (cx, cy + ch), 2)
@@ -155,7 +164,15 @@ class TextBox(Label):
         self.cursor_timer    = 0
         return True
 
+    def select_word_at_mouse(self):
+        pos = pygame.mouse.get_pos()
+        clicked_pos = self.pos_from_pixel(pos[0])
+        #print(f"in select_word_at_mouse")
+        self.select_word_at(clicked_pos)
+        #print(f"AFTER select_word: anchor={self.selection_anchor} cursor={self.cursor_pos}")
+
     def select_word_at(self, pos):
+        #print(f"postion ={pos}")
         if not self.text:
             return
         start = pos
@@ -183,7 +200,7 @@ class TextBox(Label):
     def ensure_cursor_visible(self):
         if not self.rect:
             return
-        visible_w = self.rect.width - self.pad * 2
+        visible_w = self.rect.width - self.pad_x * 2
         cx        = self.cursor_pixel_x()
         if cx - self.scroll_x > visible_w:
             self.scroll_x = cx - visible_w + 2
@@ -192,7 +209,7 @@ class TextBox(Label):
 
     def pos_from_pixel(self, mouse_x):
         r       = self.rect
-        local_x = mouse_x - r.left - self.pad + self.scroll_x
+        local_x = mouse_x - r.left - self.pad_x + self.scroll_x
         best_pos = 0
         best_d   = abs(local_x)
         for i in range(1, len(self.text) + 1):
@@ -207,18 +224,15 @@ class TextBox(Label):
     # MgrInput PROTOCOL — focus click, drag, double-click
     # ══════════════════════════════════════════════════════════════
 
-    def handle_focus_click(self, pos):
-        """Called by MgrInput when this widget gains focus via click."""
+    def handle_click_position(self):
+        pos = pygame.mouse.get_pos()
         if self.rect and self.rect.collidepoint(pos):
             self.cursor_timer     = 0
             clicked_pos           = self.pos_from_pixel(pos[0])
             self.cursor_pos       = clicked_pos
             self.selection_anchor = clicked_pos
 
-    def handle_double_click(self, pos):
-        """Called by MgrInput on double-click."""
-        clicked_pos = self.pos_from_pixel(pos[0])
-        self.select_word_at(clicked_pos)
+
 
     def handle_drag_move(self, pos):
         """Called by MgrInput during mouse drag (text selection)."""
@@ -420,9 +434,9 @@ class TextBox(Label):
             self.form.pipeline_set(self.pipeline_key, self.text)
         if self.on_submit and self.text:
             self.on_submit(self.text)
-        if not self.pipeline_key:
-            self.text            = ""
-            self.cursor_pos      = 0
+        if not self.pipeline_key and not self.on_change and not self.on_submit:
+            self.text             = ""
+            self.cursor_pos       = 0
             self.selection_anchor = 0
         self.rebuild_surface()
         self.set_focus()

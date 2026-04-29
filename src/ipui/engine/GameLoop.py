@@ -1,6 +1,6 @@
 import pygame
 from ipui.Style import Style
-from forms.NeuroForge.custom_widgets.Logger import Logger
+from ipui._forms.NeuroForge.custom_widgets.Logger import Logger
 from ipui.engine.IPUI import IPUI
 from ipui.engine.MgrFont import MgrFont
 from ipui.engine.MgrColor import MgrColor
@@ -8,17 +8,17 @@ from ipui.engine.IP import IP
 from ipui.engine.MgrInput import MgrInput
 import time
 
-class _IPUI:
+class GameLoop:
     screen      = None
     is_running  = True
-    def __init__(self, form_class, title=None):
+    def __init__(self, form_class, title=None,fullscreen=False, width=0, height=0):
         Logger()
         pygame  .init()
         pygame.key.set_repeat(350, 35)  # delay ms, interval ms (enables KEYDOWN repeats)
-        print("pygame loop constructor")
+
         self.last_wall_time = time.perf_counter() #fix lag issue
-        self    .init_pygame( title)
-        IPUI    .screen     = _IPUI.screen
+        self    .init_pygame( title, fullscreen=fullscreen, width=width, height=height)
+        IPUI    .screen     = GameLoop.screen
         self    .ip         = IP()
         IPUI    .ip         = self.ip
         self    .clock      = pygame.time.Clock()
@@ -28,7 +28,7 @@ class _IPUI:
         pygame  .quit()
 
     def run_loop(self):
-        while _IPUI.is_running: self.pygame_loop()
+        while GameLoop.is_running: self.pygame_loop()
 
     # ══════════════════════════════════════════════════════════════
     # THE LOOP — one frame
@@ -50,12 +50,12 @@ class _IPUI:
 
         # ── Snapshot all input state ──────────────────────────
         ip = self.ip
-        ip.frame_begin(dt, int(self.clock.get_fps()), self.frame_count, _IPUI.screen, form)
+        ip.frame_begin(dt, int(self.clock.get_fps()), self.frame_count, GameLoop.screen, form)
 
         # ── Collect events ────────────────────────────────────
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                _IPUI.is_running = False
+                GameLoop.is_running = False
             else:
                 ip.events.append(event)
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button in (4, 5):
@@ -71,11 +71,11 @@ class _IPUI:
         IPUI.update()
 
         # ── RENDER PRE ────────────────────────────────────────
-        _IPUI.screen.fill(Style.COLOR_BACKGROUND)
+        GameLoop.screen.fill(Style.COLOR_BACKGROUND)
         if form: form.dispatch_ip_render(ip, "ip_draw")
 
         # ── UI Draw ───────────────────────────────────────────
-        IPUI.render(_IPUI.screen)
+        IPUI.render(GameLoop.screen)
 
         # ── RENDER POST ───────────────────────────────────────
         if form: form.dispatch_ip_render(ip, "ip_draw_hud")
@@ -83,19 +83,22 @@ class _IPUI:
         # ── Flip ──────────────────────────────────────────────
         pygame.display.flip()
 
-    def init_pygame(self, title: str, fullscreen=False ):
+    def init_pygame(self, title, fullscreen=False, width=0, height=0):
         if title is None: title = "IPUI Framework"
-        if Style.SCREEN_HEIGHT==0 or Style.SCREEN_WIDTH==0:fullscreen=True
-
         pygame.display.set_caption(title)
-
         MgrFont.init()
         MgrColor.init()
-        # _IPUI.py method: init_pygame  Update: use SCALED to prevent DWM display stalls
+        info = pygame.display.Info()
         if fullscreen:
-            info = pygame.display.Info()
-            Style.SCREEN_WIDTH, Style.SCREEN_HEIGHT = info.current_w, info.current_h
-            self.__class__.screen = pygame.display.set_mode((Style.SCREEN_WIDTH, Style.SCREEN_HEIGHT), pygame.FULLSCREEN | pygame.SCALED)
+
+
+            self.__class__.screen = pygame.display.set_mode(
+                ( info.current_w, info.current_h),
+                pygame.FULLSCREEN | pygame.SCALED)
         else:
-            self.__class__.screen = pygame.display.set_mode((Style.SCREEN_WIDTH, Style.SCREEN_HEIGHT), pygame.SCALED)
+            if width  == 0: width  = info.current_w
+            if height == 0: height = int(info.current_h * 0.85)
+            self.__class__.screen = pygame.display.set_mode(
+                (width, height),
+                pygame.SCALED)
         pygame.scrap.init()

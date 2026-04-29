@@ -1,5 +1,3 @@
-# PygameBall2.py  Update: ball bounces in None gap via ip_draw
-
 import pygame
 from ipui import *
 
@@ -22,9 +20,8 @@ class PygameBall(_BaseTab):
     def overview(self, parent):
         """Left pane — explanation and speed controls."""
         Title(parent, "Pygame + IPUI", glow=True)
-        Body(parent, "IPUI sets up Pygame for you "
-                     "You can still access it normally"
-                      "But IPUI makes it easy with IP!"
+        Body(parent, "IPUI gives you pygame on a platter."
+
 
              )
 
@@ -40,34 +37,37 @@ class PygameBall(_BaseTab):
                    "  After UI draws. Overlays, cursors.\n"
                    "  The FPS counter draws here.")
 
+        # Pygame.py  method: (replace existing "ip Service Portal" card)  Update: brag-worthy ip card showing all 8 families + ip.help() hook
         card = Card(parent)
-        Heading(card, "The ip Object:", glow=True)
-        Body(card, "ip.dt        Seconds since last frame")
-        Body(card, "ip.fps       Current FPS")
-        Body(card, "ip.surface   The draw surface")
-        Body(card, "ip.events    All pygame events")
-        Body(card, "ip.unhandled Events UI didn't consume")
-        Body(card, "ip.frame     Frame counter")
+        Heading(card, "The ip Service Portal", glow=True)
+        Body(card, "One object. Everything you need. No hunting.")
+        Body(card, "  Identity   form, tab, is_active_tab")
+        Body(card, "  Timing     dt, fps, frame, elapsed")
+        Body(card, "  Geometry   rect_pane, to_screen, to_local")
+        Body(card, "  Mouse      mouse_pos, mouse_pressed, mouse_inside")
+        Body(card, "  Keyboard   key_pressed, mod_shift, mod_ctrl")
+        Body(card, "  State      ip.state.add / go / debug")
+        Body(card, "  Rendering  surface, events, unhandled")
+        Body(card, "  Cache      cache_get, cache_set — frame-to-frame scratch")
+        Body(card, "Type ip. — your IDE shows the rest.")
 
-        card = Card(parent)
-        Heading(card, "Speed:", glow=True)
-        row = Row(card)
-        Button(row, "Slower",
-               color_bg=Style.COLOR_TAB_BG,
-               on_click=self.go_slower)
-        Body(row, "1.0x", name="lbl_speed", text_align='c', width_flex=True)
-        Button(row, "Faster",
-               color_bg=Style.COLOR_TAB_BG,
-               on_click=self.go_faster)
+
+
 
     def code(self, parent):
         """Right pane — source code."""
-        Title(parent, "The Source", glow=True)
-        Body(parent, "This pane reads its own file. What you see is what runs.")
-        card = Card(parent, scrollable=True, height_flex=99)
-        CodeBox(card,
-            data  = __file__,
-        )
+        card = Col(parent)
+        Title(card, "Speed", glow=True,text_align=CENTER)
+        row = Row(card)
+        Button(row, "Slower",               on_click=self.go_slower)
+        Body(row, "1.0x", name="lbl_speed", text_align='c', width_flex=True)
+        Button(row, "Faster", on_click=self.go_faster)
+
+        Body(parent,"")     #small spacer
+        card = Card(parent,height_flex=1)
+        Title(card, "The Source", glow=True,text_align=CENTER)
+        card = Card(card, scrollable=True, height_flex=99)
+        CodeBox(card,    data  = __file__)
 
     # ══════════════════════════════════════════════════════════════
     # SPEED CONTROLS

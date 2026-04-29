@@ -45,9 +45,9 @@ class Label(_BaseWidget):
 
     def composite_glow_line(self, line):
         import pygame
-        hot_surf   = self.font.render(line, True, Style.COLOR_PAL_ORANGE_BRIGHT)
+        hot_surf   = self.font.render(line, True, Style.COLOR_HOTKEY)
         core_surf  = self.font.render(line, True, Style.COLOR_MOLTEN)
-        bloom_surf = self.font.render(line, True, Style.COLOR_PAL_ORANGE_DEEP)
+        bloom_surf = self.font.render(line, True, Style.COLOR_HOTKEY_GLOW)
 
         w    = hot_surf.get_width() + 4
         h    = hot_surf.get_height() + 4

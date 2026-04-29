@@ -32,9 +32,9 @@ class IP:
         # ── Identity (set per-dispatch by framework) ──────────
         self.form               = None      # active Form instance
         self.form_name          = ""        # name of active form
-        self.pane               = None      # active _BaseTab instance
-        self.pane_name          = ""        # name of active pane/tab
-        self.is_active_pane     = False     # is the current pane the visible one?
+        self.tab                = None      # active _BaseTab instance
+        self.tab_name           = ""        # name of active tab
+        self.is_active_tab     = False      # is the current tab the visible one?
 
         # ── Timing ────────────────────────────────────────────
         self.dt                 = 0.0       # seconds since last frame
@@ -71,10 +71,10 @@ class IP:
 
         # ── Cache (local scratch pad — NOT pipeline) ──────────
         self.private_cache      = {}
-        self.state              = StateMachine()
+        self.private_machines   = {}
 
     # ══════════════════════════════════════════════════════════════
-    # FRAME UPDATE — called by _IPUI each frame, NOT by user code
+    # FRAME UPDATE — called by GameLoop each frame, NOT by user code
     # ══════════════════════════════════════════════════════════════
 
     def frame_begin(self, dt, fps, frame, surface, form):
@@ -112,22 +112,35 @@ class IP:
         self.mod_shift       = bool(mods & pygame.KMOD_SHIFT)
         self.mod_ctrl        = bool(mods & pygame.KMOD_CTRL)
         self.mod_alt         = bool(mods & pygame.KMOD_ALT)
-        self.state.tick(dt)
+        #self.state.tick(dt)
 
+
+    @property
+    def state(self):
+        """Return the state machine for the current tab."""
+        tab = self.tab
+        if tab is None:
+            tab = self.form
+        if tab is None:
+            return None
+        key = id(tab)
+        if key not in self.private_machines:
+            self.private_machines[key] = StateMachine()
+        return self.private_machines[key]
     # ══════════════════════════════════════════════════════════════
-    # PANE CONTEXT — called before dispatching to each pane's hook
+    # TAB CONTEXT — called before dispatching to each tab's hook
     # ══════════════════════════════════════════════════════════════
 
-    def set_pane_context(self, pane, pane_name, is_active, pane_widget=None):
-        """Called before dispatching to each pane's hook."""
-        self.pane            = pane
-        self.pane_name       = pane_name
-        self.is_active_pane  = is_active
-        if pane_widget and pane_widget.rect:
-            self.rect_tab_area = pane_widget.rect
+    def set_tab_context(self, tab, tab_name, is_active, pane_widget=None):
+        """Called before dispatching to each tab's hook."""
+        self.tab                = tab
+        self.tab_name           = tab_name
+        self.is_active_tab     = is_active
+        if pane_widget and        pane_widget.rect:
+            self.rect_tab_area  = pane_widget.rect
         else:
-            self.rect_tab_area = None
-        self.rect_pane         = self.find_canvas_rect()
+            self.rect_tab_area  = None
+        self.rect_pane          = self.find_canvas_rect()
 
 
     def find_canvas_rect(self):
@@ -403,9 +416,9 @@ class IP:
 ═══ IDENTITY ═══════════════════════════════
   ip.form             Active Form instance
   ip.form_name        Name of the active form
-  ip.pane             Active Pane instance
-  ip.pane_name        Name of the active tab/pane
-  ip.is_active_pane   Is this the visible pane?
+  ip.tab              Active Tab instance
+  ip.tab_name         Name of the active tab
+  ip.is_active_tab    Is this the visible tab?
 """
 
     @staticmethod

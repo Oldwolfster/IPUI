@@ -1,9 +1,9 @@
-# MeasureAndHug.py  Update: split into single-purpose methods; symmetric shrink keeps parent centered
+# NotNP_HardHug.py  Update: split into single-purpose methods; symmetric shrink keeps parent centered
 from pygame import Rect
-from ipui.engine.MeasureAndWrap import MeasureAndWrap
+from ipui.engine.NotNP_HardWrap import NotNP_HardWrap
 
 
-class MeasureAndHug:
+class NotNP_HardHug:
     """
     Pass 4 of 4: the hug pass.
 
@@ -14,7 +14,7 @@ class MeasureAndHug:
 
     Bounds:
         Floor   — never below the parent's width_minimum / height_minimum.
-        Ceiling — never beyond the rect MeasureAndLayout settled on. Hug only
+        Ceiling — never beyond the rect NotNP_HardLayout settled on. Hug only
                   shrinks; it never grows.
 
     Scope:
@@ -28,7 +28,7 @@ class MeasureAndHug:
 
     def __init__(self, trunk):
         self.trunk  = trunk
-        #self.engine = MeasureAndWrap(trunk)
+        #self.engine = NotNP_HardWrap(trunk)
 
     def RunLayout(self):
         #self.engine.RunLayout()

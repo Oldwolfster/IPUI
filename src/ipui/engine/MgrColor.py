@@ -168,19 +168,19 @@ class MgrColor:
     def apply_bevel(widget, flavor="raised"):
         if flavor == "sunken":
             widget.border_top       = Style.COLOR_BEVEL_SUNKEN_DK
-            widget.border_left = Style.COLOR_BEVEL_SUNKEN_DK
-            widget.border_bottom = Style.COLOR_BEVEL_SUNKEN_LT
-            widget.border_right = Style.COLOR_BEVEL_SUNKEN_LT
+            widget.border_left      = Style.COLOR_BEVEL_SUNKEN_DK
+            widget.border_bottom    = Style.COLOR_BEVEL_SUNKEN_LT
+            widget.border_right     = Style.COLOR_BEVEL_SUNKEN_LT
         elif flavor == "hot":
-            widget.border_top = Style.COLOR_BEVEL_HOT_LT
-            widget.border_left = Style.COLOR_BEVEL_HOT_LT
-            widget.border_bottom = Style.COLOR_BEVEL_HOT_DK
-            widget.border_right = Style.COLOR_BEVEL_HOT_DK
+            widget.border_top       = Style.COLOR_BEVEL_HOT_LT
+            widget.border_left      = Style.COLOR_BEVEL_HOT_LT
+            widget.border_bottom    = Style.COLOR_BEVEL_HOT_DK
+            widget.border_right     = Style.COLOR_BEVEL_HOT_DK
         else:  # Default "raised"
-            widget.border_top = Style.COLOR_BEVEL_RAISED_LT
-            widget.border_left = Style.COLOR_BEVEL_RAISED_LT
-            widget.border_bottom = Style.COLOR_BEVEL_RAISED_DK
-            widget.border_right = Style.COLOR_BEVEL_RAISED_DK
+            widget.border_top       = Style.COLOR_BEVEL_RAISED_LT
+            widget.border_left      = Style.COLOR_BEVEL_RAISED_LT
+            widget.border_bottom    = Style.COLOR_BEVEL_RAISED_DK
+            widget.border_right     = Style.COLOR_BEVEL_RAISED_DK
 
     @classmethod
     def compute_bevel(cls, base_rgb, flavor="raised"):

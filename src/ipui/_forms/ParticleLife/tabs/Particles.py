@@ -26,6 +26,8 @@ class Particles(_BaseTab):
         ( 64, 224, 208),   # V  - Turquoise 2
     ]
 
+    def ip_setup(self, ip):
+        self.field_cards = {}
     def _ensure_defaultsDELETEME(self):
         ids = self.form.pipeline_read("pl.particle_ids")
         if ids:
@@ -84,9 +86,22 @@ class Particles(_BaseTab):
         self.form.refresh_pane(0)
         self.form.refresh_pane(1)
 
+    def parse_color_channel(self, value):
+        if value is None: return 60
+        try:               n = int(value)
+        except (TypeError, ValueError): return 60
+        return max(0, min(255, n))
+
+    def ip_think(self, ctx):
+        for pid, card in self.field_cards.items():
+            r = self.parse_color_channel(self.form.pipeline_read(f"pl.p.{pid}.r"))
+            g = self.parse_color_channel(self.form.pipeline_read(f"pl.p.{pid}.g"))
+            b = self.parse_color_channel(self.form.pipeline_read(f"pl.p.{pid}.b"))
+            card.color_bg = (r, g, b)
 
     def particles(self, parent):
         root = Card(parent, scrollable=True)
+        self.field_cards = {}
         header = CardRow(root, width_flex=True, justify_spread=True)
         Heading(header, "Particles", glow=True)
         Button(header, "Add",
@@ -94,10 +109,9 @@ class Particles(_BaseTab):
                on_click=self._add_particle)
 
         ids = self.form.pipeline_read("pl.particle_ids") or []
-
-
-
         for pid in ids:  self.add_particle(pid,root)
+
+
 
     def add_particle(self,pid,root):
         row = Card(root)
@@ -112,6 +126,7 @@ class Particles(_BaseTab):
                on_click=lambda pid=pid: self._delete_particle(pid))
 
         fields = CardRow(row, width_flex=True)
+        self.field_cards[pid] = fields
 
         TextBox(fields, placeholder="Name",
                 pipeline_key=f"pl.p.{pid}.name",

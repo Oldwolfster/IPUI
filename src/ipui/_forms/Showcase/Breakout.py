@@ -1,12 +1,9 @@
-# Breakout.py  Update: delegate-based state machine
-
 import random
 import pygame
 
 from ipui import *
 from ipui.engine.Key import Key
 from ipui.engine.Mouse import Mouse
-
 
 class Breakout(_BaseTab):
     """Arcade demo with attract mode, levels, and forgiving paddle."""
@@ -35,7 +32,6 @@ class Breakout(_BaseTab):
         ip.state.add        ("GAME_OVER"     , None, "DEMO_PLAYING", 1.5)
         ip.state.debug()
         self.start_demo()
-
 
     def state_demo_playing(self):
         if not self.bricks or self.lives <= 0:
@@ -333,30 +329,42 @@ class Breakout(_BaseTab):
     # ══════════════════════════════════════════════════════════════
     # PANE BUILDERS
     # ══════════════════════════════════════════════════════════════
-
     def greet(self, parent):
-        Banner(parent, "BREAKOUT", glow=True)
-        Body(parent, "A None pane in TAB_LAYOUT creates a "
-                     "transparent canvas for pygame drawing.")
         card = Card(parent)
-        Heading(card, "Please insert a quarter", glow=True)
-        Body(card, "OR press Q")
-        Button(card, "Insert Quarter",
-               color_bg=Style.COLOR_BUTTON_CTA,
-               on_click=self.start_game)
+        Spacer(card)
+        row  = Row(card)
+        Body(row,"      ")
+        hill = Plate(row,pad=0,width_flex=1 ,border=8)
+        Body(row,"      ")
+        Banner (hill, "BREAKOUT", glow=True,text_align=CENTER,pad=0)
+        Spacer(card)
+
+
+        Body   ( parent, "A working arcade game, sitting in a tab, "
+                         "next to your other tabs. Same framework. "
+                         "No special game mode.")
+
         card = Card(parent)
-        Heading(card, "You Can Build This!", glow=True)
-        Body(card, "A real Breakout game. Right here. Right now.\n"
-                  "10 minutes if you're fast.\n"
-                  "60 minutes if you just learned what a keyboard is.\n"
-                  "Either way, you'll be smashing bricks before lunch.")
+        Heading( card,   "Please insert a quarter", glow=True)
+        Body   ( card,   "OR press Q")
+        Button ( card,   "Insert Quarter",
+                         color_bg=Style.COLOR_BUTTON_CTA,
+                         on_click=self.start_game)
+
         card = Card(parent)
-        Heading(card, "What You Get For Free")
-        Body(card, "A big empty space to draw in\n"
-                  "7. A thinking loop for physics\n"
-                  "8. A drawing loop for painting\n"
-                  "9. Score as IPUI widgets in the canvas\n"
-                  "10. All coordinates normalized 0-1")
+        Heading( card,   "You Can Build This!", glow=True)
+        Body   ( card,   "A real Breakout game. Right here. Right now.\n"
+                         "10 minutes if you're fast.\n"
+                         "60 minutes if you just learned what a keyboard is.\n"
+                         "Either way, you'll be smashing bricks before lunch.")
+
+        card = Card(parent)
+        Heading( card,   "No pygame boilerplate", glow=True)
+        Body   ( card,   "No window setup. No event loop. No coordinate math.\n"
+                         "Drop into ip_think for physics, ip_draw for the bricks, "
+                         "and the framework handles the rest.\n"
+                         "The whole game — bricks, paddle, levels, HUD — fits in "
+                         "under 200 lines (Breakout_Simple.py).")
 
     def game_hud(self, parent):
         """Score and lives as real IPUI widgets floating over the game."""
@@ -366,8 +374,8 @@ class Breakout(_BaseTab):
         Body(row, "Lives: 3", name="lbl_lives")
 
     def code(self, parent):
-        Title(parent, "The Source", glow=True)
-        Body(parent, "This pane reads its own file.")
+        Title(parent, "Example of Simple State Machine", glow=True)
+
         card = Card(parent, scrollable=True, height_flex=99)
         CodeBox(card,
             data  = __file__,)

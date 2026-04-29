@@ -88,6 +88,9 @@ class Designer(_BaseTab):
     def preview(self, parent):
         Title(parent, "Preview", glow=True)
         Body(parent, "Select a pane from the Tab Map")
+        pt= Plate(parent)
+        Title(pt,"UNDER CONSTRUCTION")
+        Title(pt, "But kinda cool")
 
     def refresh_preview(self):
         if not self.selected_tab or not self.selected_pane:

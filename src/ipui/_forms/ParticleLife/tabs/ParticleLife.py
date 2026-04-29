@@ -86,9 +86,9 @@ class ParticleLife(_BaseTab):
     # ==========================================================
     # Lifecycle hooks
     # ==========================================================
-    def ip_think(self, ctx):
+    def ip_think(self, ip):
 
-        self.world_rect = self._compute_world_rect(ctx)
+        self.world_rect = self._compute_world_rect(ip)
         if self.private_needs_respawn:
             self.private_needs_respawn = False
             self._respawn_from_config()
@@ -100,15 +100,15 @@ class ParticleLife(_BaseTab):
             pass
 
         if self._read_bool("pl.sim.paused", False):
-            self._publish_runtime_metrics(ctx)
+            self._publish_runtime_metrics(ip)
             return
 
         if not self.particles:
             self._respawn_from_config()
-            self._publish_runtime_metrics(ctx)
+            self._publish_runtime_metrics(ip)
             return
 
-        dt = max(0.0, min(float(ctx.dt), 0.05))
+        dt = max(0.0, min(float(ip.dt), 0.05))
 
         r_min               = self._read_float("pl.sim.r_min", 10.0)
         r_mid               = self._read_float("pl.sim.r_mid", 40.0)
@@ -240,31 +240,34 @@ class ParticleLife(_BaseTab):
             p["x"] = (p["x"] + (p["vx"] * dt)) % world_w
             p["y"] = (p["y"] + (p["vy"] * dt)) % world_h
 
-        self._publish_runtime_metrics(ctx)
+        self._publish_runtime_metrics(ip)
 
-    def ip_draw(self, ctx):
-        self.world_rect = self._compute_world_rect(ctx)
+    def ip_draw(self, ip):
+        self.world_rect = self._compute_world_rect(ip)
 
         trail_alpha = self._read_int("pl.sim.trail_alpha", 36)
         trail_alpha = max(0, min(255, trail_alpha))
 
         world = pygame.Surface((self.world_rect.width, self.world_rect.height), pygame.SRCALPHA)
         world.fill((9, 11, 18, trail_alpha))
-        ctx.surface.blit(world, self.world_rect.topleft)
+        ip.surface.blit(world, self.world_rect.topleft)
 
-        pygame.draw.rect(ctx.surface, (36, 42, 58), self.world_rect, width=1, border_radius=10)
+        pygame.draw.rect(ip.surface, (36, 42, 58), self.world_rect, width=1, border_radius=10)
 
         for p in self.particles:
             px = self.world_rect.left + int(p["x"])
             py = self.world_rect.top  + int(p["y"])
-            pygame.draw.circle(ctx.surface, p["color"], (px, py), p["radius"])
+            pygame.draw.circle(ip.surface, p["color"], (px, py), p["radius"])
 
-    def ip_draw_hud(self, ctx):
+
+    def ip_draw_hud(self, ip):
         font = Style.FONT_DETAIL
-        surf = font.render(f"FPS: {ctx.fps}", True, Style.COLOR_TEXT_ACCENT)
-        x    = self.world_rect.left + 10
-        y    = self.world_rect.top + 10
-        ctx.surface.blit(surf, (x, y))
+        x = self.world_rect.left + 10
+        y = self.world_rect.top + 10
+        #note = font.render("Pure Python O(N^2) - frames will tank, IPUI will not", True, Style.COLOR_TEXT_ACCENT)
+        #ip.surface.blit(note, (x, y))
+        surf = font.render(f"FPS: {ip.fps}", True, Style.COLOR_TEXT_ACCENT)
+        ip.surface.blit(surf, (x, y ))
 
     # ==========================================================
     # User actions
@@ -489,9 +492,9 @@ class ParticleLife(_BaseTab):
     # ==========================================================
     # Helpers
     # ==========================================================
-    def _publish_runtime_metrics(self, ctx):
+    def _publish_runtime_metrics(self, ip):
         self.form.pipeline_set("pl.sim.count", len(self.particles))
-        self.form.pipeline_set("pl.sim.fps", ctx.fps)
+        self.form.pipeline_set("pl.sim.fps", ip.fps)
 
         if self.status_frame_mod % 10 == 0:
             paused_text = "Paused" if self._read_bool("pl.sim.paused", False) else "Running"
@@ -513,9 +516,9 @@ class ParticleLife(_BaseTab):
 
         self.status_frame_mod += 1
 
-    def _compute_world_rect(self, ctx):
-        if ctx.rect_pane:
-            return ctx.rect_pane
+    def _compute_world_rect(self, ip):
+        if ip.rect_pane:
+            return ip.rect_pane
         return pygame.Rect(320, 120, 800, 560)
 
     def _wrapped_delta(self, ax, ay, bx, by, world_w, world_h):

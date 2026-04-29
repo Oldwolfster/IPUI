@@ -2,41 +2,35 @@ from ipui.utils.EZ import EZ
 from ipui.engine.IPUI import IPUI
 
 class _BaseTab:
-    """Base class for pane builders.
+    """Base class for tabs. Contains pane builders and lifecycle hooks..
     Gives self.form to all methods.
-    Override ip_setup_pane() for one-time setup.
+
 
     ══════════════════════════════════════════════════════════════
-    LIFECYCLE HOOKS — override these in your Pane subclass
-    all run when pane is visible - THINK_ALWAYS=True makes think run regardless.
+    LIFECYCLE HOOKS — override these in your _BaseTab subclass
+    all run when tab is visible - THINK_ALWAYS=True makes think run regardless.
     ══════════════════════════════════════════════════════════════
-    ip_think(ctx)      — Recommended uses. State, math, physics, logic, etc.
-    ip_draw(ctx)       — Before UI widget tree draws. Game world, backgrounds.
-    ip_draw_hud(ctx)   — After UI widget tree draws. Custom cursors, overlays, scores.
+    ip_setup()      — For one-time setup.
+    ip_think()      — Recommended uses. State, math, physics, logic, etc.
+    ip_draw()       — Before UI widget tree draws. Game world, backgrounds.
+    ip_draw_hud()   — After UI widget tree draws. Custom cursors, overlays, scores.
 
-    ctx fields:
-        ctx.dt         — Seconds since last frame.
-        ctx.fps        — Current FPS.
-        ctx.frame_id   — Monotonically increasing frame counter.
-        ctx.surface    — The pygame draw surface.
-        ctx.events     — All pygame events this frame.
-        ctx.unhandled  — Events the UI did not consume.
-
-    DRAW IN ip_think AT YOUR OWN RISK.(feels a bit melodramatic)
     """
-    THINK_ALWAYS = False
+    THINK_ALWAYS = False    # Continues to run ip_think even if tab is not active
 
     #  guard against __init__ override
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if '__init__' in cls.__dict__:
-            raise TypeError(f"{cls.__name__}: Don't override __init__, use ip_setup_pane() instead")
+            raise TypeError(f"{cls.__name__}: Don't override __init__, use ip_setup() instead")
 
     def __init__(self, form):
-        self.form = form
-        self.ip = IPUI.ip
+        self.form               = form
+        self.ip                 = IPUI.ip
+        self.ip.tab             = self
+        self.private_setup_done = False
         self.register_derives()
-        self.ip_setup_pane()
+        # was being called to early  self.ip_setup(self.ip)
 
     def register_derives(self):
         derives = getattr(self.__class__, 'DECLARATION_UPDATES', None)
@@ -59,8 +53,9 @@ class _BaseTab:
             )
         #self.form.pipeline.fire_all_derives()
 
-    def ip_setup_pane(self):
-        pass
+
+    def set_pane(self, index, builder, *args, tab_name=None, weight=None, **kwargs):
+        self.form.set_pane(index, builder, *args, tab_name=tab_name, weight=weight, **kwargs)
 
     def swap_pane(self, index, builder, *args, **kwargs):
         def do_swap():
@@ -71,8 +66,11 @@ class _BaseTab:
         for pane in self.form.tab_strip.panes[keep_count:]:
             pane.visible = False
 
+
+    def show_modal(self, msg, min_seconds=2, work_func=None):
+        self.form.show_modal(msg, min_seconds, work_func)
     # ══════════════════════════════════════════════════════════════
-    # LIFECYCLE HOOKS — override in your pane
+    # LIFECYCLE HOOKS — override in your _BaseTab subclass
     # ══════════════════════════════════════════════════════════════
 
     def ip_think    (self, ctx):
@@ -85,6 +83,12 @@ class _BaseTab:
 
     def ip_draw_hud (self, ctx):
         """Draw after UI. Override for overlays, cursors, effects."""
+        pass
+
+    def ip_setup(self, ip):
+        pass
+
+    def ip_activated(self, ip):
         pass
 
 

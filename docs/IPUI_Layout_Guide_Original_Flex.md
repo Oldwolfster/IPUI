@@ -4,9 +4,8 @@
 
 You tell IPUI **what** you want. IPUI figures out **where** it goes.
 
-- Set `width_flex` or `height_flex` to request proportional space.  These default to one.
-- Don't change the default, all siblings will be sized identical, gapped only by spacing tokens 
-- 
+- Set `width_flex` or `height_flex` to request proportional space.  These default to zero.
+- Set the same flex value on siblings to size them identically — equal weight = equal share.
 - Make a container `scrollable=True` and overflow is handled for you.
 - That's it. No `LayoutParams`, no `BoxConstraints`, no `MediaQuery`. Just build.
 
@@ -59,7 +58,7 @@ If the total minimums exceed the available space, there's no magic. Content clip
 
 ### Vertical Stacks (the default)
 
-Widgets stack top to bottom. `height_flex` widgets how they share vertical space. Width is inherited from the parent.
+Widgets stack top to bottom. `height_flex` weights how they share vertical space. Width is inherited from the parent.
 
 ```python
 card = CardCol(parent, height_flex=1)
@@ -71,7 +70,7 @@ Button(card, "Submit")                    # intrinsic height, pinned to bottom
 
 ### Horizontal Stacks (Row / CardRow)
 
-Widgets sit side by side. `width_flex` widgets how they share horizontal space. Height is inherited from the parent.
+Widgets sit side by side. `width_flex` weights how they share horizontal space. Height is inherited from the parent.
 
 ```python
 row = Row(parent)

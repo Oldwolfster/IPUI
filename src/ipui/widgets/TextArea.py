@@ -6,7 +6,7 @@
 
 import pygame
 
-from ipui.utils import MgrClipboard
+from ipui.utils.MgrClipboard import MgrClipboard
 from ipui.widgets.TextBox import TextBox
 from ipui.Style import Style
 from ipui.engine.Key import Key
@@ -25,15 +25,18 @@ class TextArea(TextBox):
     # BUILD
     # ══════════════════════════════════════════════════════════════
 
-# TextArea.py method: build  Update: Set line_height before super
+
     def build(self):
-        self.font          = self.font or Style.FONT_BODY
-        self.line_height   = self.font.get_height()
-        self.display_lines = [""]
+        self.font                = self.font or Style.FONT_BODY
+        self.line_height         = self.font.get_height()
+        self.display_lines       = [""]
+        self.display_line_starts = [0]
+
         super().build()
-        self.wrap          = True
-        self.text_align    = 'l'
-        self.display_lines = self.text.split("\n") if self.text else [""]
+        self.wrap                = True
+        self.text_align          = 'l'
+        self.on_click            = self.handle_click_position
+        self.on_double_click     = self.select_word_at_mouse
 
     # ══════════════════════════════════════════════════════════════
     # SURFACE — rebuild for multi-line
@@ -42,24 +45,36 @@ class TextArea(TextBox):
     def rebuild_surface(self):
         display = self.text if self.text else self.placeholder
         color   = self.color_txt if self.text else self.color_placeholder
-        lines   = display.split("\n")
-        self.display_lines = lines if self.text else lines
-        surfs   = [self.font.render(line or " ", True, color) for line in lines]
-        w       = max(s.get_width() for s in surfs) if surfs else 1
-        h       = self.line_height * len(lines)
+        lines   = display.split("\n") if display else [""]
+
+        # Fallback display_lines/starts for the brief window before pass 2 runs.
+        # Pass 2 (NotNP_HardWrap) will overwrite both with width-aware wrapped values.
+        self.display_lines       = lines
+        self.display_line_starts = self.compute_starts_from_split(lines)
+
+        surfs = [self.font.render(line or " ", True, color) for line in lines]
+        w     = max(s.get_width() for s in surfs) if surfs else 1
+        h     = self.line_height * len(lines)
         self.my_surface = pygame.Surface((w, h), pygame.SRCALPHA)
         y = 0
         for s in surfs:
             self.my_surface.blit(s, (0, y))
             y += self.line_height
 
+    def compute_starts_from_split(self, lines):
+        starts = []
+        offset = 0
+        for line in lines:
+            starts.append(offset)
+            offset += len(line) + 1   # +1 for the \n that split consumed
+        return starts
     # ══════════════════════════════════════════════════════════════
     # MEASURE — taller than TextBox
     # ══════════════════════════════════════════════════════════════
 
     def measure(self):
         line_count = max(1, self.text.count("\n") + 1) if self.text else 3
-        h = self.line_height * line_count + self.pad * 2
+        h = self.line_height * line_count + self.pad_y  * 2
         w = 200
         return (w, h)
 
@@ -69,12 +84,12 @@ class TextArea(TextBox):
 
     def draw_text(self, surface):
         r        = self.rect
-        clip     = pygame.Rect(r.left + self.pad, r.top + self.pad,
-                               r.width - self.pad * 2, r.height - self.pad * 2)
+        clip     = pygame.Rect(r.left + self.pad_x, r.top + self.pad_y,
+                               r.width - self.pad_x * 2, r.height - self.pad_y * 2)
         old_clip = surface.get_clip()
         surface.set_clip(old_clip.clip(clip))
-        tx = r.left + self.pad
-        ty = r.top  + self.pad
+        tx = r.left + self.pad_x
+        ty = r.top  + self.pad_y
         self.draw_selection_highlight(surface, tx, ty)
         surface.blit(self.my_surface, (tx, ty))
         surface.set_clip(old_clip)
@@ -121,10 +136,10 @@ class TextArea(TextBox):
         r              = self.rect
         line, col      = self.pos_to_line_col(self.cursor_pos)
         line_text      = self.display_lines[line] if line < len(self.display_lines) else ""
-        cx             = r.left + self.pad + self.font.size(line_text[:col])[0]
-        cy             = r.top  + self.pad + line * self.line_height
-        content_bottom = r.top + r.height - self.pad
-        if cy < r.top + self.pad or cy + self.line_height > content_bottom:
+        cx             = r.left + self.pad_x + self.font.size(line_text[:col])[0]  # NEW
+        cy             = r.top + self.pad_y + line * self.line_height  # NEW
+        content_bottom = r.top + r.height - self.pad_y  # NEW
+        if cy < r.top + self.pad_y or cy + self.line_height > content_bottom:  # NEW
             return
         pygame.draw.line(surface, self.color_txt, (cx, cy), (cx, cy + self.line_height), 2)
 
@@ -141,28 +156,25 @@ class TextArea(TextBox):
     # ══════════════════════════════════════════════════════════════
 
     def pos_to_line_col(self, pos):
-        """Convert flat cursor position to (line_index, column)."""
-        pos   = max(0, min(pos, len(self.text)))
-        count = 0
-        for i, line in enumerate(self.display_lines):
-            line_len = len(line)
-            if count + line_len >= pos and i == len(self.display_lines) - 1:
-                return (i, pos - count)
-            if count + line_len >= pos and i < len(self.display_lines) - 1:
-                if pos - count <= line_len:
-                    return (i, pos - count)
-            count += line_len + 1  # +1 for the \n
-        return (len(self.display_lines) - 1, len(self.display_lines[-1]) if self.display_lines else 0)
+        """Convert flat cursor position to (line_index, column) using wrapped-line offsets."""
+        pos    = max(0, min(pos, len(self.text)))
+        starts = self.display_line_starts
+
+        line = len(starts) - 1
+        for i in range(len(starts) - 1):
+            if starts[i + 1] > pos:
+                line = i
+                break
+
+        col = pos - starts[line]
+        col = max(0, min(col, len(self.display_lines[line])))
+        return (line, col)
 
     def line_col_to_pos(self, line, col):
-        """Convert (line_index, column) to flat cursor position."""
-        pos = 0
-        for i in range(min(line, len(self.display_lines))):
-            pos += len(self.display_lines[i]) + 1  # +1 for \n
-        if line < len(self.display_lines):
-            col = min(col, len(self.display_lines[line]))
-        pos += col
-        return min(pos, len(self.text))
+        """Convert (line_index, column) to flat cursor position using wrapped-line offsets."""
+        line = max(0, min(line, len(self.display_lines) - 1))
+        col  = max(0, min(col,  len(self.display_lines[line])))
+        return min(self.display_line_starts[line] + col, len(self.text))
 
     # ══════════════════════════════════════════════════════════════
     # CLICK — multi-line position
@@ -171,12 +183,11 @@ class TextArea(TextBox):
     def pos_from_pixel(self, mouse_x, mouse_y=None):
         """Convert screen coordinates to flat cursor position."""
         r = self.rect
-        if mouse_y is None:
-            mouse_y = r.top + self.pad
-        local_y   = mouse_y - r.top - self.pad
+        if mouse_y is None: mouse_y = r.top + self.pad_y
+        local_y   = mouse_y - r.top - self.pad_y
         line_idx  = max(0, min(int(local_y // self.line_height), len(self.display_lines) - 1))
         line_text = self.display_lines[line_idx] if line_idx < len(self.display_lines) else ""
-        local_x   = mouse_x - r.left - self.pad
+        local_x   = mouse_x - r.left - self.pad_x
         best_col  = 0
         best_d    = abs(local_x)
         for c in range(1, len(line_text) + 1):
@@ -191,16 +202,17 @@ class TextArea(TextBox):
     # MgrInput PROTOCOL — overrides for 2D coordinates
     # ══════════════════════════════════════════════════════════════
 
-    def handle_focus_click(self, pos):
-        """Called by MgrInput when this widget gains focus via click."""
+    def handle_click_position(self):
+        pos = pygame.mouse.get_pos()
         if self.rect and self.rect.collidepoint(pos):
             self.cursor_timer     = 0
             clicked_pos           = self.pos_from_pixel(pos[0], pos[1])
             self.cursor_pos       = clicked_pos
             self.selection_anchor = clicked_pos
 
-    def handle_double_click(self, pos):
-        """Called by MgrInput on double-click."""
+
+    def select_word_at_mouse(self):
+        pos = pygame.mouse.get_pos()
         clicked_pos = self.pos_from_pixel(pos[0], pos[1])
         self.select_word_at(clicked_pos)
 

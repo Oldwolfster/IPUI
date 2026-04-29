@@ -2,7 +2,7 @@
 from email import header
 
 from ipui import *
-from ipui.utils.MgrClipboard import Clipboard
+from ipui.utils.MgrClipboard import MgrClipboard
 
 import time
 class Tree(_BaseTab):
@@ -38,11 +38,13 @@ class Tree(_BaseTab):
         from ipui.widgets.Row import CardCol
 
         row = Row(parent)
-        Button(row, "Flex", width_flex=2, color_bg=Style.COLOR_BUTTON_CTA,
-               on_click=lambda: self.form.show_modal("Coming Soon!", min_seconds=1.69))
+        self.btn_flex = Button(row, "Flex", width_flex=2,
+            color_bg = Style.COLOR_BUTTON_CTA,
+            on_click = lambda: self.set_column_mode("flex"))
         Spacer(row, width_flex=3)
-        Button(row, "Hide", width_flex=2, color_bg=Style.COLOR_TAB_BG,
-               on_click=lambda: self.form.show_modal("Coming Soon!", min_seconds=1.69))
+        self.btn_tok  = Button(row, "TOK",  width_flex=2,
+            color_bg = Style.COLOR_TAB_BG,
+            on_click = lambda: self.set_column_mode("tokens"))
 
         Spacer(parent)
         card = CardCol(parent)
@@ -59,6 +61,7 @@ class Tree(_BaseTab):
         Body(card, "Flex 0,0  fixed size")
         Body(card, "Flex 1,0  fills width")
         Body(card, "Flex 0,1  fills height")
+        Body(card, "TOK shows border/pad/gap")
         Body(card, "Min is the floor — shrink past it and content collides")
         Body(card, "Pos / Size is where it actually landed")
     # ══════════════════════════════════════════════════════════════
@@ -75,7 +78,7 @@ class Tree(_BaseTab):
         on_click=self.copy_tree)
         #on_click=lambda: self.form.show_modal("Coming Soon!", min_seconds=1.69))
         PowerGrid(parent, name="dbg_tree_grid", height_flex=True)
-        Body(parent, "Click row to inspect", name="dbg_tree_hint")
+        #Body(parent, "Click row to inspect", name="dbg_tree_hint")
         self.refresh()
 
     def refresh(self):
@@ -86,11 +89,12 @@ class Tree(_BaseTab):
         if not grid:
             return
         old_scroll = grid.scroll_offset
-        old_page = grid.record_selector.current_page
+        old_page   = grid.record_selector.current_page
 
-        rows = []
+        rows       = []
         self.walk(target, 0, rows)
-        cols = ["wid", "Dp", "Type", "Name", "Flex", "Min", "Pos", "Size"]
+        col4       = "TOK" if self.column_mode == "tokens" else "Flex"
+        cols       = ["wid", "Dp", "Type", "Name", col4, "Min", "Pos", "Size"]
         grid.set_data(rows, columns=cols)
         grid.on_row_click(self.on_row_click, "wid")
         grid.on_row_double_click(self.on_tree_row_double_clicked, "wid")
@@ -123,7 +127,7 @@ class Tree(_BaseTab):
         btn.on_click_me(self.copy_detail)
         #btn.on_click = lambda: self.form.show_modal("Coming Soon!",  min_seconds=1.69)
         PowerGrid(parent, name="dbg_detail_grid", height_flex=True)
-        Body(parent, "← Click a row", name="dbg_detail_hint")
+        #Body(parent, "← Click a row", name="dbg_detail_hint")
 
 
     def copy_tree(self):
@@ -134,7 +138,7 @@ class Tree(_BaseTab):
         lines.append("  ".join(grid.columns))
         for row in grid.rows_all:
             lines.append("  ".join(str(c) for c in row))
-        Clipboard.copy("\n".join(lines))
+        MgrClipboard.copy("\n".join(lines))
 
 
     def copy_detail(self):
@@ -142,7 +146,7 @@ class Tree(_BaseTab):
         if not grid or not grid.rows_all: return
         lines = []
         for row in grid.rows_all: lines.append(f"{row[0]:25} {row[1]}")
-        Clipboard.copy("\n".join(lines))
+        MgrClipboard.copy("\n".join(lines))
 
     def populate_detail_grid(self, widget):
         grid = self.form.widgets.get("dbg_detail_grid")
@@ -156,7 +160,9 @@ class Tree(_BaseTab):
     # ══════════════════════════════════════════════════════════════
     # EVENTS — Row click
     # ══════════════════════════════════════════════════════════════
-    def ip_activated(self):
+    def ip_setup(self, ip):
+        self.column_mode = "flex"
+    def ip_activated(self, ip):
         self.refresh()
     def on_row_click(self, wid):
         self.form.pipeline_set("selected_wid", wid)
@@ -172,19 +178,23 @@ class Tree(_BaseTab):
     # TREE WALKER
     # ══════════════════════════════════════════════════════════════
 
-    # Tree.py method: walk  Update: depth number instead of icon, wid first
+
     def walk(self, widget, depth, rows):
-        rect   = widget.rect
-        rx, ry = (rect.x, rect.y)             if rect else ("—", "—")
-        rw, rh = (rect.width, rect.height)    if rect else ("—", "—")
-        minx   = getattr(widget, 'width_minimum',  '?')
-        miny   = getattr(widget, 'height_minimum', '?')
+        rect       = widget.rect
+        rx, ry     = (rect.x, rect.y)             if rect else ("—", "—")
+        rw, rh     = (rect.width, rect.height)    if rect else ("—", "—")
+        minx       = getattr(widget, 'width_minimum',  '?')
+        miny       = getattr(widget, 'height_minimum', '?')
+        if self.column_mode == "tokens":
+            col4 = f"{widget.border}/{widget.pad_x}/{widget.pad_y}/{widget.gap}"
+        else:
+            col4 = f"{widget.width_flex}, {widget.height_flex}"
         rows.append([
             widget.widget_id,
             depth,
             type(widget).__name__,
             widget.display_name,
-            f"{widget.width_flex}, {widget.height_flex}",
+            col4,
             f"{minx}, {miny}",
             f"{rx}, {ry}",
             f"{rw} x {rh}",
@@ -199,5 +209,11 @@ class Tree(_BaseTab):
         return getattr(IPUI, 'debug_target', None)
 
 
-
+    def set_column_mode(self, mode):
+        self.column_mode    = mode
+        active              = Style.COLOR_BUTTON_CTA
+        inactive            = Style.COLOR_TAB_BG
+        self.btn_flex.color_bg = active if mode == "flex"   else inactive
+        self.btn_tok .color_bg = active if mode == "tokens" else inactive
+        self.refresh()
 

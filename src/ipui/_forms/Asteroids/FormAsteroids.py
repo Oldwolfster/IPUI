@@ -7,11 +7,12 @@ import random
 class Asteroids(_BaseForm):
     def build(self):
         row = Row(self)
-        Banner(row, "Asteroids", glow=True, text_align=CENTER)
-        Detail(row, "← → rotate   ↑ thrust   space fire   R restart", text_align=CENTER)
-        self.lbl_score = Body(row, "Score: 0", text_align=CENTER)
-        self.lbl_level = Body(row, "Level: 1", text_align=CENTER)
-        self.lbl_state = Body(row, "Playing", text_align=CENTER)
+        Title(row, "Asteroids", glow=True, text_align=CENTER)
+        #self.show_modal("Yo")
+        #Detail(row, "← → rotate   ↑ thrust   space fire   R restart", text_align=CENTER)
+        self.lbl_score = Title(row, "Score: 0", text_align=CENTER,glow=True)
+        self.lbl_level = Title(row, "Level: 1", text_align=CENTER,glow=True)
+        #self.lbl_state = Body(row, "Playing", text_align=CENTER)
 
     def ip_setup(self, ip):
         self.reset_game()
@@ -70,7 +71,6 @@ class Asteroids(_BaseForm):
     def update_labels(self):
         self.lbl_score.set_text(f"Score: {self.score}")
         self.lbl_level.set_text(f"Level: {self.level}")
-        self.lbl_state.set_text("GAME OVER" if self.game_over else "Playing")
 
     def fire_bullet(self):
         angle_rad    = math.radians(self.ship_angle)
@@ -191,13 +191,13 @@ class Asteroids(_BaseForm):
         self.draw_asteroids(ip)
 
     def ip_draw_hud(self, ip):
-        if not self.game_over:
-            return
-
-        font = Style.FONT_TITLE
-        surf = font.render("GAME OVER - Press R", True, (230, 230, 230))
+        if not self.game_over:        return
+        surf = MgrFont.render_lines("GAME OVER\nPress R to Restart\nPress Q to Quit",                                    Style.FONT_TITLE, (230, 230, 230))
         rect = surf.get_rect(center=ip.rect_screen.center)
         ip.surface.blit(surf, rect)
+
+
+
 
     def draw_ship(self, ip):
         if self.game_over:

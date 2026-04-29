@@ -1,24 +1,24 @@
 from ipui import *
-
+from ipui import *
 
 class We_HopeYouLoveIPUI(_BaseTab):
     """Opening tab of showcase/documentation"""
 
     # ══════════════════════════════════════════════#
-    #  The code that produces this pane             #
+    #  The code that produces the left pane         #
     # ══════════════════════════════════════════════#
 
     def left_pane(self, parent):
-        self.greet(parent)
+        self.greet  (parent)
         self.summary(parent)
-        self.code(parent)
+        self.code   (parent)
 
     def greet(self , parent):
         card        = Card(parent)
         Title       ( card, "Welcome to", text_align=CENTER)
-        box         = Card(card)
-        Banner      ( box, "IPUI", text_align=CENTER, glow=True)
-        Heading     ( card, "A pygame framework", text_align=CENTER)
+        box         = Plate(card,text_align=CENTER,pad_x=30, border=6)
+        Banner      ( box, "IPUI", text_align=CENTER, glow=True, hug_parent=True) #shrink the box down to child size
+        Heading     ( card, "A python framework", text_align=CENTER)
 
     def summary(self, parent):
         card        = Card(parent)
@@ -27,31 +27,32 @@ class We_HopeYouLoveIPUI(_BaseTab):
         Heading     ( card, "- Full pygame control.")
 
     def code(self, parent):
+        card        = Card(parent)
+        Title       ( card, "Code for this page", text_align=CENTER,glow=True,name="msg")
         this_code   = Card(parent, scrollable=True)
-        CodeBox     ( this_code,       # These 4 lines are
-                      data=__file__,   # what creates the
-                      start="# ═══",   # CodeBox you are
-                      end="#  ═══",    # reading now :)
-                      )
+
+        # The below line creates the Widget you are reading right now!
+        CodeBox     ( this_code,  data=__file__, start="# ═══════════", end="def detail_ez_err")
 
     #  ══════════════════════════════════════════════════════════════
-    #  Features we are most proud of
+    #  Middle Pane
     #  ══════════════════════════════════════════════════════════════
-
     def proud_features(self, parent):
+        Body(parent, "")
         row=Row(parent)
-        Title(row, "Easy to get right - Hard to get wrong")
-        our_features_scroll_box = Card(parent, scrollable=True)
+        Title(parent, "Select a feature to view details", text_align=CENTER)
+        Body(parent, " ")
+        our_features_scroll_box = Card(parent, scrollable=True, name="ourfeatures",pad=10,gap=25)
+
+        # Create about 20 feature cards
         for i, feature in enumerate(self.FEATURES, start=1):
             self.feature_card(our_features_scroll_box, i, feature)
 
     def need_delegate_from_json(self, feature):
-        #detail_method = getattr(self, feature["detail"], None)
-        #if detail_method: detail_method()
         self.form.set_pane(2, feature["detail"])
 
     def feature_card(self, parent, number, feature):
-        whole_card = Card(parent, border=10, color_bg=Style.COLOR_PANEL_BG , on_click=lambda f=feature: self.need_delegate_from_json(f))
+        whole_card = Plate(parent,  color_bg=Style.COLOR_PANEL_BG , on_click=lambda f=feature: self.need_delegate_from_json(f))
         title_row = CardRow(whole_card)
         Icon(title_row, feature["icon"])
         Heading(title_row, feature["title"],glow=True)
@@ -62,12 +63,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
         Body(joke_card, feature["joke"])
         Heading(whole_card, feature["tag"])
 
-
-
-    def detail(self, parent):
-        Title(parent, "Select a feature to view details")
-
-# Welcome.py method: detail_debug_tools  REPLACE: full detail content
     def detail_debug_tools(self, parent):
         Title(parent, "Pro Level Debug Tools", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -95,7 +90,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
         Body(card, "No flags, no config, no imports. These tools ship with every "
                    "IPUI app automatically. Press F12 right now and see for yourself.")
 
-# Welcome.py method: detail_ez_err  REPLACE: full detail content
     def detail_ez_err(self, parent):
         Title(parent, "EZ.err", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -124,7 +118,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "a framework diagnostic from a raw Python traceback. "
                    "Errors should be findable, not just readable.")
 
-# Welcome.py method: detail_icon_widget  NEW: full detail content
     def detail_icon_widget(self, parent):
         Title(parent, "Emotes in Pygame", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -147,7 +140,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "a hundred times and it's still just one surface in memory. "
                    "Performance without effort.")
 
-# Welcome.py method: detail_tab_system  NEW: full detail content
     def detail_tab_system(self, parent):
         Title(parent, "First-Class Tab System", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -175,7 +167,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "The form doesn't know or care what's inside each tab. "
                    "Add a tab, write a class, done.")
 
-# Welcome.py method: detail_resolution_independent  NEW: full detail content
     def detail_resolution_independent(self, parent):
         Title(parent, "Resolution Independent", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -198,7 +189,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "Banner, Title, Heading, Body, Detail — all derived from one "
                    "ratio so they stay in harmony at any resolution.")
 
-# Welcome.py method: detail_declarative_layout  NEW: full detail content
     def detail_declarative_layout(self, parent):
         Title(parent, "Declarative Layout", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -227,7 +217,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "No manual line breaks, no width calculations, no viewport setup. "
                    "Resize the window and the text reflows.")
 
-# Welcome.py method: detail_built_to_extend  NEW: full detail content
     def detail_built_to_extend(self, parent):
         Title(parent, "Built to Extend", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -250,7 +239,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "connections — is under 150 lines. PowerGrid with sorting, "
                    "pagination, and SQL support is one file. The framework does the heavy lifting.")
 
-# Welcome.py method: detail_one_touch_scrolling  NEW: full detail content
     def detail_one_touch_scrolling(self, parent):
         Title(parent, "One-Touch Scrolling", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -273,7 +261,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "The input system routes scroll events to the deepest scrollable "
                    "widget under the mouse. No conflicts, no stealing.")
 
-# Welcome.py method: detail_construction_attachment  NEW: full detail content
     def detail_construction_attachment(self, parent):
         Title(parent, "Construction IS Attachment", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -296,7 +283,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "top-to-bottom. Indentation shows nesting. "
                    "The code IS the layout.")
 
-# Welcome.py method: detail_multiple_update_styles  NEW: full detail content
     def detail_multiple_update_styles(self, parent):
         Title(parent, "Multiple Update Styles", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -325,7 +311,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "form fields, and direct access for one-off updates. "
                    "All three work in the same pane, same frame, no conflicts.")
 
-# Welcome.py method: detail_data_pipeline  NEW: full detail content
     def detail_data_pipeline(self, parent):
         Title(parent, "Data Pipeline", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -354,7 +339,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "No shared globals, no event buses, no import tangles. "
                    "The pipeline is the shared bus and it's already there.")
 
-# Welcome.py method: detail_lifecycle_hooks  NEW: full detail content
     def detail_lifecycle_hooks(self, parent):
         Title(parent, "Pygame Lifecycle Hooks", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -383,7 +367,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "You get clean hooks at the right moments. "
                    "Build a full game or a data dashboard — same three hooks.")
 
-# Welcome.py method: detail_multi_tier_tooltips  NEW: full detail content
     def detail_multi_tier_tooltips(self, parent):
         Title(parent, "Multi-Tier Tooltips", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -411,7 +394,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "a short delay expands it, another delay reveals the pin button. "
                    "Every transition is intentional, never accidental.")
 
-# Welcome.py method: detail_widget_registry  NEW: full detail content
     def detail_widget_registry(self, parent):
         Title(parent, "Automatic Widget Registry", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -434,7 +416,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "listing every valid registered name. "
                    "Typos fail loudly instead of returning None silently.")
 
-# Welcome.py method: detail_code_boxes  NEW: full detail content
     def detail_code_boxes(self, parent):
         Title(parent, "Beautiful Code Boxes", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -457,7 +438,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "proper padding — code looks like code, not like a paragraph "
                    "that got lost.")
 
-# Welcome.py method: detail_tab_map  NEW: full detail content
     def detail_tab_map(self, parent):
         Title(parent, "Tab Map", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -480,7 +460,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "keeps you honest. Spot orphaned panes, uneven layouts, "
                    "and forgotten screens before your users do.")
 
-# Welcome.py method: detail_grid  NEW: full detail content
     def detail_grid(self, parent):
         Title(parent, "PowerGrid", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -509,7 +488,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "and column resizing. This is a working data grid, "
                    "not three hard-coded rows in a conference talk.")
 
-# Welcome.py method: detail_documenting  NEW: full detail content
     def detail_documenting(self, parent):
         Title(parent, "Self-Documenting", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -532,7 +510,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "table of contents navigation and section rendering. "
                    "Find what you need without leaving your app.")
 
-# Welcome.py method: detail_live_charts  NEW: full detail content
     def detail_live_charts(self, parent):
         Title(parent, "Live Matplotlib Charts", glow=True)
         scroll = Card(parent, scrollable=True)
@@ -555,19 +532,23 @@ class We_HopeYouLoveIPUI(_BaseTab):
                    "Chart embeds the chart inline as a widget. "
                    "One app, one window, one focus.")
 
-
-
-
     FEATURES = [
             {
                 "icon":    "boom",
                 "title":   "Pro Level Debug Tools",
                 "tag":     "Dev Tools, Widgets",
-                "summary": "Hit F12 right now. Seriously. You get a live widget tree, property inspector, layout overlays, and a widget locator that pulses on screen. All built in, zero setup, and that is just the first tab.",
-                "joke":    "Guessing which invisible box ate your button is not a workflow.",
+                "summary": "Hit F12 right now. Seriously.\n\nWe take 'making it easy for you to resolve issues' very seriously.  ",
+                "joke":    "You get a live widget tree, property inspector, layout overlays, and a widget locator that pulses on screen. All built in, zero setup, and that is just the first tab.",
                 "detail":  "detail_debug_tools",
             },
-
+            {
+                "icon":    "attachment",
+                "title":   "Construction IS Attachment",
+                "tag":     "Structure, UX",
+                "summary": "Build a widget inside a container and it's attached. No floating widgets, no add() calls, no orphans. If it exists, it belongs somewhere.",
+                "joke":    "A widget that exists but isn't attached is a ghost, not a feature.",
+                "detail":  "detail_construction_attachment",
+            },
             {
                 "icon": "tab_system",
                 "title": "First-Class Tab System",
@@ -625,14 +606,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
                 "joke":    "Because 'just make it scroll' should not become a weekend project.",
                 "detail":  "detail_one_touch_scrolling",
             },
-            {
-                "icon":    "attachment",
-                "title":   "Construction IS Attachment",
-                "tag":     "Structure, UX",
-                "summary": "Build a widget inside a container and it's attached. No floating widgets, no add() calls, no orphans. If it exists, it belongs somewhere.",
-                "joke":    "A widget that exists but isn't attached is a ghost, not a feature.",
-                "detail":  "detail_construction_attachment",
-            },
+
             {
                 "icon":    "reactive",
                 "title":   "Multiple Update Styles",
@@ -714,3 +688,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
                 "detail":  "detail_live_charts",
             },
         ]
+    def detail(self, parent):
+        Body(parent,"",name="IPUI Mantras")
+        Title(parent, "Easy to get right - Hard to get wrong", text_align=CENTER)

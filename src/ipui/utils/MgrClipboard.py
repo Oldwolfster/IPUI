@@ -3,7 +3,7 @@ import subprocess
 import platform
 import pygame
 
-class Clipboard:
+class MgrClipboard:
 
     @staticmethod
     def copy(text):

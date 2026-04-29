@@ -39,14 +39,14 @@ class YourChoice(_BaseTab):
         Title    ( header, "Two Styles", glow=True)
 
     def react_column_left(self, two_cols):
-        col_1    = Col(two_cols, width_flex=1)
+        col_1    = Col(two_cols, width_flex=2)
         card     = Card(col_1)
         Body     ( card, "Declare relationships.")
         Body     ( card, "Magic handles the rest.")
         self    . reactive_name_game(col_1)
 
     def react_column_rite(self, two_cols):
-        card     = Card(two_cols                        , width_flex=2)
+        card     = Card(two_cols                        , width_flex=3)
         Heading  ( card, "Steps:"                   ,text_align=RIGHT)
         Spacer   ( card)
         Body     ( card, "Create two methods"       ,text_align=RIGHT)
@@ -54,7 +54,7 @@ class YourChoice(_BaseTab):
         Body     ( card, "build widgets"            ,text_align=RIGHT)
         Body     ( card, "Set DECLARATION_UPDATES"  ,text_align=RIGHT)
         Body     ( card, "")
-        Body     ( card, "IPUI is flexible"         ,text_align=RIGHT,glow=True)
+        Body     ( card, "IPUI is flexible - You can do hybrid"         ,text_align=RIGHT,glow=True)
 
 
     def reactive_code_box(self, main_left_window):
@@ -73,7 +73,7 @@ class YourChoice(_BaseTab):
             pipeline_key= "first",              #### DECLARATION_UPDATES has that covered.
                 )                               ################################################
 
-        Spacer(row,width_flex=.2)
+        Spacer(row,width_flex=.01)
 
         TextBox(row,
             placeholder = "Last name",     ################################################
@@ -81,13 +81,13 @@ class YourChoice(_BaseTab):
             )                              #### DECLARATION_UPDATES has that covered.
                                            ################################################
         row             = Row(card)
-        Button          ( card, "Clear",
+        Button          ( row, "Clear",
             name        = "btn_react",
             color_bg    = Style.COLOR_BUTTON_CTA,
             on_click    = self.reactive_clear,
             enabled     = False)
 
-        Spacer          (card   , height_flex=.1)
+        Spacer          (row   , height_flex=.1)
         Body            (card   , YourChoice.DEFAULT_MESSAGE,
             name        = "lbl_snark",
             text_align  = 'c')
@@ -118,7 +118,7 @@ class YourChoice(_BaseTab):
         Title   ( header, "Imperative", glow=True)
 
     def imperative_left(self, two_cols):          #### LEFT = steps (faces reactive's right)
-        card     = Card(two_cols, width_flex=2)
+        card     = Card(two_cols, width_flex=3)
         Heading  ( card, "Steps:")
         Spacer   ( card)
         Body     ( card, "Create two methods")
@@ -126,10 +126,10 @@ class YourChoice(_BaseTab):
         Body     (card,  "build widgets")
         Body     ( card, "Use event handler to update widget...")
         Body     ( card, "")
-        Body     (card,  "Which is simpler for task?",glow=True)
+        Body     (card,  "What is simplest for the task at hand?",glow=True)
 
     def imperative_right(self, two_cols):         #### RIGHT = demo (faces reactive's left)
-        col      = Col(two_cols, width_flex=1)
+        col      = Col(two_cols, width_flex=2)
         card     = Card(col)
         Body     ( card, "Full control and simple."   ,text_align=RIGHT)
         Body     ( card, "(My personal favorite ;)" ,text_align=RIGHT)
@@ -142,17 +142,19 @@ class YourChoice(_BaseTab):
         # Storing direct references instead of relying on the registry
         self.txt_first = TextBox(row, placeholder="First name",
                                       on_change=self.imp_name_changed)
-        Spacer(row,width_flex=.2)
+        Spacer(row,width_flex=.01)
         self.txt_last  = TextBox(row, placeholder="Last name",
                                       on_change=self.imp_name_changed)
 
 
-        self.btn_clear = Button(card, "Clear",
+        row            = Row(card)
+        Spacer(row, height_flex=.1)
+        self.btn_clear = Button(row, "Clear",
                                       color_bg=Style.COLOR_BUTTON_CTA,
                                       on_click=self.imp_clear,
                                       enabled=False)
 
-        Spacer(card, height_flex=.1)
+
         self.lbl_snark = Body(card, YourChoice.DEFAULT_MESSAGE, text_align=CENTER)
 
     def imp_name_changed(self, text):

@@ -9,9 +9,9 @@ class Tree(_BaseTab):
     def widget_tree(self, parent):
         header = Row(parent, justify_spread=True)
         Title(header, "Widget Tree", glow=True)
-        btn = Button(header, "Refresh",
-            color_bg = Style.COLOR_BUTTON_CTA)
-        btn.on_click_me(self.refresh_tree)
+        #btn = Button(header, "Refresh",
+        #    color_bg = Style.COLOR_BUTTON_CTA)
+        #btn.on_click_me(self.refresh_tree)
 
         PowerGrid(parent, name="grid_tree", height_flex=True)
         self.refresh_tree()
@@ -23,8 +23,6 @@ class Tree(_BaseTab):
     def widget_detail(self, parent):
         Title(parent, "Widget Detail", glow=True)
         PowerGrid(parent, name="grid_detail", height_flex=True)
-        Body(parent, "← Click a row to inspect",
-            name = "lbl_detail_hint")
 
     # ══════════════════════════════════════════════════════════════
     # TREE WALKER
@@ -100,7 +98,8 @@ class Tree(_BaseTab):
             ["children",    str(len(widget.children))],
             ["width_flex",  str(widget.width_flex)],
             ["height_flex", str(widget.height_flex)],
-            ["pad",         str(widget.pad)],
+            ["pad_x",       str(widget.pad_x)],                                          # NEW
+            ["pad_y",       str(widget.pad_y)],
             ["border",      str(widget.border)],
             ["x",           str(rect.x) if rect else "—"],
             ["y",           str(rect.y) if rect else "—"],

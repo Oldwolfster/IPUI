@@ -13,5 +13,6 @@ class Card(_BaseWidget):
     api:         (layout only — no custom methods)
     """
     def build(self):
-        self.color_bg = Style.COLOR_CARD_BG
+        self.color_bg = self.color_bg if self.color_bg is not None else Style.COLOR_CARD_BG
         MgrColor.apply_bevel(self, "sunken")
+        #self.pad=(2,2)

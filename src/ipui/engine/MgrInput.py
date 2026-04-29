@@ -1,6 +1,6 @@
 # MgrInput.py  All event dispatch in one place.
 #
-# Called once per frame by _IPUI after ip.frame_begin().
+# Called once per frame by GameLoop after ip.frame_begin().
 # One file replaces five. No recursive widget methods.
 #
 # Framework walks, widgets declare.
@@ -15,6 +15,7 @@ import time
 import pygame
 
 from ipui.engine.Key import Key
+from ipui._forms.Debugger.FormDebugger import FormDebugger
 
 
 class MgrInput:
@@ -42,7 +43,7 @@ class MgrInput:
     last_form           = None
 
     # ══════════════════════════════════════════════════════════════
-    # ENTRY POINT — called once per frame by _IPUI
+    # ENTRY POINT — called once per frame by GameLoop
     # ══════════════════════════════════════════════════════════════
 
     @classmethod
@@ -109,7 +110,7 @@ class MgrInput:
     # ══════════════════════════════════════════════════════════════
 
     @classmethod
-    def on_mouse_down(cls, ip, form, pos):
+    def on_mouse_downorig(cls, ip, form, pos):
         # Tooltip click first
         if form.handle_tooltip_click(pos):
             return True
@@ -150,9 +151,11 @@ class MgrInput:
         # Double-click detection
         now = time.time()
         if (now - cls.last_click_time < cls.DOUBLE_CLICK_TIME
-                and target is cls.last_click_widget
-                and hasattr(target, 'handle_double_click')):
-            target.handle_double_click(pos)
+                and target is cls.last_click_widget):          # REPLACE (removed hasattr check)
+            if hasattr(target, 'handle_double_click'):         # NEW
+                target.handle_double_click(pos)                # NEW
+            if target.on_double_click:                         # NEW
+                target.on_double_click()                       # NEW
             cls.text_dragging = False
         cls.last_click_time   = now
         cls.last_click_widget = target
@@ -167,6 +170,62 @@ class MgrInput:
 
         return True
 
+
+    @classmethod
+    def on_mouse_down(cls, ip, form, pos):
+        if form.handle_tooltip_click(pos):          return True  # Tooltip absorbs click
+        if cls.scrollbar_drag_start(form, pos):     return True  # Scrollbar drag begun
+        target = cls.find_click_target(form, pos)                # Deepest clickable widget
+        cls.manage_focus(target, pos)                            # Transfer focus if needed
+        if target is None:                          return False # Nothing clicked
+        if target.enabled is not True:              return True  # Disabled eats the click
+        target.is_pressed  = True                                # Visual press state
+        cls.pressed_widget = target                              # Track for mouse-up
+        cls.fire_clicks(target)                                  # Double-click, toggle, click
+        return True
+
+
+    @classmethod
+    def manage_focus(cls, target, pos):
+        """Transfer focus to target, or clear if unfocusable."""
+        if target and target.focusable:
+            if target is not cls.focused_widget:
+                cls.clear_focus()
+                cls.focused_widget = target
+                target.is_focused  = True
+            cls.text_dragging = True
+        else:
+            cls.clear_focus()
+
+
+    @classmethod
+    def fire_clicks(cls, target):
+        """Double-click detection, toggle, and click dispatch."""
+        now            = time.time()
+        double_clicked = False
+        elapsed        = now - cls.last_click_time
+        same_widget    = target is cls.last_click_widget
+
+        if (now - cls.last_click_time < cls.DOUBLE_CLICK_TIME
+                and target is cls.last_click_widget):
+            if target.on_double_click:
+                target.on_double_click()
+                double_clicked = True
+            cls.text_dragging = False
+        cls.last_click_time   = now
+        cls.last_click_widget = target
+        if hasattr(target, 'toggle_selected'):
+            target.toggle_selected()
+        if target.on_click and not double_clicked:
+            target.on_click()
+
+    @classmethod
+    def scrollbar_drag_start(cls, form, pos):
+        target          = cls.find_scrollbar_hit(form, pos)
+        if not target   : return False
+        cls.drag_widget = target
+        cls.drag_anchor = pos[1] - target.private_handle_rect.top
+        return True
     # ══════════════════════════════════════════════════════════════
     # MOUSE UP — release press state, end drags
     # ══════════════════════════════════════════════════════════════
@@ -230,6 +289,12 @@ class MgrInput:
             if content is not None and inner is not None:
                 max_scroll = max(0, content - inner.height)
                 target.scroll_offset = max(0, min(target.scroll_offset, max_scroll))
+                at_end = (direction > 0 and target.scroll_offset >= max_scroll) or \
+                         (direction < 0 and target.scroll_offset <= 0)  # NEW
+                if at_end and hasattr(target.parent, 'handle_scroll_overflow'):  # NEW
+                    target.parent.handle_scroll_overflow(direction)
+
+
         return True
 
     # ══════════════════════════════════════════════════════════════
@@ -245,7 +310,7 @@ class MgrInput:
 
         # F12 — debugger toggle
         if event.key == Key.F12:
-            from forms.Debugger.FormDebugger import FormDebugger
+
             from ipui.engine.IPUI import IPUI
             if isinstance(form, FormDebugger):
                 IPUI.back()
@@ -263,8 +328,8 @@ class MgrInput:
             if cls.focused_widget:
                 cls.clear_focus()
                 return True
-            from ipui.engine._IPUI import _IPUI
-            _IPUI.is_running = False
+            from ipui.engine.GameLoop import GameLoop
+            GameLoop.is_running = False
             return True
 
         # Route to focused widget
@@ -294,13 +359,14 @@ class MgrInput:
     @classmethod
     def find_click_target(cls, widget, pos):
         """Deepest visible widget under pos that wants a click."""
-        for child in widget.visible_children:
+        for child in widget.interactive_children:
             result = cls.find_click_target(child, pos)
             if result is not None:
                 return result
         if widget.rect and widget.rect.collidepoint(pos):
             if (widget.on_click
                     or widget.focusable
+                    or widget.on_double_click
                     or hasattr(widget, 'toggle_selected')):
                 return widget
         return None
@@ -308,7 +374,7 @@ class MgrInput:
     @classmethod
     def find_scrollable(cls, widget, pos):
         """Deepest scrollable widget under pos."""
-        for child in widget.visible_children:
+        for child in widget.interactive_children:
             result = cls.find_scrollable(child, pos)
             if result is not None:
                 return result
@@ -319,7 +385,7 @@ class MgrInput:
     @classmethod
     def find_scrollbar_hit(cls, widget, pos):
         """Widget whose scrollbar handle was clicked."""
-        for child in widget.visible_children:
+        for child in widget.interactive_children:
             result = cls.find_scrollbar_hit(child, pos)
             if result is not None:
                 return result

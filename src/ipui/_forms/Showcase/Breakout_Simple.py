@@ -1,11 +1,8 @@
-# Breakout.py  Update: merged greet, HUD in canvas, CodeBox on right
-
 import pygame
 
 from ipui import *
 from ipui.engine.Key import Key
 from ipui.engine.Mouse import Mouse
-
 
 class Breakout(_BaseTab):
     """Arcade demo: press Q or click to start."""
@@ -121,8 +118,6 @@ class Breakout(_BaseTab):
     def ip_draw_hud(self, ip):
         pass
 
-
-
     # ══════════════════════════════════════════════════════════════
     # PHYSICS
     # ══════════════════════════════════════════════════════════════
@@ -215,7 +210,6 @@ class Breakout(_BaseTab):
         pos = ip.to_screen(self.ball_x, self.ball_y)
         r   = ip.scale_y(self.ball_r)
         pygame.draw.circle(ip.surface, (255, 255, 255), pos, r)
-
 
     # ══════════════════════════════════════════════════════════════
     # PANE BUILDERS

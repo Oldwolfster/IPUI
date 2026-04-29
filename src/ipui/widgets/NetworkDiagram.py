@@ -149,7 +149,7 @@ class NetworkDiagram(_BaseWidget):
         for col, count in enumerate(self.layers):
             col_x   = start_x + col * (self.CELL_SIZE + self.COL_GAP)
             label   = str(count)
-            color   = Style.COLOR_PAL_ORANGE_FORGE if col == self.selected_layer else Style.COLOR_TEXT
+            color   = Style.COLOR_BUTTON_WARNING if col == self.selected_layer else Style.COLOR_TEXT
             surf    = font.render(label, True, color)
             lx      = col_x + (self.CELL_SIZE - surf.get_width()) // 2
             surface.blit(surf, (lx, center_y))

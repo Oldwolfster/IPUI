@@ -2,7 +2,7 @@
 
 
 
-from ipui.forms.NeuroForge.custom_widgets.ProjectManager import ProjectManager
+from ipui._forms.NeuroForge.custom_widgets.ProjectManager import ProjectManager
 from ipui import *
 
 class EZ_Pane(_BaseTab):
@@ -92,8 +92,7 @@ class EZ_Pane(_BaseTab):
     def create_project(self, name):
         clean_name = ProjectManager.sanitize_filename(name)
         self.form.show_modal(f"Creating Project: {clean_name}",
-                             lambda: ProjectManager.create_project(name),
-                             min_seconds=1.69)
+                             work_func=lambda: ProjectManager.create_project(name),                             )
         path = ProjectManager.PROJECTS_FOLDER / f"{clean_name}.nf"
         self.do_select_project(path)
 
@@ -115,7 +114,7 @@ class EZ_Pane(_BaseTab):
         if btn:
             btn.set_enabled()
         self.form.calc_total_runs()
-        self.form.switch_tab("Workbench")
+        self.form.switch_tab("Armory")
 
         def create_project(self, name):
             clean_name = ProjectManager.sanitize_filename(name)

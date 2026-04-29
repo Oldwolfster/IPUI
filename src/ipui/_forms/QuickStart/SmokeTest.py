@@ -1,20 +1,19 @@
-# SmokeTest.py  New: one-class smoke test using form-as-pane
 from ipui import *
 
 class SmokeTest(_BaseForm):
     TAB_LAYOUT = {
-        "Smoke Test": ["go"],           # ← This one works immediately
-        "Widgets":    ["demo"],         # ← Will trigger template picker
-        "Relax":      ["sit", "chill"], # ← Will trigger template picker
+        "Hello World"   :["welcome"],       # ← This one works immediately
+                                            #   due to the welcome method below
+        "Widgets"       :["demo","demo2"],  # ← Will trigger template picker
+        "Bouncing Ball" :["arena", None]    # ← Will trigger template picker
     }
 
-    def go(self, parent):               # ← named go to match value of above dictionary
+    def welcome(self, parent):              # ← matches "welcome" in TAB_LAYOUT
         Banner  (parent, "IPUI"              , text_align=CENTER, glow=True)
-        Title   (parent, "Easy to get right!", text_align=CENTER)
-        Body    (parent, "Hard to get wrong.", text_align=CENTER)
-        Button  (parent, "Click Me :)"       , on_click=self.show_hello,
-                 color_bg=Style.COLOR_BUTTON_CTA)
-
-    def show_hello(self): self.show_modal("Hello World!\nWelcome to IPUI")
+        Body    (parent, "Easy to get right!", text_align=CENTER)
+        Heading (parent, "Hard to get wrong.", text_align=CENTER)
+        Title   (parent, "Because we've all spent 3 hours debugging a button", text_align=CENTER, glow=True)
+        Button  (parent, "Click Me :)"       , on_click=lambda: self.form.show_modal("Hello"))
+        #Button(parent, "Click Me :)", on_click=lambda: print("Hello"), border=5)
 
 if __name__ == "__main__": show(SmokeTest)

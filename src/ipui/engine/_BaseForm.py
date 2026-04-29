@@ -1,22 +1,25 @@
 # _BaseForm.py  Update: ip service portal with geometry context
 import pygame
-
+from ipui.engine.NotNP_HardHug  import NotNP_HardHug
 from ipui.Style import Style
 from ipui.engine.WidgetsDict import WidgetsDict
-from ipui.engine.MeasureAndLayout import MeasureAndLayout
-from ipui.engine.MeasureAndWrap import MeasureAndWrap
+from ipui.engine.NotNP_HardLayout import NotNP_HardLayout
+from ipui.engine.NotNP_HardWrap import NotNP_HardWrap
 from ipui.engine.Pipeline import Pipeline
 from ipui.engine._BaseWidget import _BaseWidget
 from ipui.engine.IPUI import IPUI
+from ipui.utils.EZ import EZ
 from ipui.widgets.TabStrip import TabStrip
-
+import math
+import time
+from ipui.engine.MgrSanity import MgrSanity
 
 class _BaseForm(_BaseWidget):
     """
     name:        _BaseForm
     desc:        Root container for an IPUI application. Manages render cycle, events, modals, and optional auto-TabStrip.
     when_to_use: Every screen in your app. Subclass it, override build(), done.
-    best_for:    Top-level application forms with or without tabs.
+    best_for:    Top-level application _forms with or without tabs.
     example:     class MyApp(_BaseForm):TAB_LAYOUT = {"Home": ["welcome"], "Log": ["log"]}\n                 def build(self): self.build_header()
     api:         switch_tab(name), set_pane(tab, idx, builder), hide_tab(name), show_tab(name), get_tab(name), prepare(name), show_modal(msg, fn), pipeline_set(k, v), pipeline_read(k)
     declares:    TAB_LAYOUT(dict), tab_early_load(list), tab_on_change(str), tab_hidden(list), tab_border(int)
@@ -24,6 +27,21 @@ class _BaseForm(_BaseWidget):
 
     private_allow_init  = True
     THINK_ALWAYS        = False
+    RESERVED = {            #These cannot be used as pane names.
+        "build", "draw", "measure",
+        "setup", "update", "render",
+        "apply_scroll", "clear_children",
+        "draw_children", "draw_chrome", "draw_chrome_rounded",
+        "draw_inboard_glow", "draw_overlay",
+        "draw_scrollbar", "draw_scroll_handle",
+        "resolve_bg", "set_text", "set_disabled",
+        "set_enabled", "validate", "tap",
+        "on_click_me", "register_derives",
+        "swap_pane", "hide_extra_panes",
+        "ip_setup", "ip_think", "ip_draw",
+        "ip_draw_hud", "ip_activated",
+        "show_modal",
+    }
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if '__init__' in cls.__dict__ and not cls.__dict__.get('private_allow_init', False):
@@ -38,14 +56,13 @@ class _BaseForm(_BaseWidget):
         self.pipeline.debug = getattr(self.__class__, 'pipeline_debug', False)
         self.form           = self
         self                . seed_pipeline_defaults()
-        self                . ip_setup_pipeline()
         self.modal_msg      = None
         self.tab_strip      = None
         self.pinned_tooltip = None
         super().__init__    ( parent=None)
         self                . setup()
         self                . build_footer()
-        self.layout_engine = MeasureAndWrap(self)
+        self.layout_engine = NotNP_HardWrap(self)
 
 
     def seed_pipeline_defaults(self):
@@ -55,14 +72,71 @@ class _BaseForm(_BaseWidget):
         for key, value in defaults.items():
             self.pipeline.set(key, value)
 
+    def sane_layout(self):
+        if 1==1 or self.dirty :
+            # FUCK THIS self.layout_engine.RunLayout()
+            # FUCK THIS TOO self.layout_engine = NotNP_HardHug(self)
+            # NO RunLayout in the passes
+            # pass 1 NotNP_HardLayout
+            # pass 2 NotNP_HardWrap (does this do more than wrap text?  If not, how can it it change layout?)
+            # pass 3 NotNP_HardHug
+            #the only fucking sane line.
+            MgrSanity.check_tree(self)
+            self.dirty = False
+
     def render(self, surface):
+        #self.sane_layout()
         if 1==1 or self.dirty :
             self.layout_engine.RunLayout()
+            self.layout_engine = NotNP_HardHug(self)
+            MgrSanity.check_tree(self)
             self.dirty = False
         self.draw(surface)
         self.draw_overlays(surface)
         self.draw_tooltips(surface)
         if getattr(self, 'show_diagnostics', False):   self.draw_diagnostics(surface)
+        self.draw_pulse(surface)
+
+
+
+
+    def render(self, surface):
+        self.sane_layout()
+        self.draw(surface)
+        self.draw_overlays(surface)
+        self.draw_tooltips(surface)
+        if getattr(self, 'show_diagnostics', False): self.draw_diagnostics(surface)
+        self.draw_pulse(surface)
+
+    def sane_layout(self):
+        NotNP_HardLayout(self).RunLayout()  # Pass 1
+        if NotNP_HardWrap(self).RunLayout():  # Pass 2 — True if surfaces changed
+            NotNP_HardLayout(self).RunLayout()  # Pass 3
+        NotNP_HardHug(self).RunLayout()  # Pass 4
+        MgrSanity.check_tree(self)
+        self.dirty = False
+
+    def draw_pulse(self, surface):
+        from ipui.engine.IPUI import IPUI
+        widget = IPUI.pulse_widget
+        if not widget or not widget.rect:       return
+        elapsed = time.time() - IPUI.pulse_start
+        if elapsed > 3.0:
+            IPUI.pulse_widget = None
+            if IPUI.pulse_return:
+                form_class = IPUI.pulse_return
+                IPUI.pulse_return = None
+                IPUI.show(form_class)
+            return
+        t       = elapsed * 4
+        alpha   = int(80 + 80 * abs(math.sin(t)))
+        grow    = int(6 * abs(math.sin(t)))
+        r       = widget.rect.inflate(grow * 2, grow * 2)
+        surf    = pygame.Surface((r.width, r.height), pygame.SRCALPHA)
+        color   = (0, 200, 255, alpha)
+        pygame.draw.rect(surf, color, surf.get_rect(), border_radius=4)
+        pygame.draw.rect(surf, (0, 200, 255, min(alpha + 40, 255)), surf.get_rect(), width=2, border_radius=4)
+        surface.blit(surf, r.topleft)
 
     def draw_overlays(self, surface: pygame.Surface) -> None:
         self.walk_overlays(surface, self)
@@ -113,19 +187,18 @@ class _BaseForm(_BaseWidget):
     # ══════════════════════════════════════════════════════════════
     # LIFECYCLE HOOKS
     # ══════════════════════════════════════════════════════════════
-    def ip_setup_pipeline(self):
-        pass
-    def ip_thinkdead(self, ip):
-        self.dispatch_ip_think(ip)
+    def ip_think(self, ip):       pass
 
-    def ip_drawdead(self, ip):
-        self.dispatch_ip_render(ip, "ip_draw")
+    def ip_draw(self, ip):        pass
 
-    def ip_draw_huddead(self, ip):
-        self.dispatch_ip_render(ip, "ip_draw_hud")
+    def ip_draw_hud(self, ip):    pass
+
+    def ip_activated(self, ip):       pass
+
+    def ip_setup(self, ip ):      pass #available to be overwritten by base class.
 
     # ══════════════════════════════════════════════════════════════
-    # HOOK DISPATCH — routes to panes with geometry context
+    # HOOK DISPATCH — routes to tabs with geometry context
     # ══════════════════════════════════════════════════════════════
 
     def dispatch_ip_think(self, ip):
@@ -137,19 +210,21 @@ class _BaseForm(_BaseWidget):
         #if not self.tab_strip:   return False
         if self.tabless_mode: return False
         active_name    = self.tab_strip.active_tab
-        cache          = self.tab_strip.pane_cache
+        cache          = self.tab_strip.tab_cache
         content_widget = self.tab_strip.content
-        for name, pane in cache.items():
+        for name, tab in cache.items():
             is_active  = (name == active_name)
-            if is_active or pane.THINK_ALWAYS:
-                ip.set_pane_context(pane, name, is_active, content_widget)
-                if hasattr(pane, 'ip_think'):pane.ip_think(ip)
+            if is_active or tab.THINK_ALWAYS:
+                ip.set_tab_context(tab, name, is_active, content_widget)
+                ip.state.tick(ip.dt)
+                if hasattr(tab, 'ip_think'):tab.ip_think(ip)
         return True
 
     def dispatch_form_think(self, ip):
         if not hasattr(type(self), 'ip_think'):
             return
-        ip.set_pane_context(self, type(self).__name__, True, self)
+        ip.set_tab_context(self, type(self).__name__, True, self)
+        ip.state.tick(ip.dt)
         self.ip_think(ip)
 
     def dispatch_ip_render(self, ip, hook_name):
@@ -157,25 +232,23 @@ class _BaseForm(_BaseWidget):
         self.dispatch_form_render(ip, hook_name)
 
     def dispatch_tabs_render(self, ip, hook_name):
+        #print(f"in render - hook_name={hook_name}")
         if self.form.tabless_mode: return False
         active_name    = self.tab_strip.active_tab
-        pane           = self.tab_strip.pane_cache.get(active_name)
+        tab            = self.tab_strip.tab_cache.get(active_name)
         content_widget = self.tab_strip.content if self.tab_strip else None
-        if pane:
-            ip.set_pane_context(pane, active_name, True, content_widget)
-            getattr(pane, hook_name)(ip)
+        if tab:
+            ip.set_tab_context(tab, active_name, True, content_widget)
+            getattr(tab, hook_name)(ip)
         return True
 
     def dispatch_form_render(self, ip, hook_name):
         if not hasattr(type(self), hook_name):
             return
-        ip.set_pane_context(self, type(self).__name__, True, self)
+        ip.set_tab_context(self, type(self).__name__, True, self)
         getattr(self, hook_name)(ip)
 
 
-    def ip_think(self, ip):     pass
-    def ip_draw(self, ip):      pass
-    def ip_draw_hud(self, ip):  pass
 
     # ══════════════════════════════════════════════════════════════
     # TOOLTIP HELPERS — called by MgrInput, not by widgets
@@ -193,6 +266,9 @@ class _BaseForm(_BaseWidget):
                 return True
             if tt.hit_test_docked(pos):
                 return True
+            if tt.hit_test_copy(pos):
+                tt.copy_content()
+                return True
             tt.unpin()
             self.pinned_tooltip = None
             return False
@@ -206,7 +282,8 @@ class _BaseForm(_BaseWidget):
     def handle_tooltip_scroll(self, pos, button):
         if not self.pinned_tooltip:
             return False
-        if self.pinned_tooltip.rect_pane and self.pinned_tooltip.rect_pane.collidepoint(pos):
+
+        if self.pinned_tooltip.content_rect and self.pinned_tooltip.content_rect.collidepoint(pos):
             self.pinned_tooltip.handle_pin_scroll(button)
             return True
         return False
@@ -274,10 +351,9 @@ class _BaseForm(_BaseWidget):
         elif widget.children:               color = (80, 140, 255)
         else:                               color = (80, 220, 80)
         pygame.draw.rect(surface, color, r, 1)
-        if widget.pad > 0 or widget.border > 0:
-            inset = widget.pad + widget.border
-            inner = r.inflate(-inset * 2, -inset * 2)
-            pygame.draw.rect(surface, (color[0]//2, color[1]//2, color[2]//2), inner, 1)
+        if widget.frame_x > 0 or widget.frame_y > 0:  # NEW
+            inner = r.inflate(-widget.frame_x, -widget.frame_y)  # NEW
+            pygame.draw.rect(surface, (color[0] // 2, color[1] // 2, color[2] // 2), inner, 1)
         font = Style.FONT_DETAIL or pygame.font.SysFont("monospace", 11)
         label = font.render(widget.display_name, True, color)
         surface.blit(label, (r.left + 2, r.top + 1))
@@ -288,10 +364,9 @@ class _BaseForm(_BaseWidget):
             self.draw_diagnostic_widget(surface, child)
 
     def setup(self):
+        self.pad = 0 #otherwise pad creats monster border
         if hasattr(self.__class__, 'TAB_LAYOUT'):  self.setup_tabs()
-        if hasattr(type(self), 'ip_setup_pane') :  self.ip_setup_pane(self.ip )
-
-    def ip_setup_pane(self, ip ): pass #available to be overwritten by base class.
+        if hasattr(type(self), 'ip_setup') :  self.ip_setup(self.ip )
 
     def setup_tabs(self):
         import copy
@@ -299,6 +374,7 @@ class _BaseForm(_BaseWidget):
         if not hasattr(cls, 'TAB_LAYOUT'):
             return
         self.TAB_LAYOUT = copy.deepcopy(cls.TAB_LAYOUT)
+        self.validate_pane_names()
         on_change = None
         method_name = getattr(cls, 'tab_on_change', None)
         if method_name:
@@ -307,10 +383,21 @@ class _BaseForm(_BaseWidget):
                                   data=self.TAB_LAYOUT,
                                   early_load=getattr(cls, 'tab_early_load', None),
                                   on_change=on_change,
-                                  border=getattr(cls, 'tab_border', -5),
+                                  #border=getattr(cls, 'tab_border', -5),
+
                                   )
         for name in getattr(cls, 'tab_hidden', []):
             self.tab_strip.hide_tab(name)
+
+
+    def validate_pane_names(self):
+        for tab_name, entries in self.TAB_LAYOUT.items():
+            for entry in entries:
+                name = entry[0] if isinstance(entry, tuple) else entry
+                if isinstance(name, str) and name in _BaseForm.RESERVED:
+                    EZ.err(
+                        f"Tab '{tab_name}': pane name '{name}' is a reserved framework method.\n"
+                        f"FIX: Rename it to something descriptive like '{name}_view' or '{name}_pane'.")
 
     def build_footer(self):
         pass
@@ -318,8 +405,8 @@ class _BaseForm(_BaseWidget):
     def switch_tab(self, name):
         self.tab_strip.switch_tab(name)
 
-    def set_pane(self, index, builder,  *args, tab_name=None, **kwargs):
-        self.tab_strip.set_pane(index, builder,  *args, tab_name=tab_name, **kwargs)
+    def set_pane(self, index, builder, *args, tab_name=None, weight=None, **kwargs):
+        self.tab_strip.set_pane(index, builder, *args, tab_name=tab_name, weight=weight, **kwargs)
 
     def refresh_pane(self,index):
         self.tab_strip.refresh_pane(index)

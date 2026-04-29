@@ -26,8 +26,8 @@ class TabSystemShowcase(_BaseTab):
         #Icon(row, "muscle")
         # Heading(row, "To keep it simple - The key does double duty")
         row2 = CardRow(card)
-        c1 = Card(row2, width_flex=1)
-        c2 = Card(row2, width_flex=1)
+        c1 = Plate(row2, width_flex=1,name="myplate")
+        c2 = Plate(row2, width_flex=1)
         Heading(c1, "Each key is a tab\nin your form", text_align=CENTER)
         Heading(c2, "Each list item\nis a pane in that tab", text_align=CENTER)
         #Body(card, "No IMPORT REQUIRED!  No Circular Import Baloney!", text_align=CENTER)
@@ -63,7 +63,7 @@ class TabSystemShowcase(_BaseTab):
         #Spacer(card)
         row = Row(card)
         Icon(row, "selfdoc")
-        Heading(row, "Each Pane is like a 'branch' from the widget tree")
+        Heading(row, "Each pane builds one branch of the widget tree")
         #row2 = CardRow(card)
         #c1 = Card(row2, width_flex=1)
         #c2 = Card(row2, width_flex=1)
@@ -91,11 +91,20 @@ class TabSystemShowcase(_BaseTab):
         row   = Row(card)
         Icon  ( row, "boom")
         Title ( row, "This App, Right Now", glow=True)
-        Body  ( card, "Everything you see in this showcase —"
-                      " every tab, every pane, every layout —"
-                      " is driven by the TAB_LAYOUT below."
-                      " No routing code. No navigation stack."
-                      " Just the dict.")
+        Spacer(parent,width_flex=0.2)
+        card = CardCol(parent)
+        Body  ( card, "Everything you see in this showcase: "
+                      "every tab, every pane, every layout,\n"
+                      "is driven by the TAB_LAYOUT below.")
+        Body(card, "No routing code. No navigation stack. Just the dictionary.")
+        Spacer(parent, width_flex=0.2)
+        card  = CardCol(parent)
+        #Body(card, "Note: You can give panes a 'flex number' to change how space is allocated to panes within the tab.  By default it's equal")
+        row = Row(card)
+        Icon(row, "boom")
+        Title(row, "Check out the left column below.  Notice,", glow=True)
+        Title(card, "it matches the tabs at the top off this app.")
+
 
     def showcase_live_tabs(self, parent):
         card    = CardCol(parent)
@@ -148,10 +157,10 @@ class TabSystemShowcase(_BaseTab):
 VOLCANO_EXAMPLE = '''
 class FormPetVolcano(_BaseForm):  
     TAB_LAYOUT = {                                              
-        # Tabs       Panes in the tab 
+        # Tabs       Panes in each tab 
         "Status":   ["mood"      ,"lava_level"   ,"smoking"  ], 
         "Alerts":   ["meltdown"  ,"evacuation"               ],
-        "Care":     ["feed)goat" ,"walks"        ,"lava_bath"],    
+        "Care":     ["walks"     ,"lava_bath"    ,"feed_goat"],    
         "Profile":  ["nameplate" ,"adoption_papers"          ],
     }
 '''
@@ -160,18 +169,18 @@ class FormPetVolcano(_BaseForm):
 STATUS_EXAMPLE = '''
 class Status(_BaseTab):                            # Status (tab) from the dict key
 
-    def mood(self, parent):                        # mood (pane) from the list.
+    def mood(self, parent):                        # mood (pane) from Status' list.
         Heading(parent, "Filename: Status.py")     # parent parameter is the 'branch'
         Heading(parent, "Method: is_it_growling")  # Add widgets to parent
         Heading(parent, "Add content here!")       # you can do a whole branch from it 
     
-    def lava_level(self, parent):                  # lava_level (pane) from the list.
+    def lava_level(self, parent):                  # lava_level (pane) from Status' list.
         Heading(parent, "Filename: Status.py")     # Tabs and Panes 
         Heading(parent, "Method: lava_level")      # Easy Peasy! :)
         Heading(parent, "Add content here!")       # What are you going to build?
 
-    def smoking(self, parent):                     # smoking (pane) from the list.
-        Heading(parent, "Filename: Status.py")
+    def smoking(self, parent):                     # smoking (pane) from Status' list.
+        Heading(parent, "Filename: Status.py")     # Wanna get crazy and try a button??
         Heading(parent, "Method: smoke")
         Heading(parent, "Add content here!")    
 '''

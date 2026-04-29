@@ -1,6 +1,6 @@
 ## Why IPUI Does Things Differently
 
-IPUI makes choices that look unconventional if you're coming from other UI frameworks. This section explains the reasoning. Not to argue that other approaches are wrong — but so you understand the design intent instead of wondering if we missed the memo.
+> IPUI makes choices that look unconventional if you're coming from other UI frameworks. This doc explains the design intent behind choices that may look unusual if you’re coming from other UI frameworks.
 
 ### The O(1) Principle
 
@@ -70,7 +70,7 @@ This eliminates the entire category of "widget exists but isn't on screen" bugs 
 
 ### `from ipui import *`
 
-Yes, star imports. Conventional wisdom says they're dangerous because you don't know what you're importing.
+IPUI uses a star import deliberately.  Conventional wisdom says they're dangerous because you don't know what you're importing.
 
 IPUI controls `__all__` explicitly. You get exactly the public API — the widgets, the base classes, the style constants — and nothing else. One import line, and you're building. No ceremony, no six-line import blocks to maintain, no "which subpackage was PowerGrid in again?"
 
@@ -78,11 +78,9 @@ The alternative is asking every user to maintain their import list for every fil
 
 ### No "Private" Underscores
 
-IPUI uses underscores for structural meaning, never access control. `_BaseWidget` means "structural base class." `private_enabled` means "backing storage." A leading underscore never means "don't touch this."
+IPUI uses underscores for structural meaning, never as 'suggested scope modifiers'. `_BaseWidget` means "structural base class." `private_enabled` means "backing storage." A leading underscore never means "don't touch this."
 
-Guido's convention conflates two unrelated ideas: "architecturally foundational" and "hidden from you." IPUI keeps them separate so names tell you what something *is*, not what you're allowed to do with it.
-
-### One Class Per File
+### One Class Per File (There are a couple of exceptions)
 
 Every `.py` file contains one public class. The filename matches the class name exactly. `Button.py` has `Button`. `PowerGrid.py` has `PowerGrid`.
 
@@ -92,7 +90,9 @@ This makes discovery trivial — in your file browser, in your IDE, in conversat
 
 No loose functions at module level. No executable code outside `if __name__ == "__main__":`.
 
-Module-level code runs on import, in whatever order Python resolves dependencies. That's a source of subtle, order-dependent bugs that are painful to diagnose. Wrapping everything in classes eliminates this entirely — O(1) structural protection instead of O(N) discipline from every developer on every file.
+For one, this eliminates order dependency
+
+Also, module-level code runs on import, in whatever order Python resolves dependencies. That's a source of subtle, order-dependent bugs that are painful to diagnose. Wrapping everything in classes eliminates this entirely — O(1) structural protection instead of O(N) discipline from every developer on every file.
 
 ### Resolution Independence — No Pixel Math
 
@@ -133,7 +133,7 @@ The analogy is security entitlement management: never grant permissions directly
 
 Scrolling is a perfect example. There is no `ScrollableContainer` class. There is no `ScrollView`, `ScrollPane`, or `ScrollArea`. There's `scrollable=True` — a parameter on any widget. The scrolling behavior lives once, on `_BaseWidget`, tested once, debugged once. Any widget that sets the flag gets it for free.
 
-The results speak for themselves. Look at `CardCol` — the most-used container in IPUI:
+The effect is easy to see in the codebase.  Look at `CardCol` — the most-used container in IPUI:
 
 ```python
 class CardCol(_BaseWidget):

@@ -20,7 +20,7 @@ class RecordSelector(_BaseWidget):
         self.horizontal   = True
         self.color_bg     = Style.COLOR_PANEL_BG
         self.current_page = 1
-
+        self.pad=0
         self.total_rows   = 0
         self.page_size    = 100
         self.build_controls()

@@ -57,7 +57,30 @@ class Form_ParticleLife(_BaseForm):
 
     def build(self):
         row          = Row(self)
-        Banner       ( row, "ParticleLife", glow=True)
+        Banner       ( row, "Particle Life", glow=True)
         Spacer       ( row)
+        Heading      ( row,"This is O(N^2) so expect poor FPS")
+        Spacer(row)
         btn          = Button(row, "Back to\nShowcase",   color_bg=Style.COLOR_TAB_BG,width_flex=0)
         btn.on_click = lambda: IPUI.back()
+
+
+coolest="""
+  "matrix": {
+    "A.A": ".06",
+    "A.B": ".69",
+    "A.C": "0.72",
+    "A.D": "-0.151",
+    "B.A": ".03",
+    "B.B": "-.31",
+    "B.C": "-.36",
+    "B.D": "0.93",
+    "C.A": "-.86",
+    "C.B": ".17",
+    "C.C": ".06",
+    "C.D": "0.56",
+    "D.A": ".71",
+    "D.B": "-.35",
+    "D.C": ".35",
+    "D.D": ".35"
+  }"""

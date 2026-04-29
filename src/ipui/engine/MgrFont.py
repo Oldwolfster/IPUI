@@ -50,21 +50,22 @@ class MgrFont:
     def init(cls):
         """Initialize fonts from Style proportions using physical screen height."""
 
-        physical_h = pygame.display.Info().current_h
-
+        physical_h              = pygame.display.Info().current_h
+        scale                   = Style.FONT_SCALE
         cls.regular_font_source = cls.load_font_source(cls.FONT_REGULAR, cls.SYSTEM_FONTS_REGULAR, "Regular")
-        cls.bold_font_source = cls.load_font_source(cls.FONT_BOLD, cls.SYSTEM_FONTS_BOLD, "Bold")
-        cls.light_font_source = cls.load_font_source(cls.FONT_LIGHT, cls.SYSTEM_FONTS_LIGHT, "Light")
-        cls.mono_font_source = cls.load_font_source("", cls.SYSTEM_FONTS_MONO, "Mono")
+        cls.bold_font_source    = cls.load_font_source(cls.FONT_BOLD, cls.SYSTEM_FONTS_BOLD, "Bold")
+        cls.light_font_source   = cls.load_font_source(cls.FONT_LIGHT, cls.SYSTEM_FONTS_LIGHT, "Light")
+        cls.mono_font_source    = cls.load_font_source("", cls.SYSTEM_FONTS_MONO, "Mono")
 
-        scale = Style.FONT_SCALE
 
-        Style.FONT_BANNER = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_BANNER, 'bold')
-        Style.FONT_HEADING = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_HEADING, 'bold')
-        Style.FONT_TITLE = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_TITLE, 'bold')
-        Style.FONT_BODY = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_BODY, 'regular')
-        Style.FONT_DETAIL = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_DETAIL, 'regular')
-        Style.FONT_MONO = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_MONO, 'mono')
+
+        Style.FONT_BANNER       = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_BANNER, 'bold')
+        Style.FONT_HEADING      = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_HEADING, 'bold')
+        Style.FONT_TITLE        = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_TITLE, 'bold')
+        Style.FONT_BODY         = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_BODY, 'regular')
+        Style.FONT_DETAIL       = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_DETAIL, 'regular')
+        Style.FONT_MONO         = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_MONO, 'mono')
+        Style.FONT_MONO_BODY    = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_MONO*1.2, 'mono')
 
     @classmethod
     def load_font_source(cls, ttf_filename, system_font_names, weight_name):
@@ -148,3 +149,15 @@ class MgrFont:
             else:
                 # Fallback to default if system font disappeared
                 return pygame.font.Font(None, size)
+
+    @classmethod
+    def render_lines(cls, text, font, color, line_spacing=0):
+        surfs = [font.render(line, True, color) for line in text.split("\n")]
+        width = max(s.get_width() for s in surfs)
+        height = sum(s.get_height() for s in surfs) + line_spacing * (len(surfs) - 1)
+        out = pygame.Surface((width, height), pygame.SRCALPHA)
+        y = 0
+        for s in surfs:
+            out.blit(s, ((width - s.get_width()) // 2, y))
+            y += s.get_height() + line_spacing
+        return out

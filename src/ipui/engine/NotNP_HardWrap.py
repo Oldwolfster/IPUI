@@ -4,19 +4,19 @@ from typing import List, Optional, Tuple
 import pygame
 
 
-class MeasureAndWrap:
+class NotNP_HardWrap:
     """
     Pass 2 of 4: text-wrap pass.
 
     Bottom-up walk over the tree. For leaf text widgets whose rendered surface
     overflows their allocated rect width, re-render the surface wrapped to that
     width. Returns True if any surface changed size, signaling the orchestrator
-    to re-run MeasureAndLayout so mins/rects/scrollbars reflect the new surfaces.
+    to re-run NotNP_HardLayout so mins/rects/scrollbars reflect the new surfaces.
 
     Scope:
         - Only touches my_surface on text-like leaves with wrap=True.
         - Does NOT modify rects, flex math, or scrollbar state directly.
-        - MeasureAndLayout remains the single source of truth for mins, flex,
+        - NotNP_HardLayout remains the single source of truth for mins, flex,
           rect assignment, and scrollbar math.
 
     Orchestration (calling RunLayout before/after this pass) lives in
@@ -24,11 +24,11 @@ class MeasureAndWrap:
     """
     def __init__(self, trunk) -> None:
         self.trunk = trunk
-        #self.engine = MeasureAndLayout(trunk)
+        #self.engine = NotNP_HardLayout(trunk)
 
     def RunLayout(self) -> None:
         """
-        Drop-in compatible with MeasureAndLayout.RunLayout().
+        Drop-in compatible with NotNP_HardLayout.RunLayout().
         """
         # Pass 1: establish rects using trusted engine
         self.engine.RunLayout()
@@ -36,7 +36,7 @@ class MeasureAndWrap:
         # Pass 2: post-pass wrap/scroll decisions (bottom-up)
         changed = self.measure_after_wrap_and_scroll(self.trunk)
 
-        # Pass 3: let MeasureAndLayout recompute mins/rects/scrollbars using new surfaces
+        # Pass 3: let NotNP_HardLayout recompute mins/rects/scrollbars using new surfaces
         if changed:
             print("WTF HOW?")
             self.engine.RunLayout()
@@ -46,7 +46,7 @@ class MeasureAndWrap:
         """
         Wrap-only pass. Walks tree bottom-up, re-renders text leaves whose
         surfaces overflow their allocated rect width. Returns True if any
-        surface changed size, signaling the caller to re-run MeasureAndLayout.
+        surface changed size, signaling the caller to re-run NotNP_HardLayout.
         """
         return self.measure_after_wrap_and_scroll(self.trunk)
 
@@ -106,10 +106,10 @@ class MeasureAndWrap:
                    #      f"surface {before_size} → {after_size}, allocated_w={allocated_w}")
                     changed_any = True
 
-            # If after wrap we're still taller than allocated height, scrollbars are a MeasureAndLayout concern.
+            # If after wrap we're still taller than allocated height, scrollbars are a NotNP_HardLayout concern.
             # We do not invent new scrollbar logic here; we only ensure scrollable flag exists when user wants it.
             if bool(getattr(node, "scrollable", False)):
-                # Keep it scrollable so MeasureAndLayout can cap mins/content_size and draw scrollbars
+                # Keep it scrollable so NotNP_HardLayout can cap mins/content_size and draw scrollbars
                 # using its existing codepath.
                 pass
 
@@ -118,7 +118,7 @@ class MeasureAndWrap:
         # Wrap not enabled; only scroll if allowed.
         # (Nothing to do here except ensure scrollable stays true if the widget was configured that way.)
         if bool(getattr(node, "scrollable", False)):
-            # Leave the surface as-is; MeasureAndLayout will set scroll_active based on content_size.
+            # Leave the surface as-is; NotNP_HardLayout will set scroll_active based on content_size.
             # But content_size for scrollables is computed from height_minimum/width_minimum during MEASURE.
             # Since we didn't rebuild surface, nothing else to change here.
             return changed_any

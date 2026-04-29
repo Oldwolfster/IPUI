@@ -21,7 +21,7 @@ class TemplateStarterKit(_BaseTab):
     # REACTIVE — pipeline derives
     # ══════════════════════════════════════════════════════════════
 
-    def method_1_IPUI_TAB_BUILDER(self, parent):
+    def method_1_IPUI_TAB_BUILDER  (self, parent):
         self.hide_extra_panes(3)
         Title(parent, "Reactive", glow=True)
         card = Card(parent)
@@ -35,17 +35,17 @@ class TemplateStarterKit(_BaseTab):
         TextBox(row,
             placeholder = "First name",
             pipeline_key = "first",
-            width_flex  = False)
+            )
         TextBox(row,
             placeholder = "Last name",
             pipeline_key = "last",
-            width_flex  = False)
+            )
         Spacer(card)
         row             = Row(card)
         Spacer(row, width_flex=3)
         Button(row, "Clear",
             name        = "btn_reactive_clear",
-            color_bg    = Style.COLOR_PAL_GREEN_DARK,
+            color_bg    = Style.COLOR_BUTTON_CTA,
             on_click    = self.reactive_clear,
             width_flex  = 2)
         Spacer(row, width_flex=1)
@@ -93,12 +93,12 @@ class TemplateStarterKit(_BaseTab):
         self.txt_name   = TextBox(row,
             placeholder = "Enter your name",
             on_change   = self.name_changed,
-            width_flex  = False, )
+             )
         Spacer          ( card)                             # Vertical space is default
         row             = Row(card)                         # Row switches to horizontal
         Spacer          ( row, width_flex=3)
         self.btn_clear  = Button(row, "Clear",
-            color_bg    = Style.COLOR_PAL_GREEN_DARK,
+            color_bg    = Style.COLOR_BUTTON_CTA,
             on_click    = self.clear_clicked,
             width_flex  = 2)
         Spacer(row      , width_flex=1)

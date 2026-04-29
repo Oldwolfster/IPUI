@@ -32,6 +32,7 @@ class DropDown(_BaseWidget):
             font           = Style.FONT_HEADING,
             on_change      = self.on_text_changed,
         )
+        self.textbox.on_click = self.handle_textbox_click
 
         self.list           = SelectionList(self,
             data            = self.data or {},
@@ -39,10 +40,15 @@ class DropDown(_BaseWidget):
             on_change       = self.on_list_changed,
             tooltip_class   = self.tooltip_class,
         )
-        self.list.do_not_allocate = True
-        self.list.visible         = False
+        self.list.do_not_allocate   = True        # skip layout allocation
+        self.list.is_overlay        = True        # but include in input dispatch
+        self.list.visible           = False
         self.sync_from_pipeline()
 
+
+    def handle_textbox_click(self):
+        """Click on textbox opens the panel; does not close (user may be re-engaging filter)."""
+        if not self.is_open: self.open_panel()
     # ==============================================================
     # OPEN / CLOSE
     # ==============================================================
@@ -120,12 +126,13 @@ class DropDown(_BaseWidget):
 
     def compute_panel_rect(self):
         """Place panel directly below the textbox, matching its width."""
-        tb         = self.textbox.rect
-        row_h      = Style.FONT_HEADING.get_height() + Style.TOKEN_PAD * 2
-        item_count = len([i for i in self.list.items if i.visible])
-        show_count = max(1, min(item_count, self.max_visible))
-        panel_h    = row_h * show_count + self.list.list_card.frame_size
-        return       pygame.Rect(tb.left, tb.bottom, tb.width, panel_h)
+        tb          = self.textbox.rect
+        row_h       = (self.list.items and self.list.items[0].height_minimum) or 24
+        row_h       = row_h + (Style.TOKEN_BORDER+ Style.TOKEN_PAD) *2
+        item_count  = len([i for i in self.list.items if i.visible])
+        show_count  = max(1, min(item_count, self.max_visible))
+        panel_h     = row_h * show_count + self.list.list_card.frame_size
+        return        pygame.Rect(tb.left, tb.bottom, tb.width, panel_h)
 
     # ==============================================================
     # SELECTION API (mirrors SelectionList)

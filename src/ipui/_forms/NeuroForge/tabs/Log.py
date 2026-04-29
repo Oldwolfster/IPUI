@@ -1,5 +1,5 @@
 from ipui import *
-from ipui.forms.NeuroForge.custom_widgets.Logger import Logger
+from ipui._forms.NeuroForge.custom_widgets.Logger import Logger
 
 
 class EZ_Pane(_BaseTab):

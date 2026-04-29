@@ -37,7 +37,7 @@ from ipui.engine._BaseWidget import _BaseWidget
 import pygame
 
 
-class MeasureAndLayout:
+class NotNP_HardLayout:
 
     """
     Pass 1 of 4 (and Pass 3 conditionally): the layout engine.
@@ -57,7 +57,7 @@ class MeasureAndLayout:
     Widgets with a custom layout() method handle their own children — the engine
     hands them their rect and steps back.
 
-    Pass 1 establishes rects from single-line surfaces. If MeasureAndWrap then
+    Pass 1 establishes rects from single-line surfaces. If NotNP_HardWrap then
     re-renders any text-leaf surfaces, _BaseForm.sane_layout calls RunLayout()
     again as Pass 3 with the new surface dimensions. The flex algorithm is
     deterministic given the same inputs, so two calls converge cleanly.
@@ -161,7 +161,7 @@ class MeasureAndLayout:
             inner = self.apply_scroll(node, inner)
         self.layout_kids(node, kids, inner)
 
-    # MeasureAndLayout.py method: check_for_custom_layout  Update: use hasattr
+    # NotNP_HardLayout.py method: check_for_custom_layout  Update: use hasattr
     def check_for_custom_layout(self, node):
         """Widget overrides layout() — let it handle its own children."""
         if 'layout' not in type(node).__dict__: return False

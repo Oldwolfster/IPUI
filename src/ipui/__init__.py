@@ -1,9 +1,3 @@
-# ipui/__init__.py  NEW: Package entry point
-#
-# import ipui
-# ipui.show(MyForm, "caption")
-# ipui.docs()
-
 
 __all__ = [
     # Public API functions
@@ -20,7 +14,7 @@ __all__ = [
     # Input constants
     "Key", "Mouse",
     # Widgets
-    "Button", "Card", "ChartWidget", "DropDown",
+    "Button", "Card", "Chart", "DropDown", "Plate",
     "NetworkDiagram", "NeuronCell", "PowerGrid",
     "ProjectListItem", "Row", "CardCol", "CardRow", "Col",
     "SelectableListItem", "SelectionList", "Spacer",
@@ -30,27 +24,30 @@ __all__ = [
     # Utilities
     "smart_format", "WidgetCatalog", "CodeBox","RecordSelector",
     "LEFT", "CENTER", "RIGHT",
+    "Icon"
 ]
 from ipui.engine.IPUI import IPUI
 from ipui.Style        import Style
 
 # ── Public API ──────────────────────────────────────────
 
-def show(form_class, title=None):
+def show(form_class, title=None, fullscreen=False, width=0, height=0):
     """Launch a form. The one function you need."""
-    IPUI.show(form_class, title)
+    IPUI.show(form_class, title, fullscreen, width, height)
 
 def docs():
     """Open the built-in showcase and documentation."""
-    from forms.Showcase.FormShowcase import FormShowcase
+    from ipui._forms.Showcase.FormShowcase import FormShowcase
     IPUI.show(FormShowcase, "IPUI Documentation Guide")
+
+
     
 def back():                                                          
     """Navigate to the previous form."""                              
     IPUI.back()                                                      
 
 def destroy(form_class):                                             
-    """Remove a form from the stack and cache."""                     
+    """Remove a form from the stack and destroy."""
     IPUI.destroy(form_class)                                         
 
 def active():                                                        
@@ -71,7 +68,8 @@ from ipui.engine.WidgetsDict            import WidgetsDict
 
 from ipui.widgets.Button                import Button
 from ipui.widgets.Card                  import Card
-from ipui.widgets.ChartWidget           import ChartWidget
+from ipui.widgets.Plate                 import Plate
+from ipui.widgets.Chart                 import Chart
 from ipui.widgets.DropDown              import DropDown
 from ipui.widgets.NetworkDiagram        import NetworkDiagram
 from ipui.widgets.NeuronCell            import NeuronCell
@@ -92,4 +90,8 @@ from ipui.utils.WidgetCatalog           import WidgetCatalog
 from ipui.utils.general_text            import parse_int_list
 from ipui.utils.MgrFileManager          import FileManager
 from ipui.utils.Align                   import Align, LEFT,CENTER,RIGHT
-from forms.NeuroForge.custom_widgets.Logger import Log
+from ipui.widgets.Icon                  import Icon
+
+
+
+from ipui._forms.NeuroForge.custom_widgets.Logger import Log

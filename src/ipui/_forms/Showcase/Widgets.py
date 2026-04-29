@@ -47,35 +47,37 @@ class EZ_Pane(_BaseTab):
             return
 
         self.form.set_pane(1, self.show_detail  , entry)
-        self.form.set_pane(2, self.show_code    , entry)
+        #switching to two panes self.form.set_pane(2, self.show_code    , entry)
 
     def show_detail(self, parent, entry):
         """Build the detail pane for a selected widget."""
-        Title(parent, entry["name"], glow=True)
-        Body(parent, f"Discovered live from {entry['file']}  ·  {entry['lines']} lines")
 
-        sub = CardCol(parent)
+        row=Row(parent)
+        Title(row, entry["name"], glow=True)
+        Body(row, f"Discovered live from {entry['file']}  ·  {entry['lines']} lines",text_align=RIGHT)
+        card = Card(parent, scrollable=True)
+        sub = CardCol(card)
         if entry["desc"]:        Body(sub, entry["desc"])
         if entry["when_to_use"]: self.field(sub, "When to use", entry["when_to_use"])
         if entry["best_for"]:    self.field(sub, "Best for",    entry["best_for"])
 
         if entry["api"]:
-            sub = CardCol(parent)
+            sub = CardCol(card)
             Heading(sub, "API:")
             Body(sub, entry["api"])
 
         if entry.get("example"):
-            sub = CardCol(parent)
+            sub = CardCol(card)
             Heading(sub, "Example:")
             Body(sub, entry["example"])
 
+        # Codebox
+        CodeBox(card, data=entry.get("source", ""))
 
-    def show_code(self, parent, entry):
-        parent.pad=0
-        Title(parent, "  Source Code:", glow=True)
-        Body(parent, f"  {entry['lines']} lines")
-        sub = Col(parent,  scrollable=True, color_bg=Style.COLOR_CODE_BG)
-        CodeBox(sub, data=entry.get("source", ""))
+
+    #def show_code(self, parent, entry):
+    #    parent.pad=0
+
 
     def field(self, parent, label, value):
         """Render a label: value pair."""

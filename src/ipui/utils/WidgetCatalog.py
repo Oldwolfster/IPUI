@@ -47,8 +47,10 @@ class WidgetCatalog:
 
     def collect_subclasses(self, base):
         """Recursively gather all concrete subclasses of base."""
+        from ipui.engine._BaseForm import _BaseForm
         result = []
         for cls in base.__subclasses__():
+            if cls is not _BaseForm and issubclass(cls, _BaseForm): continue
             result.append(cls)
             result.extend(self.collect_subclasses(cls))
         return result

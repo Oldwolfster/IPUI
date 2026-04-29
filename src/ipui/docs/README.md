@@ -2,13 +2,15 @@
 
 A Python/Pygame UI framework
 
->**Easy to get right, hard to get wrong.**
+> **Easy to get right, hard to get wrong.**
 
-![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Pygame-ce](https://img.shields.io/badge/pygame--ce-2.x-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 **Actively developed • First public release — March 2026**
+
+> IPUI is developed and tested against `pygame-ce`. It is imported in code as `pygame`.
 
 ```bash
 pip install ipui
@@ -21,7 +23,8 @@ pip install ipui
 - [Quick Start](#quick-start)
 - [Core Concepts](#core-concepts)
 - [The ip Service Portal](#the-ip-service-portal)
-- [Lifecycle Hooks](#using-hooks-on-a-pane)
+- [Lifecycle Hooks](#lifecycle-hooks)
+- [Updating the UI](#updating-the-ui)
 - [Widget Catalog](#widget-catalog)
 - [Layout System](#layout-system)
 - [Tabs and Panes](#tabs-and-panes)
@@ -34,6 +37,7 @@ pip install ipui
 - [Dependencies](#dependencies)
 - [Appendix A: Single Pass Cycle](#appendix-a-detail-of-single-pass-cycle)
 - [Appendix B: The Game Loop](#appendix-b-the-game-loop)
+- [Appendix C: Tab Switch Lifecycle](#appendix-c-tab-switch-lifecycle)
 
 ---
 
@@ -82,20 +86,18 @@ from ipui import *
 
 class SmokeTest(_BaseForm):
     TAB_LAYOUT = {
-        "Smoke Test"    :["go"],            # ← This one works immediately
-        "Widgets"       :["demo"],          # ← Will trigger template picker
-        "Relax"         :["sit", "chill"],  # ← Will trigger template picker
+        "Hello World"   :["welcome"     ],  # ← This one works immediately...
+                                            #   Due to the welcome method below
+        "Widgets"       :["demo","demo2"],  # ← Will trigger template picker
+        "Bouncing Ball" :["arena", None ],  # ← Will trigger template picker
     }
-
-    def go(self, parent):                    # ← matches "go" in TAB_LAYOUT
+    
+    def welcome(self, parent):               # ← matches "welcome" in TAB_LAYOUT
         Banner  (parent, "IPUI"              , text_align=CENTER, glow=True)
         Title   (parent, "Easy to get right!", text_align=CENTER)
         Body    (parent, "Hard to get wrong.", text_align=CENTER)
-        Button  (parent, "Click Me :)"       , on_click=self.show_hello,
-                 color_bg=Style.COLOR_PAL_GREEN_DARK)
-
-    def show_hello(self): self.show_modal("Hello World!\nWelcome to IPUI")
-
+        Button  (parent, "Click Me :)"       , on_click=lambda: self.form.show_modal("Hello"))
+        
 if __name__ == "__main__": show(SmokeTest)
 ```
 
@@ -104,9 +106,9 @@ python SmokeTest.py
 ```
 
 Three tabs appear immediately:
-  - **Smoke Test**  — fully working with banner, text, and button
-  - **Widgets**     — show IPUI’s friendly Houston helper card with template options
-  - **Relax**       — show IPUI’s friendly Houston helper card with template options
+  - **Hello World**   — fully working with banner, text, and button
+  - **Widgets**       — show IPUI's helper card with template options
+  - **Bouncing Ball** — show IPUI's helper card with template options
 
 ---
 
@@ -114,11 +116,10 @@ Three tabs appear immediately:
 
 Change to the 'Widgets' tab.
 
+> Hello World already has real content.
+> Widgets and Bouncing Ball do not have matching .py files yet.
 
-> Smoke Test already has real content.
-> Widgets and Relax do not have matching .py files yet.
-
-Problem? Not even a little.
+**Problem? Not even a little.**
 
 Instead of throwing an error or even showing an empty tab, IPUI steps in with a helper card:
 
@@ -126,7 +127,7 @@ Instead of throwing an error or even showing an empty tab, IPUI steps in with a 
 
 Pick Full Showcase on the Widgets tab. IPUI will create Widgets.py and hot-swap in a complete, interactive widget playground with real working controls (buttons, textboxes, cards, grids, etc.).
 
-It’s not a dead stub — it’s live code you can immediately click, rearrange, and copy-paste from.
+It's not a dead stub — it's live code you can immediately click, rearrange, and copy-paste from.
 
 ---
 
@@ -143,7 +144,7 @@ class Widgets(_BaseTab):
         Button(parent, "Test Me", on_click=lambda: self.form.show_modal("Nice"))
 ```
 
-Save the file — changes appear instantly.
+Save the file and re-run to see your changes.
 
 This is the normal workflow:
 
@@ -154,34 +155,39 @@ This is the normal workflow:
 
 You can define pane methods directly inside _BaseForm (as in the smoke test) or in separate files — both work seamlessly.
 
+<!-- SCREENSHOT: ipui/assets/images/quick_start.png — the Hello World form with banner, body text, and green button -->
+![QuickStart Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/quick_start.png)
+
 ---
+
+## Core Concepts
 
 ### How Tab Discovery Works
 
-The `TAB_LAYOUT` dictionary is the blueprint for your application. 
+The `TAB_LAYOUT` dictionary is the blueprint for your application.
 * **The Keys** define the names of your tabs.
 * **The Values** are lists that divide that tab into one or more **Panes**.
 * You can size panes by including a flex number (below, `chill` gets 2/3 and `None` gets 1/3)
 
 ```python
 TAB_LAYOUT = {
-    "Smoke Test"    :["go"],                        # Tab 'Smoke Test'  with one pane 'go'            
-    "Widgets"       :["demo"],                      # Tab 'Widgets'     with one pane 'demo'
-    "Relax"         :[("chill", 2)  , (None, 1)],   # Tab 'Relax'       with two panes 'chill' and a blank Pygame area
+    "Hello World"   :["welcome"     ],  # Tab 'Hello World'   with one pane 'welcome'
+    "Widgets"       :["demo","demo2"],  # Tab 'Widgets'       with two panes.
+    "Bouncing Ball" :["arena", None ],  # Tab 'Bouncing Ball' with one pane 'arena' and a blank Pygame area
 }
 ```
 (Note: A pane value of None creates a blank region for you to draw directly to with Pygame!)
 
 ### What Panes Do
 
-Each pane name in your TAB_LAYOUT maps to a builder method with the exact same name. 
+Each pane name in your TAB_LAYOUT maps to a builder method with the exact same name.
 **IPUI is highly flexible** and will look for that builder method in two places:
 
 1. **The Main Form File** (Fastest)
 Just like in SmokeTest.py, you can define the builder method directly inside your _BaseForm class. Perfect for quick prototypes.
 
 2. **A Dedicated Tab File** (Most Scalable)
-When a tab grows, you can move it to its own file. If you have a tab named "Hey There", IPUI will scan your project folder (and subfolders) for a file named Hey_There.py and HeyThere.py. 
+When a tab grows, you can move it to its own file. If you have a tab named "Hey There", IPUI will scan your project folder (and subfolders) for a file named Hey_There.py and HeyThere.py.
 Inside that file, IPUI looks for any class inheriting from _BaseTab. The actual class name doesn't matter!
 
 ```python
@@ -190,26 +196,67 @@ from ipui import *
 
 # The class name can be anything, as long as it inherits from _BaseTab
 class TotallyWhateverNameYouWant(_BaseTab):
-    
+
     # This matches the 'demo' pane in TAB_LAYOUT
     def demo(self, parent):
         Title(parent, "Hello from Widgets.py")
 ```
 
-### The Golden Rule: _BaseTab Wins
+#### The Golden Rule: _BaseTab Wins
 
 What happens if IPUI finds a demo() pane builder in both your main _BaseForm and an external Widgets.py file?
 
 **The external** _BaseTab **file always wins**. This is deliberate. The main form is great for a fast start, but once a tab earns its own file, that file becomes the boss. If you extract a method into a new file and leave the old one behind, IPUI gracefully switches over to the new dedicated file.
 
-### Why the `__name__` Guard Is Necessary
+#### Why the `__name__` Guard Is Necessary
 
 Your main file should always end with:
 ```python
-if __name__ == "__main__": show(SmokeTest)    
+if __name__ == "__main__": show(SmokeTest)
 ```
 
 Don't skip this! In a one-file setup, this standard Python guard prevents accidental re-entry during import.
+
+#### Where Your Logic Lives
+
+A `_BaseTab` (or tabless `_BaseForm`) doesn't have an `__init__`. **You don't write one** — IPUI raises a `TypeError` at class definition if you try. This is on purpose: it keeps the framework in charge of construction order, so by the time your code runs, everything around you is already wired.
+
+So where does *your* code go? Two places, and the split is the whole mental model:
+
+- **Pane methods** — build the UI. Same names you put in `TAB_LAYOUT`. Run when the pane first appears (and again on rebuild). This is where you create widgets.
+- **`ip_*` hooks** — run the logic. `ip_setup` for one-time initialization, `ip_think` every frame, `ip_draw` for custom rendering, and a few more. The framework calls these; you override them.
+
+Here's the split in one example:
+
+```python
+class BouncingBall(_BaseTab):
+
+    def arena(self, parent):                        # ← pane method: builds the UI
+        Title(parent, text="Bouncing Ball")         # Print Title
+        card=Card(parent, scrollable=True)          # Create a card for codebox
+        CodeBox(card,data  =__file__)               # Put Codebox in the card
+
+    def ip_setup(self, ip):                         # ← hook: runs once, initializes state
+        self.ball_x, self.ball_y   = 0.5, 0.5       # put ball in middle of screen
+        self.ball_dx, self.ball_dy = 0.4, 0.3       # set ball x and y movement
+
+    def ip_think(self, ip):                         # ← hook: runs every frame
+        self.ball_x += self.ball_dx * ip.dt         # move ball * ip.dt normalizes based on fps
+        self.ball_y += self.ball_dy * ip.dt         # same but in y dimension
+        self.bounce_off_walls(ip.rect_pane)         # check if it needs to bounce
+
+    def ip_draw(self, ip):                          # ← hook: custom drawing
+        pos = ip.to_screen(self.ball_x,self.ball_y) # convert normalized to screen coords
+        pygame.draw.circle(ip.surface, (255, 160, 40), pos, ip.scale_y(0.02))
+
+    def bounce_off_walls(self, arena):
+        if self.ball_x < 0: self.ball_dx = .4       # reverse if at left edge
+        if self.ball_x > 1: self.ball_dx = -.4      # reverse if at right edge
+        if self.ball_y < 0: self.ball_dy = .3       # reverse if it hit's top
+        if self.ball_y > 1: self.ball_dy = -.3      # reverse if it hits bottom
+```
+
+If it lays out widgets, it goes in a pane method. If it ticks, decides, animates, or paints custom graphics, it goes in an `ip_*` hook. The full set of hooks and what each one does is covered in [Lifecycle Hooks](#lifecycle-hooks) below — for now, knowing the split exists is enough to read most IPUI code.
 
 ---
 
@@ -227,12 +274,7 @@ IPUI makes the right path the easy path.
 
 No event loop setup. No manual sizing. No coordinate math. IPUI handles the Pygame lifecycle, layout, rendering, and event dispatch automatically.
 
-<!-- SCREENSHOT: ipui/assets/images/quick_start.png — the Hello World form with banner, body text, and green button -->
-![QuickStart Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/quick_start.png)
-
 ---
-
-## Core Concepts
 
 ### The Widget Tree
 
@@ -246,7 +288,9 @@ Body(card, "Change stuff")  # attaches to card
 
 No `add()`. No `pack()`. No `grid()`. Construction IS attachment — an entire class of "widget exists but isn't visible" bugs is gone.
 
-### `build()` Not `__init__`
+#### A Note on `build()` vs `__init__` (for custom widget authors)
+
+You may have noticed there's no `__init__` when you write a custom widget either. That's deliberate. Override `build()` instead — by the time it runs, `self.parent`, `self.form`, and `self.children` are already wired, so you don't have to call `super().__init__()` with a maze of arguments.
 
 ```python
 class MyWidget(_BaseWidget):
@@ -255,9 +299,11 @@ class MyWidget(_BaseWidget):
         self.color_bg = Style.COLOR_CARD_BG
 ```
 
-By the time `build()` runs, `self.parent`, `self.form`, and `self.children` are already wired. You never need to call `super().__init__()` with a maze of arguments.
+Most users never need to write a custom widget — IPUI ships with a full catalog. This is here so you know where to look when the day comes.
 
-### Three Ways to Update the UI
+---
+
+## Updating the UI 
 
 **Reactive** — Declare relationships at the top of your _BaseTab. The pipeline handles propagation:
 
@@ -324,13 +370,13 @@ class MySimulation(_BaseTab):
 
 ### Identity
 
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `ip.form` | BaseForm | Active Form instance |
-| `ip.form_name` | str | Name of the active form |
-| `ip.pane` | _BaseTab | Active pane instance |
-| `ip.pane_name` | str | Name of the active tab/pane |
-| `ip.is_active_pane` | bool | Is this the visible pane? |
+| Attribute          | Type        | Description |
+|--------------------|-------------|-------------|
+| `ip.form`          | _BaseForm   | Active Form instance |
+| `ip.form_name`     | str         | Name of the active form |
+| `ip.tab`           | _BaseTab    | Active Tab instance (or the form, in tabless mode) |
+| `ip.tab_name`      | str         | Name of the active tab |
+| `ip.is_active_tab` | bool        | Is this the visible tab? |
 
 ### Timing
 
@@ -394,9 +440,9 @@ Three lines. No spelunking. No manual math. Resolution independent.
 | `ip.mouse_y` | int | Mouse y position (screen) |
 | `ip.mouse_pos` | tuple | Mouse (x, y) tuple |
 | `ip.mouse_wheel` | int | Scroll wheel delta this frame |
-| `ip.mouse_down("left")` | bool | Is the button held this frame? |
-| `ip.mouse_pressed("left")` | bool | Was the button just pressed this frame? (edge detect) |
-| `ip.mouse_released("left")` | bool | Was the button just released this frame? |
+| `ip.mouse_down(Mouse.LEFT)` | bool | Is the button held this frame? |
+| `ip.mouse_pressed(Mouse.LEFT)` | bool | Was the button just pressed this frame? (edge detect) |
+| `ip.mouse_released(Mouse.LEFT)` | bool | Was the button just released this frame? |
 | `ip.mouse_inside(widget)` | bool | Is the mouse inside this widget's rect? |
 | `ip.mouse_inside_pane()` | bool | Is the mouse inside `rect_pane`? |
 | `ip.mouse_inside_content()` | bool | Is the mouse inside `rect_tab_area`? |
@@ -406,7 +452,7 @@ Three lines. No spelunking. No manual math. Resolution independent.
 | `ip.mouse_local_x()` | int | Mouse x relative to `rect_pane` |
 | `ip.mouse_local_y()` | int | Mouse y relative to `rect_pane` |
 
-Buttons: `"left"`, `"middle"`, `"right"`.
+Constants: `Mouse.LEFT`, `Mouse.MIDDLE`, `Mouse.RIGHT`. Import with `from ipui import *`.
 
 ### Keyboard
 
@@ -415,11 +461,14 @@ Buttons: `"left"`, `"middle"`, `"right"`.
 | `ip.mod_shift` | bool | Shift held? |
 | `ip.mod_ctrl` | bool | Ctrl held? |
 | `ip.mod_alt` | bool | Alt held? |
-| `ip.key_down("space")` | bool | Is this key held this frame? |
-| `ip.key_pressed("space")` | bool | Was this key just pressed this frame? |
-| `ip.key_released("space")` | bool | Was this key just released this frame? |
+| `ip.key_down(Key.SPACE)` | bool | Is this key held this frame? |
+| `ip.key_pressed(Key.SPACE)` | bool | Was this key just pressed this frame? |
+| `ip.key_released(Key.SPACE)` | bool | Was this key just released this frame? |
 
-Keys use pygame names without the `K_` prefix: `"space"`, `"a"`, `"left"`, `"right"`, `"up"`, `"down"`, `"return"`, `"escape"`, `"tab"`, `"backspace"`, etc.
+Constants live on the `Key` class — autocomplete shows everything. Examples:
+`Key.LEFT`, `Key.RIGHT`, `Key.UP`, `Key.DOWN`, `Key.SPACE`, `Key.RETURN`, `Key.ESCAPE`,
+`Key.TAB`, `Key.BACKSPACE`, `Key.A`–`Key.Z`, `Key.NUM_0`–`Key.NUM_9`, `Key.F1`–`Key.F12`,
+`Key.HOME`, `Key.END`, `Key.PAGEUP`, `Key.PAGEDOWN`, `Key.DELETE`.
 
 ### Rendering
 
@@ -464,125 +513,213 @@ Currently IPUI renders every frame, so these are effectively no-ops. They exist 
 ---
 ### State Machine
 
-`ip.state` is a built-in state machine available everywhere — panes, forms, hooks. No setup required for basic use; declare a `STATES` dict for auto-transitions and flash messages.
+`ip.state` is a built-in state machine available everywhere — panes, forms, hooks. Each state pairs a **name** with a **delegate** (a method to run while in that state). States can chain to a follow-up state and auto-advance after a duration.
 
-**Zero-config — just track state:**
+The state machine tracks *what* state you're in. Drawing a flash overlay or a "GAME OVER" message is your job — the state machine just tells you which one to draw.
 
-```python
-def ip_think(self, ip):
-    ip.state.set("LOADING")
-    print(ip.state.current)     # "LOADING"
-```
-
-**Configured — declare states with transitions, durations, and messages:**
+**Register states with `add()`, transition with `go()`:**
 
 ```python
 class Breakout(_BaseTab):
-    STATES = {
-        "DEMO"      : {"next": "READY"  },
-        "READY"     : {"next": "PLAYING", "message": "Click to Launch!"},
-        "PLAYING"   : {"next": "LEVEL_UP"},
-        "LEVEL_UP"  : {"next": "READY",   "duration": 1.5, "message": "LEVEL UP!"},
-        "GAME_OVER" : {"next": "DEMO",    "duration": 2.5, "message": "GAME OVER"},
-    }
+    def ip_setup(self, ip):
+        ip.state.add("DEMO"     , self.state_demo)
+        ip.state.add("READY"    , self.state_ready)
+        ip.state.add("PLAYING"  , self.state_playing)
+        ip.state.add("LEVEL_UP" , None,    "READY",     1.5)   # auto-advance after 1.5s
+        ip.state.add("GAME_OVER", None,    "DEMO",      2.5)   # auto-advance after 2.5s
+        ip.state.go("DEMO")
 
-    def ip_setup_pane(self):
-        ip.state.configure(self.STATES)
-        ip.state.set("DEMO")
+    def state_demo(self):       ...    # called every frame while in DEMO
+    def state_ready(self):      ...    # called every frame while in READY
+    def state_playing(self):    ...    # called every frame while in PLAYING
 ```
 
-When a state has `duration`, the engine counts down automatically and transitions to `next` when the timer expires. When a state has `message`, the engine draws it centered over the canvas with a dark overlay — no drawing code needed.
+When a state has a duration, the engine counts down automatically and transitions to the named follow-up state when the timer expires. A `None` delegate means "do nothing this frame" — useful for pure timed transitions like flash messages where your draw code reads `ip.state.current` and renders accordingly.
 
 **API:**
 
 | Method / Property | Description |
 |-------------------|-------------|
-| `ip.state.current` | Current state name (or None) |
-| `ip.state.message` | Current flash message (or None) |
-| `ip.state.timer` | Seconds remaining on current flash |
-| `ip.state.is_flash` | True if current state has a duration |
-| `ip.state.set("NAME")` | Transition to a specific state |
-| `ip.state.next()` | Follow the `next` chain to the next state |
+| `ip.state.add(name, delegate, next=None, duration=0)` | Register a state |
+| `ip.state.go(name, duration=None)` | Transition to a state (override duration optional) |
+| `ip.state.next()` | Follow the registered chain to the next state |
 | `ip.state.is_("NAME")` | True if current state matches |
-| `ip.state.in_("A", "B")` | True if current state is any of these |
-| `ip.state.configure({...})` | Load a STATES dict (sets first key as initial state) |
+| `ip.state.current` | Current state name (or None) |
 
-**Usage pattern — branch your logic cleanly:**
+**Branch your logic on the current state:**
 
 ```python
 def ip_think(self, ip):
-    sm = ip.state
-
-    if sm.in_("LEVEL_UP", "GAME_OVER"):    # flash states — engine handles it
+    if ip.state.is_("READY"):
+        if ip.mouse_pressed(Mouse.LEFT):
+            ip.state.go("PLAYING")
         return
 
-    if sm.is_("READY"):                     # waiting for player
-        self.ball_x = self.paddle_x(ip)     # ball tracks paddle
-        if ip.mouse_pressed("left"):
-            sm.set("PLAYING")
-        return
-
-    if sm.is_("PLAYING"):                   # normal game
+    if ip.state.is_("PLAYING"):
         self.run_physics(ip)
 ```
 
-**Multiple state machines** — the default covers 99% of cases, but named machines are available:
+**Multiple state machines** — the default covers most cases, but named machines are available:
 
 ```python
-ip.state("combat").configure({...})
-ip.state("combat").set("ATTACKING")
-ip.state("ui").set("MENU_OPEN")
+ip.state("combat").add("IDLE", self.combat_idle)
+ip.state("combat").go("IDLE")
+ip.state("ui").go("MENU_OPEN")
 ```
 
 `ip.state` and `ip.state()` both return the default machine. `ip.state("name")` returns a named one, created on first access.
 
-**STATES dict keys:**
+> **🚧 Coming soon:** declarative state config via a `STATES` class dict and `ip.state.configure(self.STATES)`, plus `ip.state.in_("A", "B")` for multi-name membership tests.
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `"next"` | str | State to transition to (via `next()` or after `duration` expires) |
-| `"duration"` | float | Seconds to hold this state before auto-transitioning to `next` |
-| `"message"` | str | Text drawn centered over the canvas during this state |
+---
 
+## Lifecycle Hooks
 
-## Using Hooks on a Pane
+IPUI gives you five hooks into the application lifecycle. Each one fires at a specific moment, has a clear job, and works identically whether you're on a `_BaseTab` or a `_BaseForm`.
+
+### The Five Hooks
+
+**`ip_setup(self, ip)`** — Runs once, when the pane or form is first created. Initialize your state here: positions, velocities, counters, loaded assets, state machine configuration. By the time this fires, `self.form`, `self.ip`, and the widget tree are fully wired.
+
+```python
+def ip_setup(self, ip):
+    self.ball_x  = 0.5
+    self.ball_y  = 0.5
+    self.speed   = 0.4
+    self.score   = 0
+    ip.state.add("READY"  , self.state_ready)
+    ip.state.add("PLAYING", self.state_playing)
+    ip.state.go("READY")
+```
+
+**`ip_activated(self, ip)`** — Runs every time this pane or form becomes visible. On a `_BaseTab`, this fires when the user switches to your tab, and also on the initial load after `ip_setup`. On a `_BaseForm`, this fires when `IPUI.show()` or `IPUI.back()` brings the form to the front.
+
+Use it to refresh data that might have changed while you were off-screen, restart animations, or sync state from the pipeline.
+
+```python
+def ip_activated(self, ip):
+    self.refresh_leaderboard()
+    self.resume_particle_effects()
+```
+
+> **Note on `ip` inside `ip_activated`:** Identity (`ip.form`, `ip.tab`, `ip.tab_name`, `ip.is_active_tab`) and geometry (`ip.rect_pane`, `ip.rect_tab_area`) are correct when this hook fires. Per-frame fields like `ip.dt`, `ip.events`, and `ip.surface` reflect the *last* completed frame — `ip_activated` runs at lifecycle transitions, not inside the per-frame loop, so use the per-frame fields with care here.
+
+**`ip_think(self, ip)`** — Runs every frame. This is your logic tick: state machines, physics, AI, input polling, data checks. No drawing here — just thinking.
+
+By default, `ip_think` only fires on the active pane. Set `THINK_ALWAYS = True` on your `_BaseTab` subclass if you need background processing even when the tab isn't visible (useful for simulations that shouldn't pause when the user switches tabs).
+
+```python
+def ip_think(self, ip):
+    if ip.state.is_("PLAYING"):
+        self.ball_x += self.ball_dx * ip.dt
+        self.ball_y += self.ball_dy * ip.dt
+        if self.ball_y > 1.0:
+            ip.state.go("GAME_OVER")
+```
+
+**`ip_draw(self, ip)`** — Runs every frame, before the widget tree draws. This is where you paint game worlds, backgrounds, visualizations — anything that should appear behind your widgets.
+
+```python
+def ip_draw(self, ip):
+    pos = ip.to_screen(self.ball_x, self.ball_y)
+    r   = ip.scale_y(self.ball_r)
+    pygame.draw.circle(ip.surface, (255, 160, 40), pos, r)
+```
+
+**`ip_draw_hud(self, ip)`** — Runs every frame, after the widget tree draws. Overlays, cursors, FPS counters, debug text — anything that should appear on top of everything else.
+
+```python
+def ip_draw_hud(self, ip):
+    font = Style.FONT_DETAIL
+    surf = font.render(f"FPS: {ip.fps}", True, Style.COLOR_TEXT_ACCENT)
+    ip.surface.blit(surf, (10, 10))
+```
+
+### Execution Order
+
+Every frame follows this sequence:
+
+```
+ip_think       →  your logic runs
+Layout pass    →  widget tree measures and positions
+ip_draw        →  you paint behind the widgets
+Widget render  →  the UI draws itself
+ip_draw_hud    →  you paint on top of everything
+```
+
+`ip_setup` and `ip_activated` are not per-frame — they fire at lifecycle transitions.
+
+### Using Hooks on a Pane
 
 Override any hook directly on your `_BaseTab` subclass:
 
 ```python
-class MySimulation(_BaseTab):
-    def ip_setup_pane(self):
-        self.ball_x  = 0.5
-        self.ball_y  = 0.5
-        self.ball_dx = 0.4
-        self.ball_dy = 0.3
+class BouncingBall(_BaseTab):
+    def ip_setup(self, ip):
+        self.x, self.y   = 0.5, 0.5
+        self.dx, self.dy = 0.4, 0.3
+
+    def ip_activated(self, ip):
+        self.x, self.y   = 0.5, 0.5      # reset position on tab switch
 
     def ip_think(self, ip):
-        self.ball_x += self.ball_dx * ip.dt
-        self.ball_y += self.ball_dy * ip.dt
+        self.x += self.dx * ip.dt
+        self.y += self.dy * ip.dt
+        if self.x < 0 or self.x > 1: self.dx = -self.dx
+        if self.y < 0 or self.y > 1: self.dy = -self.dy
 
     def ip_draw(self, ip):
-        pos = ip.to_screen(self.ball_x, self.ball_y)
-        pygame.draw.circle(ip.surface, (255, 160, 40), pos, 12)
+        pos = ip.to_screen(self.x, self.y)
+        pygame.draw.circle(ip.surface, (255, 160, 40), pos, ip.scale_y(0.02))
 
     def ip_draw_hud(self, ip):
-        font = Style.FONT_DETAIL
-        surf = font.render(f"FPS: {ip.fps}", True, Style.COLOR_TEXT_ACCENT)
+        surf = Style.FONT_DETAIL.render(f"FPS: {ip.fps}", True, Style.COLOR_TEXT_ACCENT)
         ip.surface.blit(surf, (10, 10))
 ```
 
 ### Using Hooks on a Form
 
-Override on your `_BaseForm` subclass for app-wide logic:
+Override on your `_BaseForm` subclass for app-wide logic. Form hooks fire in addition to pane hooks — the form thinks first, then the active pane thinks.
 
 ```python
 class MyApp(_BaseForm):
+    def ip_setup(self, ip):
+        self.global_timer = 0
+
+    def ip_activated(self, ip):
+        # Fires when IPUI.show() brings this form to the front
+        self.refresh_global_state()
+
     def ip_think(self, ip):
-        super().ip_think(ip)    # dispatches to panes
-        # app-wide logic here
+        self.global_timer += ip.dt
 ```
 
-Render hooks (`ip_draw`, `ip_draw_hud`) only fire for the **active** tab regardless of policy — no point drawing to a tab nobody can see.
+Render hooks (`ip_draw`, `ip_draw_hud`) only fire on the active pane — no point drawing to a tab nobody can see.
+
+### Background Processing
+
+By default, `ip_think` only fires on the visible pane. If your pane runs a simulation or background process that shouldn't pause when the user switches tabs, opt in:
+
+```python
+class TrainingMonitor(_BaseTab):
+    THINK_ALWAYS = True
+
+    def ip_think(self, ip):
+        if not ip.is_active_tab:
+            self.training_step()     # keep training even when not visible
+            return
+        self.update_charts()         # only update visuals when visible
+```
+
+### Quick Reference
+
+| Hook            | Receives `ip`? | When it fires                             | Fires on inactive pane?           |
+|-----------------|----------------|-------------------------------------------|-----------------------------------|
+| `ip_setup`      | Yes            | Once, at creation                         | N/A — only fires once             |
+| `ip_activated`  | Yes            | Each time pane/form becomes visible       | N/A — fires on activation         |
+| `ip_think`      | Yes            | Every frame                               | Only with `THINK_ALWAYS = True`   |
+| `ip_draw`       | Yes            | Every frame, before widgets               | Active pane only                  |
+| `ip_draw_hud`   | Yes            | Every frame, after widgets                | Active pane only                  |
 
 ---
 
@@ -619,7 +756,7 @@ All text widgets support `glow=True` (molten-orange forge effect) and `text_alig
 **Button**
 ```python
 Button(parent, "Launch",
-    color_bg = Style.COLOR_PAL_GREEN_DARK,
+    color_bg = Style.COLOR_BUTTON_CTA,
     on_click = self.launch_training,
     width_flex = 2)
 ```
@@ -659,7 +796,7 @@ grid = PowerGrid(parent, name="results_grid")
 grid.set_data(rows, columns=["Run", "Accuracy", "Loss"])
 grid.set_column_max("Run", 200)
 grid.set_page_size(50)
-grid.on_row_click(self.on_row_selected, "Run")
+grid.on_row_click(self.on_row_selected, column="Run")
 ```
 
 PowerGrid also accepts SQL databases directly:
@@ -679,9 +816,9 @@ Sorting works across pages — sort the full dataset, then paginate the sorted r
 
 <!-- SCREENSHOT: ipui/assets/images/powergrid_sql.png — PowerGrid with sorted columns showing SQL data -->
 
-**ChartWidget**
+**Chart**
 ```python
-chart = ChartWidget(parent, width_flex=True, height_flex=True)
+chart = Chart(parent, width_flex=True, height_flex=True)
 chart.set_data(
     lines   = {"Train Loss": [(0, 0.9), (1, 0.7), (2, 0.5)],
                "Val Loss":   [(0, 0.95),(1, 0.75),(2, 0.6)]},
@@ -800,6 +937,34 @@ class MyApp(_BaseForm):
     tab_hidden = ["Colosseum"]
 ```
 
+### Guarding Tab Switches with `tab_on_change`
+
+Sometimes you need to *block* a tab switch — for example, "the user hasn't picked a project yet, so don't let them leave Home." That's the job of `tab_on_change`.
+
+Set `tab_on_change` to the **name of a method on your form**. IPUI calls it *before* every tab switch and lets it veto the change by returning `False`:
+
+```python
+class FormNeuroForge(_BaseForm):
+    TAB_LAYOUT     = {"Home": ["..."], "Forge": ["..."], "Pro": ["..."]}
+    tab_on_change  = "guard_tab_switch"
+
+    def guard_tab_switch(self, name, current):
+        if current == "Home" and not self.has_active_project():
+            self.show_modal("Pick a project first!")
+            return False           # ← veto: tab does NOT switch
+        return True                 # ← allow the switch
+```
+
+**Signature:** `method(name, current)` — `name` is the destination tab, `current` is the tab the user is leaving.
+
+**Return value:**
+- `False` → veto. The tab strip stays where it is. No `ip_activated` fires.
+- Any other value (`True`, `None`, missing return) → switch proceeds normally.
+
+This is a different superpower from `ip_activated`. `tab_on_change` is a **gate** — it can stop a switch before it happens. `ip_activated` is a **welcome mat** — it runs after the switch is already in motion. Both can coexist on the same form.
+
+For the full lifecycle of a tab switch — including exactly when each hook fires — see [Appendix C](#appendix-c-tab-switch-lifecycle).
+
 
 
 ---
@@ -821,7 +986,7 @@ Skip `TAB_LAYOUT` entirely. Build widgets in `build()`. Use the same lifecycle h
             Title(self, "No tabs. No panes. Just widgets.", text_align=CENTER)
             Body(self, "Everything lives right here.", text_align=CENTER)
             Button(self, "Do Something",
-                color_bg=Style.COLOR_PAL_GREEN_DARK,
+                color_bg=Style.COLOR_BUTTON_CTA,
                 on_click=self.do_something)
 
         def do_something(self):
@@ -842,21 +1007,21 @@ The same hooks work on a tabless form as on any `_BaseTab` pane:
     import pygame
 
     class Asteroids(_BaseForm):
-        STATES = {
-            "READY"     : {"next": "PLAYING", "message": "Click to Start!"},
-            "PLAYING"   : {"next": "GAME_OVER"},
-            "GAME_OVER" : {"next": "READY", "duration": 2.5, "message": "GAME OVER"},
-        }
-
         def build(self):
             self.lbl_score = Title(self, "Score: 0")
 
-        def ip_setup_pane(self):
+        def ip_setup(self, ip):
             self.ship_x  = 0.5
             self.ship_y  = 0.5
             self.speed   = 0.4
             self.bullets = []
-            ip.state.configure(self.STATES)
+            ip.state.add("READY"    , self.state_ready)
+            ip.state.add("PLAYING"  , self.state_playing)
+            ip.state.add("GAME_OVER", None, "READY", 2.5)
+            ip.state.go("READY")
+
+        def state_ready(self):    pass
+        def state_playing(self):  pass
 
         def ip_think(self, ip):
             if ip.state.is_("PLAYING"):
@@ -875,7 +1040,7 @@ The same hooks work on a tabless form as on any `_BaseTab` pane:
     if __name__ == "__main__":
         show(Asteroids)
 
-Every hook — `ip_setup_pane`, `ip_think`, `ip_draw`, `ip_draw_hud` — works identically whether it lives on a `_BaseForm` or a `_BaseTab`. Move code between the two freely.
+Every hook — `ip_setup`, `ip_activated`, `ip_think`, `ip_draw`, `ip_draw_hud` — works identically whether it lives on a `_BaseForm` or a `_BaseTab`. Move code between the two freely.
 
 ---
 
@@ -954,6 +1119,17 @@ Each entry maps a widget name (`name=` parameter) → property → compute metho
 
 The pipeline also pushes values back to source widgets — if you call `pipeline_set("my_key", "")`, any TextBox with `pipeline_key="my_key"` updates its displayed text automatically.
 
+**Seeding initial values:** declare `PIPELINE_DEFAULTS` on your form to populate the pipeline at startup:
+
+```python
+class MyApp(_BaseForm):
+    PIPELINE_DEFAULTS = {
+        "training_active": False,
+        "epoch":           0,
+        "config_valid":    True,
+    }
+```
+
 ---
 
 ## Imperative Approach
@@ -965,7 +1141,7 @@ class MyPane(_BaseTab):
     def widgets(self, parent):
         self.lbl_count = Body(parent, "0 selected", name="lbl_count")
         self.btn_run   = Button(parent, "Run",
-                             color_bg = Style.COLOR_PAL_GREEN_DARK,
+                             color_bg = Style.COLOR_BUTTON_CTA,
                              on_click = self.on_run)
 
     def on_selection_changed(self, count):
@@ -1010,7 +1186,7 @@ IPUI catches mistakes when you make them, not when users hit them:
 | Override `__init__` in a pane             | `TypeError` at class definition            |
 | `justify_center` AND `justify_spread`     | `ValueError` at construction               |
 | `text_align='x'`                          | `ValueError` at construction               |
-| `widgets["typo"]`                        | `RuntimeError` listing valid names         |
+| `widgets["typo"]`                         | `RuntimeError` listing valid names         |
 | `on_click_me(non_callable)`               | `TypeError` at registration                |
 | `on_click_me(func_with_params)`           | `ValueError` at registration               |
 
@@ -1025,15 +1201,15 @@ All styling lives in `Style`. Import and use constants — don't hard-code color
 ```python
 from ipui import Style
 
-Button(parent, "Go", color_bg=Style.COLOR_PAL_GREEN_DARK)
+Button(parent, "Go", color_bg=Style.COLOR_BUTTON_CTA)
 Body(parent,   "Status", font=Style.FONT_BODY)
 ```
 
-**Color constants:** `COLOR_BACKGROUND`, `COLOR_CARD_BG`, `COLOR_PANEL_BG`, `COLOR_TEXT`, `COLOR_TEXT_SECONDARY`, `COLOR_TEXT_MUTED`, `COLOR_BUTTON_BG`, `COLOR_BORDER`, `COLOR_PAL_GREEN_DARK`, `COLOR_PAL_GREEN_SECOND`, `COLOR_PAL_RED_DARK`, `COLOR_PAL_ORANGE_FORGE`
+**Color constants:** `COLOR_BACKGROUND`, `COLOR_MODAL_BG`, `COLOR_PANEL_BG`, `COLOR_CARD_BG`, `COLOR_TEXT`, `COLOR_TEXT_SECONDARY`, `COLOR_TEXT_MUTED`, `COLOR_TEXT_ACCENT`, `COLOR_BORDER`, `COLOR_BORDER_SUBTLE`, `COLOR_BUTTON_BG`, `COLOR_BUTTON_CTA` (green), `COLOR_BUTTON_DANGER` (red), `COLOR_BUTTON_SECONDARY` (blue), `COLOR_BUTTON_ACCENT` (orange), `COLOR_BUTTON_WARNING`, `COLOR_CODE_BG`
 
 **Font constants:** `FONT_BANNER`, `FONT_TITLE`, `FONT_HEADING`, `FONT_BODY`, `FONT_DETAIL`, `FONT_MONO`
 
-**Tokens:** `TOKEN_PAD`, `TOKEN_GAP`, `TOKEN_BORDER`, `TOKEN_SCROLLBAR`
+**Tokens:** `TOKEN_PAD`, `TOKEN_PAD_TIGHT`, `TOKEN_GAP`, `TOKEN_GAP_TIGHT`, `TOKEN_BORDER`, `TOKEN_SCROLLBAR`, `TOKEN_CORNER_RADIUS`
 
 **Screen:** `SCREEN_WIDTH` (default 1900), `SCREEN_HEIGHT` (default 900), `FONT_SCALE` (default 0.369)
 
@@ -1045,12 +1221,13 @@ IPUI ships with built-in developer tools so you never have to guess what the lay
 
 **F12 — Professional Grade Debug Tools**
 
-Press F12 to open the IPUI X-Ray — a full debug overlay with:
+Press F12 to open the IPUI X-Ray. Tabs include:
 
-- **Widget Tree** — Live view of every widget, its flex settings, minimum sizes, and actual rects. Click any row to inspect all properties. Copy the full tree to clipboard for sharing.
+- **Tree** — Live view of every widget: flex settings, minimum sizes, actual rects. Click any row to inspect all properties. Copy the full tree to clipboard for sharing.
+- **Magic** — Live view of all reactive pipeline keys, values, and registered derives.
 - **Reference** — Searchable framework documentation with table of contents, built from the source code itself.
-- **Pipeline** — Live view of all reactive keys, their values, and registered derives.
-- **Layout** — Coming soon: flex budget visualization and constraint solver details.
+- **Layout** — Layout debugging surface (under active development).
+- **Overlay** — Diagnostic overlay controls.
 
 <!-- SCREENSHOT: ipui/assets/images/widget_tree_debug.png — F12 debug mode showing the live widget tree inspector -->
 
@@ -1081,70 +1258,76 @@ ipui.show(MyApp, "My Application")
 
 ### BaseForm Class Attributes
 
-| Attribute         | Type  | Description                                      |
-|-------------------|-------|--------------------------------------------------|
-| `TAB_LAYOUT`      | dict  | Tab name → list of pane method names             |
-| `tab_early_load`  | list  | Tab names to pre-build at startup                |
-| `tab_on_change`   | str   | Method name called on every tab switch           |
-| `tab_hidden`      | list  | Tab names initially hidden                       |
-| `tab_border`      | int   | Tab strip border override                        |
-| `pipeline_debug`  | bool  | Log all pipeline activity to console             |
+| Attribute            | Type   | Description                                         |
+|----------------------|--------|-----------------------------------------------------|
+| `TAB_LAYOUT`         | dict   | Tab name → list of pane method names                |
+| `PIPELINE_DEFAULTS`  | dict   | Initial pipeline keys/values seeded at form creation |
+| `tab_early_load`     | list   | Tab names to pre-build at startup                   |
+| `tab_on_change`      | str    | Name of method on this form to call before every tab switch. Signature: `method(name, current)`. Return `False` to veto the switch. |
+| `tab_hidden`         | list   | Tab names initially hidden                          |
+| `tab_border`         | int    | Tab strip border override                           |
+| `pipeline_debug`     | bool   | Log all pipeline activity to console                |
 
 ### BaseForm Methods
 
-| Method                               | Description                                |
-|--------------------------------------|--------------------------------------------|
-| `pipeline_set(key, value)`           | Write to pipeline; triggers derived updates|
-| `pipeline_read(key)`                 | Read current pipeline value                |
-| `switch_tab(name)`                   | Switch to named tab                        |
-| `set_pane(index, builder, *args)`    | Replace pane content at runtime            |
-| `refresh_pane(index)`                | Rebuild current pane from its existing builder |
-| `hide_tab(name)`                     | Hide a tab button                          |
-| `show_tab(name)`                     | Show a hidden tab button                   |
-| `get_tab(name)`                      | Return cached _BaseTab instance           |
-| `prepare(name)`                      | Force-load a tab's _BaseTab               |
-| `show_modal(msg, func, min_sec=0)`   | Show modal while running func              |
-| `ip_think(ip)`                       | Per-frame logic hook (override for app-wide state) |
-| `ip_draw(ip)`                   | Pre-render hook (override for backgrounds) |
-| `ip_draw_hud(ip)`                  | Post-render hook (override for overlays)   |
+| Method                                                          | Description                                |
+|-----------------------------------------------------------------|--------------------------------------------|
+| `pipeline_set(key, value)`                                      | Write to pipeline; triggers derived updates |
+| `pipeline_read(key)`                                            | Read current pipeline value                |
+| `switch_tab(name)`                                              | Switch to named tab                        |
+| `set_pane(index, builder, *args, tab_name=None, weight=None, **kwargs)` | Replace pane content at runtime |
+| `refresh_pane(index)`                                           | Rebuild current pane from its existing builder |
+| `hide_tab(name)`                                                | Hide a tab button                          |
+| `show_tab(name)`                                                | Show a hidden tab button                   |
+| `get_tab(name)`                                                 | Return cached _BaseTab instance            |
+| `prepare(name)`                                                 | Force-load a tab's _BaseTab                |
+| `show_modal(msg, min_seconds=2, work_func=None)`                | Show modal message; optionally run `work_func` while displayed for at least `min_seconds` |
+| `ip_think(ip)`                                                  | Per-frame logic hook (override for app-wide state) |
+| `ip_draw(ip)`                                                   | Pre-render hook (override for backgrounds) |
+| `ip_draw_hud(ip)`                                               | Post-render hook (override for overlays)   |
 
 ### _BaseWidget Constructor Parameters
 
 All widgets accept these parameters:
 
 | Parameter        | Type     | Default      | Description                                   |
-|-----------------|----------|--------------|-----------------------------------------------|
-| `parent`        | widget   | —            | Parent widget (auto-attaches on construction) |
-| `text`          | str      | None         | Display text                                  |
-| `name`          | str      | None         | Registers widget in `form.widgets`            |
-| `width_flex`    | int      | 0            | Flex weight horizontal (0 = natural size)     |
-| `height_flex`   | int      | 0            | Flex weight vertical (0 = natural size)       |
-| `pad`           | int      | TOKEN_PAD    | Internal padding                              |
-| `gap`           | int      | TOKEN_GAP    | Gap between children                          |
-| `border`        | int      | TOKEN_BORDER | Border thickness                              |
-| `justify_center`| bool     | False        | Center children in available space            |
-| `justify_spread`| bool     | False        | Spread children evenly                        |
-| `visible`       | bool     | True         | Show/hide widget                              |
-| `enabled`       | bool/str | True         | False or reason string to disable             |
-| `font`          | Font     | None         | Override font                                 |
-| `text_align`    | str      | LEFT         | LEFT, RIGHT, CENTER                           |
-| `color_bg`      | tuple    | None         | Background RGB tuple                          |
-| `glow`          | bool     | False        | Molten-orange glow effect                     |
-| `data`          | any      | None         | Arbitrary data payload                        |
-| `single_select` | bool     | False        | Enforce single selection (lists/dropdowns)    |
-| `placeholder`   | str      | None         | TextBox placeholder text                      |
-| `initial_value` | any      | None         | Starting value                                |
-| `on_submit`     | callable | None         | Submit callback                               |
-| `on_change`     | callable | None         | Change callback                               |
-| `on_click`      | callable | None         | Click callback                                |
-| `pipeline_key`  | str      | None         | Pipeline read/write key                       |
-| `tooltip_class` | class    | None         | Custom tooltip class                          |
-| `scrollable`    | bool     | False        | Enable scrolling for this container           |
-| `scroll_glow`   | float    | 0.369        | Scrollbar bevel intensity (0 = flat)          |
-| `start`         | str      | None         | CodeBox: start-of-range marker                |
-| `end`           | str      | None         | CodeBox: end-of-range marker                  |
-| `fit_content`   | bool     | False        | Size to content width instead of stretching |
-| `border_radius` | int      | None         | Rounded corner radius (pixels)             |
+|------------------|----------|--------------|-----------------------------------------------|
+| `parent`         | widget   | —            | Parent widget (auto-attaches on construction) |
+| `text`           | str      | None         | Display text                                  |
+| `name`           | str      | None         | Registers widget in `form.widgets`            |
+| `width_flex`     | int      | 0            | Flex weight horizontal (0 = natural size)     |
+| `height_flex`    | int      | 0            | Flex weight vertical (0 = natural size)       |
+| `pad`            | int      | TOKEN_PAD    | Internal padding                              |
+| `gap`            | int      | TOKEN_GAP    | Gap between children                          |
+| `border`         | int      | TOKEN_BORDER | Chrome border thickness                       |
+| `justify_center` | bool     | False        | Center children in available space            |
+| `justify_spread` | bool     | False        | Spread children evenly                        |
+| `visible`        | bool     | True         | Show/hide widget                              |
+| `enabled`        | bool/str | True         | False or reason string to disable             |
+| `font`           | Font     | None         | Override font                                 |
+| `text_align`     | str      | LEFT         | LEFT, RIGHT, CENTER                           |
+| `color_bg`       | tuple    | None         | Background RGB tuple                          |
+| `glow`           | bool     | False        | Molten-orange glow effect                     |
+| `data`           | any      | None         | Arbitrary data payload                        |
+| `single_select`  | bool     | False        | Enforce single selection (lists/dropdowns)    |
+| `placeholder`    | str      | None         | TextBox placeholder text                      |
+| `initial_value`  | any      | None         | Starting value                                |
+| `on_submit`      | callable | None         | Submit callback                               |
+| `on_change`      | callable | None         | Change callback                               |
+| `on_click`       | callable | None         | Click callback                                |
+| `on_double_click`| callable | None         | Double-click callback                         |
+| `wrap`           | bool     | False        | Allow text wrapping when width-constrained    |
+| `tab_order`      | int      | None         | Focus order for keyboard navigation           |
+| `early_load`     | bool     | None         | Pre-build at startup instead of on-demand     |
+| `pipeline_key`   | str      | None         | Pipeline read/write key                       |
+| `tooltip_class`  | class    | None         | Custom tooltip class                          |
+| `scrollable`     | bool     | False        | Enable scrolling for this container           |
+| `scroll_glow`    | float    | 0.369        | Scrollbar bevel intensity (0 = flat)          |
+| `start`          | str      | None         | CodeBox: start-of-range marker                |
+| `end`            | str      | None         | CodeBox: end-of-range marker                  |
+| `fit_content`    | bool     | False        | Size to content width instead of stretching   |
+| `border_radius`  | int      | None         | Rounded corner radius (pixels)                |
+
 ### _BaseWidget Methods
 
 | Method                    | Description                                       |
@@ -1154,6 +1337,7 @@ All widgets accept these parameters:
 | `set_enabled()`           | Re-enable widget                                  |
 | `clear_children()`        | Remove all child widgets                          |
 | `on_click_me(callback)`   | Register validated click handler (zero-arg)       |
+| `tap(func)`               | Run `func(self)` and return self — inline post-construction helper |
 | `display_name`            | Property: human-readable identity (name → text → type) |
 
 ### _BaseTab
@@ -1161,15 +1345,17 @@ All widgets accept these parameters:
 | Attribute             | Type   | Description                                  |
 |-----------------------|--------|----------------------------------------------|
 | `DECLARATION_UPDATES` | dict   | Reactive derive declarations (see below)     |
+| `THINK_ALWAYS`        | bool   | If True, `ip_think` fires even when this pane isn't visible |
 
 **Lifecycle hooks** (override on your pane):
 
-| Method               | Description                                            |
-|----------------------|--------------------------------------------------------|
-| `ip_setup_pane()`    | One-time setup (runs once when pane is first created)  |
-| `ip_think(ip)`       | Per-frame logic. State, physics, AI.                   |
-| `ip_draw(ip)`        | Draw before UI. Game worlds, backgrounds.              |
-| `ip_draw_hud(ip)`    | Draw after UI. Overlays, cursors, effects.             |
+| Method                | Description                                            |
+|-----------------------|--------------------------------------------------------|
+| `ip_setup(ip)`        | One-time setup (runs once when pane is first created)  |
+| `ip_activated(ip)`    | Each time the pane becomes visible                     |
+| `ip_think(ip)`        | Per-frame logic. State, physics, AI.                   |
+| `ip_draw(ip)`         | Draw before UI. Game worlds, backgrounds.              |
+| `ip_draw_hud(ip)`     | Draw after UI. Overlays, cursors, effects.             |
 
 **DECLARATION_UPDATES entry format:**
 ```python
@@ -1200,7 +1386,7 @@ All widgets accept these parameters:
 | `set_max_visible(n)`  | How many rows show when dropped down     |
 | `sync_from_pipeline()`| Sync from pipeline and update textbox    |
 
-### ChartWidget Methods
+### Chart Methods
 
 | Method                              | Description                           |
 |-------------------------------------|---------------------------------------|
@@ -1208,22 +1394,22 @@ All widgets accept these parameters:
 
 ### PowerGrid Methods
 
-| Method                              | Description                                 |
-|-------------------------------------|---------------------------------------------|
-| `set_data(rows, columns=None)`      | Set grid data (list of lists, dicts, or dict of lists) |
-| `set_data(path, query=sql)`         | Load from SQLite database with a query      |
-| `set_data(path, table=name)`        | Load an entire SQLite table                 |
-| `set_column_max(col_name, width)`   | Set max pixel width for a column            |
-| `set_page_size(n)`                  | Set rows per page (0 = no pagination)       |
-| `on_row_click(callback, key_col)`   | Register row click with key column          |
+| Method                                  | Description                                            |
+|-----------------------------------------|--------------------------------------------------------|
+| `set_data(data, columns=None)`          | Set grid data (list of lists, list of dicts, or dict of lists) |
+| `set_data(path, query="...")`           | Load from SQLite database with a query                 |
+| `set_data(path, table="...")`           | Load an entire SQLite table                            |
+| `set_column_max(col, max_width)`        | Cap a column's pixel width (accepts index or column name) |
+| `set_page_size(n)`                      | Set rows per page (0 = no pagination)                  |
+| `on_row_click(callback, column=None)`   | Register row click. `column=None` → dict of row, `"name"` → that value, `int` → that index |
 
 ---
 
 ## Dependencies
 
-- Python 3.9+
+- Python 3.10+
 - pygame-ce
-- matplotlib (for ChartWidget)
+- matplotlib (for Chart)
 
 ---
 
@@ -1266,7 +1452,7 @@ IPUI manages the pygame loop. Each frame executes in this order:
 ```
 1. Snapshot input state     ( ip.dt, ip.mouse_*, ip.key_*)
 2. Process pygame events    → UI consumes what it needs
-3. ip_think(ip)             → Form, then all panes 
+3. ip_think(ip)             → Form, then all panes
 4. Layout pass              → Measure, flex solve, assign rects
 5. Screen clear
 6. ip_draw(ip)              → Form, then active pane only
@@ -1277,7 +1463,70 @@ IPUI manages the pygame loop. Each frame executes in this order:
 
 <!-- SCREENSHOT: ipui/assets/images/widget_tree_debug.png — F12 debug mode showing the live widget tree inspector -->
 
+---
+
+## Appendix C: Tab Switch Lifecycle
+
+Two form-level features can run during a tab switch: `tab_on_change` (the **gate**) and `ip_activated` (the **welcome mat**). They have similar-sounding names but completely different jobs. This appendix lays out exactly what fires when, and why you'd reach for one over the other.
+
+### Workflow
+
+When the user clicks a tab — say, switching from `Home` to `Forge`:
+
+```
+User clicks tab "Forge"
+  │
+  ▼
+TabStrip.switch_tab("Forge")
+  │
+  ├─► allow_switch("Forge")               ◄── tab_on_change handler fires
+  │     │
+  │     └─► guard_tab_switch("Forge", "Home")
+  │           returns False  → ABORT switch (vetoed; tab strip stays on "Home")
+  │           returns True / None → continue
+  │
+  ├─► cache_active_content()              ◄── snapshot Home's widgets
+  ├─► self.active_tab = "Forge"
+  ├─► update_button_visuals()             ◄── tab strip highlight moves
+  ├─► ensure_content("Forge")             ◄── may run ip_setup() on first visit
+  │
+  └─► notify_activated("Forge")           ◄── Forge.ip_activated(ip) fires
+```
+
+If `tab_on_change` returns `False`, the workflow stops at the gate. Nothing else happens — no caching, no `ip_activated`, no visual change. If it returns anything else (or doesn't return at all), the switch proceeds and `ip_activated` fires on the destination tab at the end.
+
+### How They Differ
+
+| | `tab_on_change` | `ip_activated` |
+|---|---|---|
+| **Lives on** | `_BaseForm` (one handler for the whole form) | `_BaseTab` (per-tab) — also `_BaseForm` for tabless / form-level activation |
+| **Fires** | *Before* the switch happens | *After* the switch happens |
+| **Signature** | `handler(name, current)` — destination and current tab names (strings) | `ip_activated(self, ip)` — receives the service portal |
+| **Can veto?** | **Yes** — return `False` to block the switch | No — by the time it runs, the switch is done |
+| **Use case** | "Don't let user leave Home until they pick a project" | "I'm now visible — refresh data, restart animations, sync from pipeline" |
+
+### When to Reach for Which
+
+**Use `tab_on_change` when** you need to *prevent* a tab switch. Common cases:
+
+- The user has unsaved changes in the current tab.
+- A required prerequisite hasn't been met (no project loaded, no model selected, etc.).
+- A confirmation dialog needs to gate the switch.
+- App-wide policy: e.g. during training, don't allow leaving the training tab.
+
+**Use `ip_activated` when** the switch is fine to proceed and you just need to *react* to becoming visible:
+
+- Refresh data that may have changed while the tab was off-screen.
+- Restart an animation or particle effect.
+- Sync UI state from the pipeline (e.g. update a label to reflect the current project).
+- Reset positions, counters, or scroll offsets on each visit.
+
+**Both can coexist on the same form.** `tab_on_change` runs first; if it allows the switch, `ip_activated` runs on the destination tab afterwards. They aren't redundant — they're sequential checkpoints in the same lifecycle.
+
+### Form-Level Activation
+
+`ip_activated` also fires at the form level when `IPUI.show()` brings a form to the front (or `IPUI.back()` returns to a previous one). The framework sets up the service portal — `ip.form`, `ip.tab`, `ip.tab_name`, `ip.is_active_tab`, and the geometry rects — *before* calling the hook, so they're correct when your code runs. Per-frame fields (`ip.dt`, `ip.events`, `ip.surface`) reflect the last completed frame.
+
+---
+
 *IPUI — Because life's too short for layout bugs.*
-
-
-

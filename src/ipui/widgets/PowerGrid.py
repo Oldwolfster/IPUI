@@ -1,4 +1,4 @@
-# PowerGrid2.py — IPUI Framework Data Grid  NEW: Child-widget architecture
+# PowerGrid.py — IPUI Framework Data Grid  NEW: Child-widget architecture
 # Header, body, and scroller are proper widgets. Layout engine handles everything.
 # Scrolling is unified via _BaseWidget — no custom scroll code.
 
@@ -19,6 +19,7 @@ class GridHeader(_BaseWidget):
     def build(self):
         self.pad      = 0
         self.border   = 0
+
 
     def measure(self):
         if self.my_surface:
@@ -50,7 +51,7 @@ class PowerGrid(_BaseWidget):
     desc:        The sweetest grid in the Pygame ecosystem. Sticky header, internal scroll, sortable headers, zebra rows, three input formats, validated row clicks, pagination.
     when_to_use: Tabular data of any shape.
     best_for:    Batch lists, run results, leaderboards, any data that belongs in rows and columns.
-    example:     grid = PowerGrid2(parent, name="results"); grid.set_data(rows, columns=["A","B"])
+    example:     grid = PowerGrid(parent, name="results"); grid.set_data(rows, columns=["A","B"])
     api:         set_data(data, columns), on_row_click(callback, column), set_column_max(col, width), set_page_size(n)
 
     Accepts three input formats via set_data():
@@ -66,7 +67,7 @@ class PowerGrid(_BaseWidget):
         grid.on_row_click(my_handler, 0)           # handler receives value of column 0
 
     Child structure:
-        PowerGrid2
+        PowerGrid
         ├── GridHeader       (fixed height)
         ├── Col              (scrollable=True, height_flex=1)
         │   └── GridBody     (full content height — drives scroll)
@@ -81,7 +82,7 @@ class PowerGrid(_BaseWidget):
 
     def build(self):
         if self.height_flex == 0:
-            print("[PowerGrid2] Note: height_flex forced to 1 — PowerGrid2 scrolls internally.")
+            print("[PowerGrid] Note: height_flex forced to 1 — PowerGrid scrolls internally.")
         self.height_flex        = 1
         self.pad                = 0
         self.font               = self.font or Style.FONT_BODY
@@ -104,12 +105,18 @@ class PowerGrid(_BaseWidget):
         self.available_width    = 0
         self.row_click_callback = None
         self.row_click_column   = None
+        self.selected_row       = -1
         self.page_size          = 50
         self.on_click           = self.on_grid_click
+        self.on_double_click    = self.on_grid_double_click
         self.build_body()
         if self.data            : self.set_data(self.data)
+        self.row_dbl_click_callback = None                       # NEW
+        self.row_dbl_click_column   = None
+
 
     def build_body(self):
+        if self.children:    return
         self.grid_header     = GridHeader(self)
         self.grid_scroller   = Col(self, scrollable=True, height_flex=1)
         self.grid_body       = GridBody(self.grid_scroller)
@@ -161,6 +168,12 @@ class PowerGrid(_BaseWidget):
         self.row_click_callback = callback
         self.row_click_column   = column
 
+    def on_row_double_click(self, callback, column=None):
+        """Register a callback for row double-clicks. Same signature as on_row_click."""
+        RowClickValidator.validate_callback(callback)
+        self.row_dbl_click_callback = callback
+        self.row_dbl_click_column   = column
+
     # ══════════════════════════════════════════════════════════════
     # PAGINATION
     # ══════════════════════════════════════════════════════════════
@@ -192,6 +205,20 @@ class PowerGrid(_BaseWidget):
         start = rs.start_row() - 1
         end   = rs.end_row()
         return self.rows_sorted[start:end]
+
+    def handle_scroll_overflow(self, direction):
+        if not self.record_selector or not self.record_selector.visible:
+            return False
+        if direction > 0 and self.record_selector.current_page < self.record_selector.last_page():
+            self.record_selector.go_next()
+            self.grid_scroller.scroll_offset = 0
+            return True
+        if direction < 0 and self.record_selector.current_page > 1:
+            self.record_selector.go_prev()
+            self.grid_scroller.scroll_offset = self.grid_scroller.private_max_scroll
+            return True
+        return False
+
 
     # ══════════════════════════════════════════════════════════════
     # REBUILD — the single orchestrator
@@ -335,6 +362,22 @@ class PowerGrid(_BaseWidget):
     def resolve_bg(self):
         return self.color_bg
 
+    def draw_overlay(self, surface):
+        if not self.is_hovered:              return
+        if not self.grid_header.rect:        return
+        mx, my = pygame.mouse.get_pos()
+        hr = self.grid_header.rect
+        if not hr.collidepoint(mx, my):      return
+        local_x = mx - hr.left
+        for rect in self.header_col_rects:
+            if rect.collidepoint(local_x, my - hr.top):
+                screen_rect = pygame.Rect(hr.left + rect.x, hr.top, rect.width, rect.height)
+                screen_rect = screen_rect.clip(self.rect)
+                highlight   = pygame.Surface((screen_rect.width, screen_rect.height), pygame.SRCALPHA)
+                highlight.fill((255, 255, 255, 30))
+                surface.blit(highlight, screen_rect.topleft)
+                return
+
     # ══════════════════════════════════════════════════════════════
     # COMPOSITE — build surfaces, assign to child widgets
     # ══════════════════════════════════════════════════════════════
@@ -375,9 +418,12 @@ class PowerGrid(_BaseWidget):
         surf = pygame.Surface((total_w, total_h), pygame.SRCALPHA)
         y = 0
         for row_idx, row in enumerate(rows):
-            bg = self.color_row_odd if row_idx % 2 else self.color_row_even
-            if bg:
-                pygame.draw.rect(surf, bg, pygame.Rect(0, y, total_w, self.row_height))
+            if row_idx == self.selected_row:
+                pygame.draw.rect(surf, Style.COLOR_BEVEL_LIGHT, pygame.Rect(0, y, total_w, self.row_height))
+            else:
+                bg = self.color_row_odd if row_idx % 2 else self.color_row_even
+                if bg:
+                    pygame.draw.rect(surf, bg, pygame.Rect(0, y, total_w, self.row_height))
             self.render_one_row(surf, row, y)
             y += self.row_height
         return surf
@@ -403,15 +449,60 @@ class PowerGrid(_BaseWidget):
     # CLICK HANDLING
     # ══════════════════════════════════════════════════════════════
 
+
     def on_grid_click(self):
         """Click callback — MgrInput fires this. Does header/row hit testing."""
-        if not self.rect:
-            return
+        if not self.rect:                       return
         mx, my = pygame.mouse.get_pos()
-        if self.hit_test_header(mx, my):
-            return
-        if self.row_click_callback:
-            self.hit_test_row(mx, my)
+        if self.hit_test_header(mx, my):        return
+        row_idx = self.resolve_row_index(mx, my)
+        if row_idx is not None:
+            self.selected_row = row_idx
+            self.rebuild()
+        if not self.row_click_callback:         return
+        if row_idx is not None:
+            self.fire_row_callback(row_idx, self.row_click_callback, self.row_click_column)
+
+    def on_grid_double_click(self):
+        """Double-click callback — MgrInput fires this via on_double_click."""
+        if not self.rect:                       return
+        if not self.row_dbl_click_callback:     return
+        mx, my = pygame.mouse.get_pos()
+        row_idx = self.resolve_row_index(mx, my)
+        if row_idx is not None:
+            self.fire_row_callback(row_idx, self.row_dbl_click_callback, self.row_dbl_click_column)
+
+    def fire_row_callback(self, row_idx, callback, column):
+        """Fire a row callback with the appropriate value."""
+        rows = self.rows_page()
+        row  = rows[row_idx]
+        data = self.build_row_dict(row)
+        val  = self.extract_click_value_for(data, row, column)
+        callback(val)
+
+    def resolve_row_index(self, mx, my):
+        """Return row index under mouse, or None."""
+        sr = self.grid_scroller.rect
+        if not sr or not sr.collidepoint(mx, my):    return None
+        if self.row_height <= 0:                     return None
+        local_y = my - self.grid_body.rect.top
+        row_idx = int(local_y // self.row_height)
+        rows    = self.rows_page()
+        if row_idx < 0 or row_idx >= len(rows):      return None
+        return row_idx
+
+    def extract_click_value_for(self, data, row, col):
+        """Extract the value to pass to a row callback."""
+        if col is None:                             return data
+        if isinstance(col, int):
+            if col < 0 or col >= len(self.columns):
+                raise ValueError(f"Column index {col} out of range. Grid has {len(self.columns)} columns: {', '.join(str(c) for c in self.columns)}")
+            return row[col] if col < len(row) else None
+        if isinstance(col, str):
+            if col not in data:
+                raise ValueError(f'Column "{col}" not found. Available columns: {', '.join(str(c) for c in self.columns)}')
+            return data[col]
+        raise TypeError(f"column must be None, int, or str — got {type(col).__name__}")
 
     def hit_test_header(self, mx, my):
         hr = self.grid_header.rect

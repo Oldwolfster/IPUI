@@ -32,11 +32,14 @@ class Palette:
     ORANGE_GLOW             = (255, 150,  50)
 
     # Green — Action
-    GREEN_DARK              = (45, 120, 45)
+    #GREEN_DARK              = (45, 120, 45)
+    GREEN_DARK              = (55, 95, 60)
 
     # Red — Danger / Error
-    RED_DARK                = (140, 40, 40)
-    RED_PRIMARY             = (200, 60, 60)
+    #RED_DARK                = (140, 40, 40)
+    RED_DARK                = (125, 55, 55)
+    #RED_PRIMARY             = (200, 60, 60)
+    RED_PRIMARY             = (175, 75, 75)
 
     # Blue — Info
     BLUE_MUTED              = (70, 90, 130)

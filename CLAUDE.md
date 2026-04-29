@@ -29,7 +29,7 @@ IPUI is a structural engine for pygame UIs. The goal is to make Swift and Flutte
 - **`ip_` prefix:** Reserved for per-frame pane lifecycle hooks.
 - **`on_` prefix:** Reserved for event properties (things you assign callbacks to).
 - **`handle_` prefix:** For handler methods.
-- **`ip_setup_pane` / `ip_setup_pipeline`:** Setup lifecycle hooks.
+- **`ip_setup` / `ip_setup_pipeline`:** Setup lifecycle hooks.
 - **`private_` prefix:** For backing storage attributes (e.g., `private_enabled`). Never Guido's underscore.
 - **`public_` prefix:** Planned for public attrs. These prefixes enable future `public_attrs()`/`private_attrs()` helpers.
 - **SCREAMING_CASE:** For structural class-level declaration dicts (`TAB_LAYOUT`, `DECLARATION_UPDATES`, `PIPELINE_DEFAULTS`).
@@ -62,7 +62,7 @@ IPUI is a structural engine for pygame UIs. The goal is to make Swift and Flutte
 
 ## Runtime Details
 
-- **`IP()` timing:** Created before any form or pane in `_IPUI.__init__`, stored as `IPUI.ip` at class level, eliminating per-frame reassignment.
+- **`IP()` timing:** Created before any form or pane in `GameLoop.__init__`, stored as `IPUI.ip` at class level, eliminating per-frame reassignment.
 - **dt clamping:** `min(self.clock.tick(60) / 1000.0, 0.05)` prevents background OS processes from causing large physics time jumps.
 
 ## Issue Tracking
@@ -261,7 +261,7 @@ The ip Service Portal
 Every lifecycle hook receives ip — one object that provides everything a pane needs. Type ip. and autocomplete shows the full API.
 Families:
 
-Identity: ip.form, ip.pane, ip.pane_name, ip.is_active_pane
+Identity: ip.form, ip.pane, ip.pane_name, ip.is_active_tab
 Timing: ip.dt, ip.fps, ip.frame, ip.elapsed
 Geometry: ip.rect_pane, ip.rect_tab_area, ip.rect_screen
 Coordinate helpers: ip.to_screen(nx, ny), ip.to_local(sx, sy), ip.scale_x(n), ip.scale_y(n)

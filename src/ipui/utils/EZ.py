@@ -7,13 +7,13 @@ import pygame
 
 class EZ:
     # ANSI Color Codes
-    RED          = "\033[91m"
-    YELLOW       = "\033[93m"
-    BOLD         = "\033[1m"
-    RESET        = "\033[0m"
-
-    PREFIX_ERR   = " HOUSTON!!! WE HAVE A PROBLEM!!! "
-    PREFIX_WARN  = " HOUSTON!!! WE HAVE A WARNING!!! "
+    RED             = "\033[91m"
+    YELLOW          = "\033[93m"
+    BOLD            = "\033[1m"
+    RESET           = "\033[0m"
+    FRAMEWORK_ROOT  = os.path.normcase(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    PREFIX_ERR      = " HOUSTON!!! WE HAVE A PROBLEM!!! "
+    PREFIX_WARN     = " HOUSTON!!! WE HAVE A WARNING!!! "
 
     @staticmethod
     def format_message(*args):
@@ -50,24 +50,19 @@ class EZ:
     @staticmethod
     def _get_origin_info():
         """
-        Scans the stack to find the first caller NOT in the framework core.
+        Scans the stack to find the first caller NOT in the framework.
         """
         stack = inspect.stack()
-        # Define what we consider "Framework Plumbing"
-        plumbing_files = ("EZ.py", "_BaseWidget.py", "engine.py")
-
         for frame_info in stack:
-            filename = frame_info.filename
-            base_name = os.path.basename(filename)
-
-            # Skip this helper, EZ.err, and the internal framework logic
-            if base_name in plumbing_files or "inspect" in filename:
+            normalized = os.path.normcase(os.path.abspath(frame_info.filename))
+            if normalized.startswith(EZ.FRAMEWORK_ROOT):
                 continue
-
-            # This is the first 'External' file (e.g., Paradigm.py)
-            return f'File "{filename}", line {frame_info.lineno}"'
-
-        return "Unknown Location"
+            if "inspect" in frame_info.filename:
+                continue
+            return f'File "{frame_info.filename}", line {frame_info.lineno}"'
+        # Fallback: use immediate caller if everything is framework
+        caller = stack[2] if len(stack) > 2 else stack[-1]
+        return f'File "{caller.filename}", line {caller.lineno}"'
 
     @staticmethod
     def err(*args, exc_type: type[Exception] = ValueError, origin=None) -> None:

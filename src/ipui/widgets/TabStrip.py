@@ -1,4 +1,3 @@
-# TabStrip.py  Update: lazy pane discovery from string-based data dict
 from ipui.widgets.Row import Col
 from ipui.widgets.Spacer import Spacer
 import importlib.util
@@ -34,7 +33,10 @@ class TabStrip(_BaseWidget):
         self.width_flex  = 1
         self.height_flex = 1
         self.active_tab  = None
-        self.pane_cache  = {}
+        self.pad=0
+        self.border=-2
+        self.tab_cache  = {}
+        self.content_cache = {}
         self.tab_layout  = {}
         self.clean_tab_layout_once()
         self.build_tab_buttons()
@@ -67,7 +69,7 @@ class TabStrip(_BaseWidget):
     # ============================================================
     def build_tab_buttons(self):
         outer          = CardRow(self, pad=2)
-        self.tab_row   = CardRow(outer, width_flex=True)
+        self.tab_row   = CardRow(outer, width_flex=True,pad=2)
 
     def build_content_area(self):
         self.content = Row(self, width_flex=True, height_flex=True)
@@ -83,35 +85,78 @@ class TabStrip(_BaseWidget):
 
     def prepare(self, name):
         """Resolve, cache, and initialize a tab's _BaseTab on demand."""
-        if name not in self.pane_cache:  self.resolve_pane(name)
-        return self.pane_cache[name]
+        if name not in self.tab_cache:  self.resolve_tab(name)
+        return self.tab_cache[name]
 
     # ============================================================
-    # Switching
+    # Switching tabs
     # ============================================================
 
     def switch_tab(self, name):
-        if self.on_change:
-            if self.on_change(name, self.active_tab) is False:
-                return
+        #print(f"SWITCH_TAB called: {name}")
+        if not self.allow_switch(name):     return
+        if name != self.active_tab:
+            self.cache_active_content()
         self.active_tab = name
         self.update_button_visuals()
+        self.ensure_content(name)
+        self.notify_activated(name)
+
+    def allow_switch(self, name):
+        if not self.on_change:              return True
+        return self.on_change(name, self.active_tab) is not False
+
+    def ensure_setup(self, name):
+        tab = self.tab_cache.get(name)
+        if tab and not tab.private_setup_done:
+            tab.private_setup_done = True
+            tab.ip_setup(tab.ip)
+
+
+    def notify_activated(self, name):
+        tab = self.tab_cache.get(name)
+        if tab:
+            from ipui.engine.IPUI import IPUI
+            ip = IPUI.ip
+            ip.set_tab_context(tab, name, True, self.content)
+            tab.ip_activated(ip)
+
+    def ensure_content(self, name):
+        if name in self.content_cache:
+            self.restore_cached_content(name)
+            return
         entries = self.tab_layout[name]
         if self.needs_missing_page(name, entries):
             entries = self.missing_tab_entries(name)
         self.rebuild_tab_areas(entries)
+        self.ensure_setup(name)
         self.fill_panes(name, entries)
+
+    def cache_active_content(self):
+        if self.active_tab is None:    return
+        self.content_cache[self.active_tab] = (
+            list(self.content.children),
+            list(self.panes),
+        )
+        self.content.children.clear()
+
+    def restore_cached_content(self, name):
+        children, panes = self.content_cache[name]
+        self.content.children.clear()
+        self.content.children.extend(children)
+        self.panes = panes
 
     def needs_missing_page(self, name, entries):
         if self.form_has_builders(entries):     return False
-        if self.resolve_pane(name) is not None: return False
+        if self.resolve_tab(name) is not None: return False
         return any(
             isinstance(b, str) and "." not in b
             for b, w in entries if b is not None
         )
 
     def form_has_builders(self, entries):
-        for builder, weight in entries:
+        for entry in entries:    # entries are 2-tuples initially but set_pane() grows them to 4-tuples with (builder, weight, args, kwargs)
+            builder = entry[0]
             if builder is None:
                 continue
             if isinstance(builder, str) and "." not in builder:
@@ -128,7 +173,6 @@ class TabStrip(_BaseWidget):
             else:
                 MgrColor.apply_bevel(btn, "raised")
                 btn.show_glow = False
-
 
     def rebuild_tab_areas(self, pane_list):
 
@@ -152,8 +196,6 @@ class TabStrip(_BaseWidget):
                 pane = Pane(current_area.inner, width_flex=weight, height_flex=True)
                 self.panes[i] = pane
 
-
-
     def fill_panes(self, name, pane_list):
         for i, entry in enumerate(pane_list):
             builder = entry[0]
@@ -162,29 +204,6 @@ class TabStrip(_BaseWidget):
             if builder is not None:
                 self.invoke_builder(name, builder, self.panes[i], *args, **kwargs)
 
-    def rebuild_pane_content(self, name):
-        entries = self.parse_builders(self.tab_layout.get(name, []))
-        if self.resolve_pane(name) is None:
-            needs_local = any(
-                isinstance(e[0], str) and "." not in e[0]
-                for e in entries if e[0] is not None
-            )
-            if needs_local:
-                entries = self.parse_builders(self.missing_tab_entries(name))
-                self.ensure_pane_count(len(entries))
-
-        for i, pane in enumerate(self.panes):
-            pane.children.clear()
-            if i < len(entries):
-                builder, weight  = entries[i]
-                pane.visible     = True
-                pane.width_flex  = weight
-                if builder:
-                    self.invoke_builder(name, builder, pane)
-            else:
-                pane.visible = False
-        #self.form.pipeline.fire_all() #Initialize Reactive components
-
     def missing_tab_entries(self, tab_name):
         from ipui.engine.MissingTabUI import MissingTabUI
         self.form.pipeline_set("missing_tab_name", tab_name)
@@ -192,114 +211,113 @@ class TabStrip(_BaseWidget):
         self.form.pipeline_set("missing_tab_methods", methods)
         form_dir = Path(inspect.getfile(self.form.__class__)).parent  # NEW
         self.form.pipeline_set("missing_tab_path", str(form_dir / (tab_name.replace(" ", "") + ".py")))
-        self.pane_cache["__missing__"] = MissingTabUI(self.form)
-        return [("__missing__.pitch", 2), ("__missing__.choices",1)]
+        self.tab_cache["__missing__"] = MissingTabUI(self.form)
+        return [("__missing__.pitch", 1.5), ("__missing__.choices",1)]
 
     def ensure_pane_count(self, needed):
         while len(self.panes) < needed:
             pane = CardCol(self.content, width_flex=True, height_flex=True)
             self.panes.append(pane)
 
+    def invoke_builder(self,   tab_name, builder, pane, *args, **kwargs):
+        """clean dispatch checklist"""
+        if self.inv_delegate  (tab_name, builder, pane, *args, **kwargs): return
+        if self.inv_cross_tab (tab_name, builder, pane, *args, **kwargs): return
+        if self.inv_pane      (tab_name, builder, pane, *args, **kwargs): return
+        self.houston          (tab_name, builder)
 
+    def inv_delegate(self, tab_name, builder, pane, *args, **kwargs):
+        """invoke a callable (lambda or function)"""
+        if not callable(builder):    return False
+        builder(pane, *args, **kwargs)
+        return True
 
-    def invoke_builder(self, tab_name, builder, pane, *args, **kwargs):
-        """Call a builder: resolves strings lazily, passes callables through."""
-        if callable(builder):
-            builder(pane, *args, **kwargs)
-        elif isinstance(builder, str):
-            if "." in builder:
-                source_tab, method_name = builder.split(".", 1)
-                instance = self.prepare(source_tab)
-            else:
-                instance = self.resolve_pane_or_form(tab_name, builder)
-                method_name = builder.replace(" ", "_")                        # NEW
-                if instance and not hasattr(instance, method_name):            # NEW
-                    method_name = builder.replace(" ", "")
-            if instance is None:
-                self.build_missing_pane(tab_name, pane)
-            else:
-                if not hasattr(instance, method_name):
-                    import inspect
-                    mod      = inspect.getmodule(instance.__class__)
-                    file_path = getattr(mod, '__file__', None) or getattr(instance.__class__, '__module__', 'unknown file')
-                    full_path =  f'File "{Path(inspect.getfile(self.form.__class__)).parent / (tab_name + ".py")}", line 1'
-                    EZ.err(f"Method '{method_name}' not found in '{file_path}.py'. "
-                           f"Add def {method_name}(self, parent): to that file.", origin=full_path)
-                getattr(instance, method_name)(pane, *args, **kwargs)
-        else:
-            raise TypeError(f"Tab '{tab_name}': expected string or callable, got {type(builder)}")
+    def inv_cross_tab(self, tab_name, builder, pane, *args, **kwargs):
+        """invoke a dotted cross-tab pane reference"""
+        if not isinstance(builder, str):    return False
+        if "." not in builder:              return False
+        source_tab, method_name = builder.split(".", 1)
+        instance = self.prepare(source_tab)
+        self.validate_and_call(instance, method_name, tab_name, pane, *args, **kwargs)
+        return True
 
+    def inv_pane(self, tab_name, builder, pane, *args, **kwargs):
+        """invoke a pane builder from form or tab file"""
+        if not isinstance(builder, str):    return False
+        instance, method_name = self.resolve_builder(tab_name, builder)
+        self.validate_and_call(instance, method_name, tab_name, pane, *args, **kwargs)
+        return True
 
-    def resolve_pane_or_form(self, tab_name, builder):
+    def houston(self, tab_name, builder):
+        """nothing matched — bad builder type"""
+        EZ.err(f"Tab '{tab_name}': expected string or callable, got {type(builder).__name__}")
+
+    def resolve_builder(self, tab_name, builder):
+        """find instance and method name for a string builder"""
+        if "." in builder:
+            source_tab, method_name = builder.split(".", 1)
+            return self.prepare(source_tab), method_name
+        instance = self.resolve_tab_or_form(tab_name, builder)
+        method_name = builder.replace(" ", "_")
+        if instance and not hasattr(instance, method_name):
+            method_name = builder.replace(" ", "")
+        return instance, method_name
+
+    def validate_and_call(self, instance, method_name, tab_name, pane, *args, **kwargs):
+        """check method exists and is callable, then invoke"""
+        if not hasattr(instance, method_name):
+            self.err_method_not_found(instance, method_name, tab_name)
+        method = getattr(instance, method_name)
+        if not callable(method):
+            EZ.err(
+                f"'{method_name}' on {type(instance).__name__} is a {type(method).__name__}, not a method.\n"
+                f"TAB_LAYOUT pane name '{method_name}' collides with an attribute.\n"
+                f"FIX: Rename the pane method or the attribute.")
+        method(pane, *args, **kwargs)
+
+    def err_method_not_found(self, instance, method_name, tab_name):
+        """friendly error for missing pane builder"""
+        import inspect
+        mod = inspect.getmodule(instance.__class__)
+        file_path = getattr(mod, '__file__', None) or getattr(instance.__class__, '__module__', 'unknown file')
+        full_path = f'File "{Path(inspect.getfile(self.form.__class__)).parent / (tab_name + ".py")}", line 1'
+        EZ.err(f"Method '{method_name}' not found in '{file_path}.py'. "
+               f"Add def {method_name}(self, parent): to that file.", origin=full_path)
+
+    def resolve_tab_or_form(self, tab_name, builder):
         method_name = builder.replace(" ", "_")
         if hasattr(self.form, method_name):
-            self.pane_cache[tab_name] = self.form  # to support the 'one pager' version.
+            self.tab_cache[tab_name] = self.form  # to support the 'one pager' version.
             return self.form
-        return self.resolve_pane(tab_name)
+        return self.resolve_tab(tab_name)
 
     # ============================================================
-    # Mutation and visibility
+    # Lazy discovery of tabs/panes
     # ============================================================
-    def get_tab(self, name):
-        """Return the cached _BaseTab instance for a tab, or None."""
-        return self.pane_cache.get(name)
-
-    def hide_tab(self, name):
-        for btn in self.tab_row.children:
-            if btn.text == name:  btn.visible = False
-
-    def show_tab(self, name):
-        for btn in self.tab_row.children:
-            if btn.text == name:  btn.visible = True
-
-
-    def set_pane(self, index, builder, *args, tab_name=None, **kwargs):
-
-
-        tab_name                            = tab_name or self.active_tab
-        entry                               = self.tab_layout[tab_name][index]
-        weight                              = entry[1]
-        self.tab_layout[tab_name][index]    = (builder, weight, args, kwargs)
-        if tab_name == self.active_tab:
-            pane                            = self.panes[index]
-            if pane is None: return
-            pane.children.clear()
-            self.invoke_builder             ( tab_name, builder, pane, *args, **kwargs)
-            print(f"SET_PANE: pane.rect={pane.rect}, kids={len(pane.children)}")  # DEBUG
-            self.form.layout_engine.RunLayout()
-
-
-    def refresh_pane(self, index, tab_name=None):
-        tab_name = tab_name or self.active_tab
-        entry = self.tab_layout[tab_name][index]
-        builder = entry[0] if isinstance(entry, tuple) else entry
-        self.set_pane(index, builder, tab_name=tab_name)
-
-    # ============================================================
-    # Lazy discovery
-    # ============================================================
-    def resolve_pane(self, tab_name):
-        """Find, import, and cache a Pane instance for this tab."""
-        if tab_name in self.pane_cache:
-            return self.pane_cache[tab_name]
+    def resolve_tab(self, tab_name):
+        """Find, import, and cache a _BaseTab instance for this tab."""
+        #print(f"RESOLVE_TAB: cache check '{tab_name}', in cache = {tab_name in self.tab_cache}")
+        if tab_name in self.tab_cache:
+            return self.tab_cache[tab_name]
 
         form_file  = Path(inspect.getfile(self.form.__class__)).parent
-        #tab_lower  = tab_name.lower()
-        #found      = [f for f in form_file.rglob("*.py") if f.stem.lower() == tab_lower]
         tab_lower  = tab_name.replace(" ", "").lower()
-        found      = [f for f in form_file.rglob("*.py") if f.stem.replace("_", "").lower() == tab_lower]
+        found = [f for f in form_file.rglob("*.py")
+                 if f.stem.replace("_", "").replace(" ", "").lower() == tab_lower]
+        #print(f"RESOLVE_TAB: looking for '{tab_lower}', found = {found}")  # NEW
+
         if len(found) == 0:
             return None
             #raise ImportError(f"No file '{tab_name}.py' found under {form_file}")
         if len(found) > 1:
             raise ImportError(f"Multiple '{tab_name}.py' found: {[str(f) for f in found]}")
 
-        pane_class = self.load_pane_class(found[0], tab_name)
-        instance   = pane_class(self.form)
-        self.pane_cache[tab_name] = instance
+        tab_class = self.load_tab_class(found[0], tab_name)
+        instance   = tab_class(self.form)
+        self.tab_cache[tab_name] = instance
         return instance
 
-    def load_pane_class(self, file_path, tab_name):
+    def load_tab_class(self, file_path, tab_name):
         """Import a file and find the _BaseTab subclass inside."""
         spec   = importlib.util.spec_from_file_location(tab_name, file_path)
         module = importlib.util.module_from_spec(spec)
@@ -312,6 +330,51 @@ class TabStrip(_BaseWidget):
         raise ImportError(f"No _BaseTab subclass found in {file_path}")
 
     # ============================================================
+    # Mutation and visibility
+    # ============================================================
+    def get_tab(self, name):
+        """Return the cached _BaseTab instance for a tab, or None."""
+        return self.tab_cache.get(name)
+
+    def hide_tab(self, name):
+        for btn in self.tab_row.children:
+            if btn.text == name:  btn.visible = False
+
+    def show_tab(self, name):
+        for btn in self.tab_row.children:
+            if btn.text == name:  btn.visible = True
+
+    def set_pane(self, index, builder, *args, tab_name=None, weight=None, **kwargs):
+        tab_name                            = tab_name or self.active_tab
+        needs_rebuild                       = index >= len(self.tab_layout[tab_name])
+        self.grow_tab_layout(index, tab_name)
+        entry                               = self.tab_layout[tab_name][index]
+        weight                              = weight if weight is not None else entry[1]
+        self.tab_layout[tab_name][index]    = (builder, weight, args, kwargs)
+        if tab_name == self.active_tab:
+            if needs_rebuild:
+                entries                      = self.tab_layout[tab_name]
+                self.rebuild_tab_areas(entries)
+                self.fill_panes(tab_name, entries)
+            else:
+                pane                        = self.panes[index]
+                if pane is None: return
+                pane.children.clear()
+                self.invoke_builder         ( tab_name, builder, pane, *args, **kwargs)
+            # Removed 4/22 self.form.layout_engine.RunLayout()
+
+    def grow_tab_layout(self, index, tab_name):
+        entries = self.tab_layout[tab_name]
+        while len(entries) <= index:
+            entries.append((None, 1))
+
+    def refresh_pane(self, index, tab_name=None):
+        tab_name = tab_name or self.active_tab
+        entry = self.tab_layout[tab_name][index]
+        builder = entry[0] if isinstance(entry, tuple) else entry
+        self.set_pane(index, builder, tab_name=tab_name)
+
+    # ============================================================
     # Property
     # ============================================================
     @property
@@ -321,34 +384,3 @@ class TabStrip(_BaseWidget):
     @active_tab.setter
     def active_tab(self, value):
         self._active_tab = value
-
-    # ============================================================
-    #
-    # ============================================================
-    def build_missing_pane(self, tab_name, pane):
-
-
-        form_dir = Path(inspect.getfile(self.form.__class__)).parent
-        file_path = form_dir / (tab_name.replace(" ", "") + ".py")
-
-        Title(pane, f"Tab '{tab_name}' needs a file")
-        Body(pane,  f"Create:  {file_path}")
-        Body(pane,  "Perhaps intentional for the moment.")
-        btn = Button(pane, "Create Tab File", color_bg=Style.COLOR_PAL_GREEN_DARK)
-        btn.on_click = lambda: self.create_pane_file(tab_name, file_path)
-
-    def create_pane_file(self, tab_name, file_path):
-        code = (
-            f"from ipui.engine._BaseTab import _BaseTab\n"
-            f"from ipui.widgets.Row import CardCol\n"
-            f"from ipui.widgets.Text import Title, Heading\n\n\n"
-            f"class {(tab_name.replace(" ", ""))}(_BaseTab):\n\n"
-            f"    def welcome(self, parent):\n"
-            f"        card = CardCol(parent, width_flex=True, height_flex=True)\n"
-            f"        Title(card, 'Welcome to IPUI', glow=True)\n"
-            f"        sub = CardCol(card)\n"
-            f"        Heading(sub, 'Easy to get right:', glow=True)\n"
-            f"        Heading(sub, 'Hard to get wrong:', glow=True)\n"
-        )
-        file_path.write_text(code)
-        self.switch_tab(self.active_tab)
