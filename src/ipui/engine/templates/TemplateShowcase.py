@@ -5,7 +5,7 @@ from ipui.widgets.Label import Detail
 
 class TemplateShowcase(_BaseTab):
 
-    def ip_setup_pane(self):
+    def ip_setup(self, ip):
         self.catalog = WidgetCatalog()
 
     # ══════════════════════════════════════════════════════════════
@@ -50,13 +50,13 @@ class TemplateShowcase(_BaseTab):
         row              = Row(card)
         self.btn_helpful = Button(row, "Fix My Friend",
                              on_click  = self.handle_helpful,
-                             color_bg  = Style.COLOR_PAL_GREEN_DARK)
+                             color_bg  = Style.COLOR_BUTTON_CTA)
         self.btn_broken  = Button(row, "Thanks!",
                              on_click  = self.handle_broken,
                              enabled   = "Waiting for help...")
         self.btn_snooty  = Button(row, "I'm Fabulous",
                              on_click  = self.handle_snooty,
-                             color_bg  = Style.COLOR_PAL_BLUE_MUTED)
+                             color_bg  = Style.COLOR_BUTTON_SECONDARY)
         self.btn_snooty.set_radiate()
 
     def handle_helpful(self):
@@ -82,7 +82,7 @@ class TemplateShowcase(_BaseTab):
         TextBox(card,
             placeholder  = "Type here...",
             on_change    = self.on_textbox_changed,
-            width_flex   = False)
+            )
         self.lbl_textbox_echo = Body(card, "Go ahead, type something...")
 
     def on_textbox_changed(self, text):
@@ -99,9 +99,9 @@ class TemplateShowcase(_BaseTab):
         card = self.demo_card(parent, "Spacer", "Spacer")
         Body(card, "Spacer eats remaining space. These buttons are pushed apart:")
         row = Row(card)
-        Button(row, "Left",  color_bg=Style.COLOR_PAL_GREEN_DARK, width_flex=False)
+        Button(row, "Left",  color_bg=Style.COLOR_BUTTON_CTA, width_flex=False)
         Spacer(row)
-        Button(row, "Right", color_bg=Style.COLOR_PAL_GREEN_DARK, width_flex=False)
+        Button(row, "Right", color_bg=Style.COLOR_BUTTON_CTA, width_flex=False)
 
     # ──────────────────────────────────────────────────────────
     # Layout — Row, Col, Card variants
@@ -121,6 +121,7 @@ class TemplateShowcase(_BaseTab):
 
     def demo_selection_list(self, parent):
         card = self.demo_card(parent, "SelectionList", "SelectionList")
+        card.height_flex=1
         Body(card, "Click to select. Multi-select by default.")
         items = {"Alpha": {}, "Bravo": {}, "Charlie": {}, "Delta": {}}
         SelectionList(card, data=items,
@@ -235,7 +236,7 @@ class TemplateShowcase(_BaseTab):
         Spacer(parent)
         Heading(parent, "Source:", glow=True)
         scroller = Col(parent, height_flex=True, scrollable=True,
-                       color_bg=Style.COLOR_PAL_GRAY_950)
+                       color_bg=Style.COLOR_TAB_BG)
         CodeBox(scroller, data=entry.get("source", ""))
 
     def doc_field(self, parent, label, value):

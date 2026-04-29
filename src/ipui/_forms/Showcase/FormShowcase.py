@@ -1,0 +1,66 @@
+from ipui.forms.ParticleLife.Form_ParticleLife import Form_ParticleLife
+from ipui import *
+
+class FormShowcase(_BaseForm):
+
+    TAB_LAYOUT = {
+        "Welcome"       : ["left_pane"      ,"proud_features"  ,"detail"        ],
+        "a space"       :["pane1","pane2"],
+       #"a testu2": ["abc", "pane2"],
+        #"Building Template": ["text_and_layout", "interactive", "data_and_code", "kitchen_sink"],
+        "Tab System"    : ["explain"        ,"showcase"                         ],
+        "Widgets"       : ["catalog_grid"   ,"detail"           ,"code"         ],
+        "Wiring"        : ["reactive"       ,"imperative"                       ],
+        "Pygame"        : [("overview", 2)  , (None, 3)         , ("code", 2)   ],
+        "Breakout"      : ["greet"          , None              ,"code"         ],
+        "SQL"           : [("tables", .5)   ,("query", .7)      ,("results", 1) ],
+        "Paint"         : [("tools",.3)     , None                              ],
+        "Designer"      : [("tab_map",1)    ,("preview" ,3)     ,("toolbox", 1) ],
+
+    }
+    def build(self):
+        self.build_header()
+
+    def build_header(self):
+        header = Row(self)
+        left = Row(header, width_flex=1)  # NEW - left container
+        Banner(header, "IPUI", text_align='c', glow=True, width_flex=0,fit_content=True)
+        right = Row(header, width_flex=1)  # NEW - right container
+
+        # Left content
+        Button(left, "Documentation", color_bg=Style.COLOR_BUTTON_CTA, on_click=lambda: self.show_modal("Press F12 - then select 'Reference' tab"))
+
+        # Right content
+        Spacer(right) #pushes buttons to corner
+
+        btn = Button(right, "See It Live\n Particle Life", color_bg=Style.COLOR_TAB_BG)
+        btn.on_click = lambda: self.open_particle_life()
+        btn = Button(right, "The Classic\n Asteroids", color_bg=Style.COLOR_TAB_BG)
+        btn.on_click = lambda: self.open_asteroids()
+        btn = Button(right, "ML Tools\n Neuro Forge", color_bg=Style.COLOR_BUTTON_CTA)
+        btn.on_click = lambda: self.open_neuroforge()
+
+    def open_todo(self):
+
+        from ipui.forms.Todo.FormTodo import TodoApp
+        IPUI.show(TodoApp, "To Do")
+
+
+    def open_asteroids(self):
+
+        from ipui.forms.Asteroids.FormAsteroids import Asteroids
+        IPUI.show(Asteroids, "NeuroForge")
+
+    def open_neuroforge(self):
+
+        from ipui.forms.NeuroForge.FormNeuroForge import FormNeuroForge
+        IPUI.show(FormNeuroForge, "NeuroForge")
+
+
+    def open_particle_life(self):
+        IPUI.show(Form_ParticleLife, "IPUI - Easy to get right, hard to get wrong!")
+
+    def ip_setup(self, ip):
+        from pathlib import Path
+        atest = Path(__file__).parent / "atest.py"
+        if atest.exists(): atest.unlink()
