@@ -13,8 +13,8 @@ class TodoApp(_BaseForm):
 
         main_row = Row(self, width_flex=1, height_flex=1)
 
-        left = CardCol(main_row, width_flex=2, height_flex=True)
-        right = CardCol(main_row, width_flex=3, height_flex=True, scrollable=True)
+        left = CardCol(main_row, width_flex=2, height_flex=1)
+        right = CardCol(main_row, width_flex=3, height_flex=1, scrollable=True)
         self.task_list = right
 
         Title(left, "Add Task")
@@ -22,7 +22,7 @@ class TodoApp(_BaseForm):
             left,
             placeholder="What needs doing?",
             on_submit=self.add_task,
-            width_flex=True,
+            width_flex=1,
         )
 
         Row(left)
@@ -106,10 +106,10 @@ class TodoApp(_BaseForm):
             Body(self.task_list, "No tasks yet. Add one on the left.")
         else:
             for index, task in enumerate(self.tasks):
-                row = CardRow(self.task_list, width_flex=True)
+                row = CardRow(self.task_list, width_flex=1)
                 status = "Done" if task["done"] else "Todo"
                 prefix = "✓" if task["done"] else "•"
-                Body(row, f"{prefix} {task['text']}", width_flex=True)
+                Body(row, f"{prefix} {task['text']}", width_flex=1)
                 Detail(row, status)
                 Button(row, "Toggle", on_click=lambda i=index: self.toggle_task(i))
                 Button(row, "Delete", on_click=lambda i=index: self.delete_task(i))

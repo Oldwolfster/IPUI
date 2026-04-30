@@ -745,9 +745,9 @@ All text widgets support `glow=True` (molten-orange forge effect) and `text_alig
 |-----------|------------|-----------------|------------------------------------------|
 | `Row`     | Horizontal | None            | `Row(parent, justify_spread=True)`       |
 | `Col`     | Vertical   | None            | `Col(parent)`                            |
-| `CardRow` | Horizontal | Beveled, filled | `CardRow(parent, width_flex=True)`       |
+| `CardRow` | Horizontal | Beveled, filled | `CardRow(parent, width_flex=1)`       |
 | `CardCol` | Vertical   | Beveled, filled | `CardCol(parent, scrollable=True)`       |
-| `Card`    | Vertical   | Beveled, filled | `Card(parent, height_flex=True)`         |
+| `Card`    | Vertical   | Beveled, filled | `Card(parent, height_flex=1)`         |
 
 `Row`/`Col` are invisible structure. `CardRow`/`CardCol`/`Card` have a background and beveled edges.
 
@@ -818,7 +818,7 @@ Sorting works across pages — sort the full dataset, then paginate the sorted r
 
 **Chart**
 ```python
-chart = Chart(parent, width_flex=True, height_flex=True)
+chart = Chart(parent, width_flex=1, height_flex=1)
 chart.set_data(
     lines   = {"Train Loss": [(0, 0.9), (1, 0.7), (2, 0.5)],
                "Val Loss":   [(0, 0.95),(1, 0.75),(2, 0.6)]},
@@ -843,7 +843,7 @@ Unset (or `0`) means the widget takes its natural size. No explicit pixel math r
 
 **Scrollable containers:**
 ```python
-CardCol(parent, scrollable=True, height_flex=True)
+CardCol(parent, scrollable=True, height_flex=1)
 ```
 Scrollable containers clip and scroll their children automatically. Scrollbars support both mouse wheel and click-and-drag.
 

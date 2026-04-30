@@ -68,7 +68,7 @@ class GameLoop:
         if form: form.dispatch_ip_think(ip)
 
         # ── Layout ────────────────────────────────────────────
-        IPUI.update()
+        #IPUI.update()
 
         # ── RENDER PRE ────────────────────────────────────────
         GameLoop.screen.fill(Style.COLOR_BACKGROUND)

@@ -60,7 +60,7 @@ class PygameBall(_BaseTab):
         Title(card, "Speed", glow=True,text_align=CENTER)
         row = Row(card)
         Button(row, "Slower",               on_click=self.go_slower)
-        Body(row, "1.0x", name="lbl_speed", text_align='c', width_flex=True)
+        Body(row, "1.0x", name="lbl_speed", text_align='c', width_flex=1)
         Button(row, "Faster", on_click=self.go_faster)
 
         Body(parent,"")     #small spacer

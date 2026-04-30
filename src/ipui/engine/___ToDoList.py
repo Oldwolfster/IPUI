@@ -376,6 +376,8 @@ Clean up list
 318) Added token view to F12 Tree
 319) split TOKEN_PAD to TOKEN_PAD_X and Y
 320) with new token, revisted every friggen module
+321) API CHANGE elminated flex =True as a substitute for 1.
+322)
 
 ######################################################################
 4/28
@@ -385,19 +387,27 @@ Clean up list
 323) fixed bug where cursor did not have access to full text in textarea
 324) cleaned up a huge clusterfuck on the widget layout.
 325) Add docs to readme
-326)add F11/F12 to quickstart to
+326) add F11/F12 to quickstart to
+327) Screenshots for readme.
+328) new widget parameter scroll_h, make any widget scrollable.
+329) what about flex=true
+330) tab with _ not autoscaffolding proper at least barebones.  Nope middle failed 2
+ensure NotNP_HardHug does not have layout_node
 ######################################################################
 Pending for V0.1
 ######################################################################
 
 What is left to publish
-
-
+Rename  loss function  NoneDummy back to Linear
 smaller sample sqllite
 disable launch button.
-what about flex=true
-api text_align maybe better to say alignment
+
 in powergrid if you scroll down, the last one may remove scroller meaning you can scroll up
+
+Barebones scaffold scaffold if None for a pane.
+_BaseForm.update() is pass.IPUI.update() calls form.update().  The pygame loop calling IPUI.update()
+Investigate for removal: Label.compute_intrinsic()
+Investigate for removal: Label.measure_constrained(max_width)
 
 
 
@@ -407,6 +417,7 @@ in powergrid if you scroll down, the last one may remove scroller meaning you ca
 ##########################################################
 Punting until after IPUI is on PIP
 ##########################################################
+api text_align maybe better to say alignment
 301) defect in particle life rename while scrolled.
 42) modal choose your own adventure widget.
 43) APPENDIX A:  Lambda-Free Callbacks for _BaseWidget

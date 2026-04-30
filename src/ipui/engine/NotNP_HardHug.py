@@ -34,9 +34,6 @@ class NotNP_HardHug:
         #self.engine.RunLayout()
         self.hug_walk(self.trunk)
 
-    #def layout_node(self, node, rect):
-    #    self.engine.layout_node(node, rect)
-
     def hug_walk(self, node):
         if node is None: return
         for child in self.kids(node):

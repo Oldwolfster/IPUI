@@ -84,7 +84,7 @@ class MissingTabUI(_BaseTab):
         Spacer(card, height_flex=1)
 
     def make_option(self, parent, label, desc, snark, color, action=None):
-        row = CardRow(parent, width_flex=True)
+        row = CardRow(parent, width_flex=1)
         btn = Button(row, label, color_bg=color,pad=10,border=3,width_flex=3)
         if action:  # NEW
             btn.on_click = action  # NEW

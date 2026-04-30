@@ -9,7 +9,7 @@ class Card(_BaseWidget):
     desc:        Simple card wrapper. Background and bevel, nothing else.
     when_to_use: When you need a visual container but not a row or column.
     best_for:    Wrapping a single widget or custom drawing area.
-    example:     Card(parent, height_flex=True)
+    example:     Card(parent, height_flex=1)
     api:         (layout only — no custom methods)
     """
     def build(self):

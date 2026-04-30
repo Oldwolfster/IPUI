@@ -2,7 +2,7 @@
 from ipui import *
 import inspect
 
-from ipui.utils.MgrClipboard import Clipboard
+from ipui.utils.MgrClipboard import MgrClipboard
 
 
 class ShowcaseTemplate(_BaseTab):
@@ -13,7 +13,7 @@ class ShowcaseTemplate(_BaseTab):
         self.set_pane(2, self.cookbook_demo, weight=1.3)
 
     # PUT YOUR CONTENT HERE
-    def abc(self,parent):
+    def left_pane22(self,parent):
         # self.ensure_cookbook() #Remove this to access your other panes.
         Title   ( parent, "Your Pane", glow=True)
         Body    ( parent, "This is your first pane — the one you defined in TAB_LAYOUT.")
@@ -36,16 +36,16 @@ class ShowcaseTemplate(_BaseTab):
         file    = __file__
         c2=CardCol(parent)
         Detail ( c2, file)
-        Button(c2, "Copy full path", on_click=lambda: Clipboard.copy(file))
+        Button(c2, "Copy full path", on_click=lambda: MgrClipboard.copy(file))
         Spacer  ( r)
         Spacer  ( parent)
         Detail  ( parent, "When you're done exploring, delete the WidgetExplorer pane")
         Detail  ( parent, "from your _BaseTab file and build out the other panes.")
         Spacer  ( parent)
 
-    def method_2_IPUI_TAB_BUILDER(self, parent): pass
+    def proud_features(self, parent): pass
 
-    def method_3_IPUI_TAB_BUILDER(self, parent): pass
+    def detail(self, parent): pass
 
     def ensure_cookbook(self):
         print("in cookbook")

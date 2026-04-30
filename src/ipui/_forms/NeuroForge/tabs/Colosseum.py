@@ -39,13 +39,13 @@ class EZ_Pane(_BaseTab):
         TextBox(row, placeholder="Name Batch Here", name="txt_batch_name")
         TextBox(row, placeholder="Add Note Here",   name="txt_batch_note")
 
-        sub       = CardCol(parent, height_flex=True, scrollable=True)
+        sub       = CardCol(parent, height_flex=1, scrollable=True)
         core_rows = [["Core", "Run", "Epoch", "MAE", "Status"]]
         for i in range(NUM_CORES):
             core_rows.append([f"#{i+1}", "—", "—", "—", "idle"])
         PowerGrid(sub, data=core_rows, name="grid_cores")
 
-        Chart(parent, name="chart_live", height_flex=True)
+        Chart(parent, name="chart_live", height_flex=1)
 
     def runs(self, parent) -> None:
         """Middle pane — completed run results grid and detail chart."""
@@ -53,12 +53,12 @@ class EZ_Pane(_BaseTab):
         Title(header, "Run Results", glow=True)
         Body(header, "— | — | —", name="lbl_run_header")
 
-        table_card = CardCol(parent, height_flex=True)
+        table_card = CardCol(parent, height_flex=1)
         #PowerGrid(table_card, data=[["Waiting for results..."]], name="grid_runs")
         #table_card.on_click_me(self.on_runs_grid_clicked)
         grid = PowerGrid(table_card, data=[["Waiting for results..."]], name="grid_runs")  # NEW
         grid.on_row_click(self.show_run_detail, "Run")
-        Chart(parent, name="chart_detail", height_flex=True)
+        Chart(parent, name="chart_detail", height_flex=1)
 
     def analysis(self, parent) -> None:
         """Right pane — selected run detail comparison grid."""
@@ -69,7 +69,7 @@ class EZ_Pane(_BaseTab):
         btn_scope = Button(header, "NeuroScope", color_bg=Style.COLOR_BUTTON_CTA, name="btnDetailScope")
         btn_scope.on_click_me(self.launch_neuroscope)
 
-        sub = CardCol(parent, height_flex=True)
+        sub = CardCol(parent, height_flex=1)
         PowerGrid(sub, data=[["Select a run from results"]], name="grid_detail")
 
 

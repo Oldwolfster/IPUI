@@ -1,3 +1,5 @@
+# EZ.py  Update: add origin_file/origin_line params, format internally; legacy origin= string still accepted
+
 import inspect
 import os
 import time
@@ -11,9 +13,21 @@ class EZ:
     YELLOW          = "\033[93m"
     BOLD            = "\033[1m"
     RESET           = "\033[0m"
-    FRAMEWORK_ROOT  = os.path.normcase(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     PREFIX_ERR      = " HOUSTON!!! WE HAVE A PROBLEM!!! "
     PREFIX_WARN     = " HOUSTON!!! WE HAVE A WARNING!!! "
+
+    # IPUI_ROOT = the absolute path of the ipui package, derived from EZ.py's location.
+    # EZ.py lives at <IPUI_ROOT>/utils/EZ.py, so two dirname() calls walk us up to ipui/.
+    # Works for any install layout: editable (src/ipui), PyPI (site-packages/ipui), vendored, frozen.
+    # If EZ.py ever moves, update the dirname count below to match its new depth.
+    IPUI_ROOT       = os.path.normcase(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+    # Folders whose frames are noise — skip them and keep walking up to find the actual bug site.
+    SKIP_FOLDERS    = (
+        os.path.join(IPUI_ROOT, 'engine')  + os.sep,
+        os.path.join(IPUI_ROOT, 'widgets') + os.sep,
+        os.path.join(IPUI_ROOT, 'utils')   + os.sep,
+    )
 
     @staticmethod
     def format_message(*args):
@@ -32,7 +46,7 @@ class EZ:
         return lines[0] + "".join(f"\n    {l}" for l in lines[1:])
 
     @staticmethod
-    def _draw_box(msg, color, title, origin):
+    def draw_box(msg, color, title, origin):
         lines   = msg.split("\n")
         width   = max(len(l) for l in lines)
         width   = max(width, len(title)) + 4
@@ -44,69 +58,52 @@ class EZ:
         for l in lines:
             out += f"║  {l:<{width-2}}║\n"
         out += f"╚" + "═" * (width) + f"╝{EZ.RESET}\n"
-        out +=f"\n{origin}"
+        out += f"\n{origin}"
         return out
 
     @staticmethod
-    def _get_origin_info():
-        """
-        Scans the stack to find the first caller NOT in the framework.
-        """
-        stack = inspect.stack()
-        for frame_info in stack:
-            normalized = os.path.normcase(os.path.abspath(frame_info.filename))
-            if normalized.startswith(EZ.FRAMEWORK_ROOT):
-                continue
-            if "inspect" in frame_info.filename:
-                continue
-            return f'File "{frame_info.filename}", line {frame_info.lineno}"'
-        # Fallback: use immediate caller if everything is framework
-        caller = stack[2] if len(stack) > 2 else stack[-1]
-        return f'File "{caller.filename}", line {caller.lineno}"'
+    def format_origin(file_path, line):
+        """The single source of truth for the clickable-link format.
+        PyCharm matches: File "<path>", line N — exact spelling matters."""
+        return f'File "{file_path}", line {line}'
 
     @staticmethod
-    def err(*args, exc_type: type[Exception] = ValueError, origin=None) -> None:
+    def get_origin_info():
+        """Walk the stack and return the first frame outside our noise folders.
+        Premise: framework bugs are rare, user mistakes are constant.
+        We skip ipui/engine/, ipui/widgets/, and ipui/utils/ (where EZ lives)
+        and keep walking up until we land on the actual bug site."""
+        for frame_info in inspect.stack()[1:]:                          # [1:] skips this method
+            normalized = os.path.normcase(os.path.abspath(frame_info.filename))
+            if any(normalized.startswith(skip) for skip in EZ.SKIP_FOLDERS): continue
+            return EZ.format_origin(frame_info.filename, frame_info.lineno)
+        return EZ.format_origin('<unknown>', 0)
+
+    @staticmethod
+    def resolve_origin(origin, origin_file, origin_line):
+        """Origin precedence: explicit string > explicit file/line > stack walk."""
+        if origin is not None:                          return origin
+        if origin_file is not None:                     return EZ.format_origin(origin_file, origin_line)
+        return EZ.get_origin_info()
+
+    @staticmethod
+    def err(*args, exc_type: type[Exception] = ValueError,
+            origin=None, origin_file=None, origin_line=1) -> None:
         if args and isinstance(args[-1], type) and issubclass(args[-1], Exception):
             exc_type    = args[-1]
             args        = args[:-1]
 
-        origin          = origin or EZ._get_origin_info()
+        origin          = EZ.resolve_origin(origin, origin_file, origin_line)
         formatted       = EZ.format_message(*args)
 
-        # Inject the origin into the box so the developer knows exactly where to look
-        #title = f"{EZ.PREFIX_ERR}\n    LOCATED AT: {origin}"
-
-        box = EZ._draw_box(formatted, EZ.RED, EZ.PREFIX_ERR, origin)
+        box = EZ.draw_box(formatted, EZ.RED, EZ.PREFIX_ERR, origin)
         raise exc_type(box)
 
     @staticmethod
-    def warn(*args) -> None:
+    def warn(*args, origin=None, origin_file=None, origin_line=1) -> None:
         formatted = EZ.format_message(*args)
-        print(EZ._draw_box(formatted, EZ.YELLOW, EZ.PREFIX_WARN))
-
-
-    @staticmethod
-    def _halt_and_flare(screen):
-        """ The 0.5s 'Pre-Submit Review' flare. """
-        if not pygame.display.get_init():
-            return
-
-        # 1. Capture the current screen and dim it
-        overlay = pygame.Surface(screen.get_size())
-        overlay.set_alpha(180)
-        overlay.fill((20, 0, 0)) # Deep 'Emergency' Red
-
-        screen.blit(overlay, (0, 0))
-
-        # 2. Draw a simple high-impact warning
-        # (Using your internal font/draw logic)
-        EZ.draw_emergency_text(screen, "HOUSTON: CRITICAL FAILURE IMMINENT")
-
-        pygame.display.flip()
-
-        # 3. The 'Brace' period
-        time.sleep(0.5)
-
+        origin    = EZ.resolve_origin(origin, origin_file, origin_line)
+        print(EZ.draw_box(formatted, EZ.YELLOW, EZ.PREFIX_WARN, origin))
 
     @staticmethod
     def warn_scroll(widget):

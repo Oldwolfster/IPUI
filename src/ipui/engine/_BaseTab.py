@@ -22,7 +22,9 @@ class _BaseTab:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if '__init__' in cls.__dict__:
-            raise TypeError(f"{cls.__name__}: Don't override __init__, use ip_setup() instead")
+            EZ.err(f"{cls.__name__}: Don't override __init__, use ip_setup() instead\nThis removes the burden of you needing to feed parameters to the superclass.",
+                   locate="def __init__", locate_in=cls, exc_type=TypeError)
+
 
     def __init__(self, form):
         self.form               = form

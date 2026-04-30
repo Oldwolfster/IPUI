@@ -37,7 +37,7 @@ class CardRow(_BaseWidget):
     desc:        Horizontal card. Beveled, background-filled, feels like a tray.
     when_to_use: Horizontal grouping that needs visual presence.
     best_for:    Tab button rows, toolbar areas, side-by-side panels.
-    example:     CardRow(parent, width_flex=True)
+    example:     CardRow(parent, width_flex=1)
     api:         (layout only — no custom methods)
     """
     def build(self):
@@ -51,7 +51,7 @@ class CardCol(_BaseWidget):
     desc:        Vertical card. The most-used container in IPUI. Scrollable on demand.
     when_to_use: Almost everywhere. It's the default "put stuff here" container.
     best_for:    Pane content, settings groups, scrollable lists, form sections.
-    example:     CardCol(parent, height_flex=True, scrollable=True)
+    example:     CardCol(parent, height_flex=1, scrollable=True)
     api:         (layout only — no custom methods)
     """
     def build(self):

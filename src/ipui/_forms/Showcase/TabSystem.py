@@ -3,7 +3,6 @@ import inspect
 
 class TabSystemShowcase(_BaseTab):
     """The tab that sells tabs."""
-
     # ══════════════════════════════════════════════════════════════
     #  LEFT PANE — Explain and demo with a simple example
     # ══════════════════════════════════════════════════════════════
@@ -32,14 +31,12 @@ class TabSystemShowcase(_BaseTab):
         Heading(c2, "Each list item\nis a pane in that tab", text_align=CENTER)
         #Body(card, "No IMPORT REQUIRED!  No Circular Import Baloney!", text_align=CENTER)
 
-
-
     def explain_example(self, parent):
         card  = CardCol(parent)
         row   = Row(card)
         Icon  ( row, "fire")
         Heading(row, "Example: Pet Volcano", glow=True)
-        Spacer (row, width_flex=2)
+        Spacer (row, width_flex=1)
         Heading(row, "4 Tabs, Status, Record, Training, Care ")
         CodeBox(card, data=VOLCANO_EXAMPLE)
         #Body  ( card, "Because someone has to keep an eye on these things.")

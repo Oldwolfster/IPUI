@@ -97,11 +97,11 @@ class MgrSanity:
     # ROOT CAUSE #1: Flex child starved by a sibling
     # ══════════════════════════════════════════════════════════════
     # TRIGGER EXAMPLE (height):
-    #   card_a = CardCol(parent, height_flex=True)   # gets ~1% — starved
+    #   card_a = CardCol(parent, height_flex=1)   # gets ~1% — starved
     #   Title(card_a, "I disappear")
     #   card_b = Card(parent, height_flex=99)        # hogs the budget
     # TRIGGER EXAMPLE (width):
-    #   col_a = Col(row, width_flex=True)            # gets ~1% — starved
+    #   col_a = Col(row, width_flex=1)            # gets ~1% — starved
     #   Title(col_a, "I disappear")
     #   col_b = Col(row, width_flex=99)              # hogs the budget
     # FIX: Remove flex from the victim, or increase its weight.
@@ -309,7 +309,7 @@ class MgrSanity:
             f"A widget collapsed and cannot display its children.\n"
             f"\n"
             f"{cause_text}\n"
-            f"TIP: If you can't figure out which widget is the prob\n"
+            f"TIP: If you can't figure out which widget is the problem\n"
             f"TIP: Add name='anyname' to widgets in the area\n"
             f"TIP: That name will be listed in this error\n"
         )

@@ -16,7 +16,7 @@ class Chart(_BaseWidget):
     desc:        Live-updating line chart powered by matplotlib. Dirty-flag rendering keeps it fast.
     when_to_use: Loss curves, training progress, any time-series data.
     best_for:    Watching neural networks learn in real time.
-    example:     chart = Chart(parent, name="loss", height_flex=True)
+    example:     chart = Chart(parent, name="loss", height_flex=1)
     api:         set_data(lines, x_label, y_label)
     """
     def build(self):

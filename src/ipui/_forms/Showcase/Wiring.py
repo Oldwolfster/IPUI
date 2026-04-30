@@ -65,7 +65,7 @@ class YourChoice(_BaseTab):
                    end="IMPERATIVE — manual",)  ####################################
 
     def reactive_name_game(self, parent):
-        card            = CardCol (parent, width_flex    =True)
+        card            = CardCol (parent, width_flex    =1)
         row             = Row     (card  )
 
         TextBox(row,                            ################################################
@@ -136,7 +136,7 @@ class YourChoice(_BaseTab):
         self     . imperative_name_game(col)
 
     def imperative_name_game(self, parent):
-        card    = CardCol(parent, width_flex=True)
+        card    = CardCol(parent, width_flex=1)
         row     = Row    (card)
 
         # Storing direct references instead of relying on the registry

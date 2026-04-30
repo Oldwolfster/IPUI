@@ -24,23 +24,6 @@ class NotNP_HardWrap:
     """
     def __init__(self, trunk) -> None:
         self.trunk = trunk
-        #self.engine = NotNP_HardLayout(trunk)
-
-    def RunLayout(self) -> None:
-        """
-        Drop-in compatible with NotNP_HardLayout.RunLayout().
-        """
-        # Pass 1: establish rects using trusted engine
-        self.engine.RunLayout()
-
-        # Pass 2: post-pass wrap/scroll decisions (bottom-up)
-        changed = self.measure_after_wrap_and_scroll(self.trunk)
-
-        # Pass 3: let NotNP_HardLayout recompute mins/rects/scrollbars using new surfaces
-        if changed:
-            print("WTF HOW?")
-            self.engine.RunLayout()
-
 
     def RunLayout(self) -> bool:
         """
@@ -280,7 +263,3 @@ class NotNP_HardWrap:
             cursor -= 1
 
         return result_lines, result_starts
-
-    def layout_node(self, node, rect):
-        self.engine.measure_tree(node)
-        self.engine.layout_node(node, rect)

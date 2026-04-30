@@ -59,7 +59,7 @@ class EZ_Pane(_BaseTab):
         Body(card, "You wrote zero update code.")
 
         Spacer(parent)
-        card = CardCol(parent, width_flex=True)
+        card = CardCol(parent, width_flex=1)
         TextBox(card,
             placeholder  = "Type anything...",
             pipeline_key = "demo_key")

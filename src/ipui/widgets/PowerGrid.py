@@ -36,6 +36,7 @@ class GridBody(_BaseWidget):
         self.pad      = 0
         self.border   = 0
 
+
     def measure(self):
         if self.my_surface:
             return (self.my_surface.get_width(), self.my_surface.get_height())
@@ -111,17 +112,18 @@ class PowerGrid(_BaseWidget):
         self.on_double_click    = self.on_grid_double_click
         self.build_body()
         if self.data            : self.set_data(self.data)
-        self.row_dbl_click_callback = None                       # NEW
+        self.row_dbl_click_callback = None
         self.row_dbl_click_column   = None
 
 
     def build_body(self):
         if self.children:    return
         self.grid_header     = GridHeader(self)
-        self.grid_scroller   = Col(self, scrollable=True, height_flex=1)
+        self.grid_scroller   = Col(self, scrollable=True, height_flex=1,scroll_h=True)
         self.grid_body       = GridBody(self.grid_scroller)
         self.record_selector = RecordSelector(self, on_change=self.handle_page_change)
 
+        self.grid_scroller.scroll_h_link(self.grid_header)
     # ══════════════════════════════════════════════════════════════
     # PUBLIC API
     # ══════════════════════════════════════════════════════════════
@@ -330,6 +332,12 @@ class PowerGrid(_BaseWidget):
         if not self.columns or not rect:
             self.render_gap = self.gap
             return
+
+        #testing
+        if self.grid_scroller.scroll_h:  # NEW
+            self.render_gap = self.gap  # NEW
+            return
+
         content_w       = sum(self.col_widths)
         gap_count       = max(1, len(self.columns) - 1)
         available       = rect.width

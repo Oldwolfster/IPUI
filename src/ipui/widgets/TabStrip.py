@@ -69,17 +69,17 @@ class TabStrip(_BaseWidget):
     # ============================================================
     def build_tab_buttons(self):
         outer          = CardRow(self, pad=2)
-        self.tab_row   = CardRow(outer, width_flex=True,pad=2)
+        self.tab_row   = CardRow(outer, width_flex=1,pad=2)
 
     def build_content_area(self):
-        self.content = Row(self, width_flex=True, height_flex=True)
+        self.content = Row(self, width_flex=1, height_flex=1)
         self.panes   = []
         self.rebuild_tab_buttons()
 
     def rebuild_tab_buttons(self):
         self.tab_row.children.clear()
         for tab_name in self.data:
-            btn          = Button(self.tab_row, tab_name, color_bg=Style.COLOR_TAB_BG, width_flex=True,border_radius=0)
+            btn          = Button(self.tab_row, tab_name, color_bg=Style.COLOR_TAB_BG, width_flex=1,border_radius=0)
             btn.on_click = lambda name=tab_name: self.switch_tab(name)
 
 
@@ -184,16 +184,16 @@ class TabStrip(_BaseWidget):
         for i, entry in enumerate(pane_list):
             builder, weight = entry[0], entry[1]
             if builder is None:
-                #Col(self.content, width_flex=weight, height_flex=True)
+                #Col(self.content, width_flex=weight, height_flex=1)
                 current_area = None
-                pane = Pane(self.content, width_flex=weight, height_flex=True)
+                pane = Pane(self.content, width_flex=weight, height_flex=1)
                 pane.color_bg  = None
                 pane.border_top = None
                 self.panes[i]  = pane
             else:
-                if current_area is None:  current_area = TabArea(self.content, width_flex=0, height_flex=True)
+                if current_area is None:  current_area = TabArea(self.content, width_flex=0, height_flex=1)
                 current_area.width_flex += weight
-                pane = Pane(current_area.inner, width_flex=weight, height_flex=True)
+                pane = Pane(current_area.inner, width_flex=weight, height_flex=1)
                 self.panes[i] = pane
 
     def fill_panes(self, name, pane_list):
@@ -216,7 +216,7 @@ class TabStrip(_BaseWidget):
 
     def ensure_pane_count(self, needed):
         while len(self.panes) < needed:
-            pane = CardCol(self.content, width_flex=True, height_flex=True)
+            pane = CardCol(self.content, width_flex=1, height_flex=1)
             self.panes.append(pane)
 
     def invoke_builder(self,   tab_name, builder, pane, *args, **kwargs):
@@ -301,7 +301,7 @@ class TabStrip(_BaseWidget):
             return self.tab_cache[tab_name]
 
         form_file  = Path(inspect.getfile(self.form.__class__)).parent
-        tab_lower  = tab_name.replace(" ", "").lower()
+        tab_lower  = tab_name.replace(" ", "").replace("_", "").lower()
         found = [f for f in form_file.rglob("*.py")
                  if f.stem.replace("_", "").replace(" ", "").lower() == tab_lower]
         #print(f"RESOLVE_TAB: looking for '{tab_lower}', found = {found}")  # NEW

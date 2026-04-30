@@ -39,7 +39,7 @@ class ParticleLife(_BaseTab):
     def particle_life(self, parent):
         root = Card(parent, height_flex=1)
 
-        buttons = CardRow(root, width_flex=True, justify_spread=True)
+        buttons = CardRow(root, width_flex=1, justify_spread=True)
 
         #buttons = CardCol(header)
         Button(buttons, "Respawn", color_bg=Style.COLOR_BUTTON_CTA, on_click=self._respawn_from_config)
@@ -52,13 +52,13 @@ class ParticleLife(_BaseTab):
 
         saves_card = Card(root, scrollable=True)
 
-        header = CardRow(saves_card, width_flex=True, justify_spread=True)
+        header = CardRow(saves_card, width_flex=1, justify_spread=True)
         Heading(header, "Saves")
         Button(header, "Save", color_bg=Style.COLOR_BUTTON_CTA, on_click=self._save_and_refresh)
 
         for save_path in self._list_saves():
-            row = CardRow(saves_card, width_flex=True, justify_spread=True)
-            txt = TextBox(row, initial_value=save_path.stem, width_flex=True)
+            row = CardRow(saves_card, width_flex=1, justify_spread=True)
+            txt = TextBox(row, initial_value=save_path.stem, width_flex=1)
             txt.private_path = save_path
             txt.on_submit = lambda new_name, t=txt: self._rename_save(t, new_name)
             #Button(row, "Load",   color_bg=Style.COLOR_BUTTON_CTA, on_click=lambda p=save_path: self._load_save(p))

@@ -52,16 +52,16 @@ class We_HopeYouLoveIPUI(_BaseTab):
         self.form.set_pane(2, feature["detail"])
 
     def feature_card(self, parent, number, feature):
-        whole_card = Plate(parent,  color_bg=Style.COLOR_PANEL_BG , on_click=lambda f=feature: self.need_delegate_from_json(f))
-        title_row = CardRow(whole_card)
-        Icon(title_row, feature["icon"])
-        Heading(title_row, feature["title"],glow=True)
-        Heading(title_row, f"{number}", text_align=RIGHT)
-        summary_card = Card(whole_card)
-        Body(summary_card, feature["summary"])
-        joke_card = Card(whole_card)
-        Body(joke_card, feature["joke"])
-        Heading(whole_card, feature["tag"])
+        whole_card   = Plate(parent ,color_bg=Style.COLOR_PANEL_BG , on_click=lambda f=feature: self.need_delegate_from_json(f))
+        title_row    = CardRow      (whole_card)
+        Icon         ( title_row    ,feature["icon"])
+        Heading      ( title_row    ,feature["title"],glow=True)
+        Heading      ( title_row    ,text=f"{number}", text_align=RIGHT)
+        summary_card = Card         (whole_card)
+        Body         ( summary_card ,feature["summary"])
+        joke_card    = Card         (whole_card)
+        Body         ( joke_card,   feature["joke"])
+        Heading      ( whole_card,  feature["tag"])
 
     def detail_debug_tools(self, parent):
         Title(parent, "Pro Level Debug Tools", glow=True)

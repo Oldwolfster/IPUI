@@ -10,6 +10,7 @@ import pygame
 #from ipui.engine.LayoutEngine import LayoutEngine
 from ipui.Style import Style
 from ipui.engine.MgrColor import MgrColor
+from ipui.engine.MixinScrollH import MixinScrollH
 from ipui.utils.EZ import EZ
 
 
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
     from ipui.engine._BaseForm import _BaseForm
 
 
-class _BaseWidget:
+class _BaseWidget(MixinScrollH):
     """Base class for all IPUI widgets.
 
     Provides the complete widget lifecycle: measure → layout → draw,
@@ -63,21 +64,23 @@ class _BaseWidget:
     # ==============================================================
     _next_id = 0 # For global widget resgistry
     private_next_tab_order=1
+
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if '__init__' in cls.__dict__ and cls.__name__ != '_BaseForm':
-            EZ.err(f"{cls.__name__}: Don't override __init__, use build() instead",exc_type=TypeError)
+            EZ.err(f"{cls.__name__}: Don't override __init__, use build() instead\nThis removes the burden of you needing to feed parameters to the superclass.",
+                   locate="def __init__", locate_in=cls, exc_type=TypeError)
 
 
     def __init__(self, parent=None, text=None, name=None,
-                 width_flex=0, height_flex=0,
+                 width_flex=0, height_flex=0, scroll_h=False,
                  pad=None, pad_x=None, pad_y=None, gap=None,  border=None,justify_center=False, justify_spread=False, visible = True,
                  enabled=True, start= None, end = None, font=None, fit_content=False, border_radius=None,hug_parent=False,
                  text_align=None, wrap=False, color_bg=None, glow=False, data=None, single_select=False,
                  placeholder=None, initial_value=None, on_submit=None, on_change=None, on_click=None, tab_order=None, on_double_click=None,
                  pipeline_key=None, tooltip_class=None, scrollable=False, scroll_glow=.369, early_load =None):
 
-        self.preflight_check(parent, text_align)
+        self.preflight_check(parent, text_align, width_flex, height_flex)
 
         # Identity
         self.name               = name
@@ -138,7 +141,6 @@ class _BaseWidget:
         self.scroll_active      = False
         self.scroll_glow        = scroll_glow
         self.scroll_top_inset       = 0
-        self.private_handle_rect    = None # drag_hit_testing
         self.private_handle_rect    = None             #  handle rect for drag hit-testing
         self.private_track_top      = 0                #  top of scrollbar track
         self.private_track_h        = 0                #  height of scrollbar track
@@ -193,10 +195,9 @@ class _BaseWidget:
         if pad_y  is not None: self.pad_y  = pad_y
         if gap    is not None: self.gap    = gap
         if border is not None: self.border = border
-        #self.pad                = pad    if pad    is not None else Style.TOKEN_PAD
-        #self.gap                = gap    if gap    is not None else Style.TOKEN_GAP
-        #self.border             = border if border is not None else Style.TOKEN_BORDER
 
+        #if scroll_h is not None: self.scroll_h = scroll_h
+        self.init_scroll(scroll_h=scroll_h)
 
         if self.text_align is None: self.text_align = 'l'
         self.text_align = self.text_align.lower()
@@ -213,12 +214,30 @@ class _BaseWidget:
 
 # _BaseWidget.py  Update: preflight_check now calls validate_text_align; new validator added; line 214 block killed
 
-    def preflight_check(self, parent, text_align):
+    def preflight_check(self, parent, text_align, width_flex, height_flex):
         """All construction-time input checks live here.
         Runs as the first line of __init__ — before the framework
         touches any of these inputs. Add new validators below."""
         self.validate_parent(parent)
         self.validate_text_align(text_align)
+        self.validate_flex('width_flex', width_flex)
+        self.validate_flex('height_flex', height_flex)
+
+    def validate_flex(self, name, value):
+        """flex must be a number (int or float). Catches the True/False muscle-memory bug."""
+        if isinstance(value, bool):                    self.err_flex_bad(name, value)
+        if not isinstance(value, (int, float)):        self.err_flex_bad(name, value)
+
+    def err_flex_bad(self, name, value):
+        EZ.err(
+            f"{type(self).__name__}() got {name}={value!r} — not a valid flex value.\n"
+            f"\n"
+            f"{name} needs a number: 0 means 'size to content', any positive\n"
+            f"number is a flex slot (1, 2, 0.5, etc.). Bigger numbers grab more space.\n"
+            f"\n"
+            f"You wrote:     {type(self).__name__}(parent, ..., {name}={value!r})\n"
+            f"Did you mean:  {type(self).__name__}(parent, ..., {name}=1)"
+        )
 
     def validate_text_align(self, text_align):
         """text_align must be None or one of l/c/r (case-insensitive)."""
@@ -403,18 +422,23 @@ class _BaseWidget:
             surface.blit(self.my_surface, self.compute_content_position())
         self.draw_children(surface)
         if self.scroll_active: self.draw_scrollbar(surface)
+        self.draw_scroll_h_bar(surface)
 
     def draw_children(self, surface):
         """Draw visible children, clipped to content area."""
         if not self.visible_children: return
         old_clip = surface.get_clip()
         clip = self.rect.inflate(-self.frame_x, -self.frame_y)
-        if self.scroll_active:
-            clip.width -= Style.TOKEN_SCROLLBAR
+        if self.scroll_active:   clip.width -= Style.TOKEN_SCROLLBAR
+        #clip = self.shrink_clip_h(clip)  # NEW
+        self.translate_children_h()  # NEW
         clip = old_clip.clip(clip)
         surface.set_clip(clip)
         for child in self.visible_children: child.draw(surface)
+        self.restore_children_h()  # NEW
         surface.set_clip(old_clip)
+
+
 
     def draw_chrome(self, surface: pygame.Surface, r: pygame.Rect, color_bg: Optional[tuple]) -> None:
         """Draw background fill and bevel borders. Inverts bevel on press."""

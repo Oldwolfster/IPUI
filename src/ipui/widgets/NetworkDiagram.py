@@ -16,7 +16,7 @@ class NetworkDiagram(_BaseWidget):
     desc:        Custom widget.  Interactive neural network visualization. Click layers to inspect them.
     when_to_use: Showing network architecture visually.
     best_for:    The Workbench tab. Lets users see and select layers.
-    example:     diagram = NetworkDiagram(parent, width_flex=True, height_flex=True)
+    example:     diagram = NetworkDiagram(parent, width_flex=1, height_flex=1)
     api:         set_layers(layers), set_selected(index), on_layer_selected
     """
     MAX_DISPLAY    = 8

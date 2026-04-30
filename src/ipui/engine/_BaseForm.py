@@ -45,7 +45,8 @@ class _BaseForm(_BaseWidget):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if '__init__' in cls.__dict__ and not cls.__dict__.get('private_allow_init', False):
-            raise TypeError(f"{cls.__name__}: Don't override __init__, use build() instead")
+            EZ.err(f"{cls.__name__}: Don't override __init__, use build() instead\nThis removes the burden of you needing to feed parameters to the superclass.",
+               locate="def __init__", locate_in=cls, exc_type=TypeError)
 
     def __init__(self, title=None):
         self.title          = title
@@ -62,7 +63,7 @@ class _BaseForm(_BaseWidget):
         super().__init__    ( parent=None)
         self                . setup()
         self                . build_footer()
-        self.layout_engine = NotNP_HardWrap(self)
+        # commented 4/30 cjf self.layout_engine  = NotNP_HardWrap(self)
 
 
     def seed_pipeline_defaults(self):
@@ -71,34 +72,6 @@ class _BaseForm(_BaseWidget):
             return
         for key, value in defaults.items():
             self.pipeline.set(key, value)
-
-    def sane_layout(self):
-        if 1==1 or self.dirty :
-            # FUCK THIS self.layout_engine.RunLayout()
-            # FUCK THIS TOO self.layout_engine = NotNP_HardHug(self)
-            # NO RunLayout in the passes
-            # pass 1 NotNP_HardLayout
-            # pass 2 NotNP_HardWrap (does this do more than wrap text?  If not, how can it it change layout?)
-            # pass 3 NotNP_HardHug
-            #the only fucking sane line.
-            MgrSanity.check_tree(self)
-            self.dirty = False
-
-    def render(self, surface):
-        #self.sane_layout()
-        if 1==1 or self.dirty :
-            self.layout_engine.RunLayout()
-            self.layout_engine = NotNP_HardHug(self)
-            MgrSanity.check_tree(self)
-            self.dirty = False
-        self.draw(surface)
-        self.draw_overlays(surface)
-        self.draw_tooltips(surface)
-        if getattr(self, 'show_diagnostics', False):   self.draw_diagnostics(surface)
-        self.draw_pulse(surface)
-
-
-
 
     def render(self, surface):
         self.sane_layout()

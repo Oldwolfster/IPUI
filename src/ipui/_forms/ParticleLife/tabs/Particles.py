@@ -102,7 +102,7 @@ class Particles(_BaseTab):
     def particles(self, parent):
         root = Card(parent, scrollable=True)
         self.field_cards = {}
-        header = CardRow(root, width_flex=True, justify_spread=True)
+        header = CardRow(root, width_flex=1, justify_spread=True)
         Heading(header, "Particles", glow=True)
         Button(header, "Add",
                color_bg=Style.COLOR_BUTTON_CTA,
@@ -118,14 +118,14 @@ class Particles(_BaseTab):
 
 
 
-        top = CardRow(row, width_flex=True, justify_spread=True)
+        top = CardRow(row, width_flex=1, justify_spread=True)
         Heading(top, f"Type {pid}")
 
         Button(top, "Delete",
                color_bg=Style.COLOR_BUTTON_DANGER,
                on_click=lambda pid=pid: self._delete_particle(pid))
 
-        fields = CardRow(row, width_flex=True)
+        fields = CardRow(row, width_flex=1)
         self.field_cards[pid] = fields
 
         TextBox(fields, placeholder="Name",
@@ -244,7 +244,7 @@ class Particles(_BaseTab):
         root = CardCol(parent, scrollable=True)
 
         # Header + buttons
-        header = CardRow(root, width_flex=True, justify_spread=True)
+        header = CardRow(root, width_flex=1, justify_spread=True)
         Heading(header, "Interaction Matrix", glow=True)
 
         btns = CardRow(header)
@@ -263,14 +263,14 @@ class Particles(_BaseTab):
         grid = Card(root)
 
         # Column headers
-        top = CardRow(grid, width_flex=True)
+        top = CardRow(grid, width_flex=1)
         Body(top, "")  # top-left corner spacer (row labels column)
         for col_id in ids:
             Body(top, col_id)
 
         # Rows
         for row_id in ids:
-            r = CardRow(grid, width_flex=True)
+            r = CardRow(grid, width_flex=1)
 
             # Row label
             Body(r, row_id)

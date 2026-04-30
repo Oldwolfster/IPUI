@@ -77,7 +77,7 @@ class Tree(_BaseTab):
         Button(header, "Copy", color_bg=Style.COLOR_BUTTON_CTA,
         on_click=self.copy_tree)
         #on_click=lambda: self.form.show_modal("Coming Soon!", min_seconds=1.69))
-        PowerGrid(parent, name="dbg_tree_grid", height_flex=True)
+        PowerGrid(parent, name="dbg_tree_grid", height_flex=1)
         #Body(parent, "Click row to inspect", name="dbg_tree_hint")
         self.refresh()
 
@@ -126,7 +126,7 @@ class Tree(_BaseTab):
         btn = Button(header, "Copy", color_bg=Style.COLOR_BUTTON_CTA)
         btn.on_click_me(self.copy_detail)
         #btn.on_click = lambda: self.form.show_modal("Coming Soon!",  min_seconds=1.69)
-        PowerGrid(parent, name="dbg_detail_grid", height_flex=True)
+        PowerGrid(parent, name="dbg_detail_grid", height_flex=1)
         #Body(parent, "← Click a row", name="dbg_detail_hint")
 
 

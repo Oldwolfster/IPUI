@@ -17,8 +17,8 @@ class EZ_Pane(_BaseTab):
     def batches(self, parent) -> None:
         """Left pane — batch list."""
         Title(parent, "Batches", glow=True)
-        card = CardCol(parent, height_flex=True)
-        grid = PowerGrid(card, name="grid_batches", height_flex=True)
+        card = CardCol(parent, height_flex=1)
+        grid = PowerGrid(card, name="grid_batches", height_flex=1)
         grid.on_row_click(self.on_batch_selected, "Batch")
         self.load_batches()
 
@@ -27,16 +27,16 @@ class EZ_Pane(_BaseTab):
         Title(parent, "Run Comparison", glow=True)
         Body(parent, "", name="lbl_compare_status")
         Row(parent, name="row_remove_buttons")
-        card = CardCol(parent, height_flex=True)
-        PowerGrid(card, name="grid_comparison", height_flex=True)
+        card = CardCol(parent, height_flex=1)
+        PowerGrid(card, name="grid_comparison", height_flex=1)
         self.refresh_comparison()
 
     def best_runs(self, parent) -> None:
         """Right pane — top runs across all batches with chart."""
         Title(parent, "Best Runs", glow=True)
-        sub = CardCol(parent, height_flex=True)
-        PowerGrid(sub, data=[["Loading..."]], name="grid_proj_runs", height_flex=True)
-        Chart(parent, name="chart_proj_runs", height_flex=True)
+        sub = CardCol(parent, height_flex=1)
+        PowerGrid(sub, data=[["Loading..."]], name="grid_proj_runs", height_flex=1)
+        Chart(parent, name="chart_proj_runs", height_flex=1)
         self.load_best_runs()
 
     # ══════════════════════════════════════════════════════════════
@@ -55,8 +55,8 @@ class EZ_Pane(_BaseTab):
         Title(header, f"Batch {batch_id}", glow=True)
         btn = Button(header, "Back", color_bg=Style.COLOR_TAB_BG)
         btn.on_click_me(self.swap_pane(0, self.batches))
-        card = CardCol(parent, height_flex=True)
-        grid = PowerGrid(card, name="grid_batch_runs", height_flex=True)
+        card = CardCol(parent, height_flex=1)
+        grid = PowerGrid(card, name="grid_batch_runs", height_flex=1)
         grid.on_row_click(self.on_run_toggled, "Run")
         self.load_batch_runs(batch_id)
 

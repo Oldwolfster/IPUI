@@ -38,7 +38,7 @@ class TextBox(Label):
     def build(self):
         EZ.warn_scroll             ( self)
         self.validate_params       ( )
-        self.width_flex            = True
+        self.width_flex            = 1
         self.font                  = self.font or Style.FONT_BODY
         if self.tab_order is None  : self.tab_order=0 # Will be set in base_widget
         self.wrap                  = False

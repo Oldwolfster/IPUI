@@ -4,8 +4,8 @@ from ipui import *
 class FormShowcase(_BaseForm):
 
     TAB_LAYOUT = {
-
-        "Welcome"       : ["left_pane"      ,"proud_features"   ,"detail"       ],
+        "Scroll ab"      : ["left_pane"      ,"test_here"        ,"right_pane"   ],
+        "Welcome2"       : ["left_pane22"      ,"proud_features"   ,"detail"       ],
         "SQL"           : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
         "Tab System"    : ["explain"        ,"showcase"                         ],
         "Widgets"       : ["catalog_grid"   ,"detail"                           ],

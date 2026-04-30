@@ -13,7 +13,7 @@ class Tree(_BaseTab):
         #    color_bg = Style.COLOR_BUTTON_CTA)
         #btn.on_click_me(self.refresh_tree)
 
-        PowerGrid(parent, name="grid_tree", height_flex=True)
+        PowerGrid(parent, name="grid_tree", height_flex=1)
         self.refresh_tree()
 
     # ══════════════════════════════════════════════════════════════
@@ -22,7 +22,7 @@ class Tree(_BaseTab):
 
     def widget_detail(self, parent):
         Title(parent, "Widget Detail", glow=True)
-        PowerGrid(parent, name="grid_detail", height_flex=True)
+        PowerGrid(parent, name="grid_detail", height_flex=1)
 
     # ══════════════════════════════════════════════════════════════
     # TREE WALKER

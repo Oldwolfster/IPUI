@@ -21,7 +21,7 @@ class Designer(_BaseTab):
 
     def tab_map(self, parent):
         Title(parent, "Tab Map", glow=True)
-        self.map_card = CardCol(parent, height_flex=True, scrollable=True)
+        self.map_card = CardCol(parent, height_flex=1, scrollable=True)
         self.rebuild_tab_map()
 
         card = CardCol(parent)                                          # NEW
@@ -51,7 +51,7 @@ class Designer(_BaseTab):
         row = Row(self.map_card, justify_spread=True)
         btn = Button(row, tab_name,
             color_bg   = Style.COLOR_TAB_BG,
-            width_flex = True)
+            width_flex = 1)
         is_selected = (tab_name == self.selected_tab and self.selected_pane is None)
         if is_selected:
             btn.set_radiate()
@@ -59,14 +59,14 @@ class Designer(_BaseTab):
 
     def build_pane_row(self, tab_name, method_name, weight):
         row = Row(self.map_card)
-        Spacer(row, width_flex=False)
+        Spacer(row, width_flex=0)
         label       = f"  {method_name}"
         is_selected = (tab_name == self.selected_tab
                        and method_name == self.selected_pane)
         color       = Style.COLOR_BUTTON_CTA if is_selected else Style.COLOR_BUTTON_BG
         btn         = Button(row, label,
             color_bg   = color,
-            width_flex = True)
+            width_flex = 1)
         if is_selected:
             btn.set_radiate()
         btn.on_click = lambda t=tab_name, m=method_name: self.select_pane(t, m)
@@ -102,7 +102,7 @@ class Designer(_BaseTab):
         and self.selected_pane == "preview"):
             Body(pane, "You're looking at it.")
             return
-        preview_area = CardCol(pane, height_flex=True)
+        preview_area = CardCol(pane, height_flex=1)
         instance = self.form.tab_strip.resolve_tab(self.selected_tab)
         if instance and hasattr(instance, self.selected_pane):
             getattr(instance, self.selected_pane)(preview_area)
@@ -115,7 +115,7 @@ class Designer(_BaseTab):
 
     def toolbox(self, parent):
         Title(parent, "Tools", glow=True)
-        card = CardCol(parent, scrollable=True, height_flex=True)
+        card = CardCol(parent, scrollable=True, height_flex=1)
         Heading(card, "Widgets", glow=True)
         palette = [
             "Title", "Heading", "Body",

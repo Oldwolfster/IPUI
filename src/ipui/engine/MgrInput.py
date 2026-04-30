@@ -31,6 +31,9 @@ class MgrInput:
     drag_widget         = None
     drag_anchor         = 0
 
+    # ── Generic Scrollbar drag ────────────────────────────
+    press_widget   = None
+
     # ── Text drag-select ──────────────────────────────────
     text_dragging       = False
 
@@ -109,72 +112,13 @@ class MgrInput:
     # MOUSE DOWN — tooltip check → scrollbar drag → click dispatch
     # ══════════════════════════════════════════════════════════════
 
-    @classmethod
-    def on_mouse_downorig(cls, ip, form, pos):
-        # Tooltip click first
-        if form.handle_tooltip_click(pos):
-            return True
-
-        # Scrollbar drag start
-        target = cls.find_scrollbar_hit(form, pos)
-        if target:
-            cls.drag_widget = target
-            cls.drag_anchor = pos[1] - target.private_handle_rect.top
-            return True
-
-        # Find click target
-        target = cls.find_click_target(form, pos)
-
-        # Focus management
-        if target and target.focusable:
-            if target is not cls.focused_widget:
-                cls.clear_focus()
-                cls.focused_widget  = target
-                target.is_focused   = True
-            if hasattr(target, 'handle_focus_click'):
-                target.handle_focus_click(pos)
-            cls.text_dragging = True
-        else:
-            cls.clear_focus()
-
-        if target is None:
-            return False
-
-        # Disabled widgets consume the click but do nothing
-        if target.enabled is not True:
-            return True
-
-        # Press state
-        target.is_pressed   = True
-        cls.pressed_widget  = target
-
-        # Double-click detection
-        now = time.time()
-        if (now - cls.last_click_time < cls.DOUBLE_CLICK_TIME
-                and target is cls.last_click_widget):          # REPLACE (removed hasattr check)
-            if hasattr(target, 'handle_double_click'):         # NEW
-                target.handle_double_click(pos)                # NEW
-            if target.on_double_click:                         # NEW
-                target.on_double_click()                       # NEW
-            cls.text_dragging = False
-        cls.last_click_time   = now
-        cls.last_click_widget = target
-
-        # Toggle selection (SelectableListItem)
-        if hasattr(target, 'toggle_selected'):
-            target.toggle_selected()
-
-        # Fire on_click callback
-        if target.on_click:
-            target.on_click()
-
-        return True
 
 
     @classmethod
     def on_mouse_down(cls, ip, form, pos):
         if form.handle_tooltip_click(pos):          return True  # Tooltip absorbs click
         if cls.scrollbar_drag_start(form, pos):     return True  # Scrollbar drag begun
+        if cls.press_drag_start(form, pos):         return True  # Generic scrolling
         target = cls.find_click_target(form, pos)                # Deepest clickable widget
         cls.manage_focus(target, pos)                            # Transfer focus if needed
         if target is None:                          return False # Nothing clicked
@@ -226,6 +170,13 @@ class MgrInput:
         cls.drag_widget = target
         cls.drag_anchor = pos[1] - target.private_handle_rect.top
         return True
+
+    @classmethod
+    def press_drag_start(cls, form, pos):
+        target = cls.find_press_target(form, pos)
+        if not target: return False
+        cls.press_widget = target
+        return True
     # ══════════════════════════════════════════════════════════════
     # MOUSE UP — release press state, end drags
     # ══════════════════════════════════════════════════════════════
@@ -237,6 +188,9 @@ class MgrInput:
             cls.pressed_widget = None
         if cls.drag_widget:
             cls.drag_widget = None
+        if cls.press_widget:                                    # NEW
+            cls.press_widget.on_release()                       # NEW
+            cls.press_widget = None
         if cls.text_dragging:
             cls.text_dragging = False
             if cls.focused_widget and hasattr(cls.focused_widget, 'handle_drag_end'):
@@ -256,6 +210,11 @@ class MgrInput:
                 relative = pos[1] - w.private_track_top - cls.drag_anchor
                 ratio    = max(0.0, min(1.0, relative / usable))
                 w.scroll_offset = int(ratio * w.private_max_scroll)
+            return
+
+        # Generic press drag                                   # NEW
+        if cls.press_widget:                                    # NEW
+            cls.press_widget.on_drag(pos)                       # NEW
             return
 
         # Text drag-select
@@ -296,6 +255,18 @@ class MgrInput:
 
 
         return True
+
+
+    @classmethod
+    def find_press_target(cls, widget, pos):
+        """Walk tree depth-first; return the deepest widget whose on_press(pos) returns True."""
+        for child in widget.interactive_children:
+            result = cls.find_press_target(child, pos)
+            if result is not None:
+                return result
+        if hasattr(widget, 'on_press') and widget.on_press(pos):
+            return widget
+        return None
 
     # ══════════════════════════════════════════════════════════════
     # KEYDOWN — framework keys → focused widget → unhandled
@@ -357,8 +328,9 @@ class MgrInput:
     # ══════════════════════════════════════════════════════════════
 
     @classmethod
-    def find_click_target(cls, widget, pos):
+    def find_click_targetOLD(cls, widget, pos):
         """Deepest visible widget under pos that wants a click."""
+        pos = cls.translate_pos_into(widget, pos)
         for child in widget.interactive_children:
             result = cls.find_click_target(child, pos)
             if result is not None:
@@ -372,7 +344,7 @@ class MgrInput:
         return None
 
     @classmethod
-    def find_scrollable(cls, widget, pos):
+    def find_scrollableOLD(cls, widget, pos):
         """Deepest scrollable widget under pos."""
         for child in widget.interactive_children:
             result = cls.find_scrollable(child, pos)
@@ -383,12 +355,64 @@ class MgrInput:
         return None
 
     @classmethod
-    def find_scrollbar_hit(cls, widget, pos):
+    def find_scrollbar_hitOLD(cls, widget, pos):
         """Widget whose scrollbar handle was clicked."""
         for child in widget.interactive_children:
             result = cls.find_scrollbar_hit(child, pos)
             if result is not None:
                 return result
         if widget.private_handle_rect and widget.private_handle_rect.collidepoint(pos):
+            return widget
+        return None
+
+    @classmethod
+    def find_click_target(cls, widget, mouse_coord):
+        """Deepest visible widget under mouse_coord that wants a click."""
+        child_coord = widget.translate_mouse_coord_for_horizontal_scroll(mouse_coord)
+        for child in widget.interactive_children:
+            result = cls.find_click_target(child, child_coord)
+            if result is not None:
+                return result
+        if widget.rect and widget.rect.collidepoint(mouse_coord):
+            if (widget.on_click
+                    or widget.focusable
+                    or widget.on_double_click
+                    or hasattr(widget, 'toggle_selected')):
+                return widget
+        return None
+
+    @classmethod
+    def find_scrollable(cls, widget, mouse_coord):
+        """Deepest scrollable widget under mouse_coord."""
+        child_coord = widget.translate_mouse_coord_for_horizontal_scroll(mouse_coord)
+        for child in widget.interactive_children:
+            result = cls.find_scrollable(child, child_coord)
+            if result is not None:
+                return result
+        if widget.scroll_active and widget.rect and widget.rect.collidepoint(mouse_coord):
+            return widget
+        return None
+
+    @classmethod
+    def find_scrollbar_hit(cls, widget, mouse_coord):
+        """Widget whose scrollbar handle was clicked."""
+        child_coord = widget.translate_mouse_coord_for_horizontal_scroll(mouse_coord)
+        for child in widget.interactive_children:
+            result = cls.find_scrollbar_hit(child, child_coord)
+            if result is not None:
+                return result
+        if widget.private_handle_rect and widget.private_handle_rect.collidepoint(mouse_coord):
+            return widget
+        return None
+
+    @classmethod
+    def find_press_target(cls, widget, mouse_coord):
+        """Walk tree depth-first; return the deepest widget whose on_press(mouse_coord) returns True."""
+        child_coord = widget.translate_mouse_coord_for_horizontal_scroll(mouse_coord)
+        for child in widget.interactive_children:
+            result = cls.find_press_target(child, child_coord)
+            if result is not None:
+                return result
+        if hasattr(widget, 'on_press') and widget.on_press(mouse_coord):
             return widget
         return None

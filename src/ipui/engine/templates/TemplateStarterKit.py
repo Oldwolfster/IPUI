@@ -30,7 +30,7 @@ class TemplateStarterKit(_BaseTab):
         self.reactive_name_game(parent)
 
     def reactive_name_game(self, parent):
-        card            = CardCol(parent, width_flex=True)
+        card            = CardCol(parent, width_flex=1)
         row             = Row(card, justify_center=True)
         TextBox(row,
             placeholder = "First name",
@@ -88,7 +88,7 @@ class TemplateStarterKit(_BaseTab):
 
     def name_game(self, parent):
 
-        card            = CardCol(parent, width_flex=True)
+        card            = CardCol(parent, width_flex=1)
         row             = Row(card, justify_center=True)    # Row Switches to horizontal so we can center
         self.txt_name   = TextBox(row,
             placeholder = "Enter your name",
