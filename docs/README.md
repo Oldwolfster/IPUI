@@ -309,7 +309,7 @@ Most users never need to write a custom widget — IPUI ships with a full catalo
 
 ```python
 class MyPane(_BaseTab):
-    DECLARATION_UPDATES = {
+    BINDINGS = {
         "lbl_status": {
             "property": "text",
             "compute":  "compute_status",
@@ -1089,11 +1089,11 @@ self.form.pipeline_set("training_active", True)
 active = self.form.pipeline_read("training_active")
 ```
 
-Declare widget reactions in `DECLARATION_UPDATES` at the top of your _BaseTab:
+Declare widget reactions in `BINDINGS` at the top of your _BaseTab:
 
 ```python
 class TrainingPane(_BaseTab):
-    DECLARATION_UPDATES = {
+    BINDINGS = {
         "btn_start": {
             "property": "enabled",
             "compute":  "compute_start_enabled",
@@ -1344,7 +1344,7 @@ All widgets accept these parameters:
 
 | Attribute             | Type   | Description                                  |
 |-----------------------|--------|----------------------------------------------|
-| `DECLARATION_UPDATES` | dict   | Reactive derive declarations (see below)     |
+| `BINDINGS` | dict   | Reactive derive declarations (see below)     |
 | `THINK_ALWAYS`        | bool   | If True, `ip_think` fires even when this pane isn't visible |
 
 **Lifecycle hooks** (override on your pane):
@@ -1357,7 +1357,7 @@ All widgets accept these parameters:
 | `ip_draw(ip)`         | Draw before UI. Game worlds, backgrounds.              |
 | `ip_draw_hud(ip)`     | Draw after UI. Overlays, cursors, effects.             |
 
-**DECLARATION_UPDATES entry format:**
+**BINDINGS entry format:**
 ```python
 "widget_name": {
     "property": "text",          # or "enabled", or any widget attribute

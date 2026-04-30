@@ -4,7 +4,7 @@ from ipui import *
 
 class EZ_Pane(_BaseTab):
 
-    DECLARATION_UPDATES= {
+    BINDINGS= {
         "lbl_pipeline_echo" : {"property": "text", "compute":  "compute_echo"       ,"triggers": ["demo_key"],},
         "lbl_keystrokes"    : {"property": "text", "compute":  "compute_keystrokes" ,"triggers": ["demo_key"],},
     }
@@ -106,7 +106,7 @@ class EZ_Pane(_BaseTab):
         card = Card(parent, scrollable=True, height_flex=1)
         CodeBox(card,
             data  = __file__,
-            start = "DECLARATION_UPDATES= {",
+            start = "BINDINGS= {",
             end   = "# ══════════════════════════════════════════════════════════════\n    # PANE 3")
 
     # ══════════════════════════════════════════════════════════════

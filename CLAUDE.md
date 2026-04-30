@@ -32,7 +32,7 @@ IPUI is a structural engine for pygame UIs. The goal is to make Swift and Flutte
 - **`ip_setup` / `ip_setup_pipeline`:** Setup lifecycle hooks.
 - **`private_` prefix:** For backing storage attributes (e.g., `private_enabled`). Never Guido's underscore.
 - **`public_` prefix:** Planned for public attrs. These prefixes enable future `public_attrs()`/`private_attrs()` helpers.
-- **SCREAMING_CASE:** For structural class-level declaration dicts (`TAB_LAYOUT`, `DECLARATION_UPDATES`, `PIPELINE_DEFAULTS`).
+- **SCREAMING_CASE:** For structural class-level declaration dicts (`TAB_LAYOUT`, `BINDINGS`, `PIPELINE_DEFAULTS`).
 - **Lowercase:** For configuration attributes.
 
 ## Key Systems

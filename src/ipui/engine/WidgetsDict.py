@@ -22,9 +22,9 @@ class WidgetsDict(dict):
             f""
             f"# =========================\n"
             f"# THREE EASY WAYS TO FIX\n"
-            f"# 1) In DECLARATION_UPDATES change {key} to one of the above registered names.'\n"
+            f"# 1) In BINDINGS change {key} to one of the above registered names.'\n"
             f"# 2) Name a widget '{key}'.  \n\tIt will be synchronized with that pipeline field.\n"
-            f"# 3) REMOVE: Remove: **{key}** from DECLARATION_UPDATES\n"
+            f"# 3) REMOVE: Remove: **{key}** from BINDINGS\n"
             f"# =========================\n",
             RuntimeError
         )

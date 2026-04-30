@@ -7,7 +7,7 @@ class YourChoice(_BaseTab):
     # fires and result is applied to the named widget's property.
     # ══════════════════════════════════════════════════════════════
 
-    DECLARATION_UPDATES = {
+    BINDINGS = {
         "lbl_snark":{     # "first" or "last" changes → compute_snark() → sets lbl_snark.text
             "property": "text",
             "compute": "snark",
@@ -52,7 +52,7 @@ class YourChoice(_BaseTab):
         Body     ( card, "Create two methods"       ,text_align=RIGHT)
         Body     ( card, "snark and chk_btn"        ,text_align=RIGHT)
         Body     ( card, "build widgets"            ,text_align=RIGHT)
-        Body     ( card, "Set DECLARATION_UPDATES"  ,text_align=RIGHT)
+        Body     ( card, "Set BINDINGS"  ,text_align=RIGHT)
         Body     ( card, "")
         Body     ( card, "IPUI is flexible - You can do hybrid"         ,text_align=RIGHT,glow=True)
 
@@ -70,7 +70,7 @@ class YourChoice(_BaseTab):
 
         TextBox(row,                            ################################################
             placeholder = "First name",         #### Reactive does not need 'on_change'.
-            pipeline_key= "first",              #### DECLARATION_UPDATES has that covered.
+            pipeline_key= "first",              #### BINDINGS has that covered.
                 )                               ################################################
 
         Spacer(row,width_flex=.01)
@@ -78,7 +78,7 @@ class YourChoice(_BaseTab):
         TextBox(row,
             placeholder = "Last name",     ################################################
             pipeline_key= "last",          #### Reactive does not need 'on_change'.
-            )                              #### DECLARATION_UPDATES has that covered.
+            )                              #### BINDINGS has that covered.
                                            ################################################
         row             = Row(card)
         Button          ( row, "Clear",

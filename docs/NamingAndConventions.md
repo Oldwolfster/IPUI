@@ -79,7 +79,7 @@ Style.TOKEN_PAD
 Style.FONT_SCALE
 
 # Reactive declaration
-DECLARATION_UPDATES = {
+BINDINGS = {
     "lbl_status": {
         "property": "text",
         "compute": "compute_status",

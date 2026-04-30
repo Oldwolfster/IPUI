@@ -11,7 +11,7 @@ class Tree(_BaseTab):
     # DAG — Reactive updates
     # ══════════════════════════════════════════════════════════════
 
-    DECLARATION_UPDATES = {
+    BINDINGS = {
         "dbg_tree_title": {
             "property": "text",
             "compute":  "compute_title",

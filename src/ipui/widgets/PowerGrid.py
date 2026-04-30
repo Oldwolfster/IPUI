@@ -116,14 +116,22 @@ class PowerGrid(_BaseWidget):
         self.row_dbl_click_column   = None
 
 
-    def build_body(self):
+    def build_body(self):# OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD
         if self.children:    return
         self.grid_header     = GridHeader(self)
         self.grid_scroller   = Col(self, scrollable=True, height_flex=1,scroll_h=True)
         self.grid_body       = GridBody(self.grid_scroller)
         self.record_selector = RecordSelector(self, on_change=self.handle_page_change)
-
         self.grid_scroller.scroll_h_link(self.grid_header)
+
+    def build_body(self):
+        if self.children: return
+        self.grid_header = GridHeader(self, scroll_h=True, on_click = lambda: None)
+        self.grid_scroller = Col(self, scrollable=True, height_flex=1, scroll_h=True)
+        self.grid_body = GridBody(self.grid_scroller)
+        self.record_selector = RecordSelector(self, on_change=self.handle_page_change)
+        self.grid_scroller.scroll_h_link(self.grid_header)
+
     # ══════════════════════════════════════════════════════════════
     # PUBLIC API
     # ══════════════════════════════════════════════════════════════

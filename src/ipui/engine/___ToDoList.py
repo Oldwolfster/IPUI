@@ -230,58 +230,58 @@ Clean up list
 ######################################################################
 4/7
 ######################################################################
-235) Initialize pygame with scaled mode which appeared to fix the lag issue.
-231) IP_LIFECYCLE — deleted entirely
-232) ip_renderpre → ip_draw
-233) ip_renderpost → ip_draw_hud
-228) _basePane → _BaseTab
-229) _BaseForm alias killed, __all__ enforcing visibility
-236) squish_extras → hide_extra_panes
-237) MEASUREDRAWLAY → layout_engine
-238) Runallthree() → RunLayout()
-239) font_scale → FONT_SCALE
-240) README cleaned up
-241) dt clamp for safety
+235) DONE: Initialize pygame with scaled mode which appeared to fix the lag issue.
+231) DONE: IP_LIFECYCLE — deleted entirely
+232)v ip_renderpre → ip_draw
+233) DONE: ip_renderpost → ip_draw_hud
+228) DONE: _basePane → _BaseTab
+229) DONE: _BaseForm alias killed, __all__ enforcing visibility
+236) DONE: squish_extras → hide_extra_panes
+237) DONE: MEASUREDRAWLAY → layout_engine
+238) DONE: Runallthree() → RunLayout()
+239) DONE: font_scale → FONT_SCALE
+240)  DONE:README cleaned up
+241)  DONE:dt clamp for safety
 
 
 ######################################################################
 4/11
 ######################################################################
-245) Made the quickstart smoketest super simple by building single class mode... pane logic can be in baseForm instead of separate file
-246) ip_think / ip_draw / ip_draw_hud all dispatch correctly to either file or method in baseform
-247) setup ip context to work in both modes
-248) Added 'Tabless' mode... if you don't define tab_layout it just gives entire screen
-249)created tabless_mode property on _BaseForm
-224) add ability to save particle life settings
+245) DONE: Made the quickstart smoketest super simple by building single class mode... pane logic can be in baseForm instead of separate file
+246) DONE: ip_think / ip_draw / ip_draw_hud all dispatch correctly to either file or method in baseform
+247) DONE: setup ip context to work in both modes
+248) DONE: Added 'Tabless' mode... if you don't define tab_layout it just gives entire screen
+249) DONE: created tabless_mode property on _BaseForm
+224) DONE: add ability to save particle life settings
 
 
 ######################################################################
 4/13
 ######################################################################
-249) rename ip_setup to ip_setup
-254) General polish on particle life... it's GTG!
-255) update ez.err to walk the call stack until it's outside the framework
-256) fixed override bug in sql editor.
-259) Added on_double_click as a general-purpose callback on _BaseWidget — any widget can now handle double-clicks by assigning a delegate, same as on_click
-260) Added on_double_click as a constructor parameter on _BaseWidget — declarative wiring at construction time
-261) Unified click/double-click dispatch in fire_clicks — double-click detection and the double_clicked guard that suppresses on_click when on_double_click fires
-262) Refactored on_mouse_down into small methods — scrollbar_drag_start, manage_focus, fire_clicks — replaced a 50-line monolith with a readable 10-line orchestrator
-263) Eliminated handle_focus_click protocol — TextBox and TextArea now wire on_click to handle_click_position (gets mouse pos internally)
-264) Eliminated handle_double_click protocol — TextBox and TextArea now wire on_double_click to select_word_at_mouse (gets mouse pos internally)
-265) Two hasattr sniffs removed from MgrInput — no more protocol detection for click behaviors
-266) Updated find_click_target — includes on_double_click in "wants a click" check
-267) Fixed hover color shift on focusable widgets — on_click and not self.focusable prevents TextBox/TextArea from getting button hover effects
-268). Added on_row_double_click API — mirrors on_row_click exactly
-269) Extracted resolve_row_index from hit_test_row — shared by click and double-click
-270) Extracted fire_row_callback and extract_click_value_for — generalized for both callbacks
-271) Wired on_double_click to on_grid_double_click in build
-163) move double click detect to base wid
-272) Widget Locator (unique to IPUI): Tree double-click → locates widget on target form  Pulse animation on _BaseForm.draw_pulse — breathing cyan glow for 3 seconds
-212) Investigate base_form dispatch_ip_think  - does this mean if no tab will not work.
-161) Debug tools auto-refresh (magic) — probably just call refresh() in ip_think
-234) Or shorter: "Split resolve_tab — discovery vs instantiation — so ip_setup never fires before panes exist."
-242) Default ip_think to active-tab only — Change dispatch_ip_think to only call the active pane's ip_think. Remove the loop over all cached panes.
-275) MgrSanity — catches invisible content after every layout pass
+249) DONE: rename ip_setup to ip_setup
+254) DONE: General polish on particle life... it's GTG!
+255) DONE: update ez.err to walk the call stack until it's outside the framework
+256) DONE: fixed override bug in sql editor.
+259) DONE: Added on_double_click as a general-purpose callback on _BaseWidget — any widget can now handle double-clicks by assigning a delegate, same as on_click
+260) DONE:Added on_double_click as a constructor parameter on _BaseWidget — declarative wiring at construction time
+261) DONE:Unified click/double-click dispatch in fire_clicks — double-click detection and the double_clicked guard that suppresses on_click when on_double_click fires
+262) DONE:Refactored on_mouse_down into small methods — scrollbar_drag_start, manage_focus, fire_clicks — replaced a 50-line monolith with a readable 10-line orchestrator
+263) DONE:Eliminated handle_focus_click protocol — TextBox and TextArea now wire on_click to handle_click_position (gets mouse pos internally)
+264) DONE:Eliminated handle_double_click protocol — TextBox and TextArea now wire on_double_click to select_word_at_mouse (gets mouse pos internally)
+265) DONE:Two hasattr sniffs removed from MgrInput — no more protocol detection for click behaviors
+266) DONE:Updated find_click_target — includes on_double_click in "wants a click" check
+267) DONE:Fixed hover color shift on focusable widgets — on_click and not self.focusable prevents TextBox/TextArea from getting button hover effects
+268). DONE: AddDONE:ed on_row_double_click API — mirrors on_row_click exactly
+269) DONE:Extracted resolve_row_index from hit_test_row — shared by click and double-click
+270) DONE:Extracted fire_row_callback and extract_click_value_for — generalized for both callbacks
+271) DONE:Wired on_double_click to on_grid_double_click in build
+163) DONE:move double click detect to base wid
+272) DONE:Widget Locator (unique to IPUI): Tree double-click → locates widget on target form  Pulse animation on _BaseForm.draw_pulse — breathing cyan glow for 3 seconds
+212) DONE:Investigate base_form dispatch_ip_think  - does this mean if no tab will not work.
+161) DONE:Debug tools auto-refresh (magic) — probably just call refresh() in ip_think
+234) DONE:Or shorter: "Split resolve_tab — discovery vs instantiation — so ip_setup never fires before panes exist."
+242) DONE:Default ip_think to active-tab only — Change dispatch_ip_think to only call the active pane's ip_think. Remove the loop over all cached panes.
+275) DONE:MgrSanity — catches invisible content after every layout pass
 276) Two diagnosed root causes — scrollable starvation and flex starvation, both with actionable fix instructions
 277) Smart origin detection — traces back to the pane builder method instead of useless main.py
 278) Unknown cause fallback — catches cockroaches we haven't met yet
@@ -289,69 +289,69 @@ Clean up list
 ######################################################################
 4/15
 ######################################################################
-279) MgrSanity — complete rewrite with clean top-down decomposition
-280) is_starved() — pure symptom detection with forgiving threshold
-281) diagnose() — one-line-per-cause dispatch checklist
-281) Three root cause classifiers, each with trigger examples:
-281) Cause #1: Flex child starved by sibling (the live Welcome.py bug)
-281) Cause #2: Scrollable container under non-flex ancestor
-281) Cause #3: Flex child under non-flex ancestor
-282) Unknown fallback with diagnostic dump for discovering new causes
-283) display_name upgrade — first_child_text property on _BaseWidget peeks two levels deep for child text content, so unnamed containers show CardCol('Welcome to...') instead of CardCol('CardCol')
-284) Error message restructure — "A widget collapsed and cannot display its children" → ROOT CAUSE → FIX → EXAMPLE
-285) Origin link fixed — File: "..."  Class: ...  Method: ... format, and gets file from method instead of class to avoid the __main__ built-in class bug
-286)Welcome.py fix — removed competing height_flex values that caused the starvation
+279)DONE: MgrSanity — complete rewrite with clean top-down decomposition
+280)DONE: is_starved() — pure symptom detection with forgiving threshold
+281) DONE:diagnose() — one-line-per-cause dispatch checklist
+281) DONE:Three root cause classifiers, each with trigger examples:
+281) DONE:Cause #1: Flex child starved by sibling (the live Welcome.py bug)
+281) DONE:Cause #2: Scrollable container under non-flex ancestor
+281) DONE:Cause #3: Flex child under non-flex ancestor
+282) DONE:Unknown fallback with diagnostic dump for discovering new causes
+283) DONE:display_name upgrade — first_child_text property on _BaseWidget peeks two levels deep for child text content, so unnamed containers show CardCol('Welcome to...') instead of CardCol('CardCol')
+284) DONE:Error message restructure — "A widget collapsed and cannot display its children" → ROOT CAUSE → FIX → EXAMPLE
+285) DONE:Origin link fixed — File: "..."  Class: ...  Method: ... format, and gets file from method instead of class to avoid the __main__ built-in class bug
+286) DONE:Welcome.py fix — removed competing height_flex values that caused the starvation
 
 ######################################################################
 4/18
 ######################################################################
-225) Heat seeking missle from debug tree
-287) Finished verbiage on welcome page.
-274) Fix ez.Err message origin in MgrSanity... identify by removing height_flex=1 from welcome.py ProudFeatures SCroller.  Origin- not clickable... at worst case... in class NewTab, not on NewTab.
-278) WHY DOES  welcomeWhyCOLLAPSE, collapse.
-213) In baseform, hwo do we fix the event handling fiasco
-257) add ip_activated to readme.
-273) Debug tools tree auto refresh
-216) In widgets remove duplicate source
-217) in debug tools, magic tab should autorefresh
+225) DONE:Heat seeking missle from debug tree
+287) DONE:Finished verbiage on welcome page.
+274) DONE:Fix ez.Err message origin in MgrSanity... identify by removing height_flex=1 from welcome.py ProudFeatures SCroller.  Origin- not clickable... at worst case... in class NewTab, not on NewTab.
+278) DONE:WHY DOES  welcomeWhyCOLLAPSE, collapse.
+213) DONE:In baseform, hwo do we fix the event handling fiasco
+257) DONE:add ip_activated to readme.
+273) DONE:Debug tools tree auto refresh
+216) DONE:In widgets remove duplicate source
+217) DONE:in debug tools, magic tab should autorefresh
 
 ######################################################################
 4/22
 ######################################################################
 
-220) stress test on non-tab (ensure pane work - should be same as screen)
-284) Tab/pane naming audit and cleanup (pane_cache → tab_cache, resolve_pane → resolve_tab, etc.)
-285) ip.is_active_pane → ip.is_active_tab
-286) All comments/docs aligned
-287) State machine scoped per-tab (ip.tab = self in _BaseTab.__init__)
-288) State machine tick in dispatch (active tab only)
-289) Deferred ip_setup (after rebuild_tab_areas, before fill_panes)
-290) switch_tab refactored into clean helpers
-291) Breakout two-track state machine (DEMO_PLAYING / PLAYING)
-292) Aim assist on last brick
-293) Widget tree caching (CACHE_CONTENT opt-in — in but not yet gated by the flag)
-283) ensure ip_activated is in readme.
-211) Add ip_setup_pipeline and PIPELINE_DEFAULTS to docs - note how pipeline_default runs relative to build
-223) in sql run query deletes the updated text.
-250) rename ip_setup_pipeline to ip_setup
-251) asteroids full screen is done.. add to showcase
-167) SQL recordselector behaving off. compare it to tree
-294) Renamed _IPUI to Gameloop
-280) when scrolling with recordselectors automaticall adj record indicators when scrolling down
-155) Armory needs 3rd pane.
-221) should show_modal have wrapper on base_tab?
-279) When highlighting grid, leave an indicator
-281) test named statee machines.
-295) made heat seeker return to debug tools
-296) Codebox shuold not react to hover now that it is clickable for its copy button.
-297) hover_bright is not working properly on base_widget
-258) errmsg 'TAB_LAYOUT 'Export' maps to 'build', but that method doesn't accept a parent parameter' stinks.  name exports pane 'build' to test.
-299) Fix export tab crash in NeuroForge
-282) fix placement of 'move' button in pinned pop up.
-206) Show optimizers by default - with msg to hover long
-302) got rid of two lambdas in tabstrip!
-222) not using Style properly... using colors instead of semantic role.
-300) Huge tab tip using codebox.
+220)DONE: stress test on non-tab (ensure pane work - should be same as screen)
+284) DONE:Tab/pane naming audit and cleanup (pane_cache → tab_cache, resolve_pane → resolve_tab, etc.)
+285) DONE:ip.is_active_pane → ip.is_active_tab
+286) DONE:All comments/docs aligned
+287) DONE:State machine scoped per-tab (ip.tab = self in _BaseTab.__init__)
+288) DONE:State machine tick in dispatch (active tab only)
+289)DONE: Deferred ip_setup (after rebuild_tab_areas, before fill_panes)
+290) DONE:switch_tab refactored into clean helpers
+291) DONE:Breakout two-track state machine (DEMO_PLAYING / PLAYING)
+292) DONE:Aim assist on last brick
+293) DONE:Widget tree caching (CACHE_CONTENT opt-in — in but not yet gated by the flag)
+283) DONE:ensure ip_activated is in readme.
+211) DONE:Add ip_setup_pipeline and PIPELINE_DEFAULTS to docs - note how pipeline_default runs relative to build
+223) DONE:in sql run query deletes the updated text.
+250) DONE:rename ip_setup_pipeline to ip_setup
+251) DONE:asteroids full screen is done.. add to showcase
+167) DONE:SQL recordselector behaving off. compare it to tree
+294) DONE:Renamed _IPUI to Gameloop
+280) DONE:when scrolling with recordselectors automaticall adj record indicators when scrolling down
+155) DONE:Armory needs 3rd pane.
+221) DONE:should show_modal have wrapper on base_tab?
+279) DONE:When highlighting grid, leave an indicator
+281) DONE:test named statee machines.
+295) DONE:made heat seeker return to debug tools
+296) DONE:Codebox shuold not react to hover now that it is clickable for its copy button.
+297) DONE:hover_bright is not working properly on base_widget
+258) DONE:errmsg 'TAB_LAYOUT 'Export' maps to 'build', but that method doesn't accept a parent parameter' stinks.  name exports pane 'build' to test.
+299) DONE:Fix export tab crash in NeuroForge
+282) DONE:fix placement of 'move' button in pinned pop up.
+206) DONE:Show optimizers by default - with msg to hover long
+302) DONE:got rid of two lambdas in tabstrip!
+222) DONE:not using Style properly... using colors instead of semantic role.
+300) DONE:Huge tab tip using codebox.
 ######################################################################
 4/25
 ######################################################################
@@ -392,22 +392,25 @@ Clean up list
 328) new widget parameter scroll_h, make any widget scrollable.
 329) what about flex=true
 330) tab with _ not autoscaffolding proper at least barebones.  Nope middle failed 2
-ensure NotNP_HardHug does not have layout_node
+331) Done: ensure NotNP_HardHug does not have layout_node
+332) Done:Converted DECLARATION_UPDATES to
+333) Done:Rename  loss function  NoneDummy back to Linear
+334) Done:DONE: RESULT: IN USE Investigate for removal: Label.compute_intrinsic()
+335) Done:DONE: RESULT: IN USEInvestigate for removal: Label.measure_constrained(max_width)
 ######################################################################
 Pending for V0.1
 ######################################################################
 
 What is left to publish
-Rename  loss function  NoneDummy back to Linear
+
 smaller sample sqllite
 disable launch button.
-
+double check NoneDummy is gone.
 in powergrid if you scroll down, the last one may remove scroller meaning you can scroll up
 
 Barebones scaffold scaffold if None for a pane.
 _BaseForm.update() is pass.IPUI.update() calls form.update().  The pygame loop calling IPUI.update()
-Investigate for removal: Label.compute_intrinsic()
-Investigate for removal: Label.measure_constrained(max_width)
+
 
 
 

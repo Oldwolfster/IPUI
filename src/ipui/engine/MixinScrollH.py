@@ -23,7 +23,7 @@ class MixinScrollH:
         self.private_max_scroll_h   = 0
         self.private_dragging_h     = False
         self.private_drag_anchor_h  = 0
-        self.private_scroll_h_links = []
+        #self.private_scroll_h_links = []
 
     def draw_scroll_h_bar(self, surface):
         if not self.scroll_h: return
@@ -58,14 +58,13 @@ class MixinScrollH:
         return max(20, int(track_w * ratio))
 
     def translate_children_h(self):
+
         if not self.scroll_h: return
+
         if self.scroll_offset_h == 0: return
-        print(f"TRANSLATE: offset={self.scroll_offset_h}, links={len(self.private_scroll_h_links)}")
+        print(f"TRANSLATE called on {type(self).__name__}, offset={self.scroll_offset_h}")
         for child in self.visible_children:
             if child.rect: child.rect.x -= self.scroll_offset_h
-        for linked in self.private_scroll_h_links:
-            print(f"  shifting {linked} from x={linked.rect.x if linked.rect else 'None'}")  # NEW
-            self.shift_widget_h(linked, -self.scroll_offset_h)
 
     def restore_children_h(self):
         if not self.scroll_h: return
@@ -103,8 +102,10 @@ class MixinScrollH:
         return (mouse_coord[0] + self.scroll_offset_h, mouse_coord[1])
 
     def scroll_h_link(self, widget):
-        """Make widget's children translate with this scroller's horizontal offset.
-           widget must NOT be a child of this scroller — it's a sibling/cousin riding along."""
-        if widget not in self.private_scroll_h_links:
-            self.private_scroll_h_links.append(widget)
-        print(f"LINK: {self} now has {len(self.private_scroll_h_links)} linked widgets")  # NEW
+        """Register a sibling/cousin widget to ride this scroller's horizontal offset.
+           The widget reads our offset at its own draw time, so it works
+           regardless of draw order."""
+        widget.scroll_h_source = self
+
+
+        ############### Power of attorney approach

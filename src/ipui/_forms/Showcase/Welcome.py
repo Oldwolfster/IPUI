@@ -289,7 +289,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
         card = Card(scroll)
         Heading(card, "Reactive DAG", glow=True)
-        Body(card, "Declare DECLARATION_UPDATES on your pane and pipeline changes "
+        Body(card, "Declare BINDINGS on your pane and pipeline changes "
                    "automatically recompute derived values and push them to widgets. "
                    "Change one key, the whole chain updates.")
 

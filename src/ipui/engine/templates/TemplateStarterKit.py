@@ -4,7 +4,7 @@ from ipui.widgets.Label import Detail
 
 class TemplateStarterKit(_BaseTab):
 
-    DECLARATION_UPDATES= {
+    BINDINGS= {
         "lbl_snark": {
             "property": "text",
             "compute": "compute_snark",

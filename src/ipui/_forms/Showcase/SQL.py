@@ -470,7 +470,7 @@ class SQL(_BaseTab):
         Title(row, "Query", glow=True)
         Body (row, "", name="lbl_sql_status", text_align=RIGHT)
 
-        TextArea(parent, name="code_sql", height_flex=1)
+        TextArea(parent, "SELECT * FROM batch_history LIMIT 696", name="code_sql", height_flex=1,)
 
         row = Row(parent)
         Button(row, "Run Query",

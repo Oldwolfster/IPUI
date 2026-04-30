@@ -129,7 +129,7 @@ If a method gets long, the fix is usually to **extract a named sub-step**, not t
 - **One class per file**, named identically. Locating any class is `class_name.py`. No grep required.
 - **All code lives in classes.** This protects against import-order surprises and accidentally-executed module-level code.
 - **`private_` prefix** for backing storage attributes (e.g. `private_enabled`). The Python convention of leading underscore is *not* used in IPUI — `private_` is more searchable, more honest, and forward-compatible with a future `public_` prefix.
-- **`SCREAMING_CASE`** for structural class-level declaration dicts (`TAB_LAYOUT`, `DECLARATION_UPDATES`).
+- **`SCREAMING_CASE`** for structural class-level declaration dicts (`TAB_LAYOUT`, `BINDINGS`).
 - **`ip_` prefix** is reserved for per-frame pane lifecycle hooks (`ip_setup`, `ip_think`, `ip_draw`, `ip_draw_hud`). Don't prefix anything else with `ip_`.
 - **`on_` prefix** is reserved for event properties (`on_click`, `on_change`) — things you assign callbacks to.
 - **`handle_` prefix** for handler methods that respond to events.

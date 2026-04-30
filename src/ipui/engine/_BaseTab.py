@@ -35,7 +35,7 @@ class _BaseTab:
         # was being called to early  self.ip_setup(self.ip)
 
     def register_derives(self):
-        derives = getattr(self.__class__, 'DECLARATION_UPDATES', None)
+        derives = getattr(self.__class__, 'BINDINGS', None)
         if not derives:
             return
         for control_name, entry in derives.items():
@@ -43,7 +43,7 @@ class _BaseTab:
             method      = getattr(self, method_name, None)
             if method is None:
                 EZ.err(
-                    f"{self.__class__.__name__}.DECLARATION_UPDATES references '{method_name}'. "
+                    f"{self.__class__.__name__}.BINDINGS references '{method_name}'. "
                     f"Create {method_name}() on {self.__class__.__name__} "
                     f"to calculate the value for {control_name}."
                 )

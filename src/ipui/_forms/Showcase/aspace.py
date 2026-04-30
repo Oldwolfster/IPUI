@@ -252,7 +252,7 @@ class ShowcaseTemplate(_BaseTab):
         Body    ( parent, " ", name="lbl_explorer_greeting")
         Body    ( parent, "No on_change handler. No manual update. The pipeline does it.")
 
-    DECLARATION_UPDATES = {
+    BINDINGS = {
         "lbl_explorer_greeting": {
             "property": "text",
             "compute":  "compute_greeting",
