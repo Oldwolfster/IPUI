@@ -410,6 +410,14 @@ Clean up list
 341) Renamed scrollable to scroll_v
 342) Eliminated the gap in the widget pane
 
+
+######################################################################
+5/2
+######################################################################
+343) DONE Fixed Statemachine error in Readme next -> next_state
+344) DONE: Removed duplicate frame_size from _BaseWidget
+345) DONE: Fix frame_size formula return (self.pad_x + self.border + self.pad_y+self.border
+346) DONE: Added set_pane, swap_pane, hide_extra_panes, or register_derives
 ######################################################################
 Pending for V0.1
 ######################################################################
@@ -422,7 +430,12 @@ double check NoneDummy is gone.
 disable launch button. (MUST BE LAST)
 
 Readme has code  examples that don't work.
-
+scaffolded showcase should override flex settings
+is set_text helping hurting or both?
+widget.enabled allows string. maybe a different disabled_msg prop.... widget.enabled="disabled msg" is beyond stupid of me.
+look in to on_click_me
+possibly remove from api.
+set_pane vs swap_pane _BaseTab.swap_pane(index, builder) returns a closure (a "do_swap" function) for use as a callback. That's a different shape from set_pane and the name doesn't telegraph "this returns a function." Most callers probably expect it to do the swap.
 
 
 

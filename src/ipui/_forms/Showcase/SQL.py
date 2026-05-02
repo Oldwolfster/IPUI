@@ -85,7 +85,7 @@ class SQL(_BaseTab):
         self.build_table_mode_buttons(row)
 
     def build_table_mode_buttons(self, parent):
-        Button(parent, "Preview",  color_bg=Style.COLOR_TAB_BG,         width_flex=1, on_click=self.handle_preview_clicked)
+        Button(parent, "Preview",  color_bg=Style.COLOR_TAB_BG,         width_flex=1, on_click=self.handle_preview_clicked, tooltip="testing")
         Button(parent, "Script",   color_bg=Style.COLOR_TAB_BG,         width_flex=1, on_click=self.handle_script_clicked)
         Button(parent, "Index",    color_bg=Style.COLOR_TAB_BG,         width_flex=1, on_click=self.handle_index_clicked)
         Button(parent, "Analyze",  color_bg=Style.COLOR_BUTTON_ACCENT,  width_flex=1, on_click=self.handle_analyze_clicked)

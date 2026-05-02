@@ -109,17 +109,17 @@ class RecordSelector(_BaseWidget):
         at_start = self.current_page <= 1
         at_end   = self.current_page >= self.last_page()
         if at_start:
-            self.btn_first.set_disabled()
-            self.btn_prev.set_disabled()
+            self.btn_first.enabled=False
+            self.btn_prev.enabled=False
         else:
-            self.btn_first.set_enabled()
-            self.btn_prev.set_enabled()
+            self.btn_first.enabled=True
+            self.btn_prev.enabled=False
         if at_end:
-            self.btn_next.set_disabled()
-            self.btn_last.set_disabled()
+            self.btn_next.enabled=False
+            self.btn_last.enabled=False
         else:
-            self.btn_next.set_enabled()
-            self.btn_last.set_enabled()
+            self.btn_next.enabled=True
+            self.btn_last.enabled=True
 
     # ══════════════════════════════════════════════════════════════
     # CALLBACK

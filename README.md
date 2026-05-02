@@ -107,9 +107,9 @@ Get it running first. Then let IPUI help you split things out as your app grows.
 ---
 
 ### Step 1: First Taste — Run in 30 Seconds
-> With just a few simple line you will have 
+> With just a few simple lines you will have 
 > - 3 Tabs
-> - 3 Different labels
+> - 4 Different labels
 > - Button with modal message
 
 <!-- SCREENSHOT: ipui/assets/images/quick_start.png — the Hello World form with banner, body text, and green button -->
@@ -148,7 +148,7 @@ Three tabs appear immediately:
   - **Widgets**       — show IPUI's helper card with template options
   - **Bouncing Ball** — show IPUI's helper card with template options
 
-> If you get stuck, while it's running press F12 for X-ray debug tools
+> If you get stuck, while it's running press **F12 for X-ray debug tools**
 ---
 
 ### Step 2: Open Widgets — Let IPUI Forge the File
@@ -615,13 +615,13 @@ When a state has a duration, the engine counts down automatically and transition
 
 **API:**
 
-| Method / Property | Description |
-|-------------------|-------------|
+| Method / Property                                     | Description |
+|-------------------------------------------------------|-------------|
 | `ip.state.add(name, delegate, next=None, duration=0)` | Register a state |
-| `ip.state.go(name, duration=None)` | Transition to a state (override duration optional) |
-| `ip.state.next()` | Follow the registered chain to the next state |
-| `ip.state.is_("NAME")` | True if current state matches |
-| `ip.state.current` | Current state name (or None) |
+| `ip.state.go(name, duration=None)`                    | Transition to a state (override duration optional) |
+| `ip.state.next_state()`                               | Follow the registered chain to the next state |
+| `ip.state.is_("NAME")`                                | True if current state matches |
+| `ip.state.current`                                    | Current state name (or None) |
 
 **Branch your logic on the current state:**
 

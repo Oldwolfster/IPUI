@@ -9,15 +9,11 @@ class ShowcaseTemplate(_BaseTab):
 
     #COMMENT OR DELETE THIS TO PREVENT THE COOKBOOK FROM Hijacking the 2nd and 3rd pane.
     def ip_activated(self,ip):
-        breakpoint()
         self.set_pane(1, self.cookbook_menu, weight=.6)
-
         self.set_pane(2, self.cookbook_demo, weight=1.3)
-        print("in ip_activated and setting weights")
-        print(f"TAB_LAYOUT= {self.form.TAB_LAYOUT}")
 
     # PUT YOUR CONTENT HERE
-    def method_1_IPUI_TAB_BUILDER(self,parent):
+    def other(self,parent):
         # self.ensure_cookbook() #Remove this to access your other panes.
         Title   ( parent, "Your Pane", glow=True)
         Body    ( parent, "This is your first pane — the one you defined in TAB_LAYOUT.")

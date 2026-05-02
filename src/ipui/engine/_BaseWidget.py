@@ -76,7 +76,7 @@ class _BaseWidget(MixinScrollH):
                  width_flex=0, height_flex=0, scroll_h=None,
                  pad=None, pad_x=None, pad_y=None, gap=None,  border=None,justify_center=False, justify_spread=False, visible = True,
                  enabled=True, start= None, end = None, font=None, fit_content=False, border_radius=None,hug_parent=False,
-                 text_align=None, wrap=False, color_bg=None, glow=False, data=None, single_select=False,
+                 text_align=None, wrap=False, color_bg=None, glow=False, data=None, single_select=False, tooltip=None,
                  placeholder=None, initial_value=None, on_submit=None, on_change=None, on_click=None, tab_order=None, on_double_click=None,
                  pipeline_key=None, tooltip_class=None, scroll_v=None, scroll_glow=.369, early_load =None):
 
@@ -181,7 +181,8 @@ class _BaseWidget(MixinScrollH):
         self.on_submit          = on_submit
         self.pipeline_key       = pipeline_key
         self.tooltip_class      = tooltip_class
-        if self.scroll_v      and self.height_flex == 0: self.height_flex = 1 # must occur before validate
+        self.private_tooltip    = tooltip
+        if self.scroll_v        and self.height_flex == 0: self.height_flex = 1 # must occur before validate
         self.validate()
         if self.form            : self.form.widget_registry[self.widget_id] = self
         if parent               : parent.children.append(self)
@@ -342,12 +343,6 @@ class _BaseWidget(MixinScrollH):
     def pad_total_y(self):  return self.pad_y * 2     # top + bottom pad combined
 
     @property
-    def frame_size(self) -> int:
-        # Legacy — kept for sites we haven't converted yet (MgrSanity, etc.)
-        # Returns symmetric value; safe while pad_x == pad_y everywhere.
-        return (self.pad_x + self.border) * 2
-
-    @property
     def frame_x(self) -> int:
         return (self.pad_x + self.border) * 2
 
@@ -376,7 +371,8 @@ class _BaseWidget(MixinScrollH):
     @property
     def frame_size(self) -> int:
         """Total inset from edge to content: (pad + border) × 2."""
-        return (self.pad_x + self.border) * 2
+        #return (self.pad_x + self.border) * 2
+        return self.pad_x + self.border + self.pad_y+self.border
 
     @property
     def visible_children(self) -> list[_BaseWidget]:
@@ -388,6 +384,16 @@ class _BaseWidget(MixinScrollH):
         """Children eligible for input dispatch — visible normals plus overlays.
         Layout uses visible_children (excludes overlays). Input uses this (includes them)."""
         return [c for c in self.children if c.visible and (not c.do_not_allocate or c.is_overlay)]
+
+
+    @property
+    def tooltip(self) -> Optional[str]:
+        return self.private_tooltip
+
+    @tooltip.setter
+    def tooltip(self, value: Optional[str]) -> None:
+        self.private_tooltip = value
+
     # ==============================================================
     # LAYOUT
     # ==============================================================
@@ -624,7 +630,7 @@ class _BaseWidget(MixinScrollH):
             if time.time() - self.hover_start_time >= 2.69: return self.tool_tip_huge
         return None
 
-    def find_hovered_short_desc(self) -> Optional[str]:
+    def find_hovered_short_descOLD(self) -> Optional[str]:
         """Walk tree to find the deepest hovered widget with a short description."""
         for child in self.visible_children:
             result = child.find_hovered_short_desc()
@@ -636,6 +642,19 @@ class _BaseWidget(MixinScrollH):
             if time.time() - self.hover_start_time >= .69:
                 desc = self.data.get("short_desc")
                 if desc: return desc
+        return None
+
+    def find_hovered_short_desc(self) -> Optional[str]:
+        """Walk tree to find the deepest hovered widget with a short description."""
+        for child in self.visible_children:
+            result = child.find_hovered_short_desc()
+            if result: return result
+        if not self.is_hovered: return None
+        if time.time() - self.hover_start_time < .69: return None
+        if self.private_tooltip: return self.private_tooltip
+        if self.data and isinstance(self.data, dict):
+            desc = self.data.get("short_desc")
+            if desc: return desc
         return None
 
     # ==============================================================

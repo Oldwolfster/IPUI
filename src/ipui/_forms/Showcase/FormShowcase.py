@@ -3,14 +3,15 @@ from ipui import *
 
 class FormShowcase(_BaseForm):
     #"Test scroll_h": ["left_pane", "center_pane", "right_pane"],
+
+
+
     TAB_LAYOUT = {
+        "testscaf"      : [("tables"  ,.1)  ,("query"   ,.1)    ,("results", 1) ],
         "SQL"           : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
-        "fixscaff": [("tables", .5), ("query", .7),(None,3)],
 
-        #"Test_scroll_h": ["left_pane", "center_pane", "right_pane"],
-        "Scroll ab"      : ["left_pane"      ,"test_here"        ,"right_pane"   ],
+
         "Welcome2"       : ["left_pane22"      ,"proud_features"   ,"detail"       ],
-
         "Tab System"    : ["explain"        ,"showcase"                         ],
         "Widgets"       : ["catalog_grid"   ,"detail"                           ],
         "Widget Tree"   : ["widget_tree"    ,"widget_detail"                    ],
