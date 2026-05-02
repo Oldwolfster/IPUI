@@ -376,6 +376,6 @@ class Breakout(_BaseTab):
     def code(self, parent):
         Title(parent, "Example of Simple State Machine", glow=True)
 
-        card = Card(parent, scrollable=True, height_flex=99)
+        card = Card(parent, scroll_v=True, height_flex=99)
         CodeBox(card,
             data  = __file__,)

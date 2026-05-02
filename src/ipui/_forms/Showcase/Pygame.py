@@ -66,7 +66,7 @@ class PygameBall(_BaseTab):
         Body(parent,"")     #small spacer
         card = Card(parent,height_flex=1)
         Title(card, "The Source", glow=True,text_align=CENTER)
-        card = Card(card, scrollable=True, height_flex=99)
+        card = Card(card, scroll_v=True, height_flex=99)
         CodeBox(card,    data  = __file__)
 
     # ══════════════════════════════════════════════════════════════

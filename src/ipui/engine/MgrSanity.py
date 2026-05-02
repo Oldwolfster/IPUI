@@ -67,7 +67,7 @@ class MgrSanity:
         """Try each known root cause. First match fires EZ.err and never returns."""
         ctx = cls.build_context                     (node, axis)
         cls.check_cause_flex_starved_by_sibling     (node, ctx)
-        cls.check_cause_scrollable_no_flex_ancestor (node, ctx)
+        cls.check_cause_scroll_v_no_flex_ancestor (node, ctx)
         cls.check_cause_flex_no_flex_ancestor       (node, ctx)
         cls.check_cause_all_children_flex           (node, ctx)  # NEW
         cls.check_cause_content_siblings_overflow   (node, ctx)
@@ -156,13 +156,13 @@ class MgrSanity:
     # ══════════════════════════════════════════════════════════════
     # TRIGGER Example: 
     #   wrapper = CardCol(parent)                    # no height_flex — content-sizes
-    #   scroller = CardCol(wrapper, scrollable=True) # scrollable collapses min-height
+    #   scroller = CardCol(wrapper, scroll_v=True) # scroll_v collapses min-height
     #   Title(scroller, "I disappear")
     # FIX: Add height_flex=1 to the wrapper.
 
     @classmethod
-    def check_cause_scrollable_no_flex_ancestor(cls, node, ctx):
-        if not node.scrollable:                     return
+    def check_cause_scroll_v_no_flex_ancestor(cls, node, ctx):
+        if not node.scroll_v:                     return
         flex_attr = ctx["flex_attr"]
         blocker   = cls.find_non_flex_ancestor(node, flex_attr)
         if not blocker:                             return
@@ -170,10 +170,10 @@ class MgrSanity:
         cls.fire(ctx,
             f"ROOT CAUSE: Scrollable container under non-flex ancestor ({ctx['axis']}).\n"
             f"\n"
-            f"{ctx['label']} is scrollable, which collapses its minimum\n"
+            f"{ctx['label']} is scroll_v, which collapses its minimum\n"
             f"{ctx['axis']} to zero. But its ancestor {blocker_label} has no\n"
             f"{flex_attr}, so it content-sizes to zero and collapses\n"
-            f"the scrollable child.\n"
+            f"the scroll_v child.\n"
             f"\n"
             f"FIX: Add {flex_attr}=1 to {blocker_label}.\n"
             f"\n"
@@ -247,8 +247,8 @@ class MgrSanity:
     #       CardCol(parent)  # big content
     #       CardCol(parent)  # big content
     #       CardCol(parent)  # big content
-    #       Card(parent, scrollable=True, height_flex=1)  # gets nothing — siblings ate it all
-    # FIX: Wrap the content siblings in a scrollable container, or reduce content.
+    #       Card(parent, scroll_v=True, height_flex=1)  # gets nothing — siblings ate it all
+    # FIX: Wrap the content siblings in a scroll_v container, or reduce content.
 
     # MgrSanity.py method: check_cause_content_siblings_overflow  Update: check leftover vs node frame
     @classmethod
@@ -276,7 +276,7 @@ class MgrSanity:
                  f"which leaves only {available}px — not enough to display anything.\n"
                  f"\n"
                  f"FIX: Reduce the content above, or wrap the sibling content\n"
-                 f"in a scrollable container so it doesn't consume all the space."
+                 f"in a scroll_v container so it doesn't consume all the space."
                  )
 
     # ══════════════════════════════════════════════════════════════
@@ -292,7 +292,7 @@ class MgrSanity:
             f"Axis: {ctx['axis']}\n"
             f"Widget: {ctx['label']}\n"
             f"Type: {type(node).__name__}\n"
-            f"{flex_attr}: {getattr(node, flex_attr, 0)}, scrollable: {node.scrollable}\n"
+            f"{flex_attr}: {getattr(node, flex_attr, 0)}, scroll_v: {node.scroll_v}\n"
             f"Parent: {cls.widget_label(node.parent) if node.parent else 'None'}\n"
             f"\n"
             f"This helps us add a new root cause classifier."

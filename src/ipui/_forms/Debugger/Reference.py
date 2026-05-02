@@ -62,7 +62,7 @@ class Reference(_BaseTab):
         Title(parent, "Widget Catalog", glow=True)
         Body(parent, f"{len(self.catalog.entries)} widgets discovered at runtime")
 
-        card = CardCol(parent, height_flex=1, scrollable=True)
+        card = CardCol(parent, height_flex=1, scroll_v=True)
         grid = PowerGrid(card, name="grid_ref_widgets")
         grid.set_data(self.catalog.as_grid_data())
         grid.set_column_max("Description", 500)
@@ -90,7 +90,7 @@ class Reference(_BaseTab):
 
     def pane_md_section(self, parent, title):
         from ipui.widgets.MarkdownBody import MarkdownBody
-        card = CardCol(parent, height_flex=1, scrollable=True)
+        card = CardCol(parent, height_flex=1, scroll_v=True)
         MarkdownBody(card, data=self.md_file_for_mode(), text=title)
 
     # ══════════════════════════════════════════════════════════════
@@ -134,7 +134,7 @@ class Reference(_BaseTab):
             Heading(sub, "Example:")
             Body(sub, entry["example"])
 
-        sub = CardCol(parent, height_flex=1, scrollable=True)
+        sub = CardCol(parent, height_flex=1, scroll_v=True)
         Heading(sub, "Source:")
         CodeBox(sub, data=entry.get("source", ""))
 

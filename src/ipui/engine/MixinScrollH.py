@@ -8,6 +8,18 @@ from ipui import Style
 class MixinScrollH:
     """
     Horizontal scroll capability via mixin.
+
+    TWO CONSUMERS of effective_scroll_offset_h() — both required:
+      1. translate_children_h() — for container widgets that hold real child widgets
+                                   (e.g. Col with scroll_v=True, scroll_h=True).
+                                   Shifts each child's rect.x by the offset.
+      2. _BaseWidget.draw()      — for surface-blitter widgets that render content
+                                   into self.my_surface (e.g. GridHeader, GridBody).
+                                   Shifts the my_surface blit position by the offset.
+
+    A widget can either own its scroll_h state OR follow another widget's via
+    scroll_h_link(). The effective_scroll_offset_h() helper resolves which.
+
     Bar lives at the bottom of the widget, inside the border, in the padding zone.
     Children translate on draw — layout is never re-run.
     """
@@ -57,20 +69,25 @@ class MixinScrollH:
         ratio     = track_w / content_w
         return max(20, int(track_w * ratio))
 
+
+
     def translate_children_h(self):
-
-        if not self.scroll_h: return
-
-        if self.scroll_offset_h == 0: return
-        print(f"TRANSLATE called on {type(self).__name__}, offset={self.scroll_offset_h}")
+        offset = self.effective_scroll_offset_h()
+        if offset == 0: return
         for child in self.visible_children:
-            if child.rect: child.rect.x -= self.scroll_offset_h
+            if child.rect: child.rect.x -= offset
 
     def restore_children_h(self):
-        if not self.scroll_h: return
-        if self.scroll_offset_h == 0: return
+        offset = self.effective_scroll_offset_h()
+        if offset == 0: return
         for child in self.visible_children:
-            if child.rect: child.rect.x += self.scroll_offset_h
+            if child.rect: child.rect.x += offset
+
+    def effective_scroll_offset_h(self):
+        source = getattr(self, "scroll_h_source", None)
+        if source: return source.scroll_offset_h
+        if getattr(self, "scroll_h", False): return self.scroll_offset_h
+        return 0
 
     def shift_widget_h(self, widget, dx):
         if widget.rect: widget.rect.x += dx
@@ -108,4 +125,13 @@ class MixinScrollH:
         widget.scroll_h_source = self
 
 
-        ############### Power of attorney approach
+        ############### This is the vertical portion
+
+
+
+
+
+    def effective_scroll_offset_v(self):
+        if getattr(self, "scroll_v", False):
+            return self.scroll_offset
+        return 0

@@ -155,7 +155,7 @@ class EZ_Pane(_BaseTab):
 
     def card_saved(self, parent) -> None:
         """Display saved architecture configurations."""
-        sub   = CardCol(parent, height_flex=1, scrollable=True)
+        sub   = CardCol(parent, height_flex=1, scroll_v=True)
         Heading(sub, "Saved Architectures:")
         saved = self.form.pipeline_read("NeuronLayersList") or []
         text  = self.format_saved_list(saved)
@@ -208,7 +208,7 @@ class EZ_Pane(_BaseTab):
         Title(header, "Percy's Story", glow=True)
         btn = Button(header, "Back", color_bg=Style.COLOR_TAB_BG)
         btn.on_click_me(self.swap_pane(0, self.info))
-        sub = CardCol(parent, height_flex=1, scrollable=True)
+        sub = CardCol(parent, height_flex=1, scroll_v=True)
         Body(sub, PERCY_STORY)
 
     # ══════════════════════════════════════════════════════════════

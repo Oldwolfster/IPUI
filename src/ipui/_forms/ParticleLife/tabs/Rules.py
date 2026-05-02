@@ -4,7 +4,7 @@ from ipui import *
 class Rules(_BaseTab):
 
     def world_rules(self, parent):
-        root = CardCol(parent, scrollable=True)
+        root = CardCol(parent, scroll_v=True)
 
         Heading(root, "World: Space & Boundaries", glow=True)
 
@@ -31,7 +31,7 @@ class Rules(_BaseTab):
 
 
     def interaction_rules(self, parent):
-        root = CardCol(parent, scrollable=True)
+        root = CardCol(parent, scroll_v=True)
 
         Heading(root, "Interactions: Influence Zones", glow=True)
 
@@ -54,7 +54,7 @@ class Rules(_BaseTab):
 
 
     def dynamics_rules(self, parent):
-        root = CardCol(parent, scrollable=True)
+        root = CardCol(parent, scroll_v=True)
 
         Heading(root, "Dynamics: How Time Advances", glow=True)
 

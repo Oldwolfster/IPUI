@@ -1,4 +1,5 @@
 # IPUI - Idiot Proof UI - Because we've all spent 3 hours debugging a button!
+**Version: 0.1.0 Rev 048**
 
 A lightweight, opinionated Python/Pygame UI framework that makes building complex tabbed interfaces *ridiculously* simple.
 
@@ -64,12 +65,12 @@ pip install ipui
 - 📱 **Resolution Independent:** UI scales automatically to physical screen height, so it stays usable on an old laptop or a 4K monitor.
 - 📐 **Declarative Layout:** Simple, flexible syntax that handles the math so you can focus on the logic.
 - 🧩 **Built to Extend:** Custom widgets get layout, events, and styling automatically. Standard widgets take 5–10 LOC; even tools like a network diagram widget come in under 150 LOC.
-- 📜 **One-Touch Scrolling:** Make any Card scrollable with a single parameter—no complex viewport setup required. Scrollbars are draggable and styled automatically.
+- 📜 **One-Touch Scrolling:** Make any Card scroll_v with a single parameter—no complex viewport setup required. Scrollbars are draggable and styled automatically.
 - 🔗 **Construction IS Attachment:** No floating widgets or `add()` calls. If you build it inside a container, it's attached automatically.
 - 🔄 **Multiple Update Styles:** Use DAG-based reactivity, pipeline-driven synchronization, or direct widget access—whichever fits the job best.
 - ⛓️ **Data Pipeline:** Bind widgets to a Pipeline Key and let IPUI propagate updates automatically. Derives stay in sync with zero manual update code.
 - 🎮 **Pygame Lifecycle Hooks:** `ip_think`, `ip_draw`, and `ip_draw_hud` give you full access to the game loop without fighting the framework.
-- 💡 **Multi-Tier Tooltips:** Choose between standard hover tips or "Super Tooltips"—pinnable, scrollable windows capable of displaying deep technical data.
+- 💡 **Multi-Tier Tooltips:** Choose between standard hover tips or "Super Tooltips"—pinnable, scroll_v windows capable of displaying deep technical data.
 - 🗃️ **Automatic Widget Registry:** When DAG or pipeline isn't the right fit, named widgets stay easy to reach across tabs and panes—no globals, no reference plumbing required.
 - 🐞 **Pro Debug Mode:** Includes a live Widget Tree and layout overlays to make positioning issues easy to diagnose.
 - 💻 **Beautiful Code Boxes:** Display source code by passing a string or a file path; IPUI handles the formatting.
@@ -210,35 +211,48 @@ docs()
 
 ## Core Concepts
 
-### How Tab Discovery Works
+### The Blueprint: TAB_LAYOUT
 
-The `TAB_LAYOUT` dictionary is the blueprint for your application.
-* **The Keys** define the names of your tabs.
-* **The Values** are lists that divide that tab into one or more **Panes**.
-* You can size panes by including a flex number. (See Showcase for examples. run docs())
+The TAB_LAYOUT dictionary is the core blueprint for your IPUI application. It defines your tabs and how their space is divided.
 
 ```python
 TAB_LAYOUT = {
+    #Name of Tabs    Panes dividing up each tab. 
     "Hello World"   :["welcome"     ],  # Tab 'Hello World'   with one pane 'welcome'
     "Widgets"       :["demo","demo2"],  # Tab 'Widgets'       with two panes.
     "Bouncing Ball" :["arena", None ],  # Tab 'Bouncing Ball' with one pane 'arena' and a blank Pygame area
 }
 ```
-(Note: A pane value of None creates a blank region for you to draw directly to with Pygame!)
+(Note: A pane value of None creates a raw, blank region for direct Pygame drawing!)
 
-### What Panes Do
+### Panes Have Exactly Two Jobs
 
-Each pane name in your TAB_LAYOUT maps to a builder method with the exact same name.
-**IPUI is highly flexible** and will look for that builder method in two places:
+**Divide** the tab into visual regions (using optional flex numbers for sizing).
+**Act as method names** IPUI automatically looks for a method matching the pane's name to populate that specific region.
 
-1. **The Main Form File** (Fastest)
-Just like in SmokeTest.py, you can define the builder method directly inside your _BaseForm class. Perfect for quick prototypes.
+Where IPUI Looks for Pane Methods
+**IPUI is highly flexible** and will look for these methods in two places:
 
-2. **A Dedicated Tab File** (Most Scalable)
-When a tab grows, you can move it to its own file. If you have a tab named "Hey There", IPUI will scan your project folder (and subfolders) for a file named Hey_There.py and HeyThere.py.
-Inside that file, IPUI looks for any class inheriting from _BaseTab. The actual class name doesn't matter!
+1. **The Main Form File (The Quick & Dirty Prototype)**
+What you just did in SmokeTest.py 
 
-> This process means you don't have to use import statements for the tab files (and keep them synced as you tweak your naming)  
+2. **Dedicated Tab Files**
+When you are building a real application, you want modularity. IPUI uses a powerful, zero-friction file-linking system to manage this automatically.
+
+If your tab is named "Hey There", IPUI will scan your project tree for a file named Hey_There.py (or HeyThere.py). Inside that file, it just looks for a class inheriting from _BaseTab. **The actual class name does not matter.**
+
+This creates a clean, predictable hierarchy:
+Main Form ➔ Tab File (Hey_There.py) ➔ Pane Methods (def welcome(self):)
+
+### Why we link by File Name instead of Class Imports:
+
+This unconventional approach solves three major UI development headaches:
+- Visual Project Structure: You can find tab logic by looking at your file explorer tree. There is no need to open files just to hunt down class names.
+- **NO IMPORTS NEEDED** not needing them is nice.  Not needing to maintain them as you revise content is even nicer.
+- **NO CIRCULAR IMPORTS**  No extra imports.  No extra risk of this nasty little error. 
+
+And it's really easy for IPUI to auto-scaffold the small bit of boilerplate for the 'skeleton'  of what you setup in Tab_Layout (it isn't much - but it's details you don't need to get correct)  
+
 
 ```python
 # Widgets.py
@@ -269,10 +283,9 @@ Don't skip this! In a one-file setup, this standard Python guard prevents accide
 
 #### Where Your Logic Lives
 
-A `_BaseTab` (or tabless `_BaseForm`) doesn't have an `__init__`. **You don't write one** — IPUI will guide you if you try with a 'Houston Message' if you try.  This is on purpose: 
+A `_BaseTab` (or tabless `_BaseForm`) doesn't have an `__init__`. **You don't write one**  This is on purpose: 
 
-> The framework takes the burden of ensuring all superclasses get the parameters you need so you don't have to.
-
+> The framework takes the burden of ensuring all superclasses get the correct parameters so you don't have to.
 
 So where does *your* code go? Two places, and the split is the whole mental model:
 
@@ -286,7 +299,7 @@ class BouncingBall(_BaseTab):
 
     def arena(self, parent):                        # ← pane method: builds the UI
         Title(parent, text="Bouncing Ball")         # Print Title
-        card=Card(parent, scrollable=True)          # Create a card for codebox
+        card=Card(parent, scroll_v=True)            # Create a card for codebox
         CodeBox(card,data  =__file__)               # Put Codebox in the card
 
     def ip_setup(self, ip):                         # ← hook: runs once, initializes state
@@ -315,7 +328,7 @@ If it lays out widgets, it goes in a pane method. If it ticks, decides, animates
 
 ---
 
-### The Philosophy
+### The IPUI WAY
 
 IPUI makes the right path the easy path.
 
@@ -829,7 +842,7 @@ All text widgets support `glow=True` (molten-orange forge effect) and `text_alig
 | `Row`     | Horizontal | None            | `Row(parent, justify_spread=True)`       |
 | `Col`     | Vertical   | None            | `Col(parent)`                            |
 | `CardRow` | Horizontal | Beveled, filled | `CardRow(parent, width_flex=1)`       |
-| `CardCol` | Vertical   | Beveled, filled | `CardCol(parent, scrollable=True)`       |
+| `CardCol` | Vertical   | Beveled, filled | `CardCol(parent, scroll_v=True)`       |
 | `Card`    | Vertical   | Beveled, filled | `Card(parent, height_flex=1)`         |
 
 `Row`/`Col` are invisible structure. `CardRow`/`CardCol`/`Card` have a background and beveled edges.
@@ -927,7 +940,7 @@ Unset (or `0`) means the widget takes its natural size. No explicit pixel math r
 
 **Scrollable containers:**
 ```python
-CardCol(parent, scrollable=True, height_flex=1)
+CardCol(parent, scroll_v=True, height_flex=1)
 ```
 Scrollable containers clip and scroll their children automatically. Scrollbars support both mouse wheel and click-and-drag.
 
@@ -1422,7 +1435,7 @@ All widgets accept these parameters:
 | `early_load`     | bool     | None         | Pre-build at startup instead of on-demand     |
 | `pipeline_key`   | str      | None         | Pipeline read/write key                       |
 | `tooltip_class`  | class    | None         | Custom tooltip class                          |
-| `scrollable`     | bool     | False        | Enable scrolling for this container           |
+| `scroll_v`     | bool     | False        | Enable scrolling for this container           |
 | `scroll_glow`    | float    | 0.369        | Scrollbar bevel intensity (0 = flat)          |
 | `start`          | str      | None         | CodeBox: start-of-range marker                |
 | `end`            | str      | None         | CodeBox: end-of-range marker                  |
@@ -1647,7 +1660,7 @@ IPUI doesn't classify widgets this way. There are no "container" or "leaf" types
 
 The analogy is security entitlement management: never grant permissions directly to a user. Instead, grant permissions to groups, and add users to groups. In IPUI: never hard-code capabilities into specific widget subclasses. Instead, put behaviors on `_BaseWidget`, and let widgets opt in through attributes.
 
-Scrolling is a perfect example. There is no `ScrollableContainer` class. There is no `ScrollView`, `ScrollPane`, or `ScrollArea`. There's `scrollable=True` — a parameter on any widget. The scrolling behavior lives once, on `_BaseWidget`, tested once, debugged once. Any widget that sets the flag gets it for free.
+Scrolling is a perfect example. There is no `ScrollableContainer` class. There is no `ScrollView`, `ScrollPane`, or `ScrollArea`. There's `scroll_v=True` — a parameter on any widget. The scrolling behavior lives once, on `_BaseWidget`, tested once, debugged once. Any widget that sets the flag gets it for free.
 
 The effect is easy to see in the codebase.  Look at `CardCol` — the most-used container in IPUI:
 

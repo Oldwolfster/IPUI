@@ -2,11 +2,15 @@ from ipui._forms.ParticleLife.Form_ParticleLife import Form_ParticleLife
 from ipui import *
 
 class FormShowcase(_BaseForm):
-
+    #"Test scroll_h": ["left_pane", "center_pane", "right_pane"],
     TAB_LAYOUT = {
+        "SQL"           : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
+        "fixscaff": [("tables", .5), ("query", .7),(None,3)],
+
+        #"Test_scroll_h": ["left_pane", "center_pane", "right_pane"],
         "Scroll ab"      : ["left_pane"      ,"test_here"        ,"right_pane"   ],
         "Welcome2"       : ["left_pane22"      ,"proud_features"   ,"detail"       ],
-        "SQL"           : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
+
         "Tab System"    : ["explain"        ,"showcase"                         ],
         "Widgets"       : ["catalog_grid"   ,"detail"                           ],
         "Widget Tree"   : ["widget_tree"    ,"widget_detail"                    ],

@@ -90,7 +90,7 @@ class IPUI:
         form = cls.active()
         if form: form.render(surface)
 
-    @classmethod
-    def update(cls):
-        form = cls.active()
-        if form: form.update()
+    #@classmethod
+    #def update(cls):
+    #    form = cls.active()
+    #    if form: form.update()

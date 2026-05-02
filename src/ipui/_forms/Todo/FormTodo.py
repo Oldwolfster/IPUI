@@ -14,7 +14,7 @@ class TodoApp(_BaseForm):
         main_row = Row(self, width_flex=1, height_flex=1)
 
         left = CardCol(main_row, width_flex=2, height_flex=1)
-        right = CardCol(main_row, width_flex=3, height_flex=1, scrollable=True)
+        right = CardCol(main_row, width_flex=3, height_flex=1, scroll_v=True)
         self.task_list = right
 
         Title(left, "Add Task")

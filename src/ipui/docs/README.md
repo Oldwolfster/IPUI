@@ -53,12 +53,12 @@ pip install ipui
 - 📱 **Resolution Independent:** UI scales automatically to physical screen height, so it stays usable on an old laptop or a 4K monitor.
 - 📐 **Declarative Layout:** Simple, flexible syntax that handles the math so you can focus on the logic.
 - 🧩 **Built to Extend:** Custom widgets get layout, events, and styling automatically. Standard widgets take 5–10 LOC; even tools like a network diagram widget come in under 150 LOC.
-- 📜 **One-Touch Scrolling:** Make any Card scrollable with a single parameter—no complex viewport setup required. Scrollbars are draggable and styled automatically.
+- 📜 **One-Touch Scrolling:** Make any Card scroll_v with a single parameter—no complex viewport setup required. Scrollbars are draggable and styled automatically.
 - 🔗 **Construction IS Attachment:** No floating widgets or `add()` calls. If you build it inside a container, it's attached automatically.
 - 🔄 **Multiple Update Styles:** Use DAG-based reactivity, pipeline-driven synchronization, or direct widget access—whichever fits the job best.
 - ⛓️ **Data Pipeline:** Bind widgets to a Pipeline Key and let IPUI propagate updates automatically. Derives stay in sync with zero manual update code.
 - 🎮 **Pygame Lifecycle Hooks:** `ip_think`, `ip_draw`, and `ip_draw_hud` give you full access to the game loop without fighting the framework.
-- 💡 **Multi-Tier Tooltips:** Choose between standard hover tips or "Super Tooltips"—pinnable, scrollable windows capable of displaying deep technical data.
+- 💡 **Multi-Tier Tooltips:** Choose between standard hover tips or "Super Tooltips"—pinnable, scroll_v windows capable of displaying deep technical data.
 - 🗃️ **Automatic Widget Registry:** When DAG or pipeline isn't the right fit, named widgets stay easy to reach across tabs and panes—no globals, no reference plumbing required.
 - 🐞 **Pro Debug Mode:** Includes a live Widget Tree and layout overlays to make positioning issues easy to diagnose.
 - 💻 **Beautiful Code Boxes:** Display source code by passing a string or a file path; IPUI handles the formatting.
@@ -233,7 +233,7 @@ class BouncingBall(_BaseTab):
 
     def arena(self, parent):                        # ← pane method: builds the UI
         Title(parent, text="Bouncing Ball")         # Print Title
-        card=Card(parent, scrollable=True)          # Create a card for codebox
+        card=Card(parent, scroll_v=True)          # Create a card for codebox
         CodeBox(card,data  =__file__)               # Put Codebox in the card
 
     def ip_setup(self, ip):                         # ← hook: runs once, initializes state
@@ -746,7 +746,7 @@ All text widgets support `glow=True` (molten-orange forge effect) and `text_alig
 | `Row`     | Horizontal | None            | `Row(parent, justify_spread=True)`       |
 | `Col`     | Vertical   | None            | `Col(parent)`                            |
 | `CardRow` | Horizontal | Beveled, filled | `CardRow(parent, width_flex=1)`       |
-| `CardCol` | Vertical   | Beveled, filled | `CardCol(parent, scrollable=True)`       |
+| `CardCol` | Vertical   | Beveled, filled | `CardCol(parent, scroll_v=True)`       |
 | `Card`    | Vertical   | Beveled, filled | `Card(parent, height_flex=1)`         |
 
 `Row`/`Col` are invisible structure. `CardRow`/`CardCol`/`Card` have a background and beveled edges.
@@ -843,7 +843,7 @@ Unset (or `0`) means the widget takes its natural size. No explicit pixel math r
 
 **Scrollable containers:**
 ```python
-CardCol(parent, scrollable=True, height_flex=1)
+CardCol(parent, scroll_v=True, height_flex=1)
 ```
 Scrollable containers clip and scroll their children automatically. Scrollbars support both mouse wheel and click-and-drag.
 
@@ -1321,7 +1321,7 @@ All widgets accept these parameters:
 | `early_load`     | bool     | None         | Pre-build at startup instead of on-demand     |
 | `pipeline_key`   | str      | None         | Pipeline read/write key                       |
 | `tooltip_class`  | class    | None         | Custom tooltip class                          |
-| `scrollable`     | bool     | False        | Enable scrolling for this container           |
+| `scroll_v`     | bool     | False        | Enable scrolling for this container           |
 | `scroll_glow`    | float    | 0.369        | Scrollbar bevel intensity (0 = flat)          |
 | `start`          | str      | None         | CodeBox: start-of-range marker                |
 | `end`            | str      | None         | CodeBox: end-of-range marker                  |

@@ -6,7 +6,7 @@ class BouncingBall(_BaseTab):
 
     def arena(self, parent):                        # ← pane method: builds the UI
         Title(parent, text="Bouncing Ball")         # Print Title
-        card=Card(parent, scrollable=True)          # Create a card for codebox
+        card=Card(parent, scroll_v=True)          # Create a card for codebox
         CodeBox(card,data  =__file__)               # Put Codebox in the card
 
     def ip_setup(self, ip):                         # ← hook: runs once, initializes state

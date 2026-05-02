@@ -21,7 +21,7 @@ class Designer(_BaseTab):
 
     def tab_map(self, parent):
         Title(parent, "Tab Map", glow=True)
-        self.map_card = CardCol(parent, height_flex=1, scrollable=True)
+        self.map_card = CardCol(parent, height_flex=1, scroll_v=True)
         self.rebuild_tab_map()
 
         card = CardCol(parent)                                          # NEW
@@ -115,7 +115,7 @@ class Designer(_BaseTab):
 
     def toolbox(self, parent):
         Title(parent, "Tools", glow=True)
-        card = CardCol(parent, scrollable=True, height_flex=1)
+        card = CardCol(parent, scroll_v=True, height_flex=1)
         Heading(card, "Widgets", glow=True)
         palette = [
             "Title", "Heading", "Body",

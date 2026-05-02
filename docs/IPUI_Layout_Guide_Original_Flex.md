@@ -6,7 +6,7 @@ You tell IPUI **what** you want. IPUI figures out **where** it goes.
 
 - Set `width_flex` or `height_flex` to request proportional space.  These default to zero.
 - Set the same flex value on siblings to size them identically — equal weight = equal share.
-- Make a container `scrollable=True` and overflow is handled for you.
+- Make a container `scroll_v=True` and overflow is handled for you.
 - That's it. No `LayoutParams`, no `BoxConstraints`, no `MediaQuery`. Just build.
 
 ---
@@ -95,10 +95,10 @@ Result: two buttons hugging the edges, empty space in between.
 
 ## Scrollable Containers
 
-Add `scrollable=True` to any CardCol and overflow is handled automatically.
+Add `scroll_v=True` to any CardCol and overflow is handled automatically.
 
 ```python
-card = CardCol(parent, scrollable=True)
+card = CardCol(parent, scroll_v=True)
 for i in range(100):
     Body(card, f"Item {i}")
 ```
@@ -107,11 +107,11 @@ That's it. You get a scrollbar, mouse wheel support, and proper clipping. No vie
 
 **How it works under the hood:**
 
-A scrollable container tells the flex solver "I don't need much height — just give me whatever flex says." It stores its full content height separately for scroll math. This means a scrollable card with 1000 items doesn't hog all the vertical space from its siblings.
+A scroll_v container tells the flex solver "I don't need much height — just give me whatever flex says." It stores its full content height separately for scroll math. This means a scroll_v card with 1000 items doesn't hog all the vertical space from its siblings.
 
-You don't need to set `height_flex` — `scrollable=True` implies it. One parameter, done.
+You don't need to set `height_flex` — `scroll_v=True` implies it. One parameter, done.
 
-**One rule:** Don't put `height_flex` on children inside a scrollable container. Flex expands to fill available space; scrollable needs content *bigger* than the viewport. They're contradictory — IPUI will tell you if you try.
+**One rule:** Don't put `height_flex` on children inside a scroll_v container. Flex expands to fill available space; scroll_v needs content *bigger* than the viewport. They're contradictory — IPUI will tell you if you try.
 
 ---
 
@@ -151,7 +151,7 @@ The biggest violator gets locked first because it's the one that *can't* flex an
 | Equal width panes | `width_flex=1` on each |
 | 25/75 split | `width_flex=1` and `width_flex=3` |
 | Pin to bottom | `Spacer(card, height_flex=1)` above it |
-| Scrollable list | `CardCol(parent, scrollable=True)` |
+| Scrollable list | `CardCol(parent, scroll_v=True)` |
 | Centered content | `Row(parent, justify_center=True)` |
 | Spread to edges | `Row(parent, justify_spread=True)` |
 | Fixed-size widget | Don't set `width_flex` or `height_flex` |
@@ -178,7 +178,7 @@ CardCol(row, width_flex=3)                     # main area
 **Scrollable List with Fixed Header:**
 ```python
 Title(parent, "Items")                          # fixed at top
-card = CardCol(parent, scrollable=True)         # scrolls
+card = CardCol(parent, scroll_v=True)         # scrolls
 for item in items:
     Body(card, item)
 ```

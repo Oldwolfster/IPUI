@@ -107,11 +107,11 @@ class EZ:
 
     @staticmethod
     def warn_scroll(widget):
-        if widget.scrollable:
+        if widget.scroll_v:
             name = type(widget).__name__
             EZ.err(
-                f"{name} doesn't support scrollable=True directly.\n"
-                f"Wrap it in a scrollable Card instead:\n"
-                f"  card = Card(parent, scrollable=True)\n"
+                f"{name} doesn't support scroll_v=True directly.\n"
+                f"Wrap it in a scroll_v Card instead:\n"
+                f"  card = Card(parent, scroll_v=True)\n"
                 f"  {name}(card, ...)"
             )

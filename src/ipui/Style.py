@@ -88,7 +88,7 @@ class Style:
     TOKEN_GAP                 = TOKEN_MULTIPLIER * 3
     TOKEN_GAP_TIGHT           = TOKEN_MULTIPLIER * 2
     TOKEN_BORDER              = TOKEN_MULTIPLIER * 1
-    TOKEN_SCROLLBAR           = 20
+    TOKEN_SCROLLBAR           = 12
     TOKEN_CORNER_RADIUS       = 4
 
     # Font proportions (relative to screen height)

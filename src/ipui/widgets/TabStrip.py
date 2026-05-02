@@ -83,11 +83,97 @@ class TabStrip(_BaseWidget):
             btn.on_click = lambda name=tab_name: self.switch_tab(name)
 
 
-    def prepare(self, name):
+    def prepare_OOOOOOOOOOOLLLLLLLLLLLLLLLDDDDDDDDDDDDD(self, name):
         """Resolve, cache, and initialize a tab's _BaseTab on demand."""
         if name not in self.tab_cache:  self.resolve_tab(name)
         return self.tab_cache[name]
 
+    def prepare(self, name):
+        """Resolve, cache, and initialize a tab's owner on demand.
+        Owner is either the form itself (one-pager pattern) or a _BaseTab instance
+        loaded from an external file. Mirrors the form-first-then-file logic
+        already used during normal tab switching by resolve_tab_or_form."""
+        if name in self.tab_cache:                              return self.tab_cache[name]
+
+        entries = self.tab_layout.get(name, [])
+        if not entries:                                         self.err_tab_not_in_layout(name)
+
+        first_builder = entries[0][0]
+        if isinstance(first_builder, str) and "." not in first_builder:
+            method_name = first_builder.replace(" ", "_")
+            if hasattr(self.form, method_name):                 self.err_tab_one_pager(name, method_name)
+            self.resolve_tab_or_form(name, first_builder)
+        else:
+            self.resolve_tab(name)
+
+        if name not in self.tab_cache:                          self.err_tab_unresolvable(name, first_builder)
+        return self.tab_cache[name]
+
+    def err_tab_one_pager(self, name, method_name):
+        """tab_early_load needs a tab file — gentle nudge to migrate from the one-pager smoke-test shape."""
+        file_name = name.replace(' ', '')
+        EZ.err(
+            f"To use tab_early_load, create a tab file for '{name}'.\n"
+            f"\n"
+            f"  1) Create {file_name}.py in your form's directory:\n"
+            f"\n"
+            f"        from ipui import *\n"
+            f"\n"
+            f"        class {file_name}(_BaseTab):\n"
+            f"            def {method_name}(self, parent):\n"
+            f"                # paste the body of your form's {method_name}() here\n"
+            f"                ...\n"
+            f"\n"
+            f"  2) Remove the {method_name}() method from your form.\n"
+            f"\n"
+            f"  3) tab_early_load = ['{name}'] now works as expected.\n"
+            f"\n"
+            f"TIP: Or just remove '{name}' from tab_early_load — early load is\n"
+            f"TIP: an optimization, not a requirement. The one-pager keeps working."
+        )
+    def err_tab_not_in_layout(self, name):
+        """tab_early_load names a tab that isn't in TAB_LAYOUT."""
+        EZ.err(
+            f"tab_early_load contains '{name}', but TAB_LAYOUT has no '{name}' tab.\n"
+            f"\n"
+            f"ROOT CAUSE: Every name in tab_early_load must match a key in TAB_LAYOUT.\n"
+            f"            Looks like a typo or a leftover entry.\n"
+            f"\n"
+            f"You wrote:     tab_early_load = [..., '{name}', ...]\n"
+            f"Did you mean:  one of these — {list(self.tab_layout.keys())}\n"
+            f"\n"
+            f"Fixes:\n"
+            f"  1) Remove '{name}' from tab_early_load.\n"
+            f"  2) Add '{name}' as a key in TAB_LAYOUT."
+        )
+
+
+
+    def err_tab_unresolvable(self, name, first_builder):
+        """tab_early_load names a tab whose builder lives nowhere — not on the form, not in a file."""
+        method_name = first_builder.replace(" ", "_") if isinstance(first_builder, str) else "<builder>"
+        form_dir = Path(inspect.getfile(self.form.__class__)).parent
+        expected = form_dir / (name.replace(" ", "") + ".py")
+        EZ.err(
+            f"tab_early_load contains '{name}', but it can't be found.\n"
+            f"\n"
+            f"ROOT CAUSE: Early-loaded tabs need either:\n"
+            f"            (a) a method on the form that builds the pane(s), OR\n"
+            f"            (b) an external {name.replace(' ', '')}.py file with a _BaseTab subclass.\n"
+            f"\n"
+            f"The '{name}' tab's first pane is built by '{method_name}'. IPUI checked\n"
+            f"the form (no method named '{method_name}') and the form's directory\n"
+            f"(no file at {expected}) — neither exists.\n"
+            f"\n"
+            f"Fixes:\n"
+            f"  1) Remove '{name}' from tab_early_load.\n"
+            f"\n"
+            f"  2) Add a tab builder method to the form. Example:\n"
+            f"        def {method_name}(self, parent):\n"
+            f"            # build the '{name}' tab here\n"
+            f"\n"
+            f"  3) Create {name.replace(' ', '')}.py with a _BaseTab subclass."
+        )
     # ============================================================
     # Switching tabs
     # ============================================================

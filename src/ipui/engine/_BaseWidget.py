@@ -73,12 +73,12 @@ class _BaseWidget(MixinScrollH):
 
 
     def __init__(self, parent=None, text=None, name=None,
-                 width_flex=0, height_flex=0, scroll_h=False,
+                 width_flex=0, height_flex=0, scroll_h=None,
                  pad=None, pad_x=None, pad_y=None, gap=None,  border=None,justify_center=False, justify_spread=False, visible = True,
                  enabled=True, start= None, end = None, font=None, fit_content=False, border_radius=None,hug_parent=False,
                  text_align=None, wrap=False, color_bg=None, glow=False, data=None, single_select=False,
                  placeholder=None, initial_value=None, on_submit=None, on_change=None, on_click=None, tab_order=None, on_double_click=None,
-                 pipeline_key=None, tooltip_class=None, scrollable=False, scroll_glow=.369, early_load =None):
+                 pipeline_key=None, tooltip_class=None, scroll_v=None, scroll_glow=.369, early_load =None):
 
         self.preflight_check(parent, text_align, width_flex, height_flex)
 
@@ -98,8 +98,10 @@ class _BaseWidget(MixinScrollH):
         self.text               = text
         self.my_surface         = None
         self.data               = data
+        self.scroll_pin_y       = False
 
         # Layout
+        self.scroll_h=None
         self.rect               = None
         self.pad_x              = Style.TOKEN_PAD
         self.pad_y              = Style.TOKEN_PAD
@@ -136,7 +138,7 @@ class _BaseWidget(MixinScrollH):
         self.is_overlay         = False         # if do_not_allocate, still receive input (clicks, scroll)
 
         # Scrolling
-        self.scrollable         = scrollable
+        self.scroll_v         = scroll_v
         self.scroll_offset      = 0
         self.scroll_active      = False
         self.scroll_glow        = scroll_glow
@@ -179,7 +181,7 @@ class _BaseWidget(MixinScrollH):
         self.on_submit          = on_submit
         self.pipeline_key       = pipeline_key
         self.tooltip_class      = tooltip_class
-        if self.scrollable      and self.height_flex == 0: self.height_flex = 1 # must occur before validate
+        if self.scroll_v      and self.height_flex == 0: self.height_flex = 1 # must occur before validate
         self.validate()
         if self.form            : self.form.widget_registry[self.widget_id] = self
         if parent               : parent.children.append(self)
@@ -303,8 +305,8 @@ class _BaseWidget(MixinScrollH):
         #if self.text_align not in ('l', 'c', 'r'):      EZ.err(f"text_align must be 'l', 'c', or 'r' — got '{self.text_align}'",ValueError)
         if self.text_align is not None and self.text_align not in ('l', 'c', 'r'): EZ.err(
             f"text_align must be 'l', 'c', or 'r' — got '{self.text_align}'", ValueError)
-        if self.parent and self.parent.scrollable and self.height_flex > 0 and 1==3: #1==3 becaues i don't think this is actually wrong
-            EZ.err( f"""{type(self).__name__} has height_flex inside scrollable {type(self.parent).__name__}. TO FIX: Remove height_flex from the child, or remove scrollable from the parent.  Flex expands to fill space; scrollable needs content bigger than viewport. Contradictory!""")
+        if self.parent and self.parent.scroll_v and self.height_flex > 0 and 1==3: #1==3 becaues i don't think this is actually wrong
+            EZ.err( f"""{type(self).__name__} has height_flex inside scroll_v {type(self.parent).__name__}. TO FIX: Remove height_flex from the child, or remove scroll_v from the parent.  Flex expands to fill space; scroll_v needs content bigger than viewport. Contradictory!""")
 
     # ==============================================================
     # Reparent if scroller needed
@@ -390,21 +392,6 @@ class _BaseWidget(MixinScrollH):
     # LAYOUT
     # ==============================================================
 
-    def apply_scroll(self, inner: pygame.Rect) -> pygame.Rect:
-        """Adjust inner rect for scroll state; activate scrollbar if needed."""
-        content    = self.compute_content_size()
-        main_size  = inner.width if self.horizontal else inner.height
-        self.scroll_active = content > main_size
-        if self.scroll_active:
-            bar_w      = Style.TOKEN_SCROLLBAR
-            inner      = pygame.Rect(inner.left, inner.top, inner.width - bar_w, inner.height)
-            max_scroll = max(0, content - inner.height)
-            self.scroll_offset = max(0, min(self.scroll_offset, max_scroll))
-        else:
-            self.scroll_offset = 0
-        return inner
-
-
 
     def clear_children(self) -> None:
         """Remove all children from this widget."""
@@ -418,8 +405,15 @@ class _BaseWidget(MixinScrollH):
         bg = self.resolve_bg()
         self.draw_chrome(surface, self.rect, bg)
         self.draw_inboard_glow(surface)
+
         if self.my_surface:
-            surface.blit(self.my_surface, self.compute_content_position())
+            pos      = self.compute_content_position()                   # NEW
+            offset_h = self.effective_scroll_offset_h()                  # NEW
+            offset_v = self.effective_scroll_offset_v()                  # NEW
+            if offset_h or offset_v:                                     # NEW
+                pos = (pos[0] - offset_h, pos[1] - offset_v)             # NEW
+            surface.blit(self.my_surface, pos)
+
         self.draw_children(surface)
         if self.scroll_active: self.draw_scrollbar(surface)
         self.draw_scroll_h_bar(surface)
@@ -438,7 +432,19 @@ class _BaseWidget(MixinScrollH):
         self.restore_children_h()  # NEW
         surface.set_clip(old_clip)
 
-
+    def draw_children(self, surface):
+        """Draw visible children, clipped to content area."""
+        #if getattr(self, "scroll_h", False):                print(f"DRAW_CHILDREN {type(self).__name__} kids={len(self.visible_children)} offset={self.scroll_offset_h}")  # NEW DIAG
+        if not self.visible_children: return
+        old_clip = surface.get_clip()
+        clip = self.rect.inflate(-self.frame_x, -self.frame_y)
+        if self.scroll_active:   clip.width -= Style.TOKEN_SCROLLBAR
+        self.translate_children_h()
+        clip = old_clip.clip(clip)
+        surface.set_clip(clip)
+        for child in self.visible_children: child.draw(surface)
+        self.restore_children_h()
+        surface.set_clip(old_clip)
 
     def draw_chrome(self, surface: pygame.Surface, r: pygame.Rect, color_bg: Optional[tuple]) -> None:
         """Draw background fill and bevel borders. Inverts bevel on press."""
@@ -578,7 +584,7 @@ class _BaseWidget(MixinScrollH):
     # ==============================================================
     # on_click       → any widget becomes a button
     # focusable      → any widget receives text input
-    # scrollable     → any widget scrolls
+    # scroll_v     → any widget scrolls
     # toggle_selected → any widget toggles
     # See MgrInput.py for the single dispatch point.
 

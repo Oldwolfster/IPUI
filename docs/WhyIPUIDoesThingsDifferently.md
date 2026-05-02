@@ -131,7 +131,7 @@ IPUI doesn't classify widgets this way. There are no "container" or "leaf" types
 
 The analogy is security entitlement management: never grant permissions directly to a user. Instead, grant permissions to groups, and add users to groups. In IPUI: never hard-code capabilities into specific widget subclasses. Instead, put behaviors on `_BaseWidget`, and let widgets opt in through attributes.
 
-Scrolling is a perfect example. There is no `ScrollableContainer` class. There is no `ScrollView`, `ScrollPane`, or `ScrollArea`. There's `scrollable=True` — a parameter on any widget. The scrolling behavior lives once, on `_BaseWidget`, tested once, debugged once. Any widget that sets the flag gets it for free.
+Scrolling is a perfect example. There is no `ScrollableContainer` class. There is no `ScrollView`, `ScrollPane`, or `ScrollArea`. There's `scroll_v=True` — a parameter on any widget. The scrolling behavior lives once, on `_BaseWidget`, tested once, debugged once. Any widget that sets the flag gets it for free.
 
 The effect is easy to see in the codebase.  Look at `CardCol` — the most-used container in IPUI:
 

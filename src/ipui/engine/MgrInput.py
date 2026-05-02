@@ -6,7 +6,7 @@
 # Framework walks, widgets declare.
 # ─ on_click        → any widget becomes a button
 # ─ focusable       → any widget receives text input
-# ─ scrollable      → any widget scrolls
+# ─ scroll_v      → any widget scrolls
 # ─ toggle_selected → any widget toggles
 #
 # Widgets carry ZERO event methods. Behavior lives here.
@@ -223,7 +223,7 @@ class MgrInput:
                 cls.focused_widget.handle_drag_move(pos)
 
     # ══════════════════════════════════════════════════════════════
-    # SCROLL — tooltip scroll → deepest scrollable under mouse
+    # SCROLL — tooltip scroll → deepest scroll_v under mouse
     # ══════════════════════════════════════════════════════════════
 
     @classmethod
@@ -232,8 +232,8 @@ class MgrInput:
         if form.handle_tooltip_scroll(pos, button):
             return True
 
-        # Find deepest scrollable
-        target = cls.find_scrollable(form, pos)
+        # Find deepest scroll_v
+        target = cls.find_scroll_v(form, pos)
         if target is None:
             return False
 
@@ -344,10 +344,10 @@ class MgrInput:
         return None
 
     @classmethod
-    def find_scrollableOLD(cls, widget, pos):
-        """Deepest scrollable widget under pos."""
+    def find_scroll_vOLD(cls, widget, pos):
+        """Deepest scroll_v widget under pos."""
         for child in widget.interactive_children:
-            result = cls.find_scrollable(child, pos)
+            result = cls.find_scroll_v(child, pos)
             if result is not None:
                 return result
         if widget.scroll_active and widget.rect and widget.rect.collidepoint(pos):
@@ -382,11 +382,11 @@ class MgrInput:
         return None
 
     @classmethod
-    def find_scrollable(cls, widget, mouse_coord):
-        """Deepest scrollable widget under mouse_coord."""
+    def find_scroll_v(cls, widget, mouse_coord):
+        """Deepest scroll_v widget under mouse_coord."""
         child_coord = widget.translate_mouse_coord_for_horizontal_scroll(mouse_coord)
         for child in widget.interactive_children:
-            result = cls.find_scrollable(child, child_coord)
+            result = cls.find_scroll_v(child, child_coord)
             if result is not None:
                 return result
         if widget.scroll_active and widget.rect and widget.rect.collidepoint(mouse_coord):

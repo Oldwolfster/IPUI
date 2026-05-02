@@ -88,7 +88,7 @@ class FormNeuroForge(_BaseForm):
         Logger.log(f"Colosseum opened! Batch {batch_id}")
         SubProcesses.launch_shards(self, batch_id)
 
-    def update(self):
+    def updateDEKETENE(self):
         if not hasattr(self, 'active_batch_id'):    return
         self.poll_counter = getattr(self, 'poll_counter', 0) + 1
 

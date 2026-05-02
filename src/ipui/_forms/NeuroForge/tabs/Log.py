@@ -55,7 +55,7 @@ class EZ_Pane(_BaseTab):
 
     def build_list(self, parent) -> None:
         """Scrollable log body."""
-        sub = CardCol(parent, height_flex=1, scrollable=True)
+        sub = CardCol(parent, height_flex=1, scroll_v=True)
         Body(sub, "(no log entries)", name="lbl_log")
 
     # ══════════════════════════════════════════════════════════════

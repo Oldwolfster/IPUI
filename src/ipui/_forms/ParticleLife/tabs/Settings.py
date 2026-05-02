@@ -6,7 +6,7 @@ from ipui import *
 class Settings(_BaseTab):
 
     def settings(self, parent):
-        root = CardCol(parent, scrollable=True)
+        root = CardCol(parent, scroll_v=True)
         Heading(root, "Simulation Settings", glow=True)
         Body(root, "Tweak these while the sim runs — changes apply immediately.")
         self.build_distances(root)
@@ -41,7 +41,7 @@ class Settings(_BaseTab):
         TextBox(row, placeholder="Trail Alpha (0-255)", pipeline_key="pl.sim.trail_alpha", width_flex=1)
 
     def settings(self, parent):
-        root = CardCol(parent, scrollable=True)
+        root = CardCol(parent, scroll_v=True)
         Heading(root, "Simulation Settings", glow=True)
         Body(root, "Tweak these while the sim runs — changes apply immediately.")
         self.build_distances(root)

@@ -28,7 +28,7 @@ class TodoApp(_BaseTab):
         self.update_stats()
 
     def task_list_pane(self, parent):
-        self.task_list = CardCol(parent, scrollable=True, height_flex=1)
+        self.task_list = CardCol(parent, scroll_v=True, height_flex=1)
         self.render_task_list()
 
     # ══════════════════════════════════════════════════════════════

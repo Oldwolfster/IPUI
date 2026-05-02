@@ -149,7 +149,7 @@ class TextArea(TextBox):
         return self.font.size(line_text[:col])[0]
 
     def ensure_cursor_visible(self):
-        pass  # Scrolling handled by parent scrollable container
+        pass  # Scrolling handled by parent scroll_v container
 
     # ══════════════════════════════════════════════════════════════
     # LINE / COL CONVERSION

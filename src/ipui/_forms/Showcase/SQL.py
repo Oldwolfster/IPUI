@@ -9,7 +9,8 @@ import tkinter as tk
 from tkinter import filedialog
 from ipui import *
 
-DB_PATH = r"src\ipui\assets\sample_db\rock_on_forever_claude.db"
+#DB_PATH = r"src\ipui\assets\sample_db\rock_on_forever_claude.db"
+DB_PATH = r"src\ipui\assets\sample_db\OptimizerShowdown.nf"
 
 
 class SQL(_BaseTab):
@@ -470,7 +471,7 @@ class SQL(_BaseTab):
         Title(row, "Query", glow=True)
         Body (row, "", name="lbl_sql_status", text_align=RIGHT)
 
-        TextArea(parent, "SELECT * FROM batch_history LIMIT 696", name="code_sql", height_flex=1,)
+        TextArea(parent, "SELECT * FROM batch_history LIMIT 696", name="code_sql", height_flex=1)
 
         row = Row(parent)
         Button(row, "Run Query",

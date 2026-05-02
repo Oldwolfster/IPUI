@@ -19,14 +19,17 @@ VARYING_PRIORITY = [
 
 class EZ_Pane(_BaseTab):
     """Colosseum tab — real-time training monitoring with live charts and grids."""
-
+    THINK_ALWAYS = True
     def ip_setup(self, ip):
         """Load run details and determine varying columns for the active batch."""
         batch_id = getattr(self.form, 'active_batch_id', None)
         if batch_id:
             self.load_run_details(batch_id)
             self.determine_varying_columns()
-
+    def ip_think(self, ip):
+        if not self.form.active_batch_id: return
+        if ip.frame % 30 == 0:
+            self.poll_shards()
     # ══════════════════════════════════════════════════════════════
     # TAB PANES  (names must match strings in FormNeuroForge.tab_data)
     # ══════════════════════════════════════════════════════════════
@@ -39,7 +42,7 @@ class EZ_Pane(_BaseTab):
         TextBox(row, placeholder="Name Batch Here", name="txt_batch_name")
         TextBox(row, placeholder="Add Note Here",   name="txt_batch_note")
 
-        sub       = CardCol(parent, height_flex=1, scrollable=True)
+        sub       = CardCol(parent, height_flex=1, scroll_v=True)
         core_rows = [["Core", "Run", "Epoch", "MAE", "Status"]]
         for i in range(NUM_CORES):
             core_rows.append([f"#{i+1}", "—", "—", "—", "idle"])

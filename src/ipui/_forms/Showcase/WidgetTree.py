@@ -106,7 +106,7 @@ class Tree(_BaseTab):
             ["width",       str(rect.width) if rect else "—"],
             ["height",      str(rect.height) if rect else "—"],
             ["font",        str(getattr(widget, 'font', '—'))],
-            ["scrollable",  str(getattr(widget, 'scrollable', False))],
+            ["scroll_v",  str(getattr(widget, 'scroll_v', False))],
             ["horizontal",  str(getattr(widget, 'horizontal', False))],
             ["color_bg",    str(widget.color_bg)],
         ]

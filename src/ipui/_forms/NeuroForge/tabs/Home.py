@@ -57,7 +57,7 @@ class EZ_Pane(_BaseTab):
         btn = Button(header, "+New", color_bg=Style.COLOR_BUTTON_CTA)
         btn.on_click = lambda: self.form.set_pane(1, self.name_project)
 
-        scroller = CardCol(parent, height_flex=1, scrollable=True)
+        scroller = CardCol(parent, height_flex=1, scroll_v=True)
         for project_info in projects:
             item = ProjectListItem(scroller, data=project_info)
             item.on_click = lambda p=project_info: self.do_select_project(p.path)

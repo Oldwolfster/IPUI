@@ -70,7 +70,7 @@ class PowerGrid(_BaseWidget):
     Child structure:
         PowerGrid
         ├── GridHeader       (fixed height)
-        ├── Col              (scrollable=True, height_flex=1)
+        ├── Col              (scroll_v=True, height_flex=1)
         │   └── GridBody     (full content height — drives scroll)
         └── RecordSelector   (fixed height, hidden when not needed)
     """
@@ -115,20 +115,11 @@ class PowerGrid(_BaseWidget):
         self.row_dbl_click_callback = None
         self.row_dbl_click_column   = None
 
-
-    def build_body(self):# OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD
-        if self.children:    return
-        self.grid_header     = GridHeader(self)
-        self.grid_scroller   = Col(self, scrollable=True, height_flex=1,scroll_h=True)
-        self.grid_body       = GridBody(self.grid_scroller)
-        self.record_selector = RecordSelector(self, on_change=self.handle_page_change)
-        self.grid_scroller.scroll_h_link(self.grid_header)
-
     def build_body(self):
         if self.children: return
-        self.grid_header = GridHeader(self, scroll_h=True, on_click = lambda: None)
-        self.grid_scroller = Col(self, scrollable=True, height_flex=1, scroll_h=True)
-        self.grid_body = GridBody(self.grid_scroller)
+        self.grid_header     = GridHeader(self)        # scroll_h=True removed
+        self.grid_scroller   = Col(self, scroll_v=True, height_flex=1, scroll_h=True)
+        self.grid_body       = GridBody(self.grid_scroller)
         self.record_selector = RecordSelector(self, on_change=self.handle_page_change)
         self.grid_scroller.scroll_h_link(self.grid_header)
 

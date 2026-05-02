@@ -50,7 +50,7 @@ class ParticleLife(_BaseTab):
         self.lbl_status = Body(root, "")
         self.lbl_types  = Body(root, "")
 
-        saves_card = Card(root, scrollable=True)
+        saves_card = Card(root, scroll_v=True)
 
         header = CardRow(saves_card, width_flex=1, justify_spread=True)
         Heading(header, "Saves")

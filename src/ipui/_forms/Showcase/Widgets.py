@@ -18,7 +18,7 @@ class EZ_Pane(_BaseTab):
         Title(parent, "Widget Catalog", glow=True)
         Body(parent, f"{len(self.catalog.entries)} widgets discovered at runtime")
 
-        card = CardCol(parent, height_flex=1, scrollable=True)
+        card = CardCol(parent, height_flex=1, scroll_v=True,name="andrew",pad=0)
         grid = PowerGrid(card, name="grid_widgets")
         grid.set_data(self.catalog.as_grid_data())
         grid.set_column_max("Description", 500)
@@ -55,7 +55,7 @@ class EZ_Pane(_BaseTab):
         row=Row(parent)
         Title(row, entry["name"], glow=True)
         Body(row, f"Discovered live from {entry['file']}  ·  {entry['lines']} lines",text_align=RIGHT)
-        card = Card(parent, scrollable=True)
+        card = Card(parent, scroll_v=True)
         sub = CardCol(card)
         if entry["desc"]:        Body(sub, entry["desc"])
         if entry["when_to_use"]: self.field(sub, "When to use", entry["when_to_use"])

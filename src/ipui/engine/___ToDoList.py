@@ -3,7 +3,7 @@ Clean up list
 
 1) DONE: WidgetsDict.get() — raises RuntimeError on missing keys. That's the opposite of what .get() should do (return default). This will blow up in frmColosseum where you do form.widgets.get("grid_runs") etc. — if you ever call those before the Colosseum tab is built, it crashes instead of returning None.
 2) DONE:Chart.draw() — calls super().draw() but never re-renders when chart_dirty is True and rect is available. The set_data method sets chart_dirty = True but nothing ever checks it during draw to re-render.
-3) DONE: Grid.row_index_at() — doesn't account for scroll_offset on the parent. If the grid is inside a scrollable CardCol, click detection will be off.
+3) DONE: Grid.row_index_at() — doesn't account for scroll_offset on the parent. If the grid is inside a scroll_v CardCol, click detection will be off.
 4) REMOVED: _BaseForm.render() has if 1==1 or self.dirty — the TODO for dirty flag optimization.
 5) DONE: frmSubProcesses has a TODO about the frm prefix being confusing.
 6) DONE: No way to remove manual seeds in the RNG picker.
@@ -29,7 +29,7 @@ Clean up list
 31) DONE: in BaseWidget init move validation to method
 32) DONE: Scrollbar draw is bit hanky.
 34) DONE tabs should only show the number of panes we have.
-7) DONE: compute_content_size() doesn't count flex children at all, which means scrollable containers with flex children will compute wrong content size for scrollbar.
+7) DONE: compute_content_size() doesn't count flex children at all, which means scroll_v containers with flex children will compute wrong content size for scrollbar.
 24) Done: Scroll to config setting options
 39) DONE GRID give scroll option.
 40) DONE GRID use available width
@@ -130,7 +130,7 @@ Clean up list
 164) DONE: Added scroll_top_inset + private_handle_rect to base scroll
 165) DONE: Built PowerGrid2 with proper child architecture — header, scroller, body, record selector all as real widgets
 166) DONE: Unified scrollbar — deleted all custom scroll code from PowerGrid
-167) DONE: Added scrollbar drag to _BaseWidget — every scrollable widget gets it for free
+167) DONE: Added scrollbar drag to _BaseWidget — every scroll_v widget gets it for free
 ######################################################################
 3/11
 ######################################################################
@@ -282,7 +282,7 @@ Clean up list
 234) DONE:Or shorter: "Split resolve_tab — discovery vs instantiation — so ip_setup never fires before panes exist."
 242) DONE:Default ip_think to active-tab only — Change dispatch_ip_think to only call the active pane's ip_think. Remove the loop over all cached panes.
 275) DONE:MgrSanity — catches invisible content after every layout pass
-276) Two diagnosed root causes — scrollable starvation and flex starvation, both with actionable fix instructions
+276) Two diagnosed root causes — scroll_v starvation and flex starvation, both with actionable fix instructions
 277) Smart origin detection — traces back to the pane builder method instead of useless main.py
 278) Unknown cause fallback — catches cockroaches we haven't met yet
 
@@ -377,7 +377,7 @@ Clean up list
 319) split TOKEN_PAD to TOKEN_PAD_X and Y
 320) with new token, revisted every friggen module
 321) API CHANGE elminated flex =True as a substitute for 1.
-322)
+
 
 ######################################################################
 4/28
@@ -389,7 +389,7 @@ Clean up list
 325) Add docs to readme
 326) add F11/F12 to quickstart to
 327) Screenshots for readme.
-328) new widget parameter scroll_h, make any widget scrollable.
+328) new widget parameter scroll_h, make any widget scroll_v.
 329) what about flex=true
 330) tab with _ not autoscaffolding proper at least barebones.  Nope middle failed 2
 331) Done: ensure NotNP_HardHug does not have layout_node
@@ -397,20 +397,31 @@ Clean up list
 333) Done:Rename  loss function  NoneDummy back to Linear
 334) Done:DONE: RESULT: IN USE Investigate for removal: Label.compute_intrinsic()
 335) Done:DONE: RESULT: IN USEInvestigate for removal: Label.measure_constrained(max_width)
+336) DONE: layout_node and old RunLayout in NotNP_HardWrap get deleted
+337) DONE: self.layout_engine = NotNP_HardWrap(self)
+
+
+######################################################################
+5/1 - done with help of Andrew!
+######################################################################
+338) DONE: Barebones scaffold scaffold if None for a pane.
+339) DONE: apply_scroll
+340) _BaseForm.update() is pass.    IPUI.update() calls form.update().  The pygame loop calling IPUI.update()
+341) Renamed scrollable to scroll_v
+342) Eliminated the gap in the widget pane
+
 ######################################################################
 Pending for V0.1
 ######################################################################
 
 What is left to publish
 
+
 smaller sample sqllite
-disable launch button.
 double check NoneDummy is gone.
-in powergrid if you scroll down, the last one may remove scroller meaning you can scroll up
+disable launch button. (MUST BE LAST)
 
-Barebones scaffold scaffold if None for a pane.
-_BaseForm.update() is pass.IPUI.update() calls form.update().  The pygame loop calling IPUI.update()
-
+Readme has code  examples that don't work.
 
 
 
@@ -421,6 +432,7 @@ _BaseForm.update() is pass.IPUI.update() calls form.update().  The pygame loop c
 Punting until after IPUI is on PIP
 ##########################################################
 api text_align maybe better to say alignment
+in powergrid if you scroll down, the last one may remove scroller meaning you are stuck (no scroll up)
 301) defect in particle life rename while scrolled.
 42) modal choose your own adventure widget.
 43) APPENDIX A:  Lambda-Free Callbacks for _BaseWidget

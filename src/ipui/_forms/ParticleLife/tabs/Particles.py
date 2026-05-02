@@ -100,7 +100,7 @@ class Particles(_BaseTab):
             card.color_bg = (r, g, b)
 
     def particles(self, parent):
-        root = Card(parent, scrollable=True)
+        root = Card(parent, scroll_v=True)
         self.field_cards = {}
         header = CardRow(root, width_flex=1, justify_spread=True)
         Heading(header, "Particles", glow=True)
@@ -241,7 +241,7 @@ class Particles(_BaseTab):
     # Matrix pane
     # -------------------------
     def matrix(self, parent):
-        root = CardCol(parent, scrollable=True)
+        root = CardCol(parent, scroll_v=True)
 
         # Header + buttons
         header = CardRow(root, width_flex=1, justify_spread=True)

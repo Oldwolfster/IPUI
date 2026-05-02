@@ -50,8 +50,8 @@ class CardCol(_BaseWidget):
     """
     desc:        Vertical card. The most-used container in IPUI. Scrollable on demand.
     when_to_use: Almost everywhere. It's the default "put stuff here" container.
-    best_for:    Pane content, settings groups, scrollable lists, form sections.
-    example:     CardCol(parent, height_flex=1, scrollable=True)
+    best_for:    Pane content, settings groups, scroll_v lists, form sections.
+    example:     CardCol(parent, height_flex=1, scroll_v=True)
     api:         (layout only — no custom methods)
     """
     def build(self):

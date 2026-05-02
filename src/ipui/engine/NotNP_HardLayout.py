@@ -101,14 +101,14 @@ class NotNP_HardLayout:
         width_of_children,  height_of_children = self.measure_children(node)
         node.width_minimum  = max(width_of_surface, width_of_children)
         node.height_minimum = max(height_of_surface, height_of_children)
-        self.cap_scrollable_min(node)
+        self.cap_scroll_v_min(node)
         if node.width_flex > 0: node.width_minimum   = node.frame_x
         if node.height_flex > 0: node.height_minimum = node.frame_y
 
 
-    def cap_scrollable_min(self, node):
+    def cap_scroll_v_min(self, node):
         """Scrollable containers keep content size for scroll math but report minimal min to flex."""
-        if not node.scrollable: return
+        if not node.scroll_v: return
         if node.horizontal:
             node.content_size  = node.width_minimum
             node.width_minimum = node.frame_x
@@ -157,7 +157,7 @@ class NotNP_HardLayout:
         kids            = node.visible_children
         if not kids     : return
         inner           = self.compute_inner(node, rect)
-        if node.scrollable:
+        if node.scroll_v:
             inner = self.apply_scroll(node, inner)
         self.layout_kids(node, kids, inner)
 
@@ -188,7 +188,9 @@ class NotNP_HardLayout:
         main_size = inner.width if node.horizontal else inner.height
         #print(f"SCROLL: {node.display_name} content={content} main_size={main_size} kids={len(node.visible_children)}")    # NEW
         node.scroll_active = content > main_size
-        if not node.scroll_active:
+        if node.scroll_active: node.scroll_pin_y = True  # NEW — latch on first overflow
+        if node.scroll_pin_y:  node.scroll_active = True  # NEW — honor latch
+        if not node.scroll_active:  # REFERENCE (unchanged below)
             node.scroll_offset = 0
             return inner
         bar_w      = Style.TOKEN_SCROLLBAR

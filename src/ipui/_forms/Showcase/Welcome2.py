@@ -55,7 +55,7 @@ class ShowcaseTemplate(_BaseTab):
     def cookbook_menu(self, parent):
         Title(parent, "Cookbook", glow=True)
         Body(parent, "Pick a pattern to see it live")
-        card = Card(parent, scrollable=True, height_flex=1)
+        card = Card(parent, scroll_v=True, height_flex=1)
         for name, label in self.discover_demos():
             Button(card, label, on_click=lambda n=name: self.show_demo(n),width_flex=1,text_align='l')
 
@@ -67,7 +67,7 @@ class ShowcaseTemplate(_BaseTab):
     def show_demo(self, method_name):
         method = getattr(self, method_name)
         def wrapped(parent):
-            card    = Card(parent, scrollable=True)
+            card    = Card(parent, scroll_v=True)
             method  ( card)
             #Spacer  ( card)
             c2=Card (card)
@@ -153,10 +153,10 @@ class ShowcaseTemplate(_BaseTab):
         Button  ( row,    "Right")
         Body    ( parent, "Also works vertically between cards.")
 
-    def demo_070_scrollable_card(self, parent):
+    def demo_070_scroll_v_card(self, parent):
         Title   ( parent, "Scrollable Card", glow=True)
-        Body    ( parent, "Any Card becomes scrollable with one parameter:")
-        card    = Card(parent, scrollable=True, height_flex=1)
+        Body    ( parent, "Any Card becomes scroll_v with one parameter:")
+        card    = Card(parent, scroll_v=True, height_flex=1)
         for i in range(20):
             Body( card,   f"Row {i + 1} — scroll me!")
 
@@ -409,7 +409,7 @@ class ShowcaseTemplate(_BaseTab):
     def demo_530_dynamic_list(self, parent):
         Title   ( parent, "Dynamic List", glow=True)
         Body    ( parent, "Build a list from data — add and remove at runtime:")
-        self.demo_list_card = Card(parent, scrollable=True, height_flex=1)
+        self.demo_list_card = Card(parent, scroll_v=True, height_flex=1)
         self.demo_list_items = ["Alpha", "Bravo", "Charlie"]
         self.rebuild_demo_list()
         row     = Row(parent, width_flex=1)

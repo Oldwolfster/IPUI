@@ -8,7 +8,7 @@ class TabSystemShowcase(_BaseTab):
     # ══════════════════════════════════════════════════════════════
 
     def explain(self, parent):
-        scroller = CardCol(parent, scrollable=True)
+        scroller = CardCol(parent, scroll_v=True)
         self.explain_header   (scroller)
         #self.explain_concept  (scroller)
         self.explain_example  (scroller)
@@ -76,7 +76,7 @@ class TabSystemShowcase(_BaseTab):
     # ══════════════════════════════════════════════════════════════
 
     def showcase(self, parent):
-        scroller = CardCol(parent, scrollable=True)
+        scroller = CardCol(parent, scroll_v=True)
         self.showcase_header   (scroller)
         #self.showcase_live_tabs(scroller)
         Spacer(scroller)

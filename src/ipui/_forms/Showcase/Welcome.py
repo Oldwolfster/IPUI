@@ -29,7 +29,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
     def code(self, parent):
         card        = Card(parent)
         Title       ( card, "Code for this page", text_align=CENTER,glow=True,name="msg")
-        this_code   = Card(parent, scrollable=True)
+        this_code   = Card(parent, scroll_v=True)
 
         # The below line creates the Widget you are reading right now!
         CodeBox     ( this_code,  data=__file__, start="# ═══════════", end="def detail_ez_err")
@@ -42,7 +42,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
         row=Row(parent)
         Title(parent, "Select a feature to view details", text_align=CENTER)
         Body(parent, " ")
-        our_features_scroll_box = Card(parent, scrollable=True, name="ourfeatures",pad=10,gap=25)
+        our_features_scroll_box = Card(parent, scroll_v=True, name="ourfeatures",pad=10,gap=25)
 
         # Create about 20 feature cards
         for i, feature in enumerate(self.FEATURES, start=1):
@@ -65,7 +65,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_debug_tools(self, parent):
         Title(parent, "Pro Level Debug Tools", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "Widget Tree (F12)", glow=True)
@@ -92,7 +92,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_ez_err(self, parent):
         Title(parent, "EZ.err", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "Clickable Error Links", glow=True)
@@ -120,7 +120,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_icon_widget(self, parent):
         Title(parent, "Emotes in Pygame", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "One Line, Full Color", glow=True)
@@ -142,7 +142,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_tab_system(self, parent):
         Title(parent, "First-Class Tab System", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "One Dictionary, Entire App", glow=True)
@@ -169,7 +169,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_resolution_independent(self, parent):
         Title(parent, "Resolution Independent", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "Automatic Scaling", glow=True)
@@ -191,7 +191,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_declarative_layout(self, parent):
         Title(parent, "Declarative Layout", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "Width Down, Height Up", glow=True)
@@ -219,7 +219,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_built_to_extend(self, parent):
         Title(parent, "Built to Extend", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "Inherit Everything", glow=True)
@@ -241,13 +241,13 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_one_touch_scrolling(self, parent):
         Title(parent, "One-Touch Scrolling", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
-        Heading(card, "scrollable=True", glow=True)
+        Heading(card, "scroll_v=True", glow=True)
         Body(card, "Add one parameter to any Card and it scrolls. Mouse wheel, "
                    "draggable scrollbar, styled automatically. "
-                   "This detail pane you're reading right now is a scrollable Card.")
+                   "This detail pane you're reading right now is a scroll_v Card.")
 
         card = Card(scroll)
         Heading(card, "No Viewport Plumbing", glow=True)
@@ -257,13 +257,13 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
         card = Card(scroll)
         Heading(card, "Nested Scrolling", glow=True)
-        Body(card, "Put a scrollable Card inside another scrollable Card and both work. "
-                   "The input system routes scroll events to the deepest scrollable "
+        Body(card, "Put a scroll_v Card inside another scroll_v Card and both work. "
+                   "The input system routes scroll events to the deepest scroll_v "
                    "widget under the mouse. No conflicts, no stealing.")
 
     def detail_construction_attachment(self, parent):
         Title(parent, "Construction IS Attachment", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "Build It, It's Attached", glow=True)
@@ -285,7 +285,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_multiple_update_styles(self, parent):
         Title(parent, "Multiple Update Styles", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "Reactive DAG", glow=True)
@@ -313,7 +313,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_data_pipeline(self, parent):
         Title(parent, "Data Pipeline", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "Central Key-Value Store", glow=True)
@@ -341,7 +341,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_lifecycle_hooks(self, parent):
         Title(parent, "Pygame Lifecycle Hooks", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "ip_think(ip)", glow=True)
@@ -369,7 +369,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_multi_tier_tooltips(self, parent):
         Title(parent, "Multi-Tier Tooltips", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "Standard Hover Tips", glow=True)
@@ -378,7 +378,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
         card = Card(scroll)
         Heading(card, "Super Tooltips", glow=True)
-        Body(card, "For deep data — full scrollable panels that expand after a brief "
+        Body(card, "For deep data — full scroll_v panels that expand after a brief "
                    "hover delay. They can contain tables, property lists, "
                    "and multi-column layouts.")
 
@@ -396,7 +396,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_widget_registry(self, parent):
         Title(parent, "Automatic Widget Registry", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "Name It, Find It", glow=True)
@@ -418,7 +418,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_code_boxes(self, parent):
         Title(parent, "Beautiful Code Boxes", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "String or File Path", glow=True)
@@ -440,12 +440,12 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_tab_map(self, parent):
         Title(parent, "Tab Map", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "Bird's-Eye View", glow=True)
         Body(card, "See every tab and every pane in your application laid out "
-                   "in a single scrollable list. Know your app's full structure "
+                   "in a single scroll_v list. Know your app's full structure "
                    "at a glance.")
 
         card = Card(scroll)
@@ -462,7 +462,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_grid(self, parent):
         Title(parent, "PowerGrid", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "Three Input Formats", glow=True)
@@ -490,7 +490,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_documenting(self, parent):
         Title(parent, "Self-Documenting", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "Docs From Source", glow=True)
@@ -512,7 +512,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
 
     def detail_live_charts(self, parent):
         Title(parent, "Live Matplotlib Charts", glow=True)
-        scroll = Card(parent, scrollable=True)
+        scroll = Card(parent, scroll_v=True)
 
         card = Card(scroll)
         Heading(card, "Real-Time Updates", glow=True)
@@ -602,7 +602,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
                 "icon":    "scroll",
                 "title":   "One-Touch Scrolling",
                 "tag":     "Layout, Widgets, UX",
-                "summary": "Make any container scrollable with scrollable=True. Draggable scrollbars, styled automatically. This feature list is one scrollable Card.",
+                "summary": "Make any container scroll_v with scroll_v=True. Draggable scrollbars, styled automatically. This feature list is one scroll_v Card.",
                 "joke":    "Because 'just make it scroll' should not become a weekend project.",
                 "detail":  "detail_one_touch_scrolling",
             },
@@ -635,7 +635,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
                 "icon":    "tooltip",
                 "title":   "Multi-Tier Tooltips",
                 "tag":     "Widgets, UX",
-                "summary": "Lightweight hover tips for quick hints. Super Tooltips for pinnable, scrollable deep-dive panels with full widget content inside.",
+                "summary": "Lightweight hover tips for quick hints. Super Tooltips for pinnable, scroll_v deep-dive panels with full widget content inside.",
                 "joke":    "Sometimes a tooltip should whisper. Sometimes it needs to write a small novel.",
                 "detail":  "detail_multi_tier_tooltips",
             },
@@ -651,7 +651,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
                 "icon":    "codebox",
                 "title":   "Beautiful Code Boxes",
                 "tag":     "Widgets, Rendering",
-                "summary": "Pass a string or a file path and get formatted, readable source code display. Syntax-aware, scrollable, copy-ready.",
+                "summary": "Pass a string or a file path and get formatted, readable source code display. Syntax-aware, scroll_v, copy-ready.",
                 "joke":    "Your code deserves better than being pasted into a sad little text blob.",
                 "detail":  "detail_code_boxes",
             },

@@ -139,6 +139,7 @@ class MissingTabUI(_BaseTab):
             f"class {tab_name.replace(' ', '')}(_BaseTab):\n",
         ]
         for m in methods:
+            if m is None: continue
             lines.append(f"\n    def {m}(self, parent):\n")
             lines.append(f"        Body(parent, \"Filename: {file_name}\")\n")
             lines.append(f"        Body(parent, \"Method: {m}\")\n")

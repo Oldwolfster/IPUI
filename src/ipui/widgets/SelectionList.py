@@ -16,13 +16,13 @@ class SelectionList(_BaseWidget):
     def build(self):
         self.items_data = self.data or {}
 
-        if self.scrollable:
+        if self.scroll_v:
             raise ValueError(
                 "SelectionList handles scrolling internally. "
-                "TO FIX: Remove scrollable=True from the SelectionList constructor."
+                "TO FIX: Remove scroll_v=True from the SelectionList constructor."
             )
 
-        self.list_card = CardCol(self, height_flex=1, scrollable=True)
+        self.list_card = CardCol(self, height_flex=1, scroll_v=True)
         self.items     = []
 
         for name, item_data in self.items_data.items():

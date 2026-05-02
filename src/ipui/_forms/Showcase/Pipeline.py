@@ -103,7 +103,7 @@ class EZ_Pane(_BaseTab):
         Body(card, "Read the source. Watch it happen live.")
 
         #Spacer(parent)
-        card = Card(parent, scrollable=True, height_flex=1)
+        card = Card(parent, scroll_v=True, height_flex=1)
         CodeBox(card,
             data  = __file__,
             start = "BINDINGS= {",

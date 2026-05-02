@@ -58,7 +58,7 @@ class YourChoice(_BaseTab):
 
 
     def reactive_code_box(self, main_left_window):
-        card     = Card(main_left_window, scrollable=True, height_flex=99)
+        card     = Card(main_left_window, scroll_v=True, height_flex=99)
         CodeBox  ( card,                        ####################################
                    data=__file__,               # These 4 lines are what creates
                    start="# ═══",               # The CodeBox you are reading now :)
@@ -174,7 +174,7 @@ class YourChoice(_BaseTab):
         self.btn_clear.enabled = False
 
     def imperative_code(self, parent):
-        card     = Card(parent, scrollable=True, height_flex=99)
+        card     = Card(parent, scroll_v=True, height_flex=99)
         CodeBox  ( card,                  ####################################
             data  = __file__,             # These 3 lines are what creates
             start = "#═════════",         # The CodeBox you are reading now :)

@@ -49,12 +49,12 @@ class TextBox(Label):
         self.border_color          = Style.COLOR_BORDER
         self.border_focused        = Style.COLOR_TEXT_ACCENT
         self.placeholder           = self.placeholder or ""
-        self.text                  = self.initial_value or ""
+        self.text                  = self.initial_value or self.text or ""
         self.is_focused            = False
         self.cursor_pos            = len(self.text)
         self.selection_anchor      = len(self.text)
         self.cursor_timer          = 0
-        self.scroll_x              = 0
+        self.scroll_v              = 0
         self.pad_x                 = 12
         self.pad_y                 = 4
         self.rebuild_surface()
@@ -111,7 +111,7 @@ class TextBox(Label):
         old_clip = surface.get_clip()  # (unchanged)
         surface.set_clip(old_clip.clip(clip))  # (unchanged)
         self.ensure_cursor_visible()  # (unchanged)
-        tx = r.left + self.pad_x - self.scroll_x
+        tx = r.left + self.pad_x - self.scroll_v
         ty = r.centery - self.my_surface.get_height() // 2
         self.draw_selection_highlight(surface, tx, ty)
         surface.blit(self.my_surface, (tx, ty))
@@ -134,7 +134,7 @@ class TextBox(Label):
         if self.cursor_timer % 60 >= 30:
             return
         r             = self.rect
-        cx            = r.left  + self.pad_x + self.cursor_pixel_x() - self.scroll_x   # NEW
+        cx            = r.left  + self.pad_x + self.cursor_pixel_x() - self.scroll_v   # NEW
         cy            = r.centery - self.font.get_height() // 2                        # (unchanged)
         ch            = self.font.get_height()                                         # (unchanged)
         content_left  = r.left  + self.pad_x                                           # NEW
@@ -202,14 +202,14 @@ class TextBox(Label):
             return
         visible_w = self.rect.width - self.pad_x * 2
         cx        = self.cursor_pixel_x()
-        if cx - self.scroll_x > visible_w:
-            self.scroll_x = cx - visible_w + 2
-        if cx - self.scroll_x < 0:
-            self.scroll_x = max(0, cx - 2)
+        if cx - self.scroll_v > visible_w:
+            self.scroll_v = cx - visible_w + 2
+        if cx - self.scroll_v < 0:
+            self.scroll_v = max(0, cx - 2)
 
     def pos_from_pixel(self, mouse_x):
         r       = self.rect
-        local_x = mouse_x - r.left - self.pad_x + self.scroll_x
+        local_x = mouse_x - r.left - self.pad_x + self.scroll_v
         best_pos = 0
         best_d   = abs(local_x)
         for i in range(1, len(self.text) + 1):

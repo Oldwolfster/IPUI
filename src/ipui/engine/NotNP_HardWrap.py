@@ -37,9 +37,9 @@ class NotNP_HardWrap:
         """
         Bottom-up post-pass that:
           - wraps leaf text widgets when they overflow horizontally (prefer wrap),
-          - otherwise (or additionally) relies on existing scroll logic when scrollable.
+          - otherwise (or additionally) relies on existing scroll logic when scroll_v.
 
-        Returns True if any widget changed surface and/or scrollable state.
+        Returns True if any widget changed surface and/or scroll_v state.
         """
         if node is None:
             return False
@@ -90,19 +90,19 @@ class NotNP_HardWrap:
                     changed_any = True
 
             # If after wrap we're still taller than allocated height, scrollbars are a NotNP_HardLayout concern.
-            # We do not invent new scrollbar logic here; we only ensure scrollable flag exists when user wants it.
-            if bool(getattr(node, "scrollable", False)):
-                # Keep it scrollable so NotNP_HardLayout can cap mins/content_size and draw scrollbars
+            # We do not invent new scrollbar logic here; we only ensure scroll_v flag exists when user wants it.
+            if bool(getattr(node, "scroll_v", False)):
+                # Keep it scroll_v so NotNP_HardLayout can cap mins/content_size and draw scrollbars
                 # using its existing codepath.
                 pass
 
             return changed_any
 
         # Wrap not enabled; only scroll if allowed.
-        # (Nothing to do here except ensure scrollable stays true if the widget was configured that way.)
-        if bool(getattr(node, "scrollable", False)):
+        # (Nothing to do here except ensure scroll_v stays true if the widget was configured that way.)
+        if bool(getattr(node, "scroll_v", False)):
             # Leave the surface as-is; NotNP_HardLayout will set scroll_active based on content_size.
-            # But content_size for scrollables is computed from height_minimum/width_minimum during MEASURE.
+            # But content_size for scroll_vs is computed from height_minimum/width_minimum during MEASURE.
             # Since we didn't rebuild surface, nothing else to change here.
             return changed_any
 
