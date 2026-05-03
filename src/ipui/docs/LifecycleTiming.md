@@ -472,3 +472,70 @@ Items uncovered while writing this doc that may be worth real fixes, not just do
 ---
 
 *Last updated: this is the first version. Things will move as we fix the items above. Keep this doc honest — when timing changes, update here first.*
+
+
+
+## NEW PLAN:
+
+1) start with everything that has no dependencies
+2) Instantiating tab strip DOES NOT kick off loading the first tab
+
+
+═══ Tier −1 (data exists at import) ═══
+  TAB_LAYOUT, tab_hidden, tab_on_change, tab_early_load
+  PIPELINE_DEFAULTS, BINDINGS
+  All class methods (pane builders, hooks)
+
+═══ Tier 0 (framework wiring, no user hooks fire) ═══
+  pygame init
+  IP portal
+  Form primitives (widgets dict, pipeline, registry)
+  Read TAB_LAYOUT, tab_hidden, tab_on_change → TabStrip widget built  
+  Read PIPELINE_DEFAULTS → seeded into pipeline
+  self.tab_strip = the_strip  ← form structurally complete
+
+═══ Tier 1 (tab classes instantiated; framework-only) ═══
+  Instantiate ALL tab classes (or just early-load list — design call)
+  Each tab's __init__ → register_derives() (BINDINGS interpreted)
+  → Pipeline now knows about all reactive bindings
+  → No widgets exist yet, so any premature derive fire is a silent no-op
+
+═══ Tier 2 (first tab's structure built) ═══
+  Run pane builder methods for first tab
+  → Widgets register
+  → Any pipeline writes during builder fire derives,
+    targets in this tab now exist, derives apply cleanly
+
+═══ Tier 3 (context + user setup hooks) ═══
+  ip.set_tab_context(first_tab, ...)
+  first_tab.ip_setup(ip)        ← widgets exist, ip is correct
+  form.ip_setup(ip)             ← order TBD
+
+═══ Tier 4 (activation) ═══
+  first_tab.ip_activated(ip)
+  form.ip_activated(ip)
+
+═══ Tier 5 (runtime) ═══
+  first frame paints, game loop runs
+
+
+Phase 1: Separate construction from activation. Just one change.
+
+TabStrip(...) constructs the widget but does not call switch_tab in build().
+_BaseForm.setup_tabs() constructs the strip, assigns self.tab_strip = ..., then calls self.tab_strip.switch_tab(first_tab_name) at a known-safe moment.
+
+That single change fixes:
+
+The set_pane in ip_activated bug (tab_strip is assigned before ip_activated fires)
+The double ip_activated (becomes a separate single fix)
+Foundation for everything else
+
+Phase 2: Make switch_tab's order explicit. After Phase 1 is solid.
+
+Restructure switch_tab to show the tier order at a glance
+Move ensure_setup to fire after pane builders
+Move set_tab_context to fire before ip_setup
+
+Phase 3: Form-level ip_setup placement. After Phase 2 is solid.
+Phase 4: Anything else we discover.
+Each phase is a few lines, has a clear test (the test harness from earlier), and doesn't touch what the previous phase did.
