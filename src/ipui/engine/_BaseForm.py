@@ -30,8 +30,8 @@ class _BaseForm(_BaseWidget):
     RESERVED = {            #These cannot be used as pane names.
         "build", "draw", "measure", "setup", "update", "render", "apply_scroll", "clear_children",
         "draw_children", "draw_chrome", "draw_chrome_rounded", "draw_inboard_glow", "draw_overlay",
-        "draw_scrollbar", "draw_scroll_handle", "resolve_bg", "set_text", "set_disabled", "ip_draw",
-        "set_enabled", "validate", "tap", "on_click_me", "register_derives","swap_pane", "hide_extra_panes",
+        "draw_scrollbar", "draw_scroll_handle", "resolve_bg", "set_text","ip_draw",
+        "validate", "tap", "on_click_me", "register_derives","swap_pane", "hide_extra_panes",
         "ip_setup", "ip_think", "ip_draw_hud", "ip_activated", "hide_extra_panes","register_derives"
         "show_modal", "set_pane", "swap_pane",
     }

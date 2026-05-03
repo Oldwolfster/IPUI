@@ -102,7 +102,7 @@ class TemplateStarterKit(_BaseTab):
             on_click    = self.clear_clicked,
             width_flex  = 2)
         Spacer(row      , width_flex=1)
-        self.btn_clear  . set_disabled()
+        self.btn_clear  . enabled = False
         Spacer(card     , height_flex=1)
         self.snark_text = "Go ahead, type something..."  # We will need this twice.  Variable ensures no drift
         self.lbl_snark  = Body(card, self.snark_text,text_align='r') #r for right
@@ -110,15 +110,16 @@ class TemplateStarterKit(_BaseTab):
      
     def name_changed(self, text):
         if text:
-            self.btn_clear.set_enabled  ()
+            self.btn_clear.enabled=True
             self.lbl_snark.set_text     (f"You don't look like a '{text}' to me.")
         else:
-            self.btn_clear.set_disabled ()
+            self.btn_clear.enabled= False
+            self.btn_clear.tooltip= "Enter text to enable the clear button"
             self.lbl_snark.set_text     (self.snark_text)
 
     def clear_clicked(self):
         self.txt_name   .set_text       ("")
-        self.btn_clear  .set_disabled   ()
+        self.btn_clear  .enabled=False
         self.lbl_snark  .set_text       (self.snark_text)
 
 

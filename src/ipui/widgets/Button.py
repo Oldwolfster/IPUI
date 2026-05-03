@@ -8,7 +8,7 @@ class Button(_BaseWidget):
     when_to_use: Any action the user can trigger.
     best_for:    Navigation, form submission, launching, pane swapping.
     example:     btn = Button(parent, "Launch", color_bg=Style.COLOR_BUTTON_CTA)
-    api:         set_disabled(reason), set_enabled(), set_radiate(), on_click_me(callback)
+    api:         enabled, set_radiate(), on_click_me(callback)
     """
 
     def build(self):

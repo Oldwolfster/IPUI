@@ -112,7 +112,7 @@ class EZ_Pane(_BaseTab):
         self.form.show_modal("Loading Project...", 0.1, do_load)
         btn = self.form.widgets["btnLaunch"]
         if btn:
-            btn.set_enabled()
+            btn.enabled=True
         self.form.calc_total_runs()
         self.form.switch_tab("Armory")
 

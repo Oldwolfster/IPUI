@@ -436,8 +436,8 @@ widget.enabled allows string. maybe a different disabled_msg prop.... widget.ena
 look in to on_click_me
 possibly remove from api.
 set_pane vs swap_pane _BaseTab.swap_pane(index, builder) returns a closure (a "do_swap" function) for use as a callback. That's a different shape from set_pane and the name doesn't telegraph "this returns a function." Most callers probably expect it to do the swap.
-
-
+pasting in to sql box gets caught in loops omehow
+sqlarea not scrolling
 
 ##########################################################
 ##########################################################

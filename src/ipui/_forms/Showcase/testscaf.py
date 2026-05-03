@@ -9,8 +9,11 @@ class ShowcaseTemplate(_BaseTab):
 
     #COMMENT OR DELETE THIS TO PREVENT THE COOKBOOK FROM Hijacking the 2nd and 3rd pane.
     def ip_activated(self,ip):
+
         self.set_pane(1, self.cookbook_menu, weight=.6)
         self.set_pane(2, self.cookbook_demo, weight=1.3)
+        print("in ip_activated and setting weights")
+        print(f"TAB_LAYOUT= {self.form.TAB_LAYOUT}")
 
     # PUT YOUR CONTENT HERE
     def tables(self,parent):
@@ -45,7 +48,7 @@ class ShowcaseTemplate(_BaseTab):
 
     def query(self, parent): pass
 
-    def method_3_IPUI_TAB_BUILDER(self, parent): pass
+    def results(self, parent): pass
 
     def ensure_cookbook(self):
         print("in cookbook")
@@ -113,7 +116,7 @@ class ShowcaseTemplate(_BaseTab):
         Button  ( parent, "Danger"          , on_click=self.click_me, color_bg=Style.COLOR_BUTTON_DANGER)
         Button  ( parent, "Secondary"       , on_click=self.click_me, color_bg=Style.COLOR_BUTTON_SECONDARY)
         Button  ( parent, "Warning"         , on_click=self.click_me, color_bg=Style.COLOR_BUTTON_WARNING)
-        Button  ( parent, "Please Hover").set_disabled("I am disabled. Use set_disabled(reason)")
+        Button  ( parent, "Please Hover"    , enabled=False,tooltip="I am disabled. Use enabled=False and a tooltip")
 
     def click_me(self):        self.show_modal("I've been clicked")
 

@@ -10,7 +10,7 @@ from tkinter import filedialog
 from ipui import *
 
 #DB_PATH = r"src\ipui\assets\sample_db\rock_on_forever_claude.db"
-DB_PATH = r"src\ipui\assets\sample_db\OptimizerShowdown.nf"
+DB_PATH = r"src\ipui\assets\sample_db\OptimizerShowdown.db"
 
 
 class SQL(_BaseTab):
@@ -145,12 +145,19 @@ class SQL(_BaseTab):
             conn.close()
 
     def count_columns(self, conn, table_name):
-        cur = conn.execute(f"PRAGMA table_info({self.quote_ident(table_name)})")
-        return len(cur.fetchall())
+        try:
+            cur = conn.execute(f"PRAGMA table_info({self.quote_ident(table_name)})")
+            return len(cur.fetchall())
+        except sqlite3.Error:
+            return "?"
+
 
     def count_indexes(self, conn, table_name):
-        cur = conn.execute(f"PRAGMA index_list({self.quote_ident(table_name)})")
-        return len(cur.fetchall())
+        try:
+            cur = conn.execute(f"PRAGMA index_list({self.quote_ident(table_name)})")
+            return len(cur.fetchall())
+        except sqlite3.Error:
+            return "?"
 
     def apply_filter(self, rows):
         if self.filter_mode == "Tables": return [r for r in rows if r[0] == "table"]
@@ -470,8 +477,8 @@ class SQL(_BaseTab):
         row = Row(parent)
         Title(row, "Query", glow=True)
         Body (row, "", name="lbl_sql_status", text_align=RIGHT)
-
-        TextArea(parent, "SELECT * FROM batch_history LIMIT 696", name="code_sql", height_flex=1)
+        sql_card = Card(parent,scroll_v=True,pad=2)
+        TextArea(sql_card, "SELECT * FROM batch_history LIMIT 696", name="code_sql", height_flex=1)
 
         row = Row(parent)
         Button(row, "Run Query",
@@ -585,7 +592,7 @@ class SQL(_BaseTab):
         grid.set_data(rows, columns=cols)
 
     def set_status(self, msg):
-        lbl = self.form.widgets.get("lbl_sql_status")
+        lbl = self.form.widgets.get("lbl_sql_status", None)
         if lbl: lbl.set_text(msg)
 
     # ══════════════════════════════════════════════════════════════

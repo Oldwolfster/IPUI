@@ -51,7 +51,7 @@ class FormNeuroForge(_BaseForm):
             path = projects[0].path
             ProjectManager.set_active_project(path)
             self.active_project = ProjectManager.get_project_info(path)
-            self.widgets["btnLaunch"].set_enabled()
+            self.widgets["btnLaunch"].enabled=True
             self.switch_tab("Armory")
 
 
@@ -66,12 +66,14 @@ class FormNeuroForge(_BaseForm):
         btn.on_click = lambda: IPUI.back()
         Banner(header, "NeuroForge", text_align='c', glow=True,width_flex=12)
         btn          = Button(header, "Launch", color_bg=Style.COLOR_BUTTON_CTA,  name="btnLaunch",width_flex=1)
-        btn.set_disabled("Select Project To Enable")
+        btn.enabled  = False
+        btn.Tooltip  = "Select Project To Enable"
         btn.on_click = lambda: self.launch_colosseum()
 
     def launch_colosseum(self):
-        self.widgets["btnLaunch"].text = ("Launch")
-        self.widgets["btnLaunch"].set_disabled("Running...")
+        self.widgets["btnLaunch"].text      = ("Launch")
+        self.widgets["btnLaunch"].enabled   = False
+        self.widgets["btnLaunch"].tooltips  ="Running..."
         self.show_modal("Preparing the Arena...",  0.5, self.launch_training,)
 
     def launch_training(self):

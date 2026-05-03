@@ -1244,9 +1244,10 @@ class MyPane(_BaseTab):
     def on_selection_changed(self, count):
         self.lbl_count.set_text(f"{count} selected")
         if count == 0:
-            self.btn_run.set_disabled("Select at least one item")
+            self.btn_run.enabled=False
+            self.btn_run.tool_tip="Select at least one item"
         else:
-            self.btn_run.set_enabled()
+            self.btn_run.enabled=True
 ```
 
 Access named widgets from anywhere via `self.form.widgets["widget_name"]`.
@@ -1404,51 +1405,50 @@ ipui.show(MyApp, "My Application")
 
 All widgets accept these parameters:
 
-| Parameter        | Type     | Default      | Description                                   |
-|------------------|----------|--------------|-----------------------------------------------|
-| `parent`         | widget   | —            | Parent widget (auto-attaches on construction) |
-| `text`           | str      | None         | Display text                                  |
-| `name`           | str      | None         | Registers widget in `form.widgets`            |
-| `width_flex`     | int      | 0            | Flex weight horizontal (0 = natural size)     |
-| `height_flex`    | int      | 0            | Flex weight vertical (0 = natural size)       |
-| `pad`            | int      | TOKEN_PAD    | Internal padding                              |
-| `gap`            | int      | TOKEN_GAP    | Gap between children                          |
-| `border`         | int      | TOKEN_BORDER | Chrome border thickness                       |
-| `justify_center` | bool     | False        | Center children in available space            |
-| `justify_spread` | bool     | False        | Spread children evenly                        |
-| `visible`        | bool     | True         | Show/hide widget                              |
-| `enabled`        | bool/str | True         | False or reason string to disable             |
-| `font`           | Font     | None         | Override font                                 |
-| `text_align`     | str      | LEFT         | LEFT, RIGHT, CENTER                           |
-| `color_bg`       | tuple    | None         | Background RGB tuple                          |
-| `glow`           | bool     | False        | Molten-orange glow effect                     |
-| `data`           | any      | None         | Arbitrary data payload                        |
-| `single_select`  | bool     | False        | Enforce single selection (lists/dropdowns)    |
-| `placeholder`    | str      | None         | TextBox placeholder text                      |
-| `initial_value`  | any      | None         | Starting value                                |
-| `on_submit`      | callable | None         | Submit callback                               |
-| `on_change`      | callable | None         | Change callback                               |
-| `on_click`       | callable | None         | Click callback                                |
-| `on_double_click`| callable | None         | Double-click callback                         |
-| `wrap`           | bool     | False        | Allow text wrapping when width-constrained    |
-| `tab_order`      | int      | None         | Focus order for keyboard navigation           |
-| `early_load`     | bool     | None         | Pre-build at startup instead of on-demand     |
-| `pipeline_key`   | str      | None         | Pipeline read/write key                       |
-| `tooltip_class`  | class    | None         | Custom tooltip class                          |
-| `scroll_v`     | bool     | False        | Enable scrolling for this container           |
-| `scroll_glow`    | float    | 0.369        | Scrollbar bevel intensity (0 = flat)          |
-| `start`          | str      | None         | CodeBox: start-of-range marker                |
-| `end`            | str      | None         | CodeBox: end-of-range marker                  |
-| `fit_content`    | bool     | False        | Size to content width instead of stretching   |
-| `border_radius`  | int      | None         | Rounded corner radius (pixels)                |
+| Parameter         | Type     | Default      | Description                                   |
+|-------------------|----------|--------------|-----------------------------------------------|
+| `parent`          | widget   | —            | Parent widget (auto-attaches on construction) |
+| `text`            | str      | None         | Display text                                  |
+| `name`            | str      | None         | Registers widget in `form.widgets`            |
+| `width_flex`      | int      | 0            | Flex weight horizontal (0 = natural size)     |
+| `height_flex`     | int      | 0            | Flex weight vertical (0 = natural size)       |
+| `pad`             | int      | TOKEN_PAD    | Internal padding                              |
+| `gap`             | int      | TOKEN_GAP    | Gap between children                          |
+| `border`          | int      | TOKEN_BORDER | Chrome border thickness                       |
+| `justify_center`  | bool     | False        | Center children in available space            |
+| `justify_spread`  | bool     | False        | Spread children evenly                        |
+| `visible`         | bool     | True         | Show/hide widget                              |
+| `enabled`         | bool/str | True         | False or reason string to disable             |
+| `font`            | Font     | None         | Override font                                 |
+| `text_align`      | str      | LEFT         | LEFT, RIGHT, CENTER                           |
+| `color_bg`        | tuple    | None         | Background RGB tuple                          |
+| `glow`            | bool     | False        | Molten-orange glow effect                     |
+| `data`            | any      | None         | Arbitrary data payload                        |
+| `single_select`   | bool     | False        | Enforce single selection (lists/dropdowns)    |
+| `placeholder`     | str      | None         | TextBox placeholder text                      |
+| `initial_value`   | any      | None         | Starting value                                |
+| `enabled`         | bool     | None         | Can accept a click/focus                          |
+| `on_submit`       | callable | None         | Submit callback                               |
+| `on_change`       | callable | None         | Change callback                               |
+| `on_click`        | callable | None         | Click callback                                |
+| `on_double_click` | callable | None         | Double-click callback                         |
+| `wrap`            | bool     | False        | Allow text wrapping when width-constrained    |
+| `tab_order`       | int      | None         | Focus order for keyboard navigation           |
+| `early_load`      | bool     | None         | Pre-build at startup instead of on-demand     |
+| `pipeline_key`    | str      | None         | Pipeline read/write key                       |
+| `tooltip_class`   | class    | None         | Custom tooltip class                          |
+| `scroll_v`        | bool     | False        | Enable scrolling for this container           |
+| `scroll_glow`     | float    | 0.369        | Scrollbar bevel intensity (0 = flat)          |
+| `start`           | str      | None         | CodeBox: start-of-range marker                |
+| `end`             | str      | None         | CodeBox: end-of-range marker                  |
+| `fit_content`     | bool     | False        | Size to content width instead of stretching   |
+| `border_radius`   | int      | None         | Rounded corner radius (pixels)                |
 
 ### _BaseWidget Methods
 
 | Method                    | Description                                       |
 |---------------------------|---------------------------------------------------|
 | `set_text(text)`          | Update text and rebuild layout                    |
-| `set_disabled(reason="")` | Disable with optional hover-tooltip reason        |
-| `set_enabled()`           | Re-enable widget                                  |
 | `clear_children()`        | Remove all child widgets                          |
 | `on_click_me(callback)`   | Register validated click handler (zero-arg)       |
 | `tap(func)`               | Run `func(self)` and return self — inline post-construction helper |

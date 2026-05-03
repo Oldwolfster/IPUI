@@ -714,16 +714,6 @@ class _BaseWidget(MixinScrollH):
         self.text = text
         if hasattr(self, 'build'): self.build()
 
-    def set_disabled(self, reason: str = "") -> None:
-        """Disable this widget with an optional reason string."""
-        self.enabled = reason if reason else False
-        self.build()
-
-    def set_enabled(self) -> None:
-        """Re-enable this widget."""
-        self.enabled = True
-        self.build()
-
     @property
     def enabled(self):
         return self.private_enabled

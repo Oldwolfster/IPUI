@@ -7,7 +7,7 @@ class FormShowcase(_BaseForm):
 
 
     TAB_LAYOUT = {
-        "testscaf"      : [("tables"  ,.1)  ,("query"   ,.1)    ,("results", 1) ],
+        "testscaf": [("tables", .1), ("query", .1), ("results", 1)],
         "SQL"           : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
 
 
