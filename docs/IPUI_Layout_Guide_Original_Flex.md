@@ -38,13 +38,13 @@ Every widget has an intrinsic minimum: the smallest it can render without losing
 After every widget gets its minimum, the remaining space is distributed proportionally by flex weight.
 
 ```python
-Row(parent)
+row = Row(parent)
 Button(row, "Save",   width_flex=1)   # gets 1/3 of leftover
 Button(row, "Cancel", width_flex=1)   # gets 1/3 of leftover
 Button(row, "Help",   width_flex=1)   # gets 1/3 of leftover
 ```
 
-Set `width_flex=3` on one and `width_flex=1` on another? The first gets 3× the leftover space. The ratios are relative — `1:1:1` is identical to `5:5:5`.
+Set `width_flex=3` on one and `width_flex=1` on another? The first gets 3× as much leftover space as the second (3/4 vs 1/4). The ratios are relative — `1:1:1` is identical to `5:5:5`.
 
 If a flex widget's minimum exceeds its fair share, it gets locked at its minimum and removed from the pool. The remaining widgets split what's left. This repeats until every widget has a fair deal — or runs out of room trying.
 
@@ -95,7 +95,7 @@ Result: two buttons hugging the edges, empty space in between.
 
 ## Scrollable Containers
 
-Add `scroll_v=True` to any CardCol and overflow is handled automatically.
+Add `scroll_v=True` to any container widget and overflow is handled automatically.
 
 ```python
 card = CardCol(parent, scroll_v=True)
@@ -107,7 +107,7 @@ That's it. You get a scrollbar, mouse wheel support, and proper clipping. No vie
 
 **How it works under the hood:**
 
-A scroll_v container tells the flex solver "I don't need much height — just give me whatever flex says." It stores its full content height separately for scroll math. This means a scroll_v card with 1000 items doesn't hog all the vertical space from its siblings.
+A scroll_v container reports its full content height for scroll math, but caps its *minimum* at just its frame so the flex solver doesn't let it bulldoze its siblings. This means a scroll_v card with 1000 items doesn't hog all the vertical space from its siblings.
 
 You don't need to set `height_flex` — `scroll_v=True` implies it. One parameter, done.
 

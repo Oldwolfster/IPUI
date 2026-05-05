@@ -10,7 +10,7 @@ from ipui import *
 
 class ParticleLife(_BaseTab):
 
-    def ip_setup(self, ip):
+    def ip_setup_early(self, ip):
         self.particles             = []
         self.type_specs            = []
         self.g_lookup              = {}
@@ -44,8 +44,8 @@ class ParticleLife(_BaseTab):
         #buttons = CardCol(header)
         Button(buttons, "Respawn", color_bg=Style.COLOR_BUTTON_CTA, on_click=self._respawn_from_config)
         Button(buttons, "Pause / Resume", on_click=self._toggle_pause)
-
-        Button(buttons, "Shuffle ",       on_click=self._randomize_velocities)
+        Button(buttons, "Reroll", on_click=self.reroll)
+        #Button(buttons, "Shuffle ",       on_click=self._randomize_velocities)
 
         self.lbl_status = Body(root, "")
         self.lbl_types  = Body(root, "")
@@ -82,7 +82,12 @@ class ParticleLife(_BaseTab):
         old_path.rename(new_path)
         txt.private_path = new_path
 
-
+    def reroll(self):
+        ids = self.form.pipeline_read("pl.particle_ids") or []
+        for a in ids:
+            for b in ids:
+                self.form.pipeline_set(f"pl.G.{a}.{b}", round(random.uniform(-1.0, 1.0), 2))
+        self._respawn_from_config()
     # ==========================================================
     # Lifecycle hooks
     # ==========================================================

@@ -91,6 +91,8 @@ class Style:
     TOKEN_SCROLLBAR           = 12
     TOKEN_CORNER_RADIUS       = 4
 
+    # User preference (0.0 to 1.0, future slider target)
+    FONT_SCALE                = .369
     # Font proportions (relative to screen height)
     FONT_RATIO_BANNER         = .1969
     FONT_RATIO_TITLE          = .0889
@@ -99,8 +101,7 @@ class Style:
     FONT_RATIO_DETAIL         = .0590
     FONT_RATIO_MONO           = .0396
 
-    # User preference (0.0 to 1.0, future slider target)
-    FONT_SCALE                = .369
+
 
     # Initialized by MgrFont
     FONT_BANNER               = None

@@ -60,7 +60,11 @@ class Pipeline:
         control = self.widgets.get(control_name)
         if control is None:
             return
-        if   property == "text":    control.text    = str (value)
+        #if   property == "text":    control.text    = str (value)
+
+
+        if property == "text":
+            control.set_text(str(value))  # REPLACE
         elif property == "enabled": control.enabled = bool(value)
         elif property == "visible": control.visible = bool(value)
 

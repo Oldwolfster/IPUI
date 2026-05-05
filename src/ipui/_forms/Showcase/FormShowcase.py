@@ -2,25 +2,20 @@ from ipui._forms.ParticleLife.Form_ParticleLife import Form_ParticleLife
 from ipui import *
 
 class FormShowcase(_BaseForm):
-    #"Test scroll_h": ["left_pane", "center_pane", "right_pane"],
-
-
 
     TAB_LAYOUT = {
-        "testscaf": [("tables", .1), ("query", .1), ("results", 1)],
-        "SQL"           : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
+        "testscaf": [("tables", .6), ("query", .1), ("results", 1)],
 
-
-        "Welcome2"       : ["left_pane22"      ,"proud_features"   ,"detail"       ],
+        "Welcome"       : ["left_pane"      ,"proud_features"   ,"detail"       ],
         "Tab System"    : ["explain"        ,"showcase"                         ],
         "Widgets"       : ["catalog_grid"   ,"detail"                           ],
         "Widget Tree"   : ["widget_tree"    ,"widget_detail"                    ],
         "Wiring"        : ["reactive"       ,"imperative"                       ],
         "Pygame"        : [("overview", 2)  ,(None      , 3)    ,("code"   , 2) ],
         "Breakout"      : ["greet"          ,None               ,"code"         ],
-        #"SQL"           : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
+        "SQL"           : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
         "Paint"         : [("tools"   ,.3)  ,None                               ],
-        "Designer"      : [("tab_map" , 1)  ,("preview" , 3)     ,("toolbox",1) ],
+        "Designer"      : [("tab_map" , 1)  ,("preview" , 3)    ,("toolbox", 1) ],
 
     }
     def build(self):

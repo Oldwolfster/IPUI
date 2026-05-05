@@ -318,6 +318,7 @@ class TextArea(TextBox):
         clip = MgrClipboard.paste()
         if clip:
             clip = clip.replace('\r\n', '\n').replace('\r', '\n')
+            pygame.event.clear(pygame.KEYDOWN) # discard repeats queued during subprocess
             self.delete_selection()
             self.text            = self.text[:self.cursor_pos] + clip + self.text[self.cursor_pos:]
             self.cursor_pos      += len(clip)

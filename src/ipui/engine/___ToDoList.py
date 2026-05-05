@@ -418,26 +418,44 @@ Clean up list
 344) DONE: Removed duplicate frame_size from _BaseWidget
 345) DONE: Fix frame_size formula return (self.pad_x + self.border + self.pad_y+self.border
 346) DONE: Added set_pane, swap_pane, hide_extra_panes, or register_derives
+347) DONE: Timing issues SQL       builder dep on hook   self.db_path not set
+350) DONE: Timing issues Widget    builder dep on hook   self.catalog.entries
+351) DONE: Timing issues Designer  builder dep on hook   self.selected_tab and self.selected_pane
+352) DONE: Timing issues F12       builder dep on hook   self.column_mode
+353) DONE:smaller sample sqllite
+354) DONE:double check NoneDummy is gone.
+355) DONE: scaffolded showcase should override flex settings
+356) DONE: is set_text helping hurting or both?
+357) DONE: widget.enabled allows string. maybe a different disabled_msg prop.... widget.enabled="disabled msg" is beyond stupid of me.
+358) DONE: Swap Pane is ong.e
+359) DONE:  Some cleanup on the sql editor
+360) pasting in to sql box gets caught in loops omehow
+######################################################################
+5/4
+######################################################################
+361) Nope, it is needed.  - look in to on_click_me   possibly remove from api.
+362) Readme has code  examples that don't work.
+
 ######################################################################
 Pending for V0.1
 ######################################################################
 
 What is left to publish
 
-
-smaller sample sqllite
-double check NoneDummy is gone.
+if you type to the end of a text box, it shrinks
 disable launch button. (MUST BE LAST)
 
-Readme has code  examples that don't work.
-scaffolded showcase should override flex settings
-is set_text helping hurting or both?
-widget.enabled allows string. maybe a different disabled_msg prop.... widget.enabled="disabled msg" is beyond stupid of me.
-look in to on_click_me
-possibly remove from api.
-set_pane vs swap_pane _BaseTab.swap_pane(index, builder) returns a closure (a "do_swap" function) for use as a callback. That's a different shape from set_pane and the name doesn't telegraph "this returns a function." Most callers probably expect it to do the swap.
-pasting in to sql box gets caught in loops omehow
+
+
+
 sqlarea not scrolling
+
+
+
+
+
+
+
 
 ##########################################################
 ##########################################################

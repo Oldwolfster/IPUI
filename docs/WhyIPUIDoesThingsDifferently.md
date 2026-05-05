@@ -90,9 +90,8 @@ This makes discovery trivial — in your file browser, in your IDE, in conversat
 
 No loose functions at module level. No executable code outside `if __name__ == "__main__":`.
 
-For one, this eliminates order dependency
-
-Also, module-level code runs on import, in whatever order Python resolves dependencies. That's a source of subtle, order-dependent bugs that are painful to diagnose. Wrapping everything in classes eliminates this entirely — O(1) structural protection instead of O(N) discipline from every developer on every file.
+- For one, this eliminates order dependency.
+- Also, module-level code runs on import, in whatever order Python resolves dependencies. That's a source of subtle, order-dependent bugs that are painful to diagnose. Wrapping everything in classes eliminates this entirely — O(1) structural protection instead of O(N) discipline from every developer on every file.
 
 ### Resolution Independence — No Pixel Math
 

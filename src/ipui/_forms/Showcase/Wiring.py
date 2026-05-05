@@ -42,7 +42,7 @@ class YourChoice(_BaseTab):
         col_1    = Col(two_cols, width_flex=2)
         card     = Card(col_1)
         Body     ( card, "Declare relationships.")
-        Body     ( card, "Magic handles the rest.")
+        Body     ( card, "Engine handles the rest.")
         self    . reactive_name_game(col_1)
 
     def react_column_rite(self, two_cols):

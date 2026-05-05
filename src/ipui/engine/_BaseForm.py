@@ -354,6 +354,7 @@ class _BaseForm(_BaseWidget):
                                   )
         for name in getattr(cls, 'tab_hidden', []):
             self.tab_strip.hide_tab(name)
+        self.tab_strip.switch_tab(next(iter(self.TAB_LAYOUT))) #NEW — activate first tab now that wiring is complete
 
 
     def validate_pane_names(self):

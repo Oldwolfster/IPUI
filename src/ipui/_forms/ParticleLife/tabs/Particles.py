@@ -26,8 +26,9 @@ class Particles(_BaseTab):
         ( 64, 224, 208),   # V  - Turquoise 2
     ]
 
-    def ip_setup(self, ip):
+    def ip_setup_early(self, ip):
         self.field_cards = {}
+
     def _ensure_defaultsDELETEME(self):
         ids = self.form.pipeline_read("pl.particle_ids")
         if ids:

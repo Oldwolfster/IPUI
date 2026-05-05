@@ -1,5 +1,5 @@
 # IPUI - Idiot Proof UI - Because we've all spent 3 hours debugging a button!
-**Version: 0.1.0 Rev 048**
+**Version: 0.1.0 Rev 051**
 
 A lightweight, opinionated Python/Pygame UI framework that makes building complex tabbed interfaces *ridiculously* simple.
 
@@ -9,7 +9,7 @@ A lightweight, opinionated Python/Pygame UI framework that makes building comple
 ![Pygame-ce](https://img.shields.io/badge/pygame--ce-2.x-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**Actively developed • First public release — April 2026**
+**Actively developed • First public release — May 2026**
 
 > IPUI is developed and tested against `pygame-ce`. It is imported in code as `pygame`.
 
@@ -48,8 +48,11 @@ pip install ipui
 ---
 
 ## Additional Documentation
-- [Naming Conventions](https://github.com/Oldwolfster/IPUI/blob/main/docs/NamingAndConventions.md)
+- [Why IPUI Does Things Differently](https://github.com/Oldwolfster/IPUI/blob/main/docs/WhyIPUIDoesThingsDifferently.md)
+- [Lifecycle Timing](https://github.com/Oldwolfster/IPUI/blob/main/docs/LifecycleTiming.md)
 - [Layout Guide](https://github.com/Oldwolfster/IPUI/blob/main/docs/IPUI_Layout_Guide_Original_Flex.md)
+- [Naming Conventions](https://github.com/Oldwolfster/IPUI/blob/main/docs/NamingAndConventions.md)
+- [Reading IPUI Source Code](https://github.com/Oldwolfster/IPUI/blob/main/docs/Reading_IPUI_Source_Code.md)
 
 ---
 
@@ -65,12 +68,12 @@ pip install ipui
 - 📱 **Resolution Independent:** UI scales automatically to physical screen height, so it stays usable on an old laptop or a 4K monitor.
 - 📐 **Declarative Layout:** Simple, flexible syntax that handles the math so you can focus on the logic.
 - 🧩 **Built to Extend:** Custom widgets get layout, events, and styling automatically. Standard widgets take 5–10 LOC; even tools like a network diagram widget come in under 150 LOC.
-- 📜 **One-Touch Scrolling:** Make any Card scroll_v with a single parameter—no complex viewport setup required. Scrollbars are draggable and styled automatically.
+- 📜 **One-Touch Scrolling:** Make any Card scrollable with a single parameter—no complex viewport setup required. Scrollbars are draggable and styled automatically.
 - 🔗 **Construction IS Attachment:** No floating widgets or `add()` calls. If you build it inside a container, it's attached automatically.
 - 🔄 **Multiple Update Styles:** Use DAG-based reactivity, pipeline-driven synchronization, or direct widget access—whichever fits the job best.
 - ⛓️ **Data Pipeline:** Bind widgets to a Pipeline Key and let IPUI propagate updates automatically. Derives stay in sync with zero manual update code.
 - 🎮 **Pygame Lifecycle Hooks:** `ip_think`, `ip_draw`, and `ip_draw_hud` give you full access to the game loop without fighting the framework.
-- 💡 **Multi-Tier Tooltips:** Choose between standard hover tips or "Super Tooltips"—pinnable, scroll_v windows capable of displaying deep technical data.
+- 💡 **Multi-Tier Tooltips:** Choose between standard hover tips or "Super Tooltips"—pinnable, scrollable windows capable of displaying deep technical data.
 - 🗃️ **Automatic Widget Registry:** When DAG or pipeline isn't the right fit, named widgets stay easy to reach across tabs and panes—no globals, no reference plumbing required.
 - 🐞 **Pro Debug Mode:** Includes a live Widget Tree and layout overlays to make positioning issues easy to diagnose.
 - 💻 **Beautiful Code Boxes:** Display source code by passing a string or a file path; IPUI handles the formatting.
@@ -248,7 +251,7 @@ Main Form ➔ Tab File (Hey_There.py) ➔ Pane Methods (def welcome(self):)
 
 This unconventional approach solves three major UI development headaches:
 - Visual Project Structure: You can find tab logic by looking at your file explorer tree. There is no need to open files just to hunt down class names.
-- **NO IMPORTS NEEDED** not needing them is nice.  Not needing to maintain them as you revise content is even nicer.
+- **NO IMPORTS NEEDED** — not needing them is nice. Not needing to maintain them as you revise content is even nicer.
 - **NO CIRCULAR IMPORTS**  No extra imports.  No extra risk of this nasty little error. 
 
 And it's really easy for IPUI to auto-scaffold the small bit of boilerplate for the 'skeleton'  of what you setup in Tab_Layout (it isn't much - but it's details you don't need to get correct)  
@@ -299,7 +302,7 @@ class BouncingBall(_BaseTab):
 
     def arena(self, parent):                        # ← pane method: builds the UI
         Title(parent, text="Bouncing Ball")         # Print Title
-        card=Card(parent, scroll_v=True)            # Create a card for codebox
+        card = Card(parent, scroll_v=True)          # Create a card for codebox
         CodeBox(card,data  =__file__)               # Put Codebox in the card
 
     def ip_setup(self, ip):                         # ← hook: runs once, initializes state
@@ -366,8 +369,6 @@ class MyWidget(_BaseWidget):
         self.font     = Style.FONT_BODY
         self.color_bg = Style.COLOR_CARD_BG
 ```
-
-Most users never need to write a custom widget — IPUI ships with a full catalog. This is here so you know where to look when the day comes.
 
 ---
 
@@ -656,7 +657,17 @@ ip.state("ui").go("MENU_OPEN")
 
 IPUI gives you five hooks into the application lifecycle. Each one fires at a specific moment, has a clear job, and works identically whether you're on a `_BaseTab` or a `_BaseForm`.
 
-### The Five Hooks
+### The ip Hooks
+
+**`ip_setup_early(self, ip)`** — Runs once, **before** the pane's widgets are built. This is the place to set `self.X = ...` for any state your pane builders will read while constructing widgets — column modes, file paths, configuration, lookup tables. By the time this fires, `self.form` and `self.widgets` are wired, but **no widgets in this tab exist yet**.
+ 
+```python
+def ip_setup_early(self, ip):
+    self.column_mode = "flex"
+    self.db_path     = self.form.pipeline_read("db_path")
+    self.catalog     = load_widget_catalog()
+```
+
 
 **`ip_setup(self, ip)`** — Runs once, when the pane is first created. Initialize your state here: positions, velocities, counters, loaded assets, state machine configuration. By the time this fires, `self.form`, `self.ip`, and the widget tree are fully wired.
 
@@ -726,7 +737,7 @@ Widget render  →  the UI draws itself
 ip_draw_hud    →  you paint on top of everything
 ```
 
-`ip_setup` and `ip_activated` are not per-frame — they fire at lifecycle transitions.
+`ip_setup_early`, `ip_setup`, and `ip_activated` are not per-frame — they fire at lifecycle transitions.
 
 ### Using Hooks on a Pane
 
@@ -784,7 +795,7 @@ By default, all hooks only run on the active tab.
 - Obviously, no point in the two draws if the tab isn't visible.
 - But with ip_think, you have a choice.
 
->  Use THINK_ALWAYS to switch that default behavior.  If your pane runs a simulation or background process that shouldn't pause when the user switches tabs,set THINK_ALWAYS to True and ip_think will run regardless of active tab:
+>  Use THINK_ALWAYS to switch that default behavior.  If your pane runs a simulation or background process that shouldn't pause when the user switches tabs, set THINK_ALWAYS to True and ip_think will run regardless of active tab:
 
 ```python
 class TrainingMonitor(_BaseTab):
@@ -799,13 +810,14 @@ class TrainingMonitor(_BaseTab):
 
 ### Quick Reference
 
-| Hook            | Receives `ip`? | When it fires                             | Fires on inactive pane?           |
-|-----------------|----------------|-------------------------------------------|-----------------------------------|
-| `ip_setup`      | Yes            | Once, at creation                         | N/A — only fires once             |
-| `ip_activated`  | Yes            | Each time pane/form becomes visible       | N/A — fires on activation         |
-| `ip_think`      | Yes            | Every frame                               | Only with `THINK_ALWAYS = True`   |
-| `ip_draw`       | Yes            | Every frame, before widgets               | Active pane only                  |
-| `ip_draw_hud`   | Yes            | Every frame, after widgets                | Active pane only                  |
+| Hook           | Receives `ip`? | When it fires                       | Fires on inactive pane?           |
+|----------------|----------------|-------------------------------------|-----------------------------------|
+| `ip_setup_early`| Yes            | Once, at creation before Widgets    | N/A — only fires once             |
+| `ip_setup`     | Yes            | Once, at creation after Widgets     | N/A — only fires once             |
+| `ip_activated` | Yes            | Each time pane/form becomes visible | N/A — fires on activation         |
+| `ip_think`     | Yes            | Every frame                         | Only with `THINK_ALWAYS = True`   |
+| `ip_draw`      | Yes            | Every frame, before widgets         | Active pane only                  |
+| `ip_draw_hud`  | Yes            | Every frame, after widgets          | Active pane only                  |
 
 ---
 
@@ -827,14 +839,11 @@ All text widgets support `glow=True` (molten-orange forge effect) and `text_alig
 
 ### Layout Containers
 
-> **A note on IPUI architecture:** widgets are not divided into rigid categories like “containers” and “leaves.” Shared behaviors live in the framework layer, and individual widgets opt into the behaviors they need.
+> **A note on IPUI architecture:** widgets are not divided into rigid categories like "containers" and "leaves." Shared behaviors live in the framework layer, and individual widgets opt into the behaviors they need.
 >
-> **Any widget can be a container/parent.**
+> **Any widget can be a container/parent.** Drop an icon inside a button, or a whole subtree inside a label, if that's what your UI needs.
 >
-> Drop an icon inside a button, or a whole subtree inside a label, if that's what your UI needs.
- 
-
-> These widgets were designed to be containers to make layout easier
+> The widgets below were designed to be containers to make layout easier.
 
 
 | Widget    | Direction  | Chrome          | Usage                                    |
@@ -1245,7 +1254,7 @@ class MyPane(_BaseTab):
         self.lbl_count.set_text(f"{count} selected")
         if count == 0:
             self.btn_run.enabled=False
-            self.btn_run.tool_tip="Select at least one item"
+            self.btn_run.tooltip="Select at least one item"
         else:
             self.btn_run.enabled=True
 ```
@@ -1289,19 +1298,37 @@ IPUI catches mistakes when you make them, not when users hit them:
 | `on_click_me(non_callable)`               | `TypeError` at registration                |
 | `on_click_me(func_with_params)`           | `ValueError` at registration               |
 
-IPUI Error messages stand out by always starting: `Houston we have a problem!`
+IPUI Error messages stand out by always starting with: `Houston we have a problem!`
 
 ---
 
 ## Inline Parent - Construction is Attachment
 
 Want to wrap a Row in a Plate? Just do it:
+
+```python
 right = Row(Plate(header, width_flex=1), width_flex=1, pad_y=0)
+```
 
 Same as:
+
+```python
 plate_wrapper = Plate(header, width_flex=1)
 right = Row(plate_wrapper, width_flex=1, pad_y=0)
+```
 
+---
+
+## Two Paths to `on_click`
+
+Any widget can be made clickable. There are two ways to wire the callback, and the difference is intentional:
+
+- **`on_click=` (constructor kwarg)** — pass the callback when you build the widget. Fast, no validation. You're trusted to pass a zero-arg callable.
+- **`widget.on_click_me(callback)`** — register the callback *after* construction. Validates that the callback is callable and takes zero arguments, raising at registration time if not.
+
+Both end up at the same place (`self.on_click`). Use the kwarg for inline construction, use `on_click_me` when you're wiring a handler after the fact and want the safety net.
+
+⚠️ **Don't rename one to the other.** They share a target attribute (`self.on_click`); collapsing the names creates a method-shadows-attribute collision that surfaces as a "not callable" error at click time.
 
 ---
 
@@ -1380,7 +1407,6 @@ ipui.show(MyApp, "My Application")
 | `tab_early_load`     | list   | Tab names to pre-build at startup                   |
 | `tab_on_change`      | str    | Name of method on this form to call before every tab switch. Signature: `method(name, current)`. Return `False` to veto the switch. |
 | `tab_hidden`         | list   | Tab names initially hidden                          |
-| `tab_border`         | int    | Tab strip border override                           |
 | `pipeline_debug`     | bool   | Log all pipeline activity to console                |
 
 ### BaseForm Methods
@@ -1418,7 +1444,6 @@ All widgets accept these parameters:
 | `justify_center`  | bool     | False        | Center children in available space            |
 | `justify_spread`  | bool     | False        | Spread children evenly                        |
 | `visible`         | bool     | True         | Show/hide widget                              |
-| `enabled`         | bool/str | True         | False or reason string to disable             |
 | `font`            | Font     | None         | Override font                                 |
 | `text_align`      | str      | LEFT         | LEFT, RIGHT, CENTER                           |
 | `color_bg`        | tuple    | None         | Background RGB tuple                          |
@@ -1436,6 +1461,7 @@ All widgets accept these parameters:
 | `tab_order`       | int      | None         | Focus order for keyboard navigation           |
 | `early_load`      | bool     | None         | Pre-build at startup instead of on-demand     |
 | `pipeline_key`    | str      | None         | Pipeline read/write key                       |
+| `tooltip`         | str      | None         | Hover tooltip text                            |
 | `tooltip_class`   | class    | None         | Custom tooltip class                          |
 | `scroll_v`        | bool     | False        | Enable scrolling for this container           |
 | `scroll_glow`     | float    | 0.369        | Scrollbar bevel intensity (0 = flat)          |
@@ -1463,13 +1489,14 @@ All widgets accept these parameters:
 
 **Lifecycle hooks** (override on your pane):
 
-| Method                | Description                                            |
-|-----------------------|--------------------------------------------------------|
-| `ip_setup(ip)`        | One-time setup (runs once when pane is first created)  |
-| `ip_activated(ip)`    | Each time the pane becomes visible                     |
-| `ip_think(ip)`        | Per-frame logic. State, physics, AI.                   |
-| `ip_draw(ip)`         | Draw before UI. Game worlds, backgrounds.              |
-| `ip_draw_hud(ip)`     | Draw after UI. Overlays, cursors, effects.             |
+| Method               | Description                                            |
+|----------------------|--------------------------------------------------------|
+| `ip_setup_early(ip)` | One-time setup (runs once before widget tree is built) |
+| `ip_setup(ip)`       | One-time setup (runs once after widget tree is built)  |
+| `ip_activated(ip)`   | Each time the pane becomes visible                     |
+| `ip_think(ip)`       | Per-frame logic. State, physics, AI.                   |
+| `ip_draw(ip)`        | Draw before UI. Game worlds, backgrounds.              |
+| `ip_draw_hud(ip)`    | Draw after UI. Overlays, cursors, effects.             |
 
 **BINDINGS entry format:**
 ```python
@@ -1619,7 +1646,7 @@ This makes discovery trivial — in your file browser, in your IDE, in conversat
 
 No loose functions at module level. No executable code outside `if __name__ == "__main__":`.
 
-For one, this eliminates order dependency
+For one, this eliminates order dependency.
 
 Also, module-level code runs on import, in whatever order Python resolves dependencies. That's a source of subtle, order-dependent bugs that are painful to diagnose. Wrapping everything in classes eliminates this entirely — O(1) structural protection instead of O(N) discipline from every developer on every file.
 
@@ -1731,7 +1758,7 @@ TabStrip.switch_tab("Forge")
   ├─► cache_active_content()              ◄── snapshot Home's widgets
   ├─► self.active_tab = "Forge"
   ├─► update_button_visuals()             ◄── tab strip highlight moves
-  ├─► ensure_content("Forge")             ◄── may run ip_setup() on first visit
+  ├─► build_tabs_widget_tree("Forge")     ◄── may run ip_setup() on first visit
   │
   └─► notify_activated("Forge")           ◄── Forge.ip_activated(ip) fires
 ```

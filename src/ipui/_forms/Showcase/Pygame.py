@@ -20,11 +20,7 @@ class PygameBall(_BaseTab):
     def overview(self, parent):
         """Left pane — explanation and speed controls."""
         Title(parent, "Pygame + IPUI", glow=True)
-        Body(parent, "IPUI gives you pygame on a platter."
-
-
-             )
-
+        Body(parent, "IPUI gives you pygame on a platter.")
         card = Card(parent)
         Heading(card, "Three Main Hooks:", glow=True)
         Body(card, "ip_think(ip)\n"
@@ -49,7 +45,7 @@ class PygameBall(_BaseTab):
         Body(card, "  State      ip.state.add / go / debug")
         Body(card, "  Rendering  surface, events, unhandled")
         Body(card, "  Cache      cache_get, cache_set — frame-to-frame scratch")
-        Body(card, "Type ip. — your IDE shows the rest.")
+        Body(card, "  Type ip. — your IDE shows the rest.")
 
 
 
@@ -64,9 +60,9 @@ class PygameBall(_BaseTab):
         Button(row, "Faster", on_click=self.go_faster)
 
         Body(parent,"")     #small spacer
-        card = Card(parent,height_flex=1)
+        card = Card(parent,height_flex=1,pad=0)
         Title(card, "The Source", glow=True,text_align=CENTER)
-        card = Card(card, scroll_v=True, height_flex=99)
+        card = Card(card, scroll_v=True, scroll_h=True, height_flex=99)
         CodeBox(card,    data  = __file__)
 
     # ══════════════════════════════════════════════════════════════

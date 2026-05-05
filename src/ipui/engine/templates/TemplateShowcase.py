@@ -10,8 +10,9 @@ class ShowcaseTemplate(_BaseTab):
     #COMMENT OR DELETE THIS TO PREVENT THE COOKBOOK FROM Hijacking the 2nd and 3rd pane.
     def ip_activated(self,ip):
 
-        self.set_pane(1, self.cookbook_menu, weight=.6)
-        self.set_pane(2, self.cookbook_demo, weight=1.3)
+        self.set_pane(0,"method_1_IPUI_TAB_BUILDER",weight=1.3)
+        self.set_pane(1, self.cookbook_menu, weight=.5)
+        self.set_pane(2, self.cookbook_demo, weight=.8)
         print("in ip_activated and setting weights")
         print(f"TAB_LAYOUT= {self.form.TAB_LAYOUT}")
 
@@ -63,9 +64,19 @@ class ShowcaseTemplate(_BaseTab):
             Button(card, label, on_click=lambda n=name: self.show_demo(n),width_flex=1,text_align='l')
 
     def cookbook_demo(self, parent):
-        Title(parent, "Source Code", glow=True)
-        Body(parent, "Pick something from the menu",
-             name="explorer_placeholder")
+
+        Title(parent, "GET YOUR IPUI SOURCE CODE", glow=True,text_align=CENTER)
+        Title(parent, "Pick something from the menu",  name="explorer_placeholder",text_align=CENTER)
+        Spacer(parent)
+        row = Row(parent)
+        Spacer(row,width_flex=.1)
+        plate= Plate(row,width_flex=.8)
+        Title(plate, "If it's what you need", glow=True,text_align=CENTER)
+        Spacer(row, width_flex=.1)
+        Title(parent, "just hit copy!",text_align=CENTER)
+        Title(parent, "and paste it in to your pane builder!", text_align=CENTER)
+
+        Spacer(parent)
 
     def show_demo(self, method_name):
         method = getattr(self, method_name)

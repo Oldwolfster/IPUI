@@ -46,7 +46,9 @@ class EZ_Pane(_BaseTab):
     def on_batch_selected(self, batch_id) -> None:
         self.form.selected_batch_id = batch_id
         self.form.compared_runs     = []
-        self.swap_pane(0, self.pane_batch_runs)()
+        self.show_batch_runs()
+
+        def show_batches(self):    self.form.set_pane(0, self.batches)
 
     def pane_batch_runs(self, parent) -> None:
         """Left pane after batch click — runs for that batch."""
@@ -54,12 +56,13 @@ class EZ_Pane(_BaseTab):
         header   = Row(parent, justify_spread=True)
         Title(header, f"Batch {batch_id}", glow=True)
         btn = Button(header, "Back", color_bg=Style.COLOR_TAB_BG)
-        btn.on_click_me(self.swap_pane(0, self.batches))
+        btn.on_click_me(self.show_batches)
         card = CardCol(parent, height_flex=1)
         grid = PowerGrid(card, name="grid_batch_runs", height_flex=1)
         grid.on_row_click(self.on_run_toggled, "Run")
         self.load_batch_runs(batch_id)
 
+    def show_batch_runs(self):       self.form.set_pane(0, self.pane_batch_runs)
     # ══════════════════════════════════════════════════════════════
     # RUN TOGGLE — add/remove from comparison
     # ══════════════════════════════════════════════════════════════

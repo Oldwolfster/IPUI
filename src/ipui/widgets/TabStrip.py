@@ -43,7 +43,6 @@ class TabStrip(_BaseWidget):
         for name in (self.early_load or []):  # Maybe below contenyt
             self.prepare(name)
         self.build_content_area()
-        self.switch_tab(next(iter(self.tab_layout)))
 
     def clean_tab_layout_once(self):
         """do any cleaning needed for tab_layout - should end with each value is a list of tuple(s) aka [("pane",1)]"""
@@ -177,29 +176,57 @@ class TabStrip(_BaseWidget):
     # ============================================================
     # Switching tabs
     # ============================================================
-
     def switch_tab(self, name):
-        #print(f"SWITCH_TAB called: {name}")
         if not self.allow_switch(name):     return
         if name != self.active_tab:
-            self.cache_active_content()
+            self.cache_active_tab()
         self.active_tab = name
         self.update_button_visuals()
-        self.ensure_content(name)
-        self.notify_activated(name)
+        self.resolve_tab(name)  # 1. instantiate tab class (cheap, no widgets)
+        self.set_ip_context(name) # last addition 5/4
+        self.fire_ip_setup_early(name)  # 2. user pre-widget state on self
+        self.build_tabs_widget_tree(name)  # 3. run pane builders, widgets register
+        self.fire_ip_setup(name)  # 4. user post-widget state, BINDINGS-safe
+        self.fire_ip_activated(name)  # 5. user activation hook
 
     def allow_switch(self, name):
         if not self.on_change:              return True
         return self.on_change(name, self.active_tab) is not False
 
-    def ensure_setup(self, name):
+
+    def fire_ip_setup_early(self, name):
+        tab = self.tab_cache.get(name)
+        if tab is None: return
+        if getattr(tab, 'private_setup_early_done', False): return
+        tab.private_setup_early_done = True
+        if hasattr(tab, 'ip_setup_early'):
+            tab.ip_setup_early(tab.ip)
+
+    def build_tabs_widget_tree(self, name):
+        if name in self.content_cache:
+            self.restore_cached_tab(name)
+            return
+        entries = self.tab_layout[name]
+        if self.needs_missing_page(name, entries):
+            entries = self.missing_tab_entries(name)
+        self.rebuild_tab_areas(entries)
+        self.run_pane_builders(name, entries)
+
+
+    def fire_ip_setup(self, name):
         tab = self.tab_cache.get(name)
         if tab and not tab.private_setup_done:
             tab.private_setup_done = True
             tab.ip_setup(tab.ip)
 
+    def fire_ip_activated(self, name):
+        """Update: only fires ip_activated — context now set in set_ip_context"""
+        tab = self.tab_cache.get(name)
+        if tab is None: return
+        from ipui.engine.IPUI import IPUI
+        tab.ip_activated(IPUI.ip)
 
-    def notify_activated(self, name):
+    def fire_ip_activated20260503(self, name):
         tab = self.tab_cache.get(name)
         if tab:
             from ipui.engine.IPUI import IPUI
@@ -207,18 +234,34 @@ class TabStrip(_BaseWidget):
             ip.set_tab_context(tab, name, True, self.content)
             tab.ip_activated(ip)
 
-    def ensure_content(self, name):
+    def ensure_content20260503(self, name):
         if name in self.content_cache:
-            self.restore_cached_content(name)
+            self.restore_cached_tab(name)
             return
         entries = self.tab_layout[name]
         if self.needs_missing_page(name, entries):
             entries = self.missing_tab_entries(name)
         self.rebuild_tab_areas(entries)
-        self.ensure_setup(name)
-        self.fill_panes(name, entries)
+        self.fire_ip_setup(name)
+        self.run_pane_builders(name, entries)
 
-    def cache_active_content(self):
+    def fire_ip_setup(self, name):
+        tab = self.tab_cache.get(name)
+        if tab and not tab.private_setup_done:
+            tab.private_setup_done = True
+            tab.ip_setup(tab.ip)
+
+
+
+    def set_ip_context(self, name):
+        """populate ip with tab context BEFORE ip_setup or ip_activated fires"""
+        tab = self.tab_cache.get(name)
+        if tab is None: return
+        from ipui.engine.IPUI import IPUI
+        ip = IPUI.ip
+        ip.set_tab_context(tab, name, True, self.content)
+
+    def cache_active_tab(self):
         if self.active_tab is None:    return
         self.content_cache[self.active_tab] = (
             list(self.content.children),
@@ -226,7 +269,7 @@ class TabStrip(_BaseWidget):
         )
         self.content.children.clear()
 
-    def restore_cached_content(self, name):
+    def restore_cached_tab(self, name):
         children, panes = self.content_cache[name]
         self.content.children.clear()
         self.content.children.extend(children)
@@ -282,7 +325,7 @@ class TabStrip(_BaseWidget):
                 pane = Pane(current_area.inner, width_flex=weight, height_flex=1)
                 self.panes[i] = pane
 
-    def fill_panes(self, name, pane_list):
+    def run_pane_builders(self, name, pane_list):
         for i, entry in enumerate(pane_list):
             builder = entry[0]
             args    = entry[2] if len(entry) > 2 else ()
@@ -441,10 +484,11 @@ class TabStrip(_BaseWidget):
             if needs_rebuild:
                 entries                      = self.tab_layout[tab_name]
                 self.rebuild_tab_areas(entries)
-                self.fill_panes(tab_name, entries)
+                self.run_pane_builders(tab_name, entries)
             else:
                 pane                        = self.panes[index]
                 if pane is None: return
+                pane.width_flex = weight
                 pane.children.clear()
                 self.invoke_builder         ( tab_name, builder, pane, *args, **kwargs)
             # Removed 4/22 self.form.layout_engine.RunLayout()

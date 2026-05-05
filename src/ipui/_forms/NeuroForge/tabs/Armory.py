@@ -63,7 +63,7 @@ HYPERPARAMS_LIST = {
 class EZ_Pane(_BaseTab):
     """Armory tab — configure gladiators, arenas, hyperparams, and seeds."""
 
-    def ip_setup(self, ip):
+    def ip_setup_early(self, ip):
         self.load_legos(self.form.active_project.path)
 
     def ip_activated(self, ip):
@@ -118,7 +118,7 @@ class EZ_Pane(_BaseTab):
             for name, meta in HYPERPARAMS.items()
         )
         Body(sub, hp_text, name="lbl_hyperparams")
-        sub.on_click_me(self.swap_pane(2, self.pane_hyperparams_picker))
+        sub.on_click_me(self.show_hyperparams)
 
         sub = CardCol(col)
         Heading(sub, "Seed List:")
@@ -129,7 +129,7 @@ class EZ_Pane(_BaseTab):
         rng_text     = (f"{total} seeds ({random_count} random + {manual_count} manual)"
                         if total else "configure in RNG Settings")
         Body(sub, rng_text, name="lbl_rng")
-        sub.on_click_me(self.swap_pane(2, self.pane_rng_picker))
+        sub.on_click_me(self.show_rng)
 
     # ══════════════════════════════════════════════════════════════
     # SETTINGS SUMMARY — right column (gladiators + arena)
@@ -145,14 +145,14 @@ class EZ_Pane(_BaseTab):
         selected = form.pipeline_read("GladiatorList")
         text     = "\n".join(sorted(selected)) if selected else "(none selected)"
         Body(sub, text, name="lbl_gladiators")
-        sub.on_click_me(self.swap_pane(2, self.pane_gladiator_picker))
+        sub.on_click_me(self.show_gladiators)
 
         sub = CardCol(col)
         Heading(sub, "Arena:")
         selected = form.pipeline_read("ArenaList")
         text     = "\n".join(sorted(selected)) if selected else "(none selected)"
         Body(sub, text, name="lbl_arena")
-        sub.on_click_me(self.swap_pane(2, self.pane_arena_picker))
+        sub.on_click_me(self.show_arena)
 
     # ══════════════════════════════════════════════════════════════
     # SETTINGS SUMMARY — below (config options)
@@ -171,12 +171,8 @@ class EZ_Pane(_BaseTab):
         config_text = "\n".join(parts) if parts else "Config not yet defined"
         #if parts:
         Body(sub, config_text, name="lbl_config")
-        #else:
-        #    Title(sub, config_text, name="lbl_config",glow=True)
+        sub.on_click_me(self.show_config_detail)
 
-        #sub.on_click_me(self.swap_pane(2, lambda p: self.pane_config_detail(p, "Optimizer")))
-        #sub.on_click_me(self.swap_pane(2, self.form.set_pane(2, self.pane_config_detail, "Optimizer"))    )
-        sub.on_click_me(self.swap_pane(2, self.pane_config_detail, "Optimizer"))
     # ══════════════════════════════════════════════════════════════
     # PANE: Gladiator picker
     # ══════════════════════════════════════════════════════════════
@@ -242,7 +238,12 @@ class EZ_Pane(_BaseTab):
     # ══════════════════════════════════════════════════════════════
     # PANE: RNG / Seed picker
     # ══════════════════════════════════════════════════════════════
+    def show_hyperparams(self): self.form.set_pane(2, self.pane_hyperparams_picker)
+    def show_rng(self):         self.form.set_pane(2, self.pane_rng_picker)
+    def show_gladiators(self):  self.form.set_pane(2, self.pane_gladiator_picker)
+    def show_arena(self):       self.form.set_pane(2, self.pane_arena_picker)
 
+    def show_config_detail(self):     self.form.set_pane(2, self.pane_config_detail, "Optimizer")
     def pane_rng_picker(self, parent) -> None:
         """Full pane — random + manual seed configuration."""
         Title(parent, "Seed List", glow=True)
@@ -535,12 +536,6 @@ class EZ_Pane(_BaseTab):
     # ══════════════════════════════════════════════════════════════
     # HELPERS
     # ══════════════════════════════════════════════════════════════
-
-    def swap_pane(self, index: int, builder,  *args, **kwargs) -> callable:
-        """Return a zero-arg callable that swaps a pane. For use with on_click_me."""
-        def do_swap():
-            self.form.set_pane(index, builder, *args, **kwargs)
-        return do_swap
 
     @staticmethod
     def parse_hplist_entry(val: str, parse_type: str):

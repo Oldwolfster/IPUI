@@ -9,10 +9,6 @@ class Tree(_BaseTab):
     def widget_tree(self, parent):
         header = Row(parent, justify_spread=True)
         Title(header, "Widget Tree", glow=True)
-        #btn = Button(header, "Refresh",
-        #    color_bg = Style.COLOR_BUTTON_CTA)
-        #btn.on_click_me(self.refresh_tree)
-
         PowerGrid(parent, name="grid_tree", height_flex=1)
         self.refresh_tree()
 

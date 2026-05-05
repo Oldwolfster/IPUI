@@ -9,7 +9,7 @@ from ipui.utils.WidgetCatalog import WidgetCatalog
 
 class Reference(_BaseTab):
 
-    def ip_setup(self, ip):
+    def ip_setup_early(self, ip):
         self.catalog           = WidgetCatalog()
         self.catalog_loaded_at = datetime.now()
         self.active_mode       = "widgets"
@@ -24,7 +24,7 @@ class Reference(_BaseTab):
             ("Widgets", self.pane_widgets),
             ("ReadMe", self.pane_markdown),
             ("Layout", self.pane_markdown),
-            ("Pipeline", None),  # ← None signals stub
+            ("lifecycle", self.pane_markdown),  # ← None signals stub
             ("Examples", None),  # ← None signals stub
 
         ]
@@ -47,6 +47,7 @@ class Reference(_BaseTab):
         files = {
             "readme": "docs/README.md",
             "layout": "docs/IPUI_Layout_Guide_Original_Flex.md",
+            "lifecycle": "docs/LifecycleTiming.md",
         }
         return files.get(self.active_mode)
 

@@ -59,11 +59,6 @@ class _BaseTab:
     def set_pane(self, index, builder, *args, tab_name=None, weight=None, **kwargs):
         self.form.set_pane(index, builder, *args, tab_name=tab_name, weight=weight, **kwargs)
 
-    def swap_pane(self, index, builder, *args, **kwargs):
-        def do_swap():
-            self.form.set_pane(index, builder)
-        return do_swap
-
     def hide_extra_panes(self, keep_count):
         for pane in self.form.tab_strip.panes[keep_count:]:
             pane.visible = False
@@ -75,17 +70,19 @@ class _BaseTab:
     # LIFECYCLE HOOKS — override in your _BaseTab subclass
     # ══════════════════════════════════════════════════════════════
 
-    def ip_think    (self, ctx):
+    def ip_think    (self, ip):
         """Per-frame logic. Override for state, physics, AI."""
         pass
 
-    def ip_draw     (self, ctx):
+    def ip_draw     (self, ip):
         """Draw before UI. Override for game worlds, backgrounds."""
         pass
 
-    def ip_draw_hud (self, ctx):
+    def ip_draw_hud (self, ip):
         """Draw after UI. Override for overlays, cursors, effects."""
         pass
+
+    def ip_setup_early(self, ip): pass
 
     def ip_setup(self, ip):
         pass

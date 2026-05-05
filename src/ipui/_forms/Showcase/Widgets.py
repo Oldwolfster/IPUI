@@ -10,7 +10,7 @@ class EZ_Pane(_BaseTab):
     api:         (none — it just works)
     """
 
-    def ip_setup(self, ip):
+    def ip_setup_early(self, ip):
         self.catalog = WidgetCatalog()
 
     def catalog_grid(self, parent):
@@ -21,7 +21,7 @@ class EZ_Pane(_BaseTab):
         card = CardCol(parent, height_flex=1, scroll_v=True,name="andrew",pad=0)
         grid = PowerGrid(card, name="grid_widgets")
         grid.set_data(self.catalog.as_grid_data())
-        grid.set_column_max("Description", 500)
+        #grid.set_column_max("Description")
         grid.on_row_click(self.on_widget_selected, "Widget")
 
         self.attach_tooltips(grid)

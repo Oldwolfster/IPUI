@@ -20,7 +20,7 @@ class SQL(_BaseTab):
     # SETUP
     # ══════════════════════════════════════════════════════════════
 
-    def ip_setup(self, ip):
+    def ip_setup_early(self, ip):
 
         self.db_path         = DB_PATH
         self.last_db_folder  = os.path.dirname(os.path.abspath(self.db_path))
@@ -478,8 +478,10 @@ class SQL(_BaseTab):
         Title(row, "Query", glow=True)
         Body (row, "", name="lbl_sql_status", text_align=RIGHT)
         sql_card = Card(parent,scroll_v=True,pad=2)
-        TextArea(sql_card, "SELECT * FROM batch_history LIMIT 696", name="code_sql", height_flex=1)
+        default_sql = "select optimizer, loss_function, count(epoch_count) as run_count, round(avg(epoch_count),2)  as epochs_to_solve\n\nfrom batch_history\n\ngroup by optimizer, loss_function\n\norder by 4"
 
+        #TextArea(sql_card, "SELECT * FROM batch_history LIMIT 696", name="code_sql", height_flex=1)
+        TextArea(sql_card, default_sql , name="code_sql", height_flex=1)
         row = Row(parent)
         Button(row, "Run Query",
                color_bg=Style.COLOR_BUTTON_CTA,
@@ -592,8 +594,9 @@ class SQL(_BaseTab):
         grid.set_data(rows, columns=cols)
 
     def set_status(self, msg):
-        lbl = self.form.widgets.get("lbl_sql_status", None)
-        if lbl: lbl.set_text(msg)
+        #lbl = self.form.widgets.get("lbl_sql_status")
+        #if lbl: lbl.set_text(msg)
+        self.form.widgets.get("lbl_sql_status").set_text(msg)
 
     # ══════════════════════════════════════════════════════════════
     # GUARDS

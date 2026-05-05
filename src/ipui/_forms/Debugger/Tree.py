@@ -160,7 +160,7 @@ class Tree(_BaseTab):
     # ══════════════════════════════════════════════════════════════
     # EVENTS — Row click
     # ══════════════════════════════════════════════════════════════
-    def ip_setup(self, ip):
+    def ip_setup_early(self, ip):
         self.column_mode = "flex"
     def ip_activated(self, ip):
         self.refresh()

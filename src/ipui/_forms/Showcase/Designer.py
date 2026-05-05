@@ -9,7 +9,7 @@ WRITE_FILES = False
 
 class Designer(_BaseTab):
 
-    def ip_setup(self, ip):
+    def ip_setup_early(self, ip):
         self.selected_tab  = None
         self.selected_pane = None
 
