@@ -5,7 +5,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
     """Opening tab of showcase/documentation"""
 
     # ══════════════════════════════════════════════#
-    #  The code that produces the left pane         #
+    #  The code for WHAT YOU ARE READING RIGHT NOW! #
     # ══════════════════════════════════════════════#
 
     def left_pane(self, parent):
@@ -13,11 +13,15 @@ class We_HopeYouLoveIPUI(_BaseTab):
         self.summary(parent)
         self.code   (parent)
 
+
     def greet(self , parent):
         card        = Card(parent)
         Title       ( card, "Welcome to", text_align=CENTER)
         box         = Plate(card,text_align=CENTER,pad_x=30, border=6)
-        Banner      ( box, "IPUI", text_align=CENTER, glow=True, hug_parent=True) #shrink the box down to child size
+        Banner      ( box, "IPUI", text_align=CENTER, glow=True, hug_parent=True
+                    , on_click = lambda: self.form.show_modal
+                    ( "Easy to get right! Hard to get wrong!")
+                    )
         Heading     ( card, "A python framework", text_align=CENTER)
 
     def summary(self, parent):
@@ -691,3 +695,6 @@ class We_HopeYouLoveIPUI(_BaseTab):
     def detail(self, parent):
         Body(parent,"",name="IPUI Mantras")
         Title(parent, "Easy to get right - Hard to get wrong", text_align=CENTER)
+        Spacer(parent)
+        Title(parent, "Other frameworks hand you the choke, the crank, and the spark. IPUI hands you the key: Where to?", text_align=CENTER)
+        Spacer(parent)

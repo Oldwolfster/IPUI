@@ -27,7 +27,7 @@ python -m pip install ipui
 - [Installation](#Installation)
 - [Important Note: Why IPUI Does Things Differently](#important-note-why-ipui-does-things-differently)
 - [Quick Start](#quick-start)
-  - [Step 1: First Taste — Run in 30 Seconds](#step-1-first-taste--run-in-30-seconds)
+  - [Step 1: Run in 30 Seconds](#step-1-first-taste--run-in-30-seconds)
   - [Step 2: Open Widgets — Let IPUI Forge the File](#step-2-open-widgets--let-ipui-forge-the-file)
   - [Step 3: Customize and Scale](#step-3-customize-and-scale)
 - [Run the Showcase](#run-the-showcase)
@@ -95,13 +95,13 @@ python -m pip install ipui
 - 📐 **Declarative Layout:** Simple, flexible syntax that handles the math so you can focus on the logic.
 - 🔗 **Construction IS Attachment:** No floating widgets or `add()` calls. If you build it inside a container, it's attached automatically.
 - 🧩 **Built to Extend:** Custom widgets get layout, events, and styling automatically. Standard widgets take 5–10 LOC; even tools like a network diagram widget come in under 150 LOC.
-- 📜 **One-Touch Scrolling:** Make any Card scrollable with a single parameter—no complex viewport setup required. Scrollbars are draggable and styled automatically.
+- 📜 **One-Touch Scrolling:** Make any Card scrollable with a single parameter—no complex viewport setup required. Scrollbars are styled automatically.
 - 📱 **Resolution Independent:** UI scales automatically to physical screen height, so it stays usable on an old laptop or a 4K monitor.  **Changing aspect ratio can still cause issues**
 - 🔄 **Multiple Update Styles:** Use DAG-based reactivity, pipeline-driven synchronization, or direct widget access—whichever fits the job best.
 - ⛓️ **Data Pipeline:** Bind widgets to a Pipeline Key and let IPUI propagate updates automatically. Derives stay in sync with zero manual update code.
 - 🎮 **Pygame Lifecycle Hooks:** `ip_think`, `ip_draw`, and `ip_draw_hud` give you full access to the game loop without fighting the framework.
 - 💡 **Multi-Tier Tooltips:** Choose between standard hover tips or "Super Tooltips"—pinnable, scrollable windows capable of displaying deep technical data.
-- 🗃️ **Automatic Widget Registry:** When DAG or pipeline isn't the right fit, named widgets stay easy to reach across tabs and panes—no globals, no reference plumbing required.
+- 🗃️ **Automatic Widget Registry:** When DAG or pipeline isn't the right fit, named widgets stay easy to reach across tabs and panes; **no reference plumbing required.**
 - 🐞 **Pro Debug Mode:** Includes a live Widget Tree and layout overlays to make positioning issues easy to diagnose.
 - 💻 **Beautiful Code Boxes:** Display source code by passing a string or a file path; IPUI handles the formatting.
 - 🗺️ **Tab Map:** A bird's-eye view of your entire application for quick review and navigation.
@@ -113,26 +113,39 @@ python -m pip install ipui
 
 ## Installation
 
-> Create a clean project folder:
-> Any name works.  ipui-test is just an example.
+Create a clean project folder. Any name works — `ipui-test` is just an example.
 
 ```bat
 mkdir ipui-test
 cd ipui-test
 ```
 
-> Create and activate a virtual environment:
+Create and activate a virtual environment:
 
 ```bat
 python -m venv testenv
 testenv\Scripts\activate.bat
 ```
 
-> Install `ipui`:
+Install `ipui`:
 
 ```bat
 python -m pip install ipui
 ```
+
+---
+
+## Run the Showcase
+
+Want to see what IPUI can do before you build a thing? Run `docs()` and you'll get a fully interactive widget gallery — every widget, every layout pattern, every trick, all live and clickable. It's the fastest way to go from "looks interesting" to "now I know what to steal."
+
+```python
+from ipui import *
+docs()
+```
+
+<!-- SCREENSHOT: ipui/assets/images/showcase.png — demo apps and tutorials -->
+![Showcase Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/showcase.png)
 
 ---
 
@@ -208,7 +221,7 @@ Three tabs appear immediately:
   - **Widgets**       — show IPUI's helper card with template options
   - **Bouncing Ball** — show IPUI's helper card with template options
 
-> If you get stuck, while it's running press **F12 for X-ray debug tools**
+> **Something not sitting where you expect?** Press **F12** while it’s running and pop open the **X-Ray debug tools**.
 ---
 
 ### Step 2: Open Widgets — Let IPUI Forge the File
@@ -228,7 +241,7 @@ Instead of throwing an error or even showing an empty tab, IPUI steps in with a 
 
 Pick Full Showcase on the Widgets tab. IPUI will create Widgets.py and hot-swap in a complete, interactive widget playground with real working controls (buttons, textboxes, cards, grids, etc.).
 
-It's not a dead stub — it's live code you can immediately click, rearrange, and copy-paste from.
+It's not a dead stub — it's a cookbook of live code you can immediately click, rearrange, and copy-paste from.
 
 ---
 
@@ -252,22 +265,6 @@ This is the normal workflow:
 You can define pane methods directly inside _BaseForm (as in the smoke test) or in separate files — both work seamlessly.
 
 ---
-
-## Run the Showcase
-
-Want to see what IPUI can do before you build a thing? Run `docs()` and you'll get a fully interactive widget gallery — every widget, every layout pattern, every trick, all live and clickable. It's the fastest way to go from "looks interesting" to "now I know what to steal."
-
-```python
-from ipui import *
-docs()
-```
-
-<!-- SCREENSHOT: ipui/assets/images/showcase.png — demo apps and tutorials -->
-![Showcase Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/showcase.png)
-
-
----
-
 ## Core Concepts
 
 ### The Blueprint: TAB_LAYOUT
