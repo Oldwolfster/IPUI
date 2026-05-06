@@ -241,13 +241,16 @@ Instead of throwing an error or even showing an empty tab, IPUI steps in with a 
 
 Pick Full Showcase on the Widgets tab. IPUI will create Widgets.py and hot-swap in a complete, interactive widget playground with real working controls (buttons, textboxes, cards, grids, etc.).
 
-It's not a dead stub — it's a cookbook of live code you can immediately click, rearrange, and copy-paste from.
+It's not a dead stub — it's a **cookbook** of live code you can immediately click, rearrange, and copy-paste from.
 
 ---
 
 ### Step 3: Customize and Scale
 
-IPUI generates the file with a placeholder method named after the first pane you declared in TAB_LAYOUT. Replace the placeholder content with your own:
+IPUI generates Widgets.py a placeholder method named after the first pane you declared in TAB_LAYOUT. 
+
+Replace the placeholder content 
+> **In Widgets.py delete placeholder lines (11-39)**:
 
 ```python
 def demo(self, parent):
@@ -341,21 +344,20 @@ if __name__ == "__main__": show(SmokeTest)
 ### The Widget Tree
 
 > Construction IS attachment.
+> 
+> AnyWidget(what_widget_do_i_attach_to, any_other_options, ...)
 
-When you create a widget, the first argument is always its parent. That single
-rule builds the entire tree.
+
+When you create a widget, the first argument is always the widget it attaches to.
 
 Every pane method receives a `parent` parameter — the root widget of that pane.
-Anything you construct with `parent` as its first argument becomes a direct
-child. Anything you construct with one of *those* widgets becomes a grandchild.
-Layout, events, and rendering all flow down the tree automatically.
 
-```python
-def demo(self, parent):            # ← parent is the pane's root widget
-    card = CardCol(parent)         # CardCol's parent is parent
-    Title(card, "My Tree")         # Title's parent is card
-    Heading(card, "Same parent")   # Heading's parent is card
-```
+> Each pane has 1 tree and parent is the trunk.
+
+def demo(self, parent):            # ← parent is this pane's root widget
+    card = CardCol(parent)         # card attaches to the pane
+    Title(card, "My Tree")         # Title attaches to card
+    Heading(card, "Same parent")   # also attaches to card
 
 No `add()`. No `pack()`. No `grid()`. Construction IS attachment — an entire
 class of "widget exists but isn't visible" bugs is gone.

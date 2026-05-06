@@ -12,7 +12,7 @@ class FormShowcase(_BaseForm):
         "Wiring"        : ["reactive"       ,"imperative"                       ],
         "Pygame"        : [("overview", 2)  ,(None      , 3)    ,("code"   , 2) ],
         "Breakout"      : ["greet"          ,None               ,"code"         ],
-        "SQL"           : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
+        "SQLDELETE"           : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
         "Paint"         : [("tools"   ,.3)  ,None                               ],
         "Designer"      : [("tab_map" , 1)  ,("preview" , 3)    ,("toolbox", 1) ],
     }

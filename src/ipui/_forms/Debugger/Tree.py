@@ -47,15 +47,15 @@ class Tree(_BaseTab):
             on_click = lambda: self.set_column_mode("tokens"))
 
         Spacer(parent)
-        card = CardCol(parent)
-        Title(card, "Actions")
-        Body(card, "Click row - Inspect all properties")
-        Body(card, "Double-click - Flash widget on screen")
-        Body(card, "Copy - Full tree to clipboard")
-        Body(card, "F12- Toggle debugger anytime")
+        card = Plate(parent)
+        Title(card, "It can be HARD")
+        Body(card, "to tell what these row mean")
+        Body(card, "Double-click it")
+        #Body(card, "Copy - Full tree to clipboard")
+        #Body(card, "F12- Toggle debugger anytime")
 
         Spacer(parent)
-        card = CardCol(parent)
+        card = Plate(parent)
         Title(card, "Reading the Tree")
         Body(card, "Dp shows nesting depth")
         Body(card, "Flex 0,0  fixed size")
@@ -64,6 +64,8 @@ class Tree(_BaseTab):
         Body(card, "TOK shows border/pad/gap")
         Body(card, "Min is the floor — shrink past it and content collides")
         Body(card, "Pos / Size is where it actually landed")
+        Spacer(parent)
+
     # ══════════════════════════════════════════════════════════════
     # PANE 2 — Widget Tree
     # ══════════════════════════════════════════════════════════════
