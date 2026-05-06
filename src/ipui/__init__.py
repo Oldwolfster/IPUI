@@ -10,7 +10,7 @@ __all__ = [
     "_BaseTab",
     "WidgetsDict",
     # Managers
-    "MgrColor", "MgrFont", "Log",
+    "MgrColor", "MgrFont", "MgrPkgPath", "Log",
     # Input constants
     "Key", "Mouse",
     # Widgets
@@ -89,6 +89,8 @@ from ipui.utils.general_text            import smart_format
 from ipui.utils.WidgetCatalog           import WidgetCatalog
 from ipui.utils.general_text            import parse_int_list
 from ipui.utils.MgrFileManager          import FileManager
+from ipui.utils.MgrPkgPath              import MgrPkgPath
+
 from ipui.utils.Align                   import Align, LEFT,CENTER,RIGHT
 from ipui.widgets.Icon                  import Icon
 

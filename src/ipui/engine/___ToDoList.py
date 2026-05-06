@@ -435,20 +435,119 @@ Clean up list
 ######################################################################
 361) Nope, it is needed.  - look in to on_click_me   possibly remove from api.
 362) Readme has code  examples that don't work.
-
+363) disable launch button. (MUST BE LAST)
 ######################################################################
 Pending for V0.1
 ######################################################################
 
 What is left to publish
-
+be consistent in naming docs... lets do underscores
 if you type to the end of a text box, it shrinks
-disable launch button. (MUST BE LAST)
 
 
-
-
+Defects
+Percy's story
+creating db loop on NF home
 sqlarea not scrolling
+
+# README Verification Checklist — v0.1 Publish
+
+Items still to verify against the actual code before publishing.
+Everything below is mechanical: open a file, grep, run a snippet — confirm or fix.
+
+---
+
+## High Priority — Code Examples That Need to Actually Run
+
+These are claims the README makes that a reader will copy-paste. If any of them fails, the user's first experience is broken.
+
+- [ ] **`ip.state` examples (lines ~696–746)**   with my addition it's 723 or 27 higher
+  - Verify `ip.state.add(name, delegate, next=None, duration=0)` signature exact
+  - Verify auto-advance on duration works as documented (Breakout `LEVEL_UP → READY` after 1.5s)
+  - Verify named state machines: `ip.state("combat").add(...)` and `ip.state("combat").go(...)`
+  - Verify `ip.state.is_("NAME")` and `ip.state.current` work as shown
+
+- [ ] **`tab_on_change` veto (lines ~1144–1170)**
+  - Verify the canonical signature is `method(name, current)`
+  - Verify returning `False` actually vetoes the switch
+  - Verify returning `True`, `None`, or nothing all proceed normally
+
+- [ ] **PowerGrid SQL examples (lines ~1003–1014)**
+  - Verify `grid.set_data("path/to/database.db", query="SELECT ...")` works
+  - Verify `grid.set_data("path/to/database.db", table="batch_history")` works
+  - Verify sorting works across pages as documented
+
+- [ ] **`PIPELINE_DEFAULTS` (lines ~1330–1339)**
+  - Verify class attribute name is exactly `PIPELINE_DEFAULTS`
+  - Verify seeding at startup actually populates the pipeline
+
+- [ ] **Tabless mode with state machines (lines ~1211–1243)**
+  - Run the Asteroids example as a standalone smoke test
+  - Verify all hooks fire identically on `_BaseForm` as on `_BaseTab`
+
+
+
+- [ ] **API Reference tables (lines ~1501–1648)**
+  - `_BaseForm` class attributes table — every name + type
+  - `_BaseForm` methods table — every signature
+  - `_BaseWidget` constructor parameters table — names, types, defaults
+  - `_BaseWidget` methods table
+  - `_BaseTab` attributes (`BINDINGS`, `THINK_ALWAYS`)
+  - SelectionList methods
+  - DropDown methods
+  - Chart methods
+  - PowerGrid methods
+
+- [ ] **`enabled` default (line ~1551)**
+  - Listed as `None` in the table — verify against `_BaseWidget`
+  - If actually `True`, fix; if actually `None`, leave it
+
+---
+
+## Low Priority — Anchor Links
+
+Markdown anchors are auto-generated from heading text. A typo or special char (slash, em-dash) can silently break a link.
+
+- [ ] **Test every TOC anchor link**
+  - Open the rendered README on GitHub
+  - Click each entry in the Table of Contents
+  - Confirm each one jumps to the right section (not the top of the page)
+  - Recently fixed: "Important Note: Why IPUI Does Things Differently"
+
+---
+
+## Optional — Content Authoring (only if you want to)
+
+These came up but aren't blockers.
+
+- [ ] **Add a Pipeline subsection to "Updating the UI"**
+  - Currently the intro lists three paradigms but only Imperative and Reactive
+    have inline subsections (the bouncing ball comparison)
+  - Pipeline is covered in detail later in `## Reactive Pipeline`
+  - If you want a third bouncing-ball variant showing pipeline-only style,
+    write the example first and we can wire it in
+
+- [ ] **Add a "Coming Soon" or "v0.2" footnote section**
+  - Anything shipped as "horizon" in your todo list that the README mentions
+    in passing — make it explicit so users don't expect it
+  - Candidates: declarative `STATES` dict, `ip.state.in_(...)`, true hot-reload,
+    per-tab `ip.state` scoping
+
+---
+
+## After everything above
+
+- [ ] **Final read-through** in GitHub's rendered preview (not just the editor)
+  - Tables render?
+  - Code blocks have language hints?
+  - Screenshots load?
+  - Every internal link clicks through correctly?
+
+- [ ] **Tag and ship.**
+
+---
+
+*One framework. Six hooks. Three paradigms. Zero excuses left.* 🚀
 
 
 

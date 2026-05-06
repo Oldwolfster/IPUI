@@ -7,15 +7,6 @@ from ipui.utils.MgrClipboard import MgrClipboard
 
 class ShowcaseTemplate(_BaseTab):
 
-    #COMMENT OR DELETE THIS TO PREVENT THE COOKBOOK FROM Hijacking the 2nd and 3rd pane.
-    def ip_activated(self,ip):
-
-        self.set_pane(0,"method_1_IPUI_TAB_BUILDER",weight=1.3)
-        self.set_pane(1, self.cookbook_menu, weight=.5)
-        self.set_pane(2, self.cookbook_demo, weight=.8)
-        print("in ip_activated and setting weights")
-        print(f"TAB_LAYOUT= {self.form.TAB_LAYOUT}")
-
     # PUT YOUR CONTENT HERE
     def method_1_IPUI_TAB_BUILDER(self,parent):
         # self.ensure_cookbook() #Remove this to access your other panes.
@@ -47,6 +38,15 @@ class ShowcaseTemplate(_BaseTab):
         Detail  ( parent, "from your _BaseTab file and build out the other panes.")
         Spacer  ( parent)
 
+    #COMMENT OR DELETE THIS TO PREVENT THE COOKBOOK FROM Hijacking the 2nd and 3rd pane.
+    def ip_activated(self,ip):
+
+        self.set_pane(0,"method_1_IPUI_TAB_BUILDER",weight=1.3)
+        self.set_pane(1, self.cookbook_menu, weight=.5)
+        self.set_pane(2, self.cookbook_demo, weight=.8)
+        print("in ip_activated and setting weights")
+        print(f"TAB_LAYOUT= {self.form.TAB_LAYOUT}")
+
     def method_2_IPUI_TAB_BUILDER(self, parent): pass
 
     def method_3_IPUI_TAB_BUILDER(self, parent): pass
@@ -75,6 +75,8 @@ class ShowcaseTemplate(_BaseTab):
         Spacer(row, width_flex=.1)
         Title(parent, "just hit copy!",text_align=CENTER)
         Title(parent, "and paste it in to your pane builder!", text_align=CENTER)
+        #Other frameworks hand you the choke, the crank, and the spark. IPUI hands you the key: Where to?
+
 
         Spacer(parent)
 

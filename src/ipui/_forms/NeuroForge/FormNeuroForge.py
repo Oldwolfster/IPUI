@@ -68,8 +68,8 @@ class FormNeuroForge(_BaseForm):
         btn          = Button(header, "Launch", color_bg=Style.COLOR_BUTTON_CTA,  name="btnLaunch",width_flex=1)
         btn.enabled  = False
         btn.Tooltip  = "Select Project To Enable"
-        #btn.on_click = lambda: self.launch_colosseum()
-        btn.on_click = on_click=lambda: self.form.show_modal("NeuroForge Engine will be released soon")
+        btn.on_click = lambda: self.launch_colosseum()
+        #btn.on_click = on_click=lambda: self.form.show_modal("NeuroForge Engine will be released soon")
 
     def launch_colosseum(self):
         self.widgets["btnLaunch"].text      = ("Launch")

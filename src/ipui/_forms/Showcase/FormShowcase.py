@@ -4,9 +4,8 @@ from ipui import *
 class FormShowcase(_BaseForm):
 
     TAB_LAYOUT = {
-        "testscaf": [("tables", .6), ("query", .1), ("results", 1)],
-
         "Welcome"       : ["left_pane"      ,"proud_features"   ,"detail"       ],
+        "Bouncing Ball": [("arena", .3), None],
         "Tab System"    : ["explain"        ,"showcase"                         ],
         "Widgets"       : ["catalog_grid"   ,"detail"                           ],
         "Widget Tree"   : ["widget_tree"    ,"widget_detail"                    ],
@@ -16,8 +15,8 @@ class FormShowcase(_BaseForm):
         "SQL"           : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
         "Paint"         : [("tools"   ,.3)  ,None                               ],
         "Designer"      : [("tab_map" , 1)  ,("preview" , 3)    ,("toolbox", 1) ],
-
     }
+
     def build(self):
         self.build_header()
 
@@ -28,7 +27,7 @@ class FormShowcase(_BaseForm):
         right = Row(header, width_flex=1)  # NEW - right container
 
         # Left content
-        Button(left, "Documentation", color_bg=Style.COLOR_BUTTON_CTA, on_click=lambda: self.show_modal("Press F12 - then select 'Reference' tab"))
+        Button(left, "Documentation", color_bg=Style.COLOR_BUTTON_CTA, on_click=lambda: self.show_modal("Press F12 - then select 'Documentation' tab"))
 
         # Right content
         Spacer(right) #pushes buttons to corner

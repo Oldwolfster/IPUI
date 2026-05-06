@@ -1,5 +1,7 @@
+from ipui import Heading
+
 # IPUI - Idiot Proof UI - Because we've all spent 3 hours debugging a button!
-**Version: 0.1.0 Rev 051**
+**Version: 0.1.0 Rev 052**
 
 A lightweight, opinionated Python/Pygame UI framework that makes building complex tabbed interfaces *ridiculously* simple.
 
@@ -20,22 +22,45 @@ pip install ipui
 ---
 ## Table of Contents
 
-- [The IPUI Advantage](#-the-ipui-advantage)
+## Table of Contents
+
+- [The IPUI Advantage](#️-the-ipui-advantage)
 - [Why IPUI Does Things Differently](#quickimportant-note-why-ipui-does-things-differently)
 - [Quick Start](#quick-start)
+  - [Step 1: First Taste — Run in 30 Seconds](#step-1-first-taste--run-in-30-seconds)
+  - [Step 2: Open Widgets — Let IPUI Forge the File](#step-2-open-widgets--let-ipui-forge-the-file)
+  - [Step 3: Customize and Scale](#step-3-customize-and-scale)
 - [Run the Showcase](#run-the-showcase)
 - [Core Concepts](#core-concepts)
+  - [The Blueprint: TAB_LAYOUT](#the-blueprint-tab_layout)
+  - [Panes Have Exactly Two Jobs](#panes-have-exactly-two-jobs)
+  - [Why We Link by File Name Instead of Class Imports](#why-we-link-by-file-name-instead-of-class-imports)
+  - [The Widget Tree](#the-widget-tree)
+  - [Where Does Your Logic Live? — `ip_*` Hooks](#where-does-your-logic-live--ip_-hooks)
+  - [The `ip` Service Portal](#the-ip-service-portal)
+- [The IPUI WAY](#the-ipui-way)
 - [Updating the UI](#updating-the-ui)
-- [The `ip` Service Portal](#the-ip-service-portal)
+  - [Imperative — Direct, Surgical](#imperative--direct-surgical)
+  - [Reactive — Declare Relationships, Let the Framework Propagate](#reactive--declare-relationships-let-the-framework-propagate)
+  - [Which One Should You Use?](#which-one-should-you-use)
 - [Lifecycle Hooks](#lifecycle-hooks)
 - [Widget Catalog](#widget-catalog)
+  - [Text Hierarchy](#text-hierarchy)
+  - [Layout Containers](#layout-containers)
+  - [Interactive Widgets](#interactive-widgets)
 - [Layout System](#layout-system)
 - [Tabs and Panes](#tabs-and-panes)
+  - [Canvas Panes](#canvas-panes)
+  - [Pane Weights](#pane-weights)
+  - [Cross-Tab Pane Sharing](#cross-tab-pane-sharing)
+  - [Tab Control at Runtime](#tab-control-at-runtime)
+  - [Guarding Tab Switches with `tab_on_change`](#guarding-tab-switches-with-tab_on_change)
 - [Tabless Mode](#tabless-mode)
 - [Reactive Pipeline](#reactive-pipeline)
 - [Imperative Approach](#imperative-approach)
 - [Construction-Time Safety](#construction-time-safety)
 - [Inline Parent — Construction is Attachment](#inline-parent---construction-is-attachment)
+- [Two Paths to `on_click`](#two-paths-to-on_click)
 - [Styling and Theming](#styling-and-theming)
 - [Debug Tools](#debug-tools)
 - [Launching Your App](#launching-your-app)
@@ -44,8 +69,8 @@ pip install ipui
 - [Appendix A: Why IPUI Does Things Differently](#appendix-a-why-ipui-does-things-differently)
 - [Appendix B: The Game Loop](#appendix-b-the-game-loop)
 - [Appendix C: Tab Switch Lifecycle](#appendix-c-tab-switch-lifecycle)
-- [Appendix Z: Detail of Widget Layout Process](#appendix-z-detail-of-widget-layout-process)
----
+- [Appendix Z: Detail of Widget Layout Process](#appendix-z-detail-of-widget-layout-process)---
+
 
 ## Additional Documentation
 - [Why IPUI Does Things Differently](https://github.com/Oldwolfster/IPUI/blob/main/docs/WhyIPUIDoesThingsDifferently.md)
@@ -177,17 +202,12 @@ It's not a dead stub — it's live code you can immediately click, rearrange, an
 
 ### Step 3: Customize and Scale
 
-After IPUI generates the file (e.g. Widgets.py), it's packed with working examples. Trim it down to just what you need:
+IPUI generates the file with a placeholder method named after the first pane you declared in TAB_LAYOUT. Replace the placeholder content with your own:
 
 ```python
-from ipui import *
-
-class Widgets(_BaseTab):
-    def demo(self, parent):
-        Title(parent, "Widget Playground")
-        Button(parent, "Test Me", on_click=lambda: self.form.show_modal("Nice"))
+def demo(self, parent):
+    Title(parent, "My Widget Tree", glow=True)
 ```
-
 Save the file and re-run to see your changes.
 
 This is the normal workflow:
@@ -209,6 +229,10 @@ Want to see what IPUI can do before you build a thing? Run `docs()` and you'll g
 from ipui import *
 docs()
 ```
+
+<!-- SCREENSHOT: ipui/assets/images/showcase.png — demo apps and tutorials -->
+![Showcase Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/showcase.png)
+
 
 ---
 
@@ -281,57 +305,241 @@ Your main file should always end with:
 ```python
 if __name__ == "__main__": show(SmokeTest)
 ```
+>> Don't skip this! In a one-file setup, this standard Python guard prevents accidental re-entry during import.
 
-Don't skip this! In a one-file setup, this standard Python guard prevents accidental re-entry during import.
+---
 
-#### Where Your Logic Lives
+### The Widget Tree
 
-A `_BaseTab` (or tabless `_BaseForm`) doesn't have an `__init__`. **You don't write one**  This is on purpose: 
+> Construction IS attachment.
 
-> The framework takes the burden of ensuring all superclasses get the correct parameters so you don't have to.
+When you create a widget, the first argument is always its parent. That single
+rule builds the entire tree.
 
-So where does *your* code go? Two places, and the split is the whole mental model:
+Every pane method receives a `parent` parameter — the root widget of that pane.
+Anything you construct with `parent` as its first argument becomes a direct
+child. Anything you construct with one of *those* widgets becomes a grandchild.
+Layout, events, and rendering all flow down the tree automatically.
 
-- **Pane methods** — build the UI. Same names you put in `TAB_LAYOUT`. Run when the pane first appears (and again on rebuild). This is where you create widgets.
-- **`ip_*` hooks** — run the logic. `ip_setup` for one-time initialization, `ip_think` every frame, `ip_draw` for custom rendering, and a few more. The framework calls these; you override them.
+```python
+def demo(self, parent):            # ← parent is the pane's root widget
+    card = CardCol(parent)         # CardCol's parent is parent
+    Title(card, "My Tree")         # Title's parent is card
+    Heading(card, "Same parent")   # Heading's parent is card
+```
 
-Here's the split in one example:
+No `add()`. No `pack()`. No `grid()`. Construction IS attachment — an entire
+class of "widget exists but isn't visible" bugs is gone.
+
+Need to go deeper? Same rule:
+
+```python
+def demo(self, parent):                 # ← parent is root widget.     
+    card  = Card(parent)                # This Card's parent is parent.
+    Title(card, "My Tree")              # This Heading's parent is card.
+    Heading(card, "Same parent")
+
+    inner = Card(card)                  # A card nested inside the first card
+    Body(inner, "I'm one level deeper") # A branch of inner
+    Body(inner, "So am I")
+
+    plate= Plate(inner)
+    row1 = Row(plate)                   # back in the outer card, now horizontal
+    Body(row1, "We Are")
+    Body(row1, "Stuck")
+    Body(row1, "Together")
+
+    row2 = Row(plate,justify_spread=True)                 
+    Body(row2, "We Have")
+    Body(row2, "Plenty")
+    Body(row2, "of Space")
+
+```
+
+Everything stacks vertically by default. Need widgets side by side? `Row` is a
+transparent horizontal container — pure structure, no visual chrome:
+
+```python
+def demo(self, parent):
+    card  = Card(parent)
+    Title(card, "My Tree")
+    Heading(card, "Same parent")
+
+    inner = Card(card)
+    Body(inner, "I'm one level deeper")
+    Body(inner, "So am I")
+
+    row = Row(card)                 # back in the outer card, now horizontal
+    Body(row, "Left")
+    Body(row, "Middle")
+    Body(row, "Right")
+```
+
+The pattern never changes: first argument is the parent, attachment is
+immediate. Build the tree by building widgets.
+---
+
+### Where does your logic live? — `ip_*` hooks
+
+IPUI sets up the pygame engine and ensures all superclasses get the right parameters. So where does *your* code go?
+
+You've already seen part of the answer: **pane methods** build the widget tree in the panes you defined in `TAB_LAYOUT`. The other half is **`ip_*` hooks** — they're how you talk to the game loop:
+
+- **`ip_setup(self, ip)`** — runs once before the first frame. Initialize state here.
+- **`ip_think(self, ip)`** — runs every frame. Update state, run physics, decide things.
+- **`ip_draw(self, ip)`** — runs every frame, before widgets draw. Custom rendering behind the UI.
+- **`ip_draw_hud(self, ip)`** — runs every frame, after widgets draw. Overlays, FPS counters, anything on top.
+
+The framework calls these; you override them. Together with pane methods, that's the whole split:
+
+> **If it lays out widgets, it goes in a pane method. If it ticks, decides, animates, or paints custom graphics, it goes in an `ip_*` hook.**
+
+Here's the split in a complete working example:
+
+```python
+from ipui import *
+import pygame
+
+class BouncingBall(_BaseTab):
+    
+    def arena(self, parent):                         # ← pane method: builds the UI
+        Title(parent, text="Bouncing Ball")
+        card = Card(parent, scroll_v=True)
+        CodeBox(card, data=__file__)
+
+    def ip_setup(self, ip):                          # ← runs once
+        self.ball_x,  self.ball_y  = 0.5, 0.5        # start in the middle (normalized)
+        self.ball_dx, self.ball_dy = 0.4, 0.3        # velocity (normalized units / sec)
+
+    def ip_think(self, ip):                          # ← runs every frame
+        self.ball_x += self.ball_dx * ip.dt          # ip.dt = seconds since last frame
+        self.ball_y += self.ball_dy * ip.dt
+        self.bounce_off_walls()
+
+    def ip_draw(self, ip):                           # ← custom rendering
+        pos = ip.to_screen(self.ball_x, self.ball_y) # normalized → screen pixels
+        r   = ip.scale_y(0.02)                       # normalized radius → pixels
+        pygame.draw.circle(ip.surface, (255, 160, 40), pos, r)
+
+    def bounce_off_walls(self):
+        if self.ball_x < 0: self.ball_dx =  0.4
+        if self.ball_x > 1: self.ball_dx = -0.4
+        if self.ball_y < 0: self.ball_dy =  0.3
+        if self.ball_y > 1: self.ball_dy = -0.3
+```
+
+> Notice `ball_x` and `ball_y` are **normalized**: `0` is the left/top edge, `1` is the right/bottom edge. IPUI worries about the real pixel resolution.
+
+---
+
+### The `ip` Service Portal
+
+Every lifecycle hook receives a single argument: `ip`. It's the IPUI Service Portal — one object that gives you everything you need. Type `ip.` in your IDE and autocomplete shows every attribute and method, organized by family.
+
+You already used it in the example above: `ip.dt` for frame timing, `ip.to_screen()` to convert normalized coordinates to pixels, `ip.scale_y()` to scale a radius. Without the portal, that same `ip_draw` looks like this:
+
+```python
+# ── Without ip (spelunking) ──────────────────────────────────────
+def ip_draw(self, ip):
+    arena = self.form.tab_strip.panes[1].rect             # find the canvas by hand
+    sx    = arena.left + int(self.ball_x * arena.width)   # offset + scale manually
+    sy    = arena.top  + int(self.ball_y * arena.height)
+    r     = int(0.02 * arena.height)
+    pygame.draw.circle(ip.surface, (255, 160, 40), (sx, sy), r)
+
+# ── With ip (portal) ─────────────────────────────────────────────
+def ip_draw(self, ip):
+    pos = ip.to_screen(self.ball_x, self.ball_y)
+    r   = ip.scale_y(0.02)
+    pygame.draw.circle(ip.surface, (255, 160, 40), pos, r)
+```
+
+Three lines. No spelunking. No manual math. Resolution-independent. The portal absorbs the coordinate plumbing so you can focus on what you're actually drawing.
+
+The full set of `ip` attributes and methods is covered in [The `ip` Service Portal](#the-ip-service-portal) below. The full set of hooks and when each fires is in [Lifecycle Hooks](#lifecycle-hooks).
+
+---
+
+## Updating the UI
+
+**IPUI gives you two styles. Mix them freely.**
+
+---
+
+### Imperative — direct, surgical
+
+Store widget references, update them by hand:
+
+```python
+def arena(self, parent):                                # ← pane method: builds the UI
+    self.lbl_quadrant  = Body(parent, "Quadrant: —")    # NOTE: Now we are storing reference to the widgets
+    self.lbl_direction = Body(parent, "Direction: —")
+    self.lbl_warning   = Body(parent, "")
+
+def ip_think(self, ip):
+    self.ball_x += self.ball_dx * ip.dt
+    self.ball_y += self.ball_dy * ip.dt
+    self.bounce_off_walls()
+
+    self.lbl_quadrant .set_text(f"Quadrant: {self.compute_quadrant()}")
+    self.lbl_direction.set_text(f"Direction: {self.compute_direction()}")
+    self.lbl_warning  .set_text(self.compute_warning())
+
+def compute_quadrant_text (self, ball_x,  ball_y):  return f"Quadrant: {('NW' if ball_y<0.5 else 'SW') if ball_x<0.5 else ('NE' if ball_y<0.5 else 'SE')}"
+def compute_direction_text(self, ball_dx, ball_dy): return f"Direction: {'→' if ball_dx>0 else '←'}{'↓' if ball_dy>0 else '↑'}"
+def compute_warning_text  (self, ball_x,  ball_y):  return "⚠ OMG we are going to crash!" if min(ball_x, ball_y, 1-ball_x, 1-ball_y) < 0.05 else ""
+```
+
+Every update is an explicit line you can grep for and breakpoint on. Great when one widget reflects one piece of state.
+
+---
+
+### Reactive — declare relationships, let the framework propagate
+
+`BINDINGS` is a class-level dict that wires pipeline keys to widget properties. When a key changes, the framework calls your compute method and applies the result — no manual update code needed:
 
 ```python
 class BouncingBall(_BaseTab):
 
-    def arena(self, parent):                        # ← pane method: builds the UI
-        Title(parent, text="Bouncing Ball")         # Print Title
-        card = Card(parent, scroll_v=True)          # Create a card for codebox
-        CodeBox(card,data  =__file__)               # Put Codebox in the card
+    BINDINGS = {
+        "lbl_quadrant":  {"property": "text", "compute": "compute_quadrant",  "triggers": ["ball_x", "ball_y"]},
+        "lbl_direction": {"property": "text", "compute": "compute_direction", "triggers": ["ball_dx", "ball_dy"]},
+        "lbl_warning":   {"property": "text", "compute": "compute_warning",   "triggers": ["ball_x", "ball_y"]},
+    }
 
-    def ip_setup(self, ip):                         # ← hook: runs once, initializes state
-        self.ball_x, self.ball_y   = 0.5, 0.5       # put ball in middle of screen
-        self.ball_dx, self.ball_dy = 0.4, 0.3       # set ball x and y movement
+    def ip_think(self, ip):
+        self.ball_x += self.ball_dx * ip.dt
+        self.ball_y += self.ball_dy * ip.dt
+        self.bounce_off_walls()
+        self.form.pipeline_set("ball_x",  self.ball_x)   # framework sees the change,
+        self.form.pipeline_set("ball_y",  self.ball_y)   # calls the right compute methods,
+        self.form.pipeline_set("ball_dx", self.ball_dx)  # and updates the widgets.
+        self.form.pipeline_set("ball_dy", self.ball_dy)
 
-    def ip_think(self, ip):                         # ← hook: runs every frame
-        self.ball_x += self.ball_dx * ip.dt         # move ball * ip.dt normalizes based on fps
-        self.ball_y += self.ball_dy * ip.dt         # same but in y dimension
-        self.bounce_off_walls()                     # check if it needs to bounce
-
-    def ip_draw(self, ip):                          # ← hook: custom drawing
-        pos = ip.to_screen(self.ball_x,self.ball_y) # convert normalized to screen coords
-        pygame.draw.circle(ip.surface, (255, 160, 40), pos, ip.scale_y(0.02))
-
-    def bounce_off_walls(self):
-        if self.ball_x < 0: self.ball_dx = .4       # reverse if at left edge
-        if self.ball_x > 1: self.ball_dx = -.4      # reverse if at right edge
-        if self.ball_y < 0: self.ball_dy = .3       # reverse if it hit's top
-        if self.ball_y > 1: self.ball_dy = -.3      # reverse if it hits bottom
+    def compute_quadrant (self, ball_x, ball_y):  return f"Quadrant: {('NW' if ball_y<0.5 else 'SW') if ball_x<0.5 else ('NE' if ball_y<0.5 else 'SE')}"
+    def compute_direction(self, ball_dx, ball_dy): return f"Direction: {'→' if ball_dx>0 else '←'}{'↓' if ball_dy>0 else '↑'}"
+    def compute_warning  (self, ball_x, ball_y):  return "⚠ near wall" if min(ball_x, ball_y, 1-ball_x, 1-ball_y) < 0.05 else ""
 ```
 
-If it lays out widgets, it goes in a pane method. If it ticks, decides, animates, or paints custom graphics, it goes in an `ip_*` hook. The full set of hooks and what each one does is covered in [Lifecycle Hooks](#lifecycle-hooks) below — for now, knowing the split exists is enough to read most IPUI code.
-
->  Note the normalized coordinates in 'bounce_off_walls'  0 is the left edge and 1 is the right edge.  Let IPUI worry about the real resolution.  (Unless you prefer the other way - You have full access to pygame!)
+Add a fourth widget? One new entry in `BINDINGS`. `ip_think` doesn't grow.
 
 ---
 
-### The IPUI WAY
+### Which one should you use?
+
+> Honest answer: this example is roughly a tie. You have four `pipeline_set` calls vs. three `set_text` calls — neither version is obviously cleaner at this scale. Reactive starts to win when state drives many widgets, or when several places update the same state. Imperative stays clearer when one widget reflects one piece of state and you want a single named method everyone calls. **Mix them in the same tab.** IPUI doesn't have an opinion on which paradigm is "correct" — only that you should have the choice and that both should be cheap.
+
+
+---
+
+Mix all three freely. The reactive approach requires less code and eliminates update-ordering bugs. Imperative gives you surgical control when you need it. The pipeline connects them.
+
+<!-- SCREENSHOT: ipui/assets/images/reactive_pipeline.png — the Paradigm tab showing reactive vs imperative side-by-side -->
+![Reactive vs imperative pipeline screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/paradigm.png)
+
+---
+
+## The IPUI WAY
 
 IPUI makes the right path the easy path.
 
@@ -345,100 +553,8 @@ IPUI makes the right path the easy path.
 
 No event loop setup. No manual sizing. No coordinate math. IPUI handles the Pygame lifecycle, layout, rendering, and event dispatch automatically.
 
----
 
-### The Widget Tree
-
-Every IPUI app is a tree. Construction attaches:
-
-```python
-card = CardCol(parent)      # attaches to parent
-Title(card, "Settings")     # attaches to card
-Body(card, "Change stuff")  # attaches to card
-```
-
-No `add()`. No `pack()`. No `grid()`. Construction IS attachment — an entire class of "widget exists but isn't visible" bugs is gone.
-
-#### A Note on `build()` vs `__init__` (for custom widget authors)
-
-You may have noticed there's no `__init__` when you write a custom widget either. Just like with the _BaseTab files, this allows IPUI to ensure superclasses get the parameters, so you don't have to call `super().__init__()` with a maze of arguments.
-
-```python
-class MyWidget(_BaseWidget):
-    def build(self):
-        self.font     = Style.FONT_BODY
-        self.color_bg = Style.COLOR_CARD_BG
-```
-
----
-
-## Updating the UI
-
-**IPUI likes to give you choices.**
-
-**Reactive** — Declare relationships at the top of your _BaseTab. The pipeline handles propagation:
-
-```python
-class MyPane(_BaseTab):
-    BINDINGS = {
-        "lbl_status": {
-            "property": "text",
-            "compute":  "compute_status",
-            "triggers": ["training_active", "epoch"],
-        },
-    }
-
-    def compute_status(self, training_active, epoch):
-        if training_active:
-            return f"Epoch {epoch}"
-        return "Idle"
-```
-
-**Imperative** — Store widget references, call methods when things change:
-
-```python
-def your_pane(self, parent):
-    self.lbl = Body(parent, "Idle", name="lbl_status")
-
-def on_epoch_done(self, epoch):
-    self.lbl.set_text(f"Epoch {epoch}")
-```
-
-**Hybrid** — Use the pipeline as a shared key-value store, but read it imperatively:
-
-```python
-def on_run_clicked(self):
-    active = self.form.pipeline_read("training_active")
-    if active:
-        self.form.show_modal("Already running!")
-```
-
-Mix all three freely. The reactive approach requires less code and eliminates update-ordering bugs. Imperative gives you surgical control when you need it. The pipeline connects them.
-
-<!-- SCREENSHOT: ipui/assets/images/reactive_pipeline.png — the Paradigm tab showing reactive vs imperative side-by-side -->
-![Reactive vs imperative pipeline screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/paradigm.png)
-
----
-
-## The `ip` Service Portal
-
-Every lifecycle hook receives a single argument: `ip`. It's the IPUI Service Portal — one object that gives you everything you need. Type `ip.` in your IDE and autocomplete shows every attribute and method, organized by family.
-
-```python
-class MySimulation(_BaseTab):
-    def ip_think(self, ip):
-        self.ball_x += self.ball_dx * ip.dt
-
-    def ip_draw(self, ip):
-        pos = ip.to_screen(self.ball_x, self.ball_y)
-        r   = ip.scale_y(self.ball_r)
-        pygame.draw.circle(ip.surface, (255, 160, 40), pos, r)
-
-    def ip_draw_hud(self, ip):
-        font = Style.FONT_DETAIL
-        surf = font.render(f"FPS: {ip.fps}", True, Style.COLOR_TEXT_ACCENT)
-        ip.surface.blit(surf, (10, 10))
-```
+## The ip Service Portal
 
 ### Identity
 
@@ -481,26 +597,6 @@ Work in normalized coordinates (0.0–1.0) and let IPUI handle the pixel math:
 | `ip.scale_y(n)` | Normalized height → pixel height |
 | `ip.local_to_screen(x, y)` | Pane-local pixel coords → screen coords |
 | `ip.screen_to_local(x, y)` | Screen coords → pane-local pixel coords |
-
-**Before:**
-```python
-def draw_ball(self, surface):
-    arena = self.form.tab_strip.panes[1].rect   # spelunking
-    sx = arena.left + int(self.ball_x * arena.width)
-    sy = arena.top  + int(self.ball_y * arena.height)
-    r  = int(self.ball_r * arena.height)
-    pygame.draw.circle(surface, WHITE, (sx, sy), r)
-```
-
-**After:**
-```python
-def draw_ball(self, ip):
-    pos = ip.to_screen(self.ball_x, self.ball_y)
-    r   = ip.scale_y(self.ball_r)
-    pygame.draw.circle(ip.surface, WHITE, pos, r)
-```
-
-Three lines. No spelunking. No manual math. Resolution independent.
 
 
 ### Mouse
@@ -1550,7 +1646,7 @@ All widgets accept these parameters:
 
 - Python 3.10+
 - pygame-ce
-- matplotlib (for Chart)
+- OPTIONAL: matplotlib (for Chart)
 
 ---
 

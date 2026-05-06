@@ -1,5 +1,4 @@
 from ipui import *
-from ipui.widgets.Label import Detail
 import pygame
 
 class BouncingBall(_BaseTab):
@@ -18,7 +17,7 @@ class BouncingBall(_BaseTab):
         self.ball_y += self.ball_dy * ip.dt         # same but in y dimension
         self.bounce_off_walls()                     # check if it needs to bounce
 
-    def ip_draw(self, ip):                          # ← hook: custom drawing
+    def ip_draw2(self, ip):                          # ← hook: custom drawing
         pos = ip.to_screen(self.ball_x,self.ball_y) # convert normalized to screen coords
         pygame.draw.circle(ip.surface, (255, 160, 40), pos, ip.scale_y(0.02))
 

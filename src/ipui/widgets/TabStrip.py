@@ -87,26 +87,6 @@ class TabStrip(_BaseWidget):
         if name not in self.tab_cache:  self.resolve_tab(name)
         return self.tab_cache[name]
 
-    def prepareqwqw(self, name):
-        """Resolve, cache, and initialize a tab's owner on demand.
-        Owner is either the form itself (one-pager pattern) or a _BaseTab instance
-        loaded from an external file. Mirrors the form-first-then-file logic
-        already used during normal tab switching by resolve_tab_or_form."""
-        if name in self.tab_cache:                              return self.tab_cache[name]
-
-        entries = self.tab_layout.get(name, [])
-        if not entries:                                         self.err_tab_not_in_layout(name)
-
-        first_builder = entries[0][0]
-        if isinstance(first_builder, str) and "." not in first_builder:
-            method_name = first_builder.replace(" ", "_")
-            if hasattr(self.form, method_name):                 self.err_tab_one_pager(name, method_name)
-            self.resolve_tab_or_form(name, first_builder)
-        else:
-            self.resolve_tab(name)
-
-        if name not in self.tab_cache:                          self.err_tab_unresolvable(name, first_builder)
-        return self.tab_cache[name]
 
     def err_tab_one_pager(self, name, method_name):
         """tab_early_load needs a tab file — gentle nudge to migrate from the one-pager smoke-test shape."""
@@ -212,10 +192,10 @@ class TabStrip(_BaseWidget):
         self.rebuild_tab_areas(entries)
         self.run_pane_builders(name, entries)
 
-
     def fire_ip_setup(self, name):
+        """Update: defensive getattr for form-as-tab Quick Start pattern"""
         tab = self.tab_cache.get(name)
-        if tab and not tab.private_setup_done:
+        if tab and not getattr(tab, 'private_setup_done', False):
             tab.private_setup_done = True
             tab.ip_setup(tab.ip)
 
@@ -225,32 +205,6 @@ class TabStrip(_BaseWidget):
         if tab is None: return
         from ipui.engine.IPUI import IPUI
         tab.ip_activated(IPUI.ip)
-
-    def fire_ip_activated20260503(self, name):
-        tab = self.tab_cache.get(name)
-        if tab:
-            from ipui.engine.IPUI import IPUI
-            ip = IPUI.ip
-            ip.set_tab_context(tab, name, True, self.content)
-            tab.ip_activated(ip)
-
-    def ensure_content20260503(self, name):
-        if name in self.content_cache:
-            self.restore_cached_tab(name)
-            return
-        entries = self.tab_layout[name]
-        if self.needs_missing_page(name, entries):
-            entries = self.missing_tab_entries(name)
-        self.rebuild_tab_areas(entries)
-        self.fire_ip_setup(name)
-        self.run_pane_builders(name, entries)
-
-    def fire_ip_setup(self, name):
-        tab = self.tab_cache.get(name)
-        if tab and not tab.private_setup_done:
-            tab.private_setup_done = True
-            tab.ip_setup(tab.ip)
-
 
 
     def set_ip_context(self, name):
@@ -431,9 +385,11 @@ class TabStrip(_BaseWidget):
 
         form_file  = Path(inspect.getfile(self.form.__class__)).parent
         tab_lower  = tab_name.replace(" ", "").replace("_", "").lower()
-        found = [f for f in form_file.rglob("*.py")
-                 if f.stem.replace("_", "").replace(" ", "").lower() == tab_lower]
-        #print(f"RESOLVE_TAB: looking for '{tab_lower}', found = {found}")  # NEW
+        #20260505 found = [f for f in form_file.rglob("*.py")
+        #20260505         if f.stem.replace("_", "").replace(" ", "").lower() == tab_lower]
+        found = [f for f in form_file.rglob("*.py")  # NEW
+                 if not self.is_in_excluded_dir(f, form_file)  # NEW
+                 and f.stem.replace("_", "").replace(" ", "").lower() == tab_lower]  # NEW
 
         if len(found) == 0:
             return None
@@ -445,6 +401,14 @@ class TabStrip(_BaseWidget):
         instance   = tab_class(self.form)
         self.tab_cache[tab_name] = instance
         return instance
+
+
+    def is_in_excluded_dir(self, path, form_dir):                                       # NEW
+        """A user's project shouldn't find files inside installed packages, but        # NEW
+        framework-internal forms searching their own directory tree are fine."""       # NEW
+        form_in_site_packages = "site-packages" in form_dir.parts                       # NEW
+        path_in_site_packages = "site-packages" in path.parts                           # NEW
+        return path_in_site_packages and not form_in_site_packages
 
     def load_tab_class(self, file_path, tab_name):
         """Import a file and find the _BaseTab subclass inside."""

@@ -78,7 +78,7 @@ class MgrFont:
         if ttf_filename and os.path.exists(ttf_path): 
             print(f"✓ Loaded {weight_name} font: {ttf_path}")
             return ttf_path
-        else: print ("Font folder not found")
+        #else: print (f"Using System font instead of :{ttf_filename}")
 
         # Try system fonts
         for font_name in system_font_names:

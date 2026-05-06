@@ -56,7 +56,7 @@ class EZ_Pane(_BaseTab):
         header   = Row(parent, justify_spread=True)
         Title(header, f"Batch {batch_id}", glow=True)
         btn = Button(header, "Back", color_bg=Style.COLOR_TAB_BG)
-        btn.on_click_me(self.show_batches)
+        btn.on_click_me(self.load_batches)
         card = CardCol(parent, height_flex=1)
         grid = PowerGrid(card, name="grid_batch_runs", height_flex=1)
         grid.on_row_click(self.on_run_toggled, "Run")

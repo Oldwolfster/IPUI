@@ -24,7 +24,7 @@ class Reference(_BaseTab):
             ("Widgets", self.pane_widgets),
             ("ReadMe", self.pane_markdown),
             ("Layout", self.pane_markdown),
-            ("lifecycle", self.pane_markdown),  # ← None signals stub
+            ("Lifecycle", self.pane_markdown),  # ← None signals stub
             ("Examples", None),  # ← None signals stub
 
         ]

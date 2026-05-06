@@ -202,6 +202,7 @@ class EZ_Pane(_BaseTab):
         Body(sub, "Then you compose them\ninto bigger things.")
         Body(sub, "Every giant neural network\nis just a building made of Percys.")
 
+
     def pane_percy(self, parent) -> None:
         """Percy's Story — sub-pane with Back navigation."""
         header = Row(parent, justify_spread=True)
@@ -209,7 +210,7 @@ class EZ_Pane(_BaseTab):
         btn = Button(header, "Back", color_bg=Style.COLOR_TAB_BG)
         btn.on_click_me(self.swap_pane(0, self.info))
         sub = CardCol(parent, height_flex=1, scroll_v=True)
-        Body(sub, PERCY_STORY)
+        Body(sub, "\n".join(PERCY_STORY))
 
     # ══════════════════════════════════════════════════════════════
     # STATE HELPERS

@@ -9,8 +9,7 @@ import tkinter as tk
 from tkinter import filedialog
 from ipui import *
 
-#DB_PATH = r"src\ipui\assets\sample_db\rock_on_forever_claude.db"
-DB_PATH = r"src\ipui\assets\sample_db\OptimizerShowdown.db"
+DB_PATH = MgrPkgPath.as_str("assets/sample_db/OptimizerShowdown.db")
 
 
 class SQL(_BaseTab):
