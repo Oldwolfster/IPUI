@@ -75,7 +75,7 @@ python -m pip install ipui
 
 
 ## Additional Documentation
-- [Why IPUI Does Things Differently](https://github.com/Oldwolfster/IPUI/blob/main/docs/WhyIPUIDoesThingsDifferently.md)
+- [Why IPUI Does Things Differently](https://github.com/Oldwolfster/IPUI/blob/main/docs/Why_IPUI_Does_Things_Differently.md)
 - [Lifecycle Timing](https://github.com/Oldwolfster/IPUI/blob/main/docs/Lifecycle_Timing.md)
 - [Layout Guide](https://github.com/Oldwolfster/IPUI/blob/main/docs/IPUI_Layout_Guide_Original_Flex.md)
 - [Naming Conventions](https://github.com/Oldwolfster/IPUI/blob/main/docs/NamingAndConventions.md)
