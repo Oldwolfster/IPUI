@@ -61,26 +61,17 @@ class MarkdownTOC(_BaseWidget):
             return []
 
     def extract_toc(self, lines):
-        explicit = self.extract_explicit_toc(lines)
-        if explicit:
-            return explicit
-        return self.extract_from_headings(lines)
+        explicit     = self.extract_explicit_toc(lines)
+        all_headings = self.extract_from_headings(lines)
+        if not explicit:
+            return all_headings
+        explicit_titles = {slug: title for title, slug in explicit}
+        result = []
+        for title, slug in all_headings:
+            display = explicit_titles.get(slug, title)
+            result.append((display, slug))
+        return result
 
-    def extract_explicit_tocDelete(self, lines):
-        in_toc = False
-        titles = []
-        for line in lines:
-            if line.strip().lower().startswith("## table of contents"):
-                in_toc = True
-                continue
-            if in_toc:
-                if line.startswith("## ") or line.startswith("# "):
-                    break
-                if line.strip().startswith("- ["):
-                    start = line.index("[") + 1
-                    end   = line.index("]")
-                    titles.append(line[start:end])
-        return titles
 
     def extract_explicit_toc(self, lines):
         in_toc = False
@@ -90,9 +81,9 @@ class MarkdownTOC(_BaseWidget):
                 in_toc = True
                 continue
             if in_toc:
-                if line.startswith("## ") or line.startswith("# "):
+                if line.startswith("## ") or line.startswith("# "):       # REFERENCE
                     break
-                if line.strip().startswith("- ["):
+                if line.startswith("- ["):                                 # REPLACE  (was line.strip().startswith)
                     start = line.index("[") + 1
                     end   = line.index("]")
                     title = line[start:end]
@@ -103,10 +94,7 @@ class MarkdownTOC(_BaseWidget):
     def extract_slug(self, line):
         start = line.index("(#") + 2
         end   = line.index(")", start)
-        return line[start:end].strip('-')
-
-
-
+        return line[start:end].strip('-').lower()
 
     def extract_from_headings(self, lines):
         entries = []
@@ -134,3 +122,22 @@ class MarkdownTOC(_BaseWidget):
     def on_item_changed(self, selected):
         if self.on_change and selected:
             self.on_change(selected[0])
+
+    def select_slug(self, slug):
+        """Select the TOC entry whose slug matches; fires on_change so Body re-renders."""
+        title = self.title_for_slug(slug)
+        if not title:
+            return False
+        for item in self.sel.items:
+            item.is_selected = (item.text == title)
+            item.apply_selection_visual()
+        if self.on_change:
+            self.on_change(slug)
+        return True
+
+    def title_for_slug(self, slug):
+        """Reverse-lookup: slug → title. Returns None if not in this TOC."""
+        for title, mapped_slug in self.slug_map.items():
+            if mapped_slug == slug:
+                return title
+        return None

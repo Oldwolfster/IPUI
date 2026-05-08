@@ -1,5 +1,5 @@
 # IPUI - Idiot Proof UI - Because we've all spent 3 hours debugging a button!
-**Version: 0.1.0 Rev 053**
+**Version: 0.1.0 Rev 054**
 
 A lightweight, opinionated Python/Pygame UI framework that makes building complex tabbed interfaces *ridiculously* simple.
 
@@ -14,7 +14,7 @@ A lightweight, opinionated Python/Pygame UI framework that makes building comple
 > IPUI is developed and tested against `pygame-ce`. It is imported in code as `pygame`.
 
 
-> Full installation in section 2 but if you are just looking for the command...
+> Full installation in section 2 but if you are just looking pip command...
 
 ```bash
 python -m pip install ipui
@@ -23,7 +23,7 @@ python -m pip install ipui
 ---
 ## Table of Contents
 
-- [The IPUI Advantage](#️-the-ipui-advantage)
+- [The IPUI Advantage](#the-ipui-advantage)
 - [Installation](#Installation)
 - [Important Note: Why IPUI Does Things Differently](#important-note-why-ipui-does-things-differently)
 - [Quick Start](#quick-start)
@@ -75,15 +75,15 @@ python -m pip install ipui
 
 
 ## Additional Documentation
-- [Why IPUI Does Things Differently](https://github.com/Oldwolfster/IPUI/blob/main/docs/WhyIPUIDoesThingsDifferently.md)
-- [Lifecycle Timing](https://github.com/Oldwolfster/IPUI/blob/main/docs/LifecycleTiming.md)
+- [Why IPUI Does Things Differently](https://github.com/Oldwolfster/IPUI/blob/main/docs/Why_IPUI_Does_Things_Differently.md)
+- [Lifecycle Timing](https://github.com/Oldwolfster/IPUI/blob/main/docs/Lifecycle_Timing.md)
 - [Layout Guide](https://github.com/Oldwolfster/IPUI/blob/main/docs/IPUI_Layout_Guide_Original_Flex.md)
 - [Naming Conventions](https://github.com/Oldwolfster/IPUI/blob/main/docs/NamingAndConventions.md)
 - [Reading IPUI Source Code](https://github.com/Oldwolfster/IPUI/blob/main/docs/Reading_IPUI_Source_Code.md)
 
 ---
 
-## 🛠️ The IPUI Advantage
+## The IPUI Advantage
 
 - 🗂️ **First-Class Tab System:** Define your app's tabs, panes, and flex ratios from a single simple dictionary. IPUI scaffolds the structure and keeps each tab cleanly modular:
   ```python
@@ -135,7 +135,7 @@ python -m pip install ipui
 
 ---
 
-## Run the Showcase
+### Run the Showcase
 
 Want to see what IPUI can do before you build a thing? Run `docs()` and you'll get a fully interactive widget gallery — every widget, every layout pattern, every trick, all live and clickable. It's the fastest way to go from "looks interesting" to "now I know what to steal."
 
@@ -391,9 +391,9 @@ Everything stacks vertically by default. Need widgets side by side? `Row` is a
 transparent horizontal container — pure structure, no visual chrome:
 
 ```python
-def demo(self, parent):
-    card  = Card(parent)
-    Title(card, "My Tree")
+def demo(self, parent):            # ← parent is the pane root
+    card  = Card(parent)           # card attaches to the pane
+    Title(card, "My Tree")         # Title attaches to card
     Heading(card, "Same parent")
 
     inner = Card(card)
@@ -465,7 +465,7 @@ class BouncingBall(_BaseTab):
 
 ---
 
-### The `ip` Service Portal
+### The `ip` Parameter
 
 Every lifecycle hook receives a single argument: `ip`. It's the IPUI Service Portal — one object that gives you everything you need. Type `ip.` in your IDE and autocomplete shows every attribute and method, organized by family.
 
@@ -510,7 +510,7 @@ Most real apps use all three: imperative for one-off direct updates, pipeline fo
 Store widget references, update them by hand:
 
 ```python
-def arena(self, parent):                                # ← pane method: builds the UI
+def arena(self, parent):                                # ← pane method: parent root of widget tree for this parent
     self.lbl_quadrant  = Body(parent, "Quadrant: —")    # NOTE: Now we are storing reference to the widgets
     self.lbl_direction = Body(parent, "Direction: —")
     self.lbl_warning   = Body(parent, "")
@@ -568,7 +568,6 @@ Add a fourth widget? One new entry in `BINDINGS`. `ip_think` doesn't grow.
 
 > Honest answer: this example is roughly a tie. You have four `pipeline_set` calls vs. three `set_text` calls — neither version is obviously cleaner at this scale. Reactive starts to win when state drives many widgets, or when several places update the same state. Imperative stays clearer when one widget reflects one piece of state and you want a single named method everyone calls. **Mix them in the same tab.** IPUI doesn't have an opinion on which paradigm is "correct" — only that you should have the choice and that both should be cheap.
 
-
 ---
 
 Mix all three freely. Each one earns its keep: pipeline shines when one piece of state drives many widgets — including across tabs — and you don't want to maintain explicit wiring. Reactive shines when widget display depends on combinations of state. Imperative shines for surgical one-off updates. Same engine underneath, three access patterns on top.
@@ -580,7 +579,8 @@ Mix all three freely. Each one earns its keep: pipeline shines when one piece of
 
 ## The IPUI WAY
 
-IPUI makes the right path the easy path.
+We make the right path the easy path.  
+We think what would be the easiest api to do 'whatever'  and build that.
 
 - Simple things should be trivial
 - Missing structure should be fixable, not fatal

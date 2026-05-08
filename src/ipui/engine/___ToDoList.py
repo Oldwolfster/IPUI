@@ -430,127 +430,46 @@ Clean up list
 358) DONE: Swap Pane is ong.e
 359) DONE:  Some cleanup on the sql editor
 360) pasting in to sql box gets caught in loops omehow
+
 ######################################################################
 5/4
 ######################################################################
 361) Nope, it is needed.  - look in to on_click_me   possibly remove from api.
 362) Readme has code  examples that don't work.
 363) disable launch button. (MUST BE LAST)
+364) A lot of testing
+365) Percy's story
+366) A lot of work on MD reader
+367) Converted Designer to Fish Eye
+
+
+######################################################################
+5/8
+######################################################################
+368) DONE: Birdseye - Fixed defect on Codebox 'initial value' logic.
+369) DONE: Birdseye - Tab click behavior — tab headers now show pane summary in Preview + Form source in Source pane
+370) DONE: Birdseye - find_tab_file on TabStrip — DRY extraction of fuzzy tab-to-file resolution (spaces/underscores), used by BirdsEye and resolve_tab
+371) DONE: Birdseye - Preview error handling — try_render_pane helper with friendly message for tabs that haven't run ip_setup_early
+372) DONE: Birdseye - CodeBox scroll fix — find_scroll now sets parent's scroll_offset instead of its own
+373) DONE: Birdseye - CodeBox background fix — surface.fill(color_bg) so background extends with horizontal scroll
+374) DONE: Birdseye - Preview default text — cleaned up "UNDER CONSTRUCTION" placeholder
+375) DONE: Ensure wall widgets have docstrings for the cataalog
+376) DONE: Birdseye - not finding names with spaces.
+377) DONE: Added header to MarkdownBody
+378) DONE: Added next/prev buttons to MarkdownBody header
+379) DONE: Fixed issue in MArkdownTOC that missed some content if they had double has but were not listed in toc.
+380) DONE: Added image support to MarkdownBody
+
 ######################################################################
 Pending for V0.1
 ######################################################################
 
 What is left to publish
 be consistent in naming docs... lets do underscores
-if you type to the end of a text box, it shrinks
 
 
-Defects
-Percy's story
-creating db loop on NF home
+still issue creating db in neuroforge with enter key vs button
 sqlarea not scrolling
-
-# README Verification Checklist — v0.1 Publish
-
-Items still to verify against the actual code before publishing.
-Everything below is mechanical: open a file, grep, run a snippet — confirm or fix.
-
----
-
-## High Priority — Code Examples That Need to Actually Run
-
-These are claims the README makes that a reader will copy-paste. If any of them fails, the user's first experience is broken.
-
-- [ ] **`ip.state` examples (lines ~696–746)**   with my addition it's 723 or 27 higher
-  - Verify `ip.state.add(name, delegate, next=None, duration=0)` signature exact
-  - Verify auto-advance on duration works as documented (Breakout `LEVEL_UP → READY` after 1.5s)
-  - Verify named state machines: `ip.state("combat").add(...)` and `ip.state("combat").go(...)`
-  - Verify `ip.state.is_("NAME")` and `ip.state.current` work as shown
-
-- [ ] **`tab_on_change` veto (lines ~1144–1170)**
-  - Verify the canonical signature is `method(name, current)`
-  - Verify returning `False` actually vetoes the switch
-  - Verify returning `True`, `None`, or nothing all proceed normally
-
-- [ ] **PowerGrid SQL examples (lines ~1003–1014)**
-  - Verify `grid.set_data("path/to/database.db", query="SELECT ...")` works
-  - Verify `grid.set_data("path/to/database.db", table="batch_history")` works
-  - Verify sorting works across pages as documented
-
-- [ ] **`PIPELINE_DEFAULTS` (lines ~1330–1339)**
-  - Verify class attribute name is exactly `PIPELINE_DEFAULTS`
-  - Verify seeding at startup actually populates the pipeline
-
-- [ ] **Tabless mode with state machines (lines ~1211–1243)**
-  - Run the Asteroids example as a standalone smoke test
-  - Verify all hooks fire identically on `_BaseForm` as on `_BaseTab`
-
-
-
-- [ ] **API Reference tables (lines ~1501–1648)**
-  - `_BaseForm` class attributes table — every name + type
-  - `_BaseForm` methods table — every signature
-  - `_BaseWidget` constructor parameters table — names, types, defaults
-  - `_BaseWidget` methods table
-  - `_BaseTab` attributes (`BINDINGS`, `THINK_ALWAYS`)
-  - SelectionList methods
-  - DropDown methods
-  - Chart methods
-  - PowerGrid methods
-
-- [ ] **`enabled` default (line ~1551)**
-  - Listed as `None` in the table — verify against `_BaseWidget`
-  - If actually `True`, fix; if actually `None`, leave it
-
----
-
-## Low Priority — Anchor Links
-
-Markdown anchors are auto-generated from heading text. A typo or special char (slash, em-dash) can silently break a link.
-
-- [ ] **Test every TOC anchor link**
-  - Open the rendered README on GitHub
-  - Click each entry in the Table of Contents
-  - Confirm each one jumps to the right section (not the top of the page)
-  - Recently fixed: "Important Note: Why IPUI Does Things Differently"
-
----
-
-## Optional — Content Authoring (only if you want to)
-
-These came up but aren't blockers.
-
-- [ ] **Add a Pipeline subsection to "Updating the UI"**
-  - Currently the intro lists three paradigms but only Imperative and Reactive
-    have inline subsections (the bouncing ball comparison)
-  - Pipeline is covered in detail later in `## Reactive Pipeline`
-  - If you want a third bouncing-ball variant showing pipeline-only style,
-    write the example first and we can wire it in
-
-- [ ] **Add a "Coming Soon" or "v0.2" footnote section**
-  - Anything shipped as "horizon" in your todo list that the README mentions
-    in passing — make it explicit so users don't expect it
-  - Candidates: declarative `STATES` dict, `ip.state.in_(...)`, true hot-reload,
-    per-tab `ip.state` scoping
-
----
-
-## After everything above
-
-- [ ] **Final read-through** in GitHub's rendered preview (not just the editor)
-  - Tables render?
-  - Code blocks have language hints?
-  - Screenshots load?
-  - Every internal link clicks through correctly?
-
-- [ ] **Tag and ship.**
-
----
-
-*One framework. Six hooks. Three paradigms. Zero excuses left.* 🚀
-
-
-
 
 
 
@@ -561,6 +480,7 @@ These came up but aren't blockers.
 ##########################################################
 Punting until after IPUI is on PIP
 ##########################################################
+if you type to the end of a text box, it sometimes shrinks
 api text_align maybe better to say alignment
 in powergrid if you scroll down, the last one may remove scroller meaning you are stuck (no scroll up)
 301) defect in particle life rename while scrolled.

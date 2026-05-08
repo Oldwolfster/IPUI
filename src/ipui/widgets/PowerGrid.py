@@ -16,10 +16,17 @@ from ipui.widgets.RecordSelector import RecordSelector
 # ══════════════════════════════════════════════════════════════════
 
 class GridHeader(_BaseWidget):
+    """
+    desc:        Internal widget holding the composited header row of a PowerGrid.
+    when_to_use: Created automatically by PowerGrid — not used directly.
+    best_for:    Sticky column headers with sort indicators.
+    example:     (internal to PowerGrid)
+    api:         (managed by PowerGrid)
+    """
+
     def build(self):
         self.pad      = 0
         self.border   = 0
-
 
     def measure(self):
         if self.my_surface:
@@ -32,6 +39,13 @@ class GridHeader(_BaseWidget):
 # ══════════════════════════════════════════════════════════════════
 
 class GridBody(_BaseWidget):
+    """
+    desc:        Internal widget holding the composited data rows of a PowerGrid.
+    when_to_use: Created automatically by PowerGrid — not used directly.
+    best_for:    Scrollable row display with zebra striping.
+    example:     (internal to PowerGrid)
+    api:         (managed by PowerGrid)
+    """
     def build(self):
         self.pad      = 0
         self.border   = 0

@@ -72,8 +72,10 @@ class _BaseWidget(MixinScrollH):
                    locate="def __init__", locate_in=cls, exc_type=TypeError)
 
 
+
+
     def __init__(self, parent=None, text=None, name=None,
-                 width_flex=0, height_flex=0, scroll_h=None,
+                 width_flex=0, height_flex=0, scroll_h=None, encroach_x=None, encroach_y=None,
                  pad=None, pad_x=None, pad_y=None, gap=None,  border=None,justify_center=False, justify_spread=False, visible = True,
                  enabled=True, start= None, end = None, font=None, fit_content=False, border_radius=None,hug_parent=False,
                  text_align=None, wrap=False, color_bg=None, glow=False, data=None, single_select=False, tooltip=None,
@@ -102,6 +104,8 @@ class _BaseWidget(MixinScrollH):
 
         # Layout
         self.scroll_h=None
+        self.encroach_x         = None
+        self.encroach_y         = None
         self.rect               = None
         self.pad_x              = Style.TOKEN_PAD
         self.pad_y              = Style.TOKEN_PAD
@@ -198,6 +202,8 @@ class _BaseWidget(MixinScrollH):
         if pad_y  is not None: self.pad_y  = pad_y
         if gap    is not None: self.gap    = gap
         if border is not None: self.border = border
+
+        if encroach_x==True  : self.pad_x=-10
 
         #if scroll_h is not None: self.scroll_h = scroll_h
         self.init_scroll(scroll_h=scroll_h)
@@ -424,7 +430,7 @@ class _BaseWidget(MixinScrollH):
         if self.scroll_active: self.draw_scrollbar(surface)
         self.draw_scroll_h_bar(surface)
 
-    def draw_children(self, surface):
+    def draw_childrenOld(self, surface):
         """Draw visible children, clipped to content area."""
         if not self.visible_children: return
         old_clip = surface.get_clip()

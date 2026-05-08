@@ -20,21 +20,21 @@ class Designer(_BaseTab):
 
 
     def tab_map(self, parent):
-        Title(parent, "Tab Map", glow=True)
+        Title(parent, "App Map", glow=True)
         self.map_card = CardCol(parent, height_flex=1, scroll_v=True)
         self.rebuild_tab_map()
-
-        card = CardCol(parent)                                          # NEW
-        self.txt_name = TextBox(card, placeholder="Tab or Pane name")   # NEW
-        row = Row(card)                                                 # NEW
-        Button(row, "+ Tab",  color_bg=Style.COLOR_BUTTON_CTA,      # NEW
-            width_flex=1, on_click=self.add_tab)                        # NEW
-        Button(row, "- Tab",  color_bg=Style.COLOR_BUTTON_DANGER,        # NEW
-            width_flex=1, on_click=self.delete_tab)                     # NEW
-        Button(row, "+ Pane", color_bg=Style.COLOR_BUTTON_CTA,      # NEW
-            width_flex=1, on_click=self.add_pane)                       # NEW
-        Button(row, "- Pane", color_bg=Style.COLOR_BUTTON_DANGER,        # NEW
-            width_flex=1, on_click=self.delete_pane)                    # NEW
+        return
+        card = CardCol(parent)                                          
+        self.txt_name = TextBox(card, placeholder="Tab or Pane name")   
+        row = Row(card)                                                 
+        Button(row, "+ Tab",  color_bg=Style.COLOR_BUTTON_CTA,      
+            width_flex=1, on_click=self.add_tab)                        
+        Button(row, "- Tab",  color_bg=Style.COLOR_BUTTON_DANGER,        
+            width_flex=1, on_click=self.delete_tab)                     
+        Button(row, "+ Pane", color_bg=Style.COLOR_BUTTON_CTA,      
+            width_flex=1, on_click=self.add_pane)                       
+        Button(row, "- Pane", color_bg=Style.COLOR_BUTTON_DANGER,        
+            width_flex=1, on_click=self.delete_pane)                    
 
     def rebuild_tab_map(self):
         self.map_card.clear_children()
@@ -48,29 +48,26 @@ class Designer(_BaseTab):
                 self.build_pane_row(tab_name, method_name, weight)
 
     def build_tab_header(self, tab_name):
-        row = Row(self.map_card, justify_spread=True)
-        btn = Button(row, tab_name,
-            color_bg   = Style.COLOR_TAB_BG,
-            width_flex = 1)
+        btn = Button(self.map_card, tab_name,
+                     color_bg=Style.COLOR_TAB_BG,
+                     width_flex=1)
         is_selected = (tab_name == self.selected_tab and self.selected_pane is None)
         if is_selected:
             btn.set_radiate()
         btn.on_click = lambda n=tab_name: self.select_tab(n)
 
+
+
     def build_pane_row(self, tab_name, method_name, weight):
-        row = Row(self.map_card)
-        Spacer(row, width_flex=0)
-        label       = f"  {method_name}"
         is_selected = (tab_name == self.selected_tab
                        and method_name == self.selected_pane)
-        color       = Style.COLOR_BUTTON_CTA if is_selected else Style.COLOR_BUTTON_BG
-        btn         = Button(row, label,
-            color_bg   = color,
-            width_flex = 1)
+        color = Style.COLOR_BUTTON_CTA if is_selected else Style.COLOR_BUTTON_BG
+        row = Row(self.map_card)
+        btn = Button(row, method_name,  color_bg=color,width_flex=4,text_align=LEFT)
         if is_selected:
             btn.set_radiate()
         btn.on_click = lambda t=tab_name, m=method_name: self.select_pane(t, m)
-        Body(row, f"({weight})")
+        Spacer(row, width_flex=1)
 
     def normalize_entries(self, entries):
         result = []
@@ -87,52 +84,95 @@ class Designer(_BaseTab):
 
     def preview(self, parent):
         Title(parent, "Preview", glow=True)
-        Body(parent, "Select a pane from the Tab Map")
-        pt= Plate(parent)
-        Title(pt,"UNDER CONSTRUCTION")
-        Title(pt, "But kinda cool")
+        Spacer(parent)
+        row=Row(parent)
+        Spacer(row,width_flex=1)
+        pt= Plate(row)
+        Title(pt, "Inspect your entire app",hug_parent=True,text_align=CENTER)
+        Title(pt, "from one place",text_align=CENTER)
+        Title(pt,"")
+        Title(pt, "one day", text_align=CENTER)
+        Title(pt, "maybe build", text_align=CENTER)
+        Spacer(row, width_flex=1)
+
+        Spacer(parent)
+        Spacer(parent)
 
     def refresh_preview(self):
-        if not self.selected_tab or not self.selected_pane:
-            return
         pane = self.form.tab_strip.panes[1]
         pane.children.clear()
         Title(pane, "Preview", glow=True)
-        if (self.selected_tab == "Designer"
-        and self.selected_pane == "preview"):
+        if not self.selected_tab:
+            Body(pane, "Select a tab or pane from the App Map")
+            return
+        if not self.selected_pane:
+            self.preview_tab_summary(pane)
+            return
+        if (self.selected_tab == "Birds Eye"
+                and self.selected_pane == "preview"):
             Body(pane, "You're looking at it.")
             return
         preview_area = CardCol(pane, height_flex=1)
         instance = self.form.tab_strip.resolve_tab(self.selected_tab)
         if instance and hasattr(instance, self.selected_pane):
-            getattr(instance, self.selected_pane)(preview_area)
+            self.try_render_pane(preview_area, instance)
         else:
             Body(preview_area, f"Cannot resolve: {self.selected_tab}.{self.selected_pane}")
+
+
+
+    def try_render_pane(self, parent, instance):
+        try:
+            getattr(instance, self.selected_pane)(parent)
+        except Exception as e:
+            Body(parent,
+                 f"Preview unavailable for {self.selected_tab}.{self.selected_pane}\n\n"
+                 f"{e}\n\n"
+                 f"This usually happens because the tab's ip_setup_early\n"
+                 f"hasn't run yet. Try clicking the '{self.selected_tab}' tab\n"
+                 f"first, then come back — the preview should work.\n\n"
+                 f"We're working on a better fix.")
+
+    def preview_tab_summary(self, parent):
+        Heading(parent, self.selected_tab)
+        entries = self.form.TAB_LAYOUT.get(self.selected_tab, [])
+        panes = self.normalize_entries(entries)
+        card = CardCol(parent, height_flex=1)
+        for method_name, weight in panes:
+            if not isinstance(method_name, str):
+                continue
+            row = Row(card)
+            Body(row, method_name, width_flex=1)
+            Body(row, f"flex: {weight}")
 
     # ══════════════════════════════════════════════════════════════
     # RIGHT PANE — Toolbox
     # ══════════════════════════════════════════════════════════════
 
     def toolbox(self, parent):
-        Title(parent, "Tools", glow=True)
-        card = CardCol(parent, scroll_v=True, height_flex=1)
-        Heading(card, "Widgets", glow=True)
-        palette = [
-            "Title", "Heading", "Body",
-            "Button", "CardCol", "CardRow",
-            "Row", "Spacer", "TextBox",
-            "SelectionList", "PowerGrid",
-        ]
-        for widget_name in palette:
-            Button(card, widget_name,
-                color_bg = Style.COLOR_BUTTON_BG,
-                on_click = lambda w=widget_name: self.inject_widget(w))
+        Title(parent, "Source", glow=True)
+        self.code_card = CardCol(parent, scroll_v=True, scroll_h=True)
+        Body(self.code_card, "Select a pane from the Tab Map", name="lbl_codebox_empty")
+        self.refresh_codebox()
 
-        #Spacer(parent)
-        card = CardCol(parent)
-        Heading(card, "Status", glow=True)
-        Body(card, "Ready.", name="lbl_designer_status")
+        # BirdsEye.py method: refresh_codebox  Update: handle tab-level (show Form source)
 
+    def refresh_codebox(self):
+        if not hasattr(self, "code_card"):
+            return
+        self.code_card.clear_children()
+        if not self.selected_tab:
+            Body(self.code_card, "Select a tab or pane from the App Map")
+            return
+        file_path = self.get_tab_file_path(self.selected_tab)
+        if not file_path.exists():
+            Body(self.code_card, f"File not found: {file_path.name}")
+            return
+        initial = f"def {self.selected_pane}" if self.selected_pane else None
+        print(f"Initial val ={initial}")
+        CodeBox(self.code_card,
+                data=str(file_path),
+                initial_value=initial)
     # ══════════════════════════════════════════════════════════════
     # SELECTION
     # ══════════════════════════════════════════════════════════════
@@ -140,8 +180,9 @@ class Designer(_BaseTab):
     def select_tab(self, tab_name):
         self.selected_tab  = tab_name
         self.selected_pane = None
-        self.set_status(f"Tab: {tab_name}")
         self.rebuild_tab_map()
+        self.refresh_preview()
+        self.refresh_codebox()
 
     def select_pane(self, tab_name, method_name):
         self.selected_tab  = tab_name
@@ -149,6 +190,7 @@ class Designer(_BaseTab):
         self.set_status(f"{tab_name} . {method_name}")
         self.rebuild_tab_map()
         self.refresh_preview()
+        self.refresh_codebox()
 
     # ══════════════════════════════════════════════════════════════
     # ACTIONS — Tab
@@ -229,9 +271,9 @@ class Designer(_BaseTab):
                 break
         self.form.tab_strip.data[tab] = entries
         self.form.tab_strip.tab_cache.pop(tab, None)
-        if WRITE_FILES:
-            file_path = self.get_tab_file_path(tab)
-            FileManager.deprecate_method(file_path, method)
+        #if WRITE_FILES:
+        #    file_path = self.get_tab_file_path(tab)
+        #    FileManager.deprecate_method(file_path, method)
         self.save_form_layout()
         self.selected_pane = None
         self.set_status(f"Deprecated: {method}")
@@ -256,7 +298,7 @@ class Designer(_BaseTab):
             self.set_status(f"File not found: {file_path.name}")
             return
         snippet = self.widget_snippet(widget_type)
-        FileManager.inject_into_method(file_path, self.selected_pane, snippet)
+        #FileManager.inject_into_method(file_path, self.selected_pane, snippet)
         self.form.tab_strip.tab_cache.pop(self.selected_tab, None)
         self.set_status(f"Added {widget_type} to {self.selected_pane}")
         self.refresh_preview()
@@ -281,24 +323,22 @@ class Designer(_BaseTab):
     # FILE OPERATIONS
     # ══════════════════════════════════════════════════════════════
 
-    def get_tab_file_path(self, tab_name):
-        form_dir = Path(inspect.getfile(self.form.__class__)).parent
-        return form_dir / f"{tab_name}.py"
+    def get_tab_file_path(self, tab_name): return self.form.tab_strip.find_tab_file(tab_name)
 
     def backup_and_write(self, tab_name, new_method):
         if not WRITE_FILES:return
 
         file_path = self.get_tab_file_path(tab_name)
-        if file_path.exists():
-            FileManager.append_method(file_path, new_method)
-        else:
-            methods = self.form.TAB_LAYOUT.get(tab_name, [])
-            FileManager.generate_pane_file(file_path, tab_name, methods)
+        #if file_path.exists():
+            #FileManager.append_method(file_path, new_method)
+        #else:
+            #methods = self.form.TAB_LAYOUT.get(tab_name, [])
+            #FileManager.generate_pane_file(file_path, tab_name, methods)
 
     def save_form_layout(self):
         if not WRITE_FILES:  return
         form_file = inspect.getfile(self.form.__class__)
-        FileManager.save_TAB_LAYOUT(form_file, self.form.TAB_LAYOUT)
+        #FileManager.save_TAB_LAYOUT(form_file, self.form.TAB_LAYOUT)
 
     # ══════════════════════════════════════════════════════════════
     # HELPERS

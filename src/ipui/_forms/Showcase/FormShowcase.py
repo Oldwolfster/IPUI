@@ -4,17 +4,18 @@ from ipui import *
 class FormShowcase(_BaseForm):
 
     TAB_LAYOUT = {
+
         "Welcome"       : ["left_pane"      ,"proud_features"   ,"detail"       ],
-        "Bouncing Ball": [("arena", .3), None],
         "Tab System"    : ["explain"        ,"showcase"                         ],
         "Widgets"       : ["catalog_grid"   ,"detail"                           ],
         "Widget Tree"   : ["widget_tree"    ,"widget_detail"                    ],
         "Wiring"        : ["reactive"       ,"imperative"                       ],
         "Pygame"        : [("overview", 2)  ,(None      , 3)    ,("code"   , 2) ],
         "Breakout"      : ["greet"          ,None               ,"code"         ],
-        "SQLDELETE"           : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
+        "SQL"           : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
+        "Kanban"        : ["todo", "doing"  ,"done"                             ],
         "Paint"         : [("tools"   ,.3)  ,None                               ],
-        "Designer"      : [("tab_map" , 1)  ,("preview" , 3)    ,("toolbox", 1) ],
+        "Birds Eye"     : [("tab_map" , 1)  ,("preview" , 3)    ,("toolbox", 3) ],
     }
 
     def build(self):
@@ -27,14 +28,14 @@ class FormShowcase(_BaseForm):
         right = Row(header, width_flex=1)  # NEW - right container
 
         # Left content
-        Button(left, "Documentation", color_bg=Style.COLOR_BUTTON_CTA, on_click=lambda: self.show_modal("Press F12 - then select 'Documentation' tab"))
+        Button(left, "Documentation", on_click=lambda: self.show_modal("Press F12 - then select 'Documentation' tab"))
 
         # Right content
         Spacer(right) #pushes buttons to corner
 
-        btn = Button(right, "Particle Life", color_bg=Style.COLOR_TAB_BG, pad_y=8)
+        btn = Button(right, "Particle Life", pad_y=8)
         btn.on_click = lambda: self.open_particle_life()
-        btn = Button(right, "Asteroids", color_bg=Style.COLOR_TAB_BG)
+        btn = Button(right, "Asteroids")
         btn.on_click = lambda: self.open_asteroids()
         btn = Button(right, "NeuroForge", color_bg=Style.COLOR_BUTTON_CTA)
         btn.on_click = lambda: self.open_neuroforge()

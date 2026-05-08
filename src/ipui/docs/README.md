@@ -1,7 +1,5 @@
-from ipui import Heading
-
 # IPUI - Idiot Proof UI - Because we've all spent 3 hours debugging a button!
-**Version: 0.1.0 Rev 052**
+**Version: 0.1.0 Rev 054**
 
 A lightweight, opinionated Python/Pygame UI framework that makes building complex tabbed interfaces *ridiculously* simple.
 
@@ -15,19 +13,21 @@ A lightweight, opinionated Python/Pygame UI framework that makes building comple
 
 > IPUI is developed and tested against `pygame-ce`. It is imported in code as `pygame`.
 
+
+> Full installation in section 2 but if you are just looking pip command...
+
 ```bash
-pip install ipui
+python -m pip install ipui
 ```
 
 ---
 ## Table of Contents
 
-## Table of Contents
-
-- [The IPUI Advantage](#️-the-ipui-advantage)
-- [Why IPUI Does Things Differently](#quickimportant-note-why-ipui-does-things-differently)
+- [The IPUI Advantage](#the-ipui-advantage)
+- [Installation](#Installation)
+- [Important Note: Why IPUI Does Things Differently](#important-note-why-ipui-does-things-differently)
 - [Quick Start](#quick-start)
-  - [Step 1: First Taste — Run in 30 Seconds](#step-1-first-taste--run-in-30-seconds)
+  - [Step 1: Run in 30 Seconds](#step-1-first-taste--run-in-30-seconds)
   - [Step 2: Open Widgets — Let IPUI Forge the File](#step-2-open-widgets--let-ipui-forge-the-file)
   - [Step 3: Customize and Scale](#step-3-customize-and-scale)
 - [Run the Showcase](#run-the-showcase)
@@ -69,19 +69,21 @@ pip install ipui
 - [Appendix A: Why IPUI Does Things Differently](#appendix-a-why-ipui-does-things-differently)
 - [Appendix B: The Game Loop](#appendix-b-the-game-loop)
 - [Appendix C: Tab Switch Lifecycle](#appendix-c-tab-switch-lifecycle)
-- [Appendix Z: Detail of Widget Layout Process](#appendix-z-detail-of-widget-layout-process)---
+- [Appendix Z: Detail of Widget Layout Process](#appendix-z-detail-of-widget-layout-process)
+
+---
 
 
 ## Additional Documentation
 - [Why IPUI Does Things Differently](https://github.com/Oldwolfster/IPUI/blob/main/docs/WhyIPUIDoesThingsDifferently.md)
-- [Lifecycle Timing](https://github.com/Oldwolfster/IPUI/blob/main/docs/LifecycleTiming.md)
+- [Lifecycle Timing](https://github.com/Oldwolfster/IPUI/blob/main/docs/Lifecycle_Timing.md)
 - [Layout Guide](https://github.com/Oldwolfster/IPUI/blob/main/docs/IPUI_Layout_Guide_Original_Flex.md)
 - [Naming Conventions](https://github.com/Oldwolfster/IPUI/blob/main/docs/NamingAndConventions.md)
 - [Reading IPUI Source Code](https://github.com/Oldwolfster/IPUI/blob/main/docs/Reading_IPUI_Source_Code.md)
 
 ---
 
-## 🛠️ The IPUI Advantage
+## The IPUI Advantage
 
 - 🗂️ **First-Class Tab System:** Define your app's tabs, panes, and flex ratios from a single simple dictionary. IPUI scaffolds the structure and keeps each tab cleanly modular:
   ```python
@@ -90,16 +92,16 @@ pip install ipui
       "Settings" : ["sidebar", "options"],                    # 2 equal panes
       "Analytics": [("nav", .2), ("graph", .6), ("log", .2)]  # Custom flex sizing
   }  
-- 📱 **Resolution Independent:** UI scales automatically to physical screen height, so it stays usable on an old laptop or a 4K monitor.
 - 📐 **Declarative Layout:** Simple, flexible syntax that handles the math so you can focus on the logic.
-- 🧩 **Built to Extend:** Custom widgets get layout, events, and styling automatically. Standard widgets take 5–10 LOC; even tools like a network diagram widget come in under 150 LOC.
-- 📜 **One-Touch Scrolling:** Make any Card scrollable with a single parameter—no complex viewport setup required. Scrollbars are draggable and styled automatically.
 - 🔗 **Construction IS Attachment:** No floating widgets or `add()` calls. If you build it inside a container, it's attached automatically.
+- 🧩 **Built to Extend:** Custom widgets get layout, events, and styling automatically. Standard widgets take 5–10 LOC; even tools like a network diagram widget come in under 150 LOC.
+- 📜 **One-Touch Scrolling:** Make any Card scrollable with a single parameter—no complex viewport setup required. Scrollbars are styled automatically.
+- 📱 **Resolution Independent:** UI scales automatically to physical screen height, so it stays usable on an old laptop or a 4K monitor.  **Changing aspect ratio can still cause issues**
 - 🔄 **Multiple Update Styles:** Use DAG-based reactivity, pipeline-driven synchronization, or direct widget access—whichever fits the job best.
 - ⛓️ **Data Pipeline:** Bind widgets to a Pipeline Key and let IPUI propagate updates automatically. Derives stay in sync with zero manual update code.
 - 🎮 **Pygame Lifecycle Hooks:** `ip_think`, `ip_draw`, and `ip_draw_hud` give you full access to the game loop without fighting the framework.
 - 💡 **Multi-Tier Tooltips:** Choose between standard hover tips or "Super Tooltips"—pinnable, scrollable windows capable of displaying deep technical data.
-- 🗃️ **Automatic Widget Registry:** When DAG or pipeline isn't the right fit, named widgets stay easy to reach across tabs and panes—no globals, no reference plumbing required.
+- 🗃️ **Automatic Widget Registry:** When DAG or pipeline isn't the right fit, named widgets stay easy to reach across tabs and panes; **no reference plumbing required.**
 - 🐞 **Pro Debug Mode:** Includes a live Widget Tree and layout overlays to make positioning issues easy to diagnose.
 - 💻 **Beautiful Code Boxes:** Display source code by passing a string or a file path; IPUI handles the formatting.
 - 🗺️ **Tab Map:** A bird's-eye view of your entire application for quick review and navigation.
@@ -108,7 +110,46 @@ pip install ipui
 - 📈 **Live Matplotlib Charts:** Embed real-time updating research visuals directly in your pygame UI—useful for training curves, experiment monitoring, and diagnostics.
 
 ---
-## Quick/Important Note: Why IPUI Does Things Differently
+
+## Installation
+
+Create a clean project folder. Any name works — `ipui-test` is just an example.
+
+```bat
+mkdir ipui-test
+cd ipui-test
+```
+
+Create and activate a virtual environment:
+
+```bat
+python -m venv testenv
+testenv\Scripts\activate.bat
+```
+
+Install `ipui`:
+
+```bat
+python -m pip install ipui
+```
+
+---
+
+### Run the Showcase
+
+Want to see what IPUI can do before you build a thing? Run `docs()` and you'll get a fully interactive widget gallery — every widget, every layout pattern, every trick, all live and clickable. It's the fastest way to go from "looks interesting" to "now I know what to steal."
+
+```python
+from ipui import *
+docs()
+```
+
+<!-- SCREENSHOT: ipui/assets/images/showcase.png — demo apps and tutorials -->
+![Showcase Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/showcase.png)
+
+---
+
+## Important Note: Why IPUI Does Things Differently
 
 IPUI intentionally makes choices that look unconventional if you're coming from tkinter, Qt, web UI frameworks, or typical Python library design.
 
@@ -143,14 +184,19 @@ Get it running first. Then let IPUI help you split things out as your app grows.
 <!-- SCREENSHOT: ipui/assets/images/quick_start.png — the Hello World form with banner, body text, and green button -->
 ![QuickStart Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/quick_start.png)
 
-Save this as `SmokeTest.py` (or any name you like):
+
+```bat
+notepad smoketest.py
+```
+copy the below code and save.
+
 ```python
 
 from ipui import *
 
 class SmokeTest(_BaseForm):                 # ← Doesn't need to match file but can
     TAB_LAYOUT = {
-        "Hello World"   :["welcome"     ],  # ← This one works immediately...
+        "Hello World"   :["welcome"     ],  # ← This tab works immediately...
                                             #   Due to the welcome method below
         "Widgets"       :["demo","demo2"],  # ← Will trigger template picker
         "Bouncing Ball" :["arena", None ],  # ← Will trigger template picker
@@ -170,23 +216,22 @@ if __name__ == "__main__": show(SmokeTest)
 python SmokeTest.py # or whatever you named your file.
 ```
 
-
 Three tabs appear immediately:
   - **Hello World**   — fully working with banner, text, and button
   - **Widgets**       — show IPUI's helper card with template options
   - **Bouncing Ball** — show IPUI's helper card with template options
 
-> If you get stuck, while it's running press **F12 for X-ray debug tools**
+> **Something not sitting where you expect?** Press **F12** while it’s running and pop open the **X-Ray debug tools**.
 ---
 
 ### Step 2: Open Widgets — Let IPUI Forge the File
 
 Change to the 'Widgets' tab.
 
-> Hello World already has real content.
-> Widgets and Bouncing Ball do not have matching .py files yet.
+> The welcome method defined the content for the Hello World tab.
+> Widgets and Bouncing Ball do not have matching content yet.
 
-**Problem? Not even a little.**
+Problem? **Not even a little.**
 
 Instead of throwing an error or even showing an empty tab, IPUI steps in with a helper card:
 
@@ -196,13 +241,16 @@ Instead of throwing an error or even showing an empty tab, IPUI steps in with a 
 
 Pick Full Showcase on the Widgets tab. IPUI will create Widgets.py and hot-swap in a complete, interactive widget playground with real working controls (buttons, textboxes, cards, grids, etc.).
 
-It's not a dead stub — it's live code you can immediately click, rearrange, and copy-paste from.
+It's not a dead stub — it's a **cookbook** of live code you can immediately click, rearrange, and copy-paste from.
 
 ---
 
 ### Step 3: Customize and Scale
 
-IPUI generates the file with a placeholder method named after the first pane you declared in TAB_LAYOUT. Replace the placeholder content with your own:
+IPUI generates Widgets.py a placeholder method named after the first pane you declared in TAB_LAYOUT. 
+
+Replace the placeholder content 
+> **In Widgets.py delete placeholder lines (11-39)**:
 
 ```python
 def demo(self, parent):
@@ -220,22 +268,6 @@ This is the normal workflow:
 You can define pane methods directly inside _BaseForm (as in the smoke test) or in separate files — both work seamlessly.
 
 ---
-
-## Run the Showcase
-
-Want to see what IPUI can do before you build a thing? Run `docs()` and you'll get a fully interactive widget gallery — every widget, every layout pattern, every trick, all live and clickable. It's the fastest way to go from "looks interesting" to "now I know what to steal."
-
-```python
-from ipui import *
-docs()
-```
-
-<!-- SCREENSHOT: ipui/assets/images/showcase.png — demo apps and tutorials -->
-![Showcase Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/showcase.png)
-
-
----
-
 ## Core Concepts
 
 ### The Blueprint: TAB_LAYOUT
@@ -312,21 +344,20 @@ if __name__ == "__main__": show(SmokeTest)
 ### The Widget Tree
 
 > Construction IS attachment.
+> 
+> AnyWidget(what_widget_do_i_attach_to, any_other_options, ...)
 
-When you create a widget, the first argument is always its parent. That single
-rule builds the entire tree.
+
+When you create a widget, the first argument is always the widget it attaches to.
 
 Every pane method receives a `parent` parameter — the root widget of that pane.
-Anything you construct with `parent` as its first argument becomes a direct
-child. Anything you construct with one of *those* widgets becomes a grandchild.
-Layout, events, and rendering all flow down the tree automatically.
 
-```python
-def demo(self, parent):            # ← parent is the pane's root widget
-    card = CardCol(parent)         # CardCol's parent is parent
-    Title(card, "My Tree")         # Title's parent is card
-    Heading(card, "Same parent")   # Heading's parent is card
-```
+> Each pane has 1 tree and parent is the trunk.
+
+def demo(self, parent):            # ← parent is this pane's root widget
+    card = CardCol(parent)         # card attaches to the pane
+    Title(card, "My Tree")         # Title attaches to card
+    Heading(card, "Same parent")   # also attaches to card
 
 No `add()`. No `pack()`. No `grid()`. Construction IS attachment — an entire
 class of "widget exists but isn't visible" bugs is gone.
@@ -360,9 +391,9 @@ Everything stacks vertically by default. Need widgets side by side? `Row` is a
 transparent horizontal container — pure structure, no visual chrome:
 
 ```python
-def demo(self, parent):
-    card  = Card(parent)
-    Title(card, "My Tree")
+def demo(self, parent):            # ← parent is the pane root
+    card  = Card(parent)           # card attaches to the pane
+    Title(card, "My Tree")         # Title attaches to card
     Heading(card, "Same parent")
 
     inner = Card(card)
@@ -385,7 +416,9 @@ IPUI sets up the pygame engine and ensures all superclasses get the right parame
 
 You've already seen part of the answer: **pane methods** build the widget tree in the panes you defined in `TAB_LAYOUT`. The other half is **`ip_*` hooks** — they're how you talk to the game loop:
 
-- **`ip_setup(self, ip)`** — runs once before the first frame. Initialize state here.
+- **`ip_setup_early(self, ip)`** — runs once before this pane's widgets are built. Initialize state your pane builders will read.
+- **`ip_setup(self, ip)`** — runs once after the widget tree is built. Initialize game/animation state.
+- **`ip_activated(self, ip)`** — runs each time this pane (or form) becomes visible.
 - **`ip_think(self, ip)`** — runs every frame. Update state, run physics, decide things.
 - **`ip_draw(self, ip)`** — runs every frame, before widgets draw. Custom rendering behind the UI.
 - **`ip_draw_hud(self, ip)`** — runs every frame, after widgets draw. Overlays, FPS counters, anything on top.
@@ -432,7 +465,7 @@ class BouncingBall(_BaseTab):
 
 ---
 
-### The `ip` Service Portal
+### The `ip` Parameter
 
 Every lifecycle hook receives a single argument: `ip`. It's the IPUI Service Portal — one object that gives you everything you need. Type `ip.` in your IDE and autocomplete shows every attribute and method, organized by family.
 
@@ -462,7 +495,13 @@ The full set of `ip` attributes and methods is covered in [The `ip` Service Port
 
 ## Updating the UI
 
-**IPUI gives you two styles. Mix them freely.**
+**IPUI gives you three ways to keep the UI in sync with state. Mix them freely.**
+
+- **Imperative** — store references, update by hand. Surgical and direct.
+- **Pipeline** — bind widgets to keys; write to a key and every bound widget updates. No widget references, no callbacks, no per-update code.
+- **Reactive** — declare derived values in `BINDINGS`; the framework recomputes when triggers change.
+
+Most real apps use all three: imperative for one-off direct updates, pipeline for state that drives many widgets (or crosses tabs), reactive for derived display logic. Pick whichever fits each call site.
 
 ---
 
@@ -471,7 +510,7 @@ The full set of `ip` attributes and methods is covered in [The `ip` Service Port
 Store widget references, update them by hand:
 
 ```python
-def arena(self, parent):                                # ← pane method: builds the UI
+def arena(self, parent):                                # ← pane method: parent root of widget tree for this parent
     self.lbl_quadrant  = Body(parent, "Quadrant: —")    # NOTE: Now we are storing reference to the widgets
     self.lbl_direction = Body(parent, "Direction: —")
     self.lbl_warning   = Body(parent, "")
@@ -529,10 +568,9 @@ Add a fourth widget? One new entry in `BINDINGS`. `ip_think` doesn't grow.
 
 > Honest answer: this example is roughly a tie. You have four `pipeline_set` calls vs. three `set_text` calls — neither version is obviously cleaner at this scale. Reactive starts to win when state drives many widgets, or when several places update the same state. Imperative stays clearer when one widget reflects one piece of state and you want a single named method everyone calls. **Mix them in the same tab.** IPUI doesn't have an opinion on which paradigm is "correct" — only that you should have the choice and that both should be cheap.
 
-
 ---
 
-Mix all three freely. The reactive approach requires less code and eliminates update-ordering bugs. Imperative gives you surgical control when you need it. The pipeline connects them.
+Mix all three freely. Each one earns its keep: pipeline shines when one piece of state drives many widgets — including across tabs — and you don't want to maintain explicit wiring. Reactive shines when widget display depends on combinations of state. Imperative shines for surgical one-off updates. Same engine underneath, three access patterns on top.
 
 <!-- SCREENSHOT: ipui/assets/images/reactive_pipeline.png — the Paradigm tab showing reactive vs imperative side-by-side -->
 ![Reactive vs imperative pipeline screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/paradigm.png)
@@ -541,7 +579,8 @@ Mix all three freely. The reactive approach requires less code and eliminates up
 
 ## The IPUI WAY
 
-IPUI makes the right path the easy path.
+We make the right path the easy path.  
+We think what would be the easiest api to do 'whatever'  and build that.
 
 - Simple things should be trivial
 - Missing structure should be fixable, not fatal
@@ -660,15 +699,6 @@ For reactive state, use `self.form.pipeline_set()` / `self.form.pipeline_read()`
 
 For scratch data (animation counters, drag state, accumulators), use `ip.cache`.
 
-### Discovery
-
-| Method | Description |
-|--------|-------------|
-| `ip.find("widget_name")` | Locate a widget by name. Returns widget or None |
-| `ip.help()` | Print a guided tour of the full API |
-| `ip.help("mouse")` | Print help for a specific topic |
-
-Help topics: `identity`, `timing`, `geometry`, `mouse`, `keyboard`, `render`, `cache`, `redraw`, `discover`.
 
 ### Invalidation (scaffolded for future optimization)
 
@@ -691,7 +721,8 @@ Currently IPUI renders every frame, so these are effectively no-ops. They exist 
 
 **Register states with `add()`, transition with `go()`:**
 
->  To see it in action, look at Breakout in the Showcase (run docs())  below is an excerpt
+
+> Excerpt — see Breakout in docs() for the full runnable version
 
 ```python
 class Breakout(_BaseTab):
@@ -702,6 +733,7 @@ class Breakout(_BaseTab):
         ip.state.add("LEVEL_UP" , None,    "READY",     1.5)   # auto-advance after 1.5s
         ip.state.add("GAME_OVER", None,    "DEMO",      2.5)   # auto-advance after 2.5s
         ip.state.go("DEMO")
+
 
     def state_demo(self):       ...    # called every frame while in DEMO
     def state_ready(self):      ...    # called every frame while in READY
@@ -751,7 +783,7 @@ ip.state("ui").go("MENU_OPEN")
 
 ## Lifecycle Hooks
 
-IPUI gives you five hooks into the application lifecycle. Each one fires at a specific moment, has a clear job, and works identically whether you're on a `_BaseTab` or a `_BaseForm`.
+IPUI gives you six hooks into the application lifecycle. Each one fires at a specific moment, has a clear job, and works identically whether you're on a `_BaseTab` or a `_BaseForm`.
 
 ### The ip Hooks
 
@@ -1291,6 +1323,10 @@ self.form.pipeline_set("training_active", True)
 active = self.form.pipeline_read("training_active")
 ```
 
+**The pipeline works on its own.** Any widget with a `pipeline_key=` parameter is bound — no `BINDINGS` required. Write to the key, every bound widget updates. This alone is enough to drive serious workloads: in NeuroForge, batches of 20,000+ neural-network configurations are wired through nothing but pipeline keys and `PIPELINE_DEFAULTS`.
+
+`BINDINGS` is the optional layer on top, for derived display logic. Use it when a widget's property depends on a *combination* of pipeline keys, or needs a compute step before display.
+
 Declare widget reactions in `BINDINGS` at the top of your _BaseTab:
 
 ```python
@@ -1394,7 +1430,7 @@ IPUI catches mistakes when you make them, not when users hit them:
 | `on_click_me(non_callable)`               | `TypeError` at registration                |
 | `on_click_me(func_with_params)`           | `ValueError` at registration               |
 
-IPUI Error messages stand out by always starting with: `Houston we have a problem!`
+IPUI error messages always announce themselves with the same banner: `Houston we have a problem!` — easy to spot in a long traceback.
 
 ---
 

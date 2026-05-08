@@ -24,6 +24,7 @@ class We_HopeYouLoveIPUI(_BaseTab):
                     )
         Heading     ( card, "A python framework", text_align=CENTER)
 
+
     def summary(self, parent):
         card        = Card(parent)
         Heading     ( card, "- Declarative flex-based layout.")
@@ -698,3 +699,4 @@ class We_HopeYouLoveIPUI(_BaseTab):
         Spacer(parent)
         Title(parent, "Other frameworks hand you the choke, the crank, and the spark. IPUI hands you the key: Where to?", text_align=CENTER)
         Spacer(parent)
+        Image(parent, "assets/images/houston.png")

@@ -63,7 +63,7 @@ class PygameBall(_BaseTab):
         card = Card(parent,height_flex=1,pad=0)
         Title(card, "The Source", glow=True,text_align=CENTER)
         card = Card(card, scroll_v=True, scroll_h=True, height_flex=99)
-        CodeBox(card,    data  = __file__)
+        CodeBox(card,    data  = __file__, height_flex=1)
 
     # ══════════════════════════════════════════════════════════════
     # SPEED CONTROLS

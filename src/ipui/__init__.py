@@ -22,8 +22,8 @@ __all__ = [
     # Label family
     "Title", "Heading", "Body", "Banner", "Detail",
     # Utilities
-    "smart_format", "WidgetCatalog", "CodeBox","RecordSelector",
-    "LEFT", "CENTER", "RIGHT",
+    "smart_format", "WidgetCatalog", "CodeBox","RecordSelector", #,"CodeBoxNoScroll"
+    "LEFT", "CENTER", "RIGHT","Image",
     "Icon"
 ]
 from ipui.engine.IPUI import IPUI
@@ -74,6 +74,7 @@ from ipui.widgets.DropDown              import DropDown
 from ipui.widgets.NetworkDiagram        import NetworkDiagram
 from ipui.widgets.NeuronCell            import NeuronCell
 from ipui.widgets.PowerGrid             import PowerGrid
+from ipui.widgets.Image                 import Image
 from ipui.widgets.ProjectListItem       import ProjectListItem
 from ipui.widgets.Row                   import Row,  CardRow, CardCol, Col
 from ipui.widgets.SelectableListItem    import SelectableListItem
@@ -82,6 +83,7 @@ from ipui.widgets.Spacer                import Spacer
 from ipui.widgets.TabStrip              import TabStrip
 from ipui.widgets.Label                 import Title, Heading, Body, Banner, Detail
 from ipui.widgets.CodeBox               import CodeBox
+#from ipui.widgets.CodeBoxNoScroll       import CodeBoxNoScroll
 from ipui.widgets.TextBox               import TextBox
 from ipui.widgets.TextArea              import TextArea
 from ipui.widgets.RecordSelector        import RecordSelector

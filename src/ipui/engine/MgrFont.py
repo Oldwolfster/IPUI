@@ -54,7 +54,7 @@ class MgrFont:
         scale                   = Style.FONT_SCALE
         cls.regular_font_source = cls.load_font_source(cls.FONT_REGULAR, cls.SYSTEM_FONTS_REGULAR, "Regular")
         cls.bold_font_source    = cls.load_font_source(cls.FONT_BOLD, cls.SYSTEM_FONTS_BOLD, "Bold")
-        cls.light_font_source   = cls.load_font_source(cls.FONT_LIGHT, cls.SYSTEM_FONTS_LIGHT, "Light")
+        #cls.light_font_source   = cls.load_font_source(cls.FONT_LIGHT, cls.SYSTEM_FONTS_LIGHT, "Light")
         cls.mono_font_source    = cls.load_font_source("", cls.SYSTEM_FONTS_MONO, "Mono")
 
 
@@ -76,18 +76,18 @@ class MgrFont:
         # Try bundled TTF
         ttf_path = os.path.join(cls.FONT_DIR, ttf_filename)
         if ttf_filename and os.path.exists(ttf_path): 
-            print(f"✓ Loaded {weight_name} font: {ttf_path}")
+            #print(f"✓ Loaded {weight_name} font: {ttf_path}")
             return ttf_path
         #else: print (f"Using System font instead of :{ttf_filename}")
 
         # Try system fonts
         for font_name in system_font_names:
             if pygame.font.match_font(font_name):
-                print(f"✓ Using system font for {weight_name}: {font_name}")
+                #print(f"✓ Using system font for {weight_name}: {font_name}")
                 return font_name
 
         # Fallback to pygame default
-        print(f"⚠ {weight_name} font not found - using pygame default (limited unicode)")
+        #print(f"⚠ {weight_name} font not found - using pygame default (limited unicode)")
         return None
 
     @classmethod

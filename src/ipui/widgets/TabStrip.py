@@ -44,6 +44,20 @@ class TabStrip(_BaseWidget):
             self.prepare(name)
         self.build_content_area()
 
+    def find_tab_file(self, tab_name):
+        form_dir  = Path(inspect.getfile(self.form.__class__)).parent
+        tab_lower = tab_name.replace(" ", "").replace("_", "").lower()
+        found     = [f for f in form_dir.rglob("*.py")
+                     if f.stem.replace("_", "").replace(" ", "").lower() == tab_lower]
+        if len(found) > 1:
+            EZ.err(
+                f"Multiple files match tab '{tab_name}': {[f.name for f in found]}\n"
+                f"Each tab must resolve to exactly one file.\n"
+                f"Remove or rename the duplicate.",
+                locate=tab_name
+            )
+        return found[0] if found else None
+
     def clean_tab_layout_once(self):
         """do any cleaning needed for tab_layout - should end with each value is a list of tuple(s) aka [("pane",1)]"""
         self.clean_tab_layout_ensure_list()

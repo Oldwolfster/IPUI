@@ -6,7 +6,13 @@ from ipui.Style import Style
 
 
 class SelectableListItem(_BaseWidget):
-
+    """
+    desc:        A list item that toggles between selected and unselected states.
+    when_to_use: Created automatically by SelectionList — not used directly.
+    best_for:    Clickable items in selection lists with visual feedback.
+    example:     (internal to SelectionList)
+    api:         toggle_selected()
+    """
     def build(self):
         self.font         = self.font or Style.FONT_BODY
         self.color_bg     = Style.COLOR_CARD_BG

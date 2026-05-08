@@ -6,7 +6,13 @@ from ipui.Style import Style
 
 
 class NeuronCell(_BaseWidget):
-
+    """
+    desc:        A single neuron cell for neural network visualizations.
+    when_to_use: Created automatically by NeuroForge network diagrams.
+    best_for:    Displaying individual neurons with activation highlighting.
+    example:     NeuronCell(parent)
+    api:         set_highlighted(bool)
+    """
     CELL_SIZE = 24
 
     def build(self):

@@ -47,7 +47,7 @@ class Reference(_BaseTab):
         files = {
             "readme": "docs/README.md",
             "layout": "docs/IPUI_Layout_Guide_Original_Flex.md",
-            "lifecycle": "docs/LifecycleTiming.md",
+            "lifecycle": "docs/Lifecycle_Timing.md",
         }
         return files.get(self.active_mode)
 

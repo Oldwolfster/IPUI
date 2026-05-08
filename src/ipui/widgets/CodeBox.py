@@ -26,7 +26,7 @@ class CodeBox(_BaseWidget):
         self.private_copy_flash     = 0
         self.private_copy_surf      = Style.FONT_DETAIL.render("Copy",    True, Style.COLOR_TEXT)
         self.private_copied_surf    = Style.FONT_DETAIL.render("Copied!", True, (100, 220, 100))
-        if self.parent:
+        if self.parent:              # and not self.keep_parent_layout:
             self.parent.pad         = 0
             self.parent.gap         = 0
 
@@ -34,9 +34,10 @@ class CodeBox(_BaseWidget):
             self.my_surface         = self.font.render("# no method set", True, self.color_txt)
             return
 
-        lines                       = self.extract_lines()
-        self.my_surface             = self.render_code(lines)
-        self.scroll_offset          = self.find_scroll(lines)
+        lines                           =   self.extract_lines()
+        self.my_surface                 =   self.render_code(lines)
+        if self.parent                  and self.parent.scroll_v:  # NEW
+            self.parent.scroll_offset   =   self.find_scroll(lines)
 
 
 
@@ -95,6 +96,7 @@ class CodeBox(_BaseWidget):
         height  = line_h * len(lines)
 
         surface = pygame.Surface((width, height), pygame.SRCALPHA)
+        surface.fill(self.color_bg)
         for i, surf in enumerate(surfs):
             surface.blit(surf, (0, i * line_h))
 
