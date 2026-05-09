@@ -48,7 +48,7 @@ class MixinScrollH:
         track_rect      = pygame.Rect(bar_left, bar_top, track_w, bar_h)
         pygame.draw.rect(surface, Style.COLOR_PANEL_BG, track_rect)
         thumb_w         = self.compute_scroll_h_thumb_width(track_w)
-        content_w       = self.width_minimum or track_w
+        content_w       = self.min_width or track_w
         max_scroll      = max(0, content_w - track_w)
         thumb_travel    = max(0, track_w - thumb_w)
         ratio           = (self.scroll_offset_h / max_scroll) if max_scroll > 0 else 0
@@ -64,7 +64,7 @@ class MixinScrollH:
 
 
     def compute_scroll_h_thumb_width(self, track_w):
-        content_w = self.width_minimum or track_w
+        content_w = self.min_width or track_w
         if content_w <= track_w: return track_w
         ratio     = track_w / content_w
         return max(20, int(track_w * ratio))

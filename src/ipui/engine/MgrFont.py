@@ -47,7 +47,7 @@ class MgrFont:
 
 
     @classmethod
-    def init(cls):
+    def init_NOT_BEING_USED___UsingWindowInsteadOfSCreen(cls):
         """Initialize fonts from Style proportions using physical screen height."""
 
         physical_h              = pygame.display.Info().current_h
@@ -56,9 +56,6 @@ class MgrFont:
         cls.bold_font_source    = cls.load_font_source(cls.FONT_BOLD, cls.SYSTEM_FONTS_BOLD, "Bold")
         #cls.light_font_source   = cls.load_font_source(cls.FONT_LIGHT, cls.SYSTEM_FONTS_LIGHT, "Light")
         cls.mono_font_source    = cls.load_font_source("", cls.SYSTEM_FONTS_MONO, "Mono")
-
-
-
         Style.FONT_BANNER       = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_BANNER, 'bold')
         Style.FONT_HEADING      = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_HEADING, 'bold')
         Style.FONT_TITLE        = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_TITLE, 'bold')
@@ -66,6 +63,42 @@ class MgrFont:
         Style.FONT_DETAIL       = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_DETAIL, 'regular')
         Style.FONT_MONO         = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_MONO, 'mono')
         Style.FONT_MONO_BODY    = cls.get_font_for_height(physical_h * scale * Style.FONT_RATIO_MONO*1.2, 'mono')
+
+
+    @classmethod
+    def init(cls, surface_height):
+        """Initialize fonts from Style proportions using the actual window surface height.(NOT SCREEN LIKE ABOVE)"""
+        # Tokens
+        cls.set_token_mult      (pygame.display.Info().current_h)
+
+        # fonts
+        scale                   = Style.FONT_SCALE
+        cls.regular_font_source = cls.load_font_source(cls.FONT_REGULAR, cls.SYSTEM_FONTS_REGULAR, "Regular")
+        cls.bold_font_source    = cls.load_font_source(cls.FONT_BOLD,    cls.SYSTEM_FONTS_BOLD,    "Bold")
+        cls.light_font_source   = cls.load_font_source(cls.FONT_LIGHT,   cls.SYSTEM_FONTS_LIGHT,   "Light")
+        cls.mono_font_source    = cls.load_font_source("",               cls.SYSTEM_FONTS_MONO,    "Mono")
+
+        Style.FONT_BANNER       = cls.get_font_for_height(surface_height * scale * Style.FONT_RATIO_BANNER,     'bold')
+        Style.FONT_HEADING      = cls.get_font_for_height(surface_height * scale * Style.FONT_RATIO_HEADING,    'bold')
+        Style.FONT_TITLE        = cls.get_font_for_height(surface_height * scale * Style.FONT_RATIO_TITLE,      'bold')
+        Style.FONT_BODY         = cls.get_font_for_height(surface_height * scale * Style.FONT_RATIO_BODY,       'regular')
+        Style.FONT_DETAIL       = cls.get_font_for_height(surface_height * scale * Style.FONT_RATIO_DETAIL,     'regular')
+        Style.FONT_MONO         = cls.get_font_for_height(surface_height * scale * Style.FONT_RATIO_MONO,       'mono')
+        Style.FONT_MONO_BODY    = cls.get_font_for_height(surface_height * scale * Style.FONT_RATIO_MONO * 1.2, 'mono')
+
+    @classmethod
+    def set_token_mult(cls, surface_height):
+        if Style.TOKEN_MULTIPLIER == 0: Style.recalculate(cls.token_buckets(surface_height)) #resets tokens in Style
+        else                          : Style.recalculate(Style.TOKEN_MULTIPLIER)
+
+
+    @classmethod
+    def token_buckets(cls, surface_height):
+        #constraint = min(surface_width, surface_height)
+        if   surface_height         < 600 : return 1  # tiny windows, debug, embedded
+        elif surface_height         < 1200: return 2  # 720p, 1080p — the tuned baseline
+        elif surface_height         < 2000: return 3  # 1440p, ultrawide
+        else                              : return 4  # 4K and up
 
     @classmethod
     def load_font_source(cls, ttf_filename, system_font_names, weight_name):

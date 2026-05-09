@@ -38,7 +38,7 @@ class _BaseWidget(MixinScrollH):
 
     2. MEASURE  Parent asks each child: "how big do you want to be?"
                 Returns (width, height) based on the surface built in step 1.
-                Flex children (width_flex/height_flex > 0) skip this —
+                Flex children (flex_width/flex_height > 0) skip this —
                 their size comes from leftover space, not intrinsic content.
 
     3. LAYOUT   Parent assigns each child a rect. For vertical stacks:
@@ -75,14 +75,14 @@ class _BaseWidget(MixinScrollH):
 
 
     def __init__(self, parent=None, text=None, name=None,
-                 width_flex=0, height_flex=0, scroll_h=None, encroach_x=None, encroach_y=None,
+                 flex_width=0, flex_height=0, scroll_h=None, encroach_x=None, encroach_y=None,
                  pad=None, pad_x=None, pad_y=None, gap=None,  border=None,justify_center=False, justify_spread=False, visible = True,
                  enabled=True, start= None, end = None, font=None, fit_content=False, border_radius=None,hug_parent=False,
                  text_align=None, wrap=False, color_bg=None, glow=False, data=None, single_select=False, tooltip=None,
                  placeholder=None, initial_value=None, on_submit=None, on_change=None, on_click=None, tab_order=None, on_double_click=None,
                  pipeline_key=None, tooltip_class=None, scroll_v=None, scroll_glow=.369, early_load =None):
 
-        self.preflight_check(parent, text_align, width_flex, height_flex)
+        self.preflight_check(parent, text_align, flex_width, flex_height)
 
         # Identity
         self.name               = name
@@ -115,19 +115,19 @@ class _BaseWidget(MixinScrollH):
 
         self.justify_center     = justify_center
         self.justify_spread     = justify_spread
-        self.width_flex         = width_flex
-        self.width_flex_actual  = width_flex #if there is not enough space to honr the width_flex it may be set to zero (renders at minimum(intrinsic) size)
-        self.height_flex        = height_flex
-        self.height_flex        = height_flex #if there is not enough space to honor the height_flex it may be set to zero (renders at minimum(intrinsic) size)
+        self.flex_width         = flex_width
+        self.flex_width_actual  = flex_width #if there is not enough space to honor the flex_width it may be set to zero (renders at minimum(intrinsic) size)
+        self.flex_height        = flex_height
+        self.flex_height        = flex_height #if there is not enough space to honor the flex_height it may be set to zero (renders at minimum(intrinsic) size)
         self.fit_content        = fit_content
         self.hug_parent         = hug_parent
         self.horizontal         = False
         self.wrap               = wrap
         self.text_align         = text_align.lower() if text_align is not None else None
-        self.width_minimum      = None      #min space needed to render surface of children
-        self.height_minimum     = None      #min space needed to render surface of children
+        self.min_width          = None      #min space needed to render surface of children
+        self.min_height         = None      #min space needed to render surface of children
 
-        #if text_align.lower() in ('c', 'r') and self.width_flex == 0: self.width_flex = 1
+        #if text_align.lower() in ('c', 'r') and self.flex_width == 0: self.flex_width = 1
 
         # Appearance
         self.font               = font
@@ -186,7 +186,7 @@ class _BaseWidget(MixinScrollH):
         self.pipeline_key       = pipeline_key
         self.tooltip_class      = tooltip_class
         self.private_tooltip    = tooltip
-        if self.scroll_v        and self.height_flex == 0: self.height_flex = 1 # must occur before validate
+        if self.scroll_v        and self.flex_height == 0: self.flex_height = 1 # must occur before validate
         self.validate()
         if self.form            : self.form.widget_registry[self.widget_id] = self
         if parent               : parent.children.append(self)
@@ -210,8 +210,8 @@ class _BaseWidget(MixinScrollH):
 
         if self.text_align is None: self.text_align = 'l'
         self.text_align = self.text_align.lower()
-        if self.text_align in ('c', 'r') and self.width_flex == 0 and not self.fit_content and not self.hug_parent:
-            self.width_flex = 1
+        if self.text_align in ('c', 'r') and self.flex_width == 0 and not self.fit_content and not self.hug_parent:
+            self.flex_width = 1
 
         if self.tab_order == 0:
             _BaseWidget.private_next_tab_order += 1
@@ -223,14 +223,14 @@ class _BaseWidget(MixinScrollH):
 
 # _BaseWidget.py  Update: preflight_check now calls validate_text_align; new validator added; line 214 block killed
 
-    def preflight_check(self, parent, text_align, width_flex, height_flex):
+    def preflight_check(self, parent, text_align, flex_width, flex_height):
         """All construction-time input checks live here.
         Runs as the first line of __init__ — before the framework
         touches any of these inputs. Add new validators below."""
         self.validate_parent(parent)
         self.validate_text_align(text_align)
-        self.validate_flex('width_flex', width_flex)
-        self.validate_flex('height_flex', height_flex)
+        self.validate_flex('flex_width', flex_width)
+        self.validate_flex('flex_height', flex_height)
 
     def validate_flex(self, name, value):
         """flex must be a number (int or float). Catches the True/False muscle-memory bug."""
@@ -312,8 +312,8 @@ class _BaseWidget(MixinScrollH):
         #if self.text_align not in ('l', 'c', 'r'):      EZ.err(f"text_align must be 'l', 'c', or 'r' — got '{self.text_align}'",ValueError)
         if self.text_align is not None and self.text_align not in ('l', 'c', 'r'): EZ.err(
             f"text_align must be 'l', 'c', or 'r' — got '{self.text_align}'", ValueError)
-        if self.parent and self.parent.scroll_v and self.height_flex > 0 and 1==3: #1==3 becaues i don't think this is actually wrong
-            EZ.err( f"""{type(self).__name__} has height_flex inside scroll_v {type(self.parent).__name__}. TO FIX: Remove height_flex from the child, or remove scroll_v from the parent.  Flex expands to fill space; scroll_v needs content bigger than viewport. Contradictory!""")
+        if self.parent and self.parent.scroll_v and self.flex_height > 0 and 1==3: #1==3 becaues i don't think this is actually wrong
+            EZ.err( f"""{type(self).__name__} has flex_height inside scroll_v {type(self.parent).__name__}. TO FIX: Remove flex_height from the child, or remove scroll_v from the parent.  Flex expands to fill space; scroll_v needs content bigger than viewport. Contradictory!""")
 
     # ==============================================================
     # Reparent if scroller needed
@@ -674,7 +674,7 @@ class _BaseWidget(MixinScrollH):
         bar_w        = Style.TOKEN_SCROLLBAR
         bar_x        = self.rect.right - bar_w
         bar_x        = self.rect.right - self.border - bar_w
-        content      = getattr(self, 'content_size', self.height_minimum)
+        content      = getattr(self, 'content_size', self.min_height)
         track_top    = self.rect.top + self.border + self.scroll_top_inset
         track_h      = self.rect.height - self.border * 2 - self.scroll_top_inset
         track_rect   = pygame.Rect(bar_x, track_top, bar_w, track_h)

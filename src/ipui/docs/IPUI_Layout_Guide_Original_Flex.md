@@ -4,7 +4,7 @@
 
 You tell IPUI **what** you want. IPUI figures out **where** it goes.
 
-- Set `width_flex` or `height_flex` to request proportional space.  These default to zero.
+- Set `flex_width` or `flex_height` to request proportional space.  These default to zero.
 - Set the same flex value on siblings to size them identically — equal weight = equal share.
 - Make a container `scroll_v=True` and overflow is handled for you.
 - That's it. No `LayoutParams`, no `BoxConstraints`, no `MediaQuery`. Just build.
@@ -39,12 +39,12 @@ After every widget gets its minimum, the remaining space is distributed proporti
 
 ```python
 row = Row(parent)
-Button(row, "Save",   width_flex=1)   # gets 1/3 of leftover
-Button(row, "Cancel", width_flex=1)   # gets 1/3 of leftover
-Button(row, "Help",   width_flex=1)   # gets 1/3 of leftover
+Button(row, "Save",   flex_width=1)   # gets 1/3 of leftover
+Button(row, "Cancel", flex_width=1)   # gets 1/3 of leftover
+Button(row, "Help",   flex_width=1)   # gets 1/3 of leftover
 ```
 
-Set `width_flex=3` on one and `width_flex=1` on another? The first gets 3× as much leftover space as the second (3/4 vs 1/4). The ratios are relative — `1:1:1` is identical to `5:5:5`.
+Set `flex_width=3` on one and `flex_width=1` on another? The first gets 3× as much leftover space as the second (3/4 vs 1/4). The ratios are relative — `1:1:1` is identical to `5:5:5`.
 
 If a flex widget's minimum exceeds its fair share, it gets locked at its minimum and removed from the pool. The remaining widgets split what's left. This repeats until every widget has a fair deal — or runs out of room trying.
 
@@ -58,24 +58,24 @@ If the total minimums exceed the available space, there's no magic. Content clip
 
 ### Vertical Stacks (the default)
 
-Widgets stack top to bottom. `height_flex` weights how they share vertical space. Width is inherited from the parent.
+Widgets stack top to bottom. `flex_height` weights how they share vertical space. Width is inherited from the parent.
 
 ```python
-card = CardCol(parent, height_flex=1)
+card = CardCol(parent, flex_height=1)
 Title(card, "Header")                     # intrinsic height — just enough for text
 Body(card, "Some content")                # intrinsic height
-Spacer(card, height_flex=1)               # absorbs all remaining vertical space
+Spacer(card, flex_height=1)               # absorbs all remaining vertical space
 Button(card, "Submit")                    # intrinsic height, pinned to bottom
 ```
 
 ### Horizontal Stacks (Row / CardRow)
 
-Widgets sit side by side. `width_flex` weights how they share horizontal space. Height is inherited from the parent.
+Widgets sit side by side. `flex_width` weights how they share horizontal space. Height is inherited from the parent.
 
 ```python
 row = Row(parent)
-CardCol(row, width_flex=1)    # left pane  — 1/4 of the width
-CardCol(row, width_flex=3)    # right pane — 3/4 of the width
+CardCol(row, flex_width=1)    # left pane  — 1/4 of the width
+CardCol(row, flex_width=3)    # right pane — 3/4 of the width
 ```
 
 ### Mixing Fixed and Flex
@@ -85,7 +85,7 @@ Non-flex children get measured first. Flex children split what's left.
 ```python
 row = Row(parent)
 Button(row, "OK")                 # fixed width — measured from text
-Spacer(row, width_flex=1)         # eats all the leftover space
+Spacer(row, flex_width=1)         # eats all the leftover space
 Button(row, "Cancel")             # fixed width — measured from text
 ```
 
@@ -109,17 +109,17 @@ That's it. You get a scrollbar, mouse wheel support, and proper clipping. No vie
 
 A scroll_v container reports its full content height for scroll math, but caps its *minimum* at just its frame so the flex solver doesn't let it bulldoze its siblings. This means a scroll_v card with 1000 items doesn't hog all the vertical space from its siblings.
 
-You don't need to set `height_flex` — `scroll_v=True` implies it. One parameter, done.
+You don't need to set `flex_height` — `scroll_v=True` implies it. One parameter, done.
 
-**One rule:** Don't put `height_flex` on children inside a scroll_v container. Flex expands to fill available space; scroll_v needs content *bigger* than the viewport. They're contradictory — IPUI will tell you if you try.
+**One rule:** Don't put `flex_height` on children inside a scroll_v container. Flex expands to fill available space; scroll_v needs content *bigger* than the viewport. They're contradictory — IPUI will tell you if you try.
 
 ---
 
 ## Why Your Layout Is Stable
 
-If you set `width_flex=1` on two panes, they stay equal — regardless of content.
+If you set `flex_width=1` on two panes, they stay equal — regardless of content.
 
-A pane with `width_flex` doesn't let its children's width propagate up to the flex solver. It's saying "I'll take whatever proportional space you give me." The content inside adapts: text wraps, grids resize, long lines clip.
+A pane with `flex_width` doesn't let its children's width propagate up to the flex solver. It's saying "I'll take whatever proportional space you give me." The content inside adapts: text wraps, grids resize, long lines clip.
 
 This means changing content — clicking a different item, loading new data, resizing text — doesn't cause the pane widths to jump. The layout is stable because flex ratios are honored, not overridden by content.
 
@@ -148,13 +148,13 @@ The biggest violator gets locked first because it's the one that *can't* flex an
 
 | You Want | You Write |
 |---|---|
-| Equal width panes | `width_flex=1` on each |
-| 25/75 split | `width_flex=1` and `width_flex=3` |
-| Pin to bottom | `Spacer(card, height_flex=1)` above it |
+| Equal width panes | `flex_width=1` on each |
+| 25/75 split | `flex_width=1` and `flex_width=3` |
+| Pin to bottom | `Spacer(card, flex_height=1)` above it |
 | Scrollable list | `CardCol(parent, scroll_v=True)` |
 | Centered content | `Row(parent, justify_center=True)` |
 | Spread to edges | `Row(parent, justify_spread=True)` |
-| Fixed-size widget | Don't set `width_flex` or `height_flex` |
+| Fixed-size widget | Don't set `flex_width` or `flex_height` |
 
 ---
 
@@ -162,17 +162,17 @@ The biggest violator gets locked first because it's the one that *can't* flex an
 
 **Header + Content + Footer:**
 ```python
-card = CardCol(parent, height_flex=1)
+card = CardCol(parent, flex_height=1)
 Title(card, "My App")                          # top
-content = CardCol(card, height_flex=1)         # fills middle
+content = CardCol(card, flex_height=1)         # fills middle
 Button(card, "Done")                           # bottom
 ```
 
 **Sidebar + Main:**
 ```python
-row = Row(parent, height_flex=1)
-CardCol(row, width_flex=1)                     # sidebar
-CardCol(row, width_flex=3)                     # main area
+row = Row(parent, flex_height=1)
+CardCol(row, flex_width=1)                     # sidebar
+CardCol(row, flex_width=3)                     # main area
 ```
 
 **Scrollable List with Fixed Header:**
@@ -186,8 +186,8 @@ for item in items:
 **Dynamic Content That Doesn't Break Layout:**
 ```python
 # Pane widths stay at 1:3 regardless of what's inside
-row = Row(parent, height_flex=1)
-left  = CardCol(row, width_flex=1)              # always 25%
-right = CardCol(row, width_flex=3)              # always 75%
+row = Row(parent, flex_height=1)
+left  = CardCol(row, flex_width=1)              # always 25%
+right = CardCol(row, flex_width=3)              # always 75%
 # Content inside wraps, clips, or scrolls — never bulldozes the ratio
 ```

@@ -38,7 +38,7 @@ class TextBox(Label):
     def build(self):
         EZ.warn_scroll             ( self)
         self.validate_params       ( )
-        self.width_flex            = 1
+        self.flex_width            = 1
         self.font                  = self.font or Style.FONT_BODY
         if self.tab_order is None  : self.tab_order=0 # Will be set in base_widget
         self.wrap                  = False
@@ -64,8 +64,8 @@ class TextBox(Label):
         self.on_double_click       = self.select_word_at_mouse
 
     def validate_params(self):
-        if self.width_flex is False:
-            EZ.err("TextBox does not support width_flex=False. TextBoxes always stretch to fill available space. Remove width_flex=False.")
+        if self.flex_width is False:
+            EZ.err("TextBox does not support flex_width=False. TextBoxes always stretch to fill available space. Remove flex_width=False.")
 
     # ══════════════════════════════════════════════════════════════
     # SURFACE — rebuild my_surface from current text or placeholder

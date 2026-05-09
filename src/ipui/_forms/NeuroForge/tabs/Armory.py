@@ -97,7 +97,7 @@ class EZ_Pane(_BaseTab):
     def match_settings(self, parent):
         """Middle pane — clickable summary of all current settings."""
         Title(parent, "Settings", glow=True)
-        row = Row(parent, width_flex=1)
+        row = Row(parent, flex_width=1)
         self.build_settings_left(row)
         self.build_settings_right(row)
         self.build_settings_below(parent)
@@ -108,7 +108,7 @@ class EZ_Pane(_BaseTab):
 
     def build_settings_left(self, parent: Row) -> None:
         """Render left column of settings summary (hyperparams + RNG)."""
-        col  = CardCol(parent, width_flex=1)
+        col  = CardCol(parent, flex_width=1)
         form = self.form
 
         sub = CardCol(col)
@@ -137,7 +137,7 @@ class EZ_Pane(_BaseTab):
 
     def build_settings_right(self, parent: Row) -> None:
         """Render right column of settings summary (gladiators + arena)."""
-        col  = CardCol(parent, width_flex=1, height_flex=1)
+        col  = CardCol(parent, flex_width=1, flex_height=1)
         form = self.form
 
         sub = CardCol(col)
@@ -161,7 +161,7 @@ class EZ_Pane(_BaseTab):
     def build_settings_below(self, parent) -> None:
         """Render config options summary beneath the two columns."""
         form = self.form
-        sub  = CardCol(parent, height_flex=1)
+        sub  = CardCol(parent, flex_height=1)
         Heading(sub, "Config Options:")
         parts = []
         for cat_name, cat_info in CONFIG_CATEGORIES.items():
@@ -185,8 +185,8 @@ class EZ_Pane(_BaseTab):
         SelectionList(parent,
             pipeline_key  = "GladiatorList",
             data          = GLADIATORS,
-            width_flex    = 1,
-            height_flex   = 1,
+            flex_width    = 1,
+            flex_height   = 1,
             tooltip_class = TooltipGladiator,
             on_change     = lambda selected: self.update_gladiator_summary(selected),  # TODO: NIP — SelectionList callback
         )
@@ -218,8 +218,8 @@ class EZ_Pane(_BaseTab):
         sel = SelectionList(parent,
             pipeline_key  = "ArenaList",
             data          = ARENAS,
-            width_flex    = 1,
-            height_flex   = 1,
+            flex_width    = 1,
+            flex_height   = 1,
             tooltip_class = TooltipArena,
             on_change     = lambda selected: self.on_arena_changed(selected),  # TODO: NIP — SelectionList callback
         )
@@ -262,9 +262,9 @@ class EZ_Pane(_BaseTab):
     def rng_data(self, parent) -> None:
         """Random count + manual seed entry fields."""
         form = self.form
-        row  = Row(parent, width_flex=1)
+        row  = Row(parent, flex_width=1)
 
-        sub = CardCol(row, width_flex=2)
+        sub = CardCol(row, flex_width=2)
         Heading(sub, "Random Seeds:")
         TextBox(sub,
             placeholder   = "Count...",
@@ -273,7 +273,7 @@ class EZ_Pane(_BaseTab):
             on_submit     = lambda val: self.on_seed_count_changed(val),  # TODO: NIP — TextBox callback
         )
 
-        sub         = CardCol(row, width_flex=3)
+        sub         = CardCol(row, flex_width=3)
         row_manual  = Row(sub)
         Heading(row_manual, "Manual Seeds:")
         Spacer(row_manual)
@@ -365,7 +365,7 @@ class EZ_Pane(_BaseTab):
     def pane_config_detail(self, parent, category_name: str = "Optimizer") -> None:
         """Full pane — category selector + item multi-select."""
         Heading(parent, "Config Options - Hover for pinnable tool-tip", glow=True)
-        row = Row(parent, width_flex=1, height_flex=1)
+        row = Row(parent, flex_width=1, flex_height=1)
         #print(f"pane_config_detail GLADIATORS id: {id(GLADIATORS)}, count: {len(GLADIATORS)}")
         cat_dict = {name: {} for name in CONFIG_CATEGORIES}
         SelectionList(row,
@@ -373,20 +373,20 @@ class EZ_Pane(_BaseTab):
                       text="Setting:",
                       data=cat_dict,
                       single_select=True,
-                      height_flex=1,
+                      flex_height=1,
                       on_change=lambda selected: self.on_config_cat_changed(),  # TODO: NIP — SelectionList callback
                       )
         self.preselect_category(category_name)
 
-        #col_right = CardCol(row, width_flex=1, height_flex=1)
+        #col_right = CardCol(row, flex_width=1, flex_height=1)
         cat = CONFIG_CATEGORIES[category_name]
         #print(f"DETAIL: {category_name} has {len(cat['data'])} items")
         SelectionList(row,
                       name="sel_config_items",
                       pipeline_key=cat["pipeline_key"],
                       data=cat["data"],
-                      width_flex=1,
-                      height_flex=1,
+                      flex_width=1,
+                      flex_height=1,
                       tooltip_class=TooltipGladiator,
                       on_change=lambda selected: self.update_config_summary(),  # TODO: NIP — SelectionList callback
                       )

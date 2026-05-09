@@ -244,7 +244,7 @@ class MgrInput:
         if target.rect:
             frame      = target.frame_size
             inner      = target.rect.inflate(-frame, -frame)
-            content    = getattr(target, 'content_size', target.height_minimum)
+            content    = getattr(target, 'content_size', target.min_height)
             if content is not None and inner is not None:
                 max_scroll = max(0, content - inner.height)
                 target.scroll_offset = max(0, min(target.scroll_offset, max_scroll))

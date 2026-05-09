@@ -79,8 +79,8 @@ class EZ_Pane(_BaseTab):
 
         layers  = self.get_workbench()
         diagram = NetworkDiagram(parent,
-            width_flex  = 1,
-            height_flex = 1,
+            flex_width  = 1,
+            flex_height = 1,
             name        = "net_diagram",
         )
         diagram.on_layer_selected = lambda idx: self.on_layer_clicked(idx)  # TODO: NIP — NetworkDiagram callback
@@ -155,7 +155,7 @@ class EZ_Pane(_BaseTab):
 
     def card_saved(self, parent) -> None:
         """Display saved architecture configurations."""
-        sub   = CardCol(parent, height_flex=1, scroll_v=True)
+        sub   = CardCol(parent, flex_height=1, scroll_v=True)
         Heading(sub, "Saved Architectures:")
         saved = self.form.pipeline_read("NeuronLayersList") or []
         text  = self.format_saved_list(saved)
@@ -209,7 +209,7 @@ class EZ_Pane(_BaseTab):
         Title(header, "Percy's Story", glow=True)
         btn = Button(header, "Back", color_bg=Style.COLOR_TAB_BG)
         btn.on_click_me(self.swap_pane(0, self.info))
-        sub = CardCol(parent, height_flex=1, scroll_v=True)
+        sub = CardCol(parent, flex_height=1, scroll_v=True)
         Body(sub, "\n".join(PERCY_STORY))
 
     # ══════════════════════════════════════════════════════════════

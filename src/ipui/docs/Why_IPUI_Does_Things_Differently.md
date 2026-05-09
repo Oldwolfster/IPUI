@@ -1,8 +1,8 @@
-## Why IPUI Does Things Differently
+# Why IPUI Does Things Differently
 
 > IPUI makes choices that look unconventional if you're coming from other UI frameworks. This doc explains the design intent behind choices that may look unusual if you’re coming from other UI frameworks.
 
-### The O(1) Principle
+## The O(1) Principle
 
 Every framework design decision lives on one side of a line:
 
@@ -13,7 +13,7 @@ IPUI pushes as much as possible to the framework side. When something can be han
 
 This principle drives nearly every decision below.
 
-### `build()`, Not `__init__`
+## `build()`, Not `__init__`
 
 Here's how custom widgets work in tkinter:
 
@@ -56,7 +56,7 @@ No `super().__init__()`. No `*args, **kwargs` forwarding. No `parent` parameter 
 
 If you try to override `__init__`, you get a clear error at class definition time. Not at runtime. Not in production.
 
-### Construction IS Attachment
+## Construction IS Attachment
 
 ```python
 card = CardCol(parent)
@@ -68,7 +68,7 @@ No `add()`. No `pack()`. No `grid()`. When you construct a widget inside a conta
 
 This eliminates the entire category of "widget exists but isn't on screen" bugs — O(1). In frameworks where attachment is a separate step, every user must remember to attach every widget every time — O(N).
 
-### `from ipui import *`
+## `from ipui import *`
 
 IPUI uses a star import deliberately.  Conventional wisdom says they're dangerous because you don't know what you're importing.
 
@@ -76,30 +76,30 @@ IPUI controls `__all__` explicitly. You get exactly the public API — the widge
 
 The alternative is asking every user to maintain their import list for every file — O(N).
 
-### No "Private" Underscores
+## No "Private" Underscores
 
 IPUI uses underscores for structural meaning, never as 'suggested scope modifiers'. `_BaseWidget` means "structural base class." `private_enabled` means "backing storage." A leading underscore never means "don't touch this."
 
-### One Class Per File (There are a couple of exceptions)
+## One Class Per File (There are a couple of exceptions)
 
 Every `.py` file contains one public class. The filename matches the class name exactly. `Button.py` has `Button`. `PowerGrid.py` has `PowerGrid`.
 
 This makes discovery trivial — in your file browser, in your IDE, in conversation. No hunting through a 2,000-line `widgets.py` to find the class you need. And it's how IPUI's tab discovery system works: a tab named "Settings" automatically finds `Settings.py`.
 
-### All Code Lives in Classes
+## All Code Lives in Classes
 
 No loose functions at module level. No executable code outside `if __name__ == "__main__":`.
 
 - For one, this eliminates order dependency.
 - Also, module-level code runs on import, in whatever order Python resolves dependencies. That's a source of subtle, order-dependent bugs that are painful to diagnose. Wrapping everything in classes eliminates this entirely — O(1) structural protection instead of O(N) discipline from every developer on every file.
 
-### Resolution Independence — No Pixel Math
+## Resolution Independence — No Pixel Math
 
 IPUI scales to the physical screen automatically. You work in semantic sizes (`FONT_BODY`, `TOKEN_PAD`) and normalized coordinates (`ip.to_screen(0.5, 0.5)`). The framework does the pixel math.
 
 The alternative is every user doing coordinate math for every element, then redoing it when someone runs the app on a different monitor — O(N).
 
-### `TAB_LAYOUT` — Single Source of Truth
+## `TAB_LAYOUT` — Single Source of Truth
 
 Your entire app structure is one dictionary at the top of your form:
 
@@ -112,7 +112,7 @@ TAB_LAYOUT = {
 
 No router. No navigation stack. No registration calls. The dictionary *is* the structure, and IPUI builds everything from it — tab buttons, pane slots, file discovery, hot-reload.
 
-### Pygame as Foundation
+## Pygame as Foundation
 
 "Why not tkinter? Why not Qt? Why not web?"
 
@@ -120,7 +120,7 @@ Because IPUI was built for applications that think every frame — neural networ
 
 And thanks to the `ip` service portal, you never touch the raw pygame API for layout, input, or coordinate math unless you want to.
 
-### Behaviors, Not Classifications
+## Behaviors, Not Classifications
 
 This is the design choice that pays the biggest compound dividend.
 
@@ -149,7 +149,7 @@ Every time a capability gets baked into a specific widget subclass instead of th
 
 O(1).
 
-### See for Yourself
+## See for Yourself
 
 The best evidence isn't an argument — it's the code. Run the smoke test, open F12, and browse the widget tree. Check the Widget Catalog tab and see 36+ widgets built on a single, uniform foundation. Read `CardCol.py` and count the lines.
 

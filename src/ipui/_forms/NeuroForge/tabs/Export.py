@@ -6,7 +6,7 @@ class EZ_PANE(_BaseTab):
 
     def exp(self, parent: CardCol) -> None:
         """Render the Export Coming Soon pane."""
-        card = CardCol(parent, width_flex=1, height_flex=1)
+        card = CardCol(parent, flex_width=1, flex_height=1)
         Title(card, "Export to PyTorch", glow=True)
 
         card = CardCol(card)

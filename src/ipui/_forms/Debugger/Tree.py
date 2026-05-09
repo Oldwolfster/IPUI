@@ -38,11 +38,11 @@ class Tree(_BaseTab):
         from ipui.widgets.Row import CardCol
 
         row = Row(parent)
-        self.btn_flex = Button(row, "Flex", width_flex=2,
+        self.btn_flex = Button(row, "Flex", flex_width=2,
             color_bg = Style.COLOR_BUTTON_CTA,
             on_click = lambda: self.set_column_mode("flex"))
-        Spacer(row, width_flex=3)
-        self.btn_tok  = Button(row, "TOK",  width_flex=2,
+        Spacer(row, flex_width=3)
+        self.btn_tok  = Button(row, "TOK",  flex_width=2,
             color_bg = Style.COLOR_TAB_BG,
             on_click = lambda: self.set_column_mode("tokens"))
 
@@ -79,7 +79,7 @@ class Tree(_BaseTab):
         Button(header, "Copy", color_bg=Style.COLOR_BUTTON_CTA,
         on_click=self.copy_tree)
         #on_click=lambda: self.form.show_modal("Coming Soon!", min_seconds=1.69))
-        PowerGrid(parent, name="dbg_tree_grid", height_flex=1)
+        PowerGrid(parent, name="dbg_tree_grid", flex_height=1)
         #Body(parent, "Click row to inspect", name="dbg_tree_hint")
         self.refresh()
 
@@ -128,7 +128,7 @@ class Tree(_BaseTab):
         btn = Button(header, "Copy", color_bg=Style.COLOR_BUTTON_CTA)
         btn.on_click_me(self.copy_detail)
         #btn.on_click = lambda: self.form.show_modal("Coming Soon!",  min_seconds=1.69)
-        PowerGrid(parent, name="dbg_detail_grid", height_flex=1)
+        PowerGrid(parent, name="dbg_detail_grid", flex_height=1)
         #Body(parent, "← Click a row", name="dbg_detail_hint")
 
 
@@ -185,12 +185,12 @@ class Tree(_BaseTab):
         rect       = widget.rect
         rx, ry     = (rect.x, rect.y)             if rect else ("—", "—")
         rw, rh     = (rect.width, rect.height)    if rect else ("—", "—")
-        minx       = getattr(widget, 'width_minimum',  '?')
-        miny       = getattr(widget, 'height_minimum', '?')
+        minx       = getattr(widget, 'min_width',  '?')
+        miny       = getattr(widget, 'min_height', '?')
         if self.column_mode == "tokens":
             col4 = f"{widget.border}/{widget.pad_x}/{widget.pad_y}/{widget.gap}"
         else:
-            col4 = f"{widget.width_flex}, {widget.height_flex}"
+            col4 = f"{widget.flex_width}, {widget.flex_height}"
         rows.append([
             widget.widget_id,
             depth,

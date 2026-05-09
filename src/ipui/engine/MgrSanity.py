@@ -52,9 +52,9 @@ class MgrSanity:
     def has_content_children(cls, node):
         """True if at least one visible child wants real space."""
         for child in node.visible_children:
-            if child.height_minimum and child.height_minimum > 0:
+            if child.min_height and child.min_height > 0:
                 return True
-            if child.width_minimum and child.width_minimum > 0:
+            if child.min_width and child.min_width > 0:
                 return True
         return False
 
@@ -78,12 +78,12 @@ class MgrSanity:
     @classmethod
     def build_context(cls, node, axis):
         """Gather common info once so check_cause_* methods stay focused."""
-        flex_attr = "height_flex" if axis == "height" else "width_flex"
+        flex_attr = "flex_height" if axis == "height" else "flex_width"
         if axis == "height":
-            child_need = max((c.height_minimum for c in node.visible_children if c.height_minimum), default=0)
+            child_need = max((c.min_height for c in node.visible_children if c.min_height), default=0)
             got = node.rect.height
         else:
-            child_need = max((c.width_minimum for c in node.visible_children if c.width_minimum), default=0)
+            child_need = max((c.min_width for c in node.visible_children if c.min_width), default=0)
             got = node.rect.width
         return {
             "label": cls.widget_label(node),
@@ -97,13 +97,13 @@ class MgrSanity:
     # ROOT CAUSE #1: Flex child starved by a sibling
     # ══════════════════════════════════════════════════════════════
     # TRIGGER EXAMPLE (height):
-    #   card_a = CardCol(parent, height_flex=1)   # gets ~1% — starved
+    #   card_a = CardCol(parent, flex_height=1)   # gets ~1% — starved
     #   Title(card_a, "I disappear")
-    #   card_b = Card(parent, height_flex=99)        # hogs the budget
+    #   card_b = Card(parent, flex_height=99)        # hogs the budget
     # TRIGGER EXAMPLE (width):
-    #   col_a = Col(row, width_flex=1)            # gets ~1% — starved
+    #   col_a = Col(row, flex_width=1)            # gets ~1% — starved
     #   Title(col_a, "I disappear")
-    #   col_b = Col(row, width_flex=99)              # hogs the budget
+    #   col_b = Col(row, flex_width=99)              # hogs the budget
     # FIX: Remove flex from the victim, or increase its weight.
 
     @classmethod
@@ -155,10 +155,10 @@ class MgrSanity:
     # ROOT CAUSE #2: Scrollable container under a non-flex ancestor
     # ══════════════════════════════════════════════════════════════
     # TRIGGER Example: 
-    #   wrapper = CardCol(parent)                    # no height_flex — content-sizes
+    #   wrapper = CardCol(parent)                    # no flex_height — content-sizes
     #   scroller = CardCol(wrapper, scroll_v=True) # scroll_v collapses min-height
     #   Title(scroller, "I disappear")
-    # FIX: Add height_flex=1 to the wrapper.
+    # FIX: Add flex_height=1 to the wrapper.
 
     @classmethod
     def check_cause_scroll_v_no_flex_ancestor(cls, node, ctx):
@@ -185,10 +185,10 @@ class MgrSanity:
     # ROOT CAUSE #3: Flex child under a non-flex ancestor
     # ══════════════════════════════════════════════════════════════
     # TRIGGER Example: 
-    #   wrapper = CardCol(parent)                    # no height_flex — content-sizes
-    #   inner   = CardCol(wrapper, height_flex=1)    # wants flex space
+    #   wrapper = CardCol(parent)                    # no flex_height — content-sizes
+    #   inner   = CardCol(wrapper, flex_height=1)    # wants flex space
     #   Title(inner, "I disappear")                  # but wrapper has none to give
-    # FIX: Add height_flex=1 to the wrapper.
+    # FIX: Add flex_height=1 to the wrapper.
 
     @classmethod
     def check_cause_flex_no_flex_ancestor(cls, node, ctx):
@@ -217,10 +217,10 @@ class MgrSanity:
 
     # TRIGGER Example: 
     #   row = Row(parent)
-    #   box = CardCol(row)                        # no width_flex — content-sizes
-    #   Banner(box, "IPUI", text_align=CENTER)    # text_align=CENTER auto-sets width_flex=1
+    #   box = CardCol(row)                        # no flex_width — content-sizes
+    #   Banner(box, "IPUI", text_align=CENTER)    # text_align=CENTER auto-sets flex_width=1
     #   # box asks children "how wide are you?" — they all say 0 (flex). Box collapses.
-    # FIX: Add width_flex to the parent container.
+    # FIX: Add flex_width to the parent container.
 
     @classmethod
     def check_cause_all_children_flex(cls, node, ctx):
@@ -247,7 +247,7 @@ class MgrSanity:
     #       CardCol(parent)  # big content
     #       CardCol(parent)  # big content
     #       CardCol(parent)  # big content
-    #       Card(parent, scroll_v=True, height_flex=1)  # gets nothing — siblings ate it all
+    #       Card(parent, scroll_v=True, flex_height=1)  # gets nothing — siblings ate it all
     # FIX: Wrap the content siblings in a scroll_v container, or reduce content.
 
     # MgrSanity.py method: check_cause_content_siblings_overflow  Update: check leftover vs node frame
@@ -262,7 +262,7 @@ class MgrSanity:
         for sib in siblings:
             if sib is node:                         continue
             if getattr(sib, flex_attr, 0) > 0:      continue
-            min_attr = "height_minimum" if ctx["axis"] == "height" else "width_minimum"
+            min_attr = "min_height" if ctx["axis"] == "height" else "min_width"
             content_total += getattr(sib, min_attr, 0) or 0
         parent_size = node.parent.rect.height if ctx["axis"] == "height" else node.parent.rect.width
         if content_total <= 0:                      return

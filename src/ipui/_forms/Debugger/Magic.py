@@ -25,10 +25,10 @@ class Magic(_BaseTab):
 
         btns = Row(parent)
 
-        Button(btns, "Pipeline", color_bg=Style.COLOR_TAB_BG, on_click=lambda: self.set_mode("pipeline"))
-        Button(btns, "Registry", color_bg=Style.COLOR_TAB_BG, on_click=lambda: self.set_mode("registry"))
-        Button(btns, "DAG",      color_bg=Style.COLOR_TAB_BG, on_click=lambda: self.set_mode("dag"))
-        Button(btns, "Refresh",  color_bg=Style.COLOR_BUTTON_CTA, on_click=self.refresh)
+        mode = (self.form.pipeline_read("magic_mode") or "pipeline").lower()   # NEW
+        Button(btns, "Pipeline", color_bg=Style.COLOR_BUTTON_CTA if mode == "pipeline" else Style.COLOR_TAB_BG, on_click=lambda: self.set_mode("pipeline"))
+        Button(btns, "Registry", color_bg=Style.COLOR_BUTTON_CTA if mode == "registry" else Style.COLOR_TAB_BG, on_click=lambda: self.set_mode("registry"))
+        Button(btns, "DAG",      color_bg=Style.COLOR_BUTTON_CTA if mode == "dag"      else Style.COLOR_TAB_BG, on_click=lambda: self.set_mode("dag"))
 
     def magic_teaching_cards(self, parent):
         mode = (self.form.pipeline_read("magic_mode") or "pipeline").lower()
@@ -41,65 +41,64 @@ class Magic(_BaseTab):
             self.teach_pipeline(parent)
 
     def teach_pipeline(self, parent):
-        card = CardCol(parent, width_flex=1)
+        card = CardCol(parent, flex_width=1)
         Title(card, "Data Pipeline", glow=True)
         Body(card, "What it is", glow=True)
         Detail(card, "• The framework’s key/value store (single source of truth).")
         Detail(card, "• UI reads from it; user actions write to it.")
         Spacer(card)
 
-        card2 = CardCol(parent, width_flex=1)
+        card2 = CardCol(parent, flex_width=1)
         Body(card2, "Why it exists", glow=True)
         Detail(card2, "• Eliminates 'where did that value come from?' confusion.")
         Detail(card2, "• Makes state visible + debuggable in one place.")
         Spacer(card2)
 
-        card3 = CardCol(parent, width_flex=1)
+        card3 = CardCol(parent, flex_width=1)
         Body(card3, "Common mistakes", glow=True)
         Detail(card3, "• Setting a key no one listens to (no derives / no reads).")
         Detail(card3, "• Typos in keys become silent bugs without tooling.")
 
     def teach_registry(self, parent):
-        card = CardCol(parent, width_flex=1)
+        card = CardCol(parent, flex_width=1)
         Title(card, "Named Widgets Registry", glow=True)
         Body(card, "What it is", glow=True)
         Detail(card, "• Every named widget is tracked automatically.")
         Detail(card, "• Access anything by name: form.widgets['widget_name']")
         Spacer(card)
 
-        card2 = CardCol(parent, width_flex=1)
+        card2 = CardCol(parent, flex_width=1)
         Body(card2, "Why it matters", glow=True)
         Detail(card2, "• No passing widget references around.")
         Detail(card2, "• No globals. No self.btn_save_ref_copy_backup_final.")
         Spacer(card2)
 
-        card3 = CardCol(parent, width_flex=1)
+        card3 = CardCol(parent, flex_width=1)
         Body(card3, "Common mistakes", glow=True)
         Detail(card3, "• Forgetting to give the widget a name=...")
         Detail(card3, "• Looking on the wrong form instead of the target form's widgets.")
 
     def teach_dag(self, parent):
-        card = CardCol(parent, width_flex=1)
+        card = CardCol(parent, flex_width=1)
         Title(card, "Reactive DAG", glow=True)
         Body(card, "What it is", glow=True)
         Detail(card, "• A directed acyclic graph of updates.")
         Detail(card, "• Pipeline keys trigger derives. Derives update widgets.")
         Spacer(card)
 
-        card2 = CardCol(parent, width_flex=1)
+        card2 = CardCol(parent, flex_width=1)
         Body(card2, "Why it matters", glow=True)
         Detail(card2, "• Change one source value, downstream UI updates predictably.")
         Detail(card2, "• No manual callback spaghetti for every tiny screen change.")
         Spacer(card2)
 
-        card3 = CardCol(parent, width_flex=1)
+        card3 = CardCol(parent, flex_width=1)
         Body(card3, "Common mistakes", glow=True)
         Detail(card3, "• Triggers point at the wrong pipeline keys.")
         Detail(card3, "• The derive target is unnamed, so nothing can be updated.")
 
     def set_mode(self, mode):
         self.form.pipeline_set("magic_mode", mode)
-        self.form.set_pane(0, self.debug_magic_teach)
         self.form.set_pane(1, self.debug_magic_show)
         self.refresh()
 
@@ -118,29 +117,29 @@ class Magic(_BaseTab):
             self.debug_magic_pipeline(parent)
 
     def debug_magic_pipeline(self, parent):
-        panel = CardCol(parent, name="magic_show_panel", width_flex=1, height_flex=1)
+        panel = CardCol(parent, name="magic_show_panel", flex_width=1, flex_height=1)
 
         Title(panel, "Pipeline Store", glow=True)
         Detail(panel, "Key/value state tracked by the framework.")
-        PowerGrid(panel, name="magic_grid_pipeline_data", height_flex=1)
+        PowerGrid(panel, name="magic_grid_pipeline_data", flex_height=1)
 
         self.refresh_pipeline_data(self.get_target())
 
     def debug_magic_registry(self, parent):
-        panel = CardCol(parent, name="magic_show_panel", width_flex=1, height_flex=1)
+        panel = CardCol(parent, name="magic_show_panel", flex_width=1, flex_height=1)
 
         Title(panel, "Widgets Registry", glow=True)
         Detail(panel, "Every named widget tracked on the target form.")
-        PowerGrid(panel, name="magic_grid_registry_data", height_flex=1)
+        PowerGrid(panel, name="magic_grid_registry_data", flex_height=1)
 
         self.refresh_registry_data(self.get_target())
 
     def debug_magic_dag(self, parent):
-        panel = CardCol(parent, name="magic_show_panel", width_flex=1, height_flex=1)
+        panel = CardCol(parent, name="magic_show_panel", flex_width=1, flex_height=1)
 
         Title(panel, "Reactive DAG", glow=True)
         Detail(panel, "Derives wired from pipeline keys to named widgets.")
-        PowerGrid(panel, name="magic_grid_dag_data", height_flex=1)
+        PowerGrid(panel, name="magic_grid_dag_data", flex_height=1)
 
 
     # ============================================================

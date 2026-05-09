@@ -84,7 +84,7 @@ class PowerGrid(_BaseWidget):
     Child structure:
         PowerGrid
         ├── GridHeader       (fixed height)
-        ├── Col              (scroll_v=True, height_flex=1)
+        ├── Col              (scroll_v=True, flex_height=1)
         │   └── GridBody     (full content height — drives scroll)
         └── RecordSelector   (fixed height, hidden when not needed)
     """
@@ -96,9 +96,9 @@ class PowerGrid(_BaseWidget):
     # ══════════════════════════════════════════════════════════════
 
     def build(self):
-        if self.height_flex == 0:
-            print("[PowerGrid] Note: height_flex forced to 1 — PowerGrid scrolls internally.")
-        self.height_flex        = 1
+        if self.flex_height == 0:
+            print("[PowerGrid] Note: flex_height forced to 1 — PowerGrid scrolls internally.")
+        self.flex_height        = 1
         self.pad                = 0
         self.font               = self.font or Style.FONT_BODY
         self.color_txt          = Style.COLOR_TEXT
@@ -132,7 +132,7 @@ class PowerGrid(_BaseWidget):
     def build_body(self):
         if self.children: return
         self.grid_header     = GridHeader(self)        # scroll_h=True removed
-        self.grid_scroller   = Col(self, scroll_v=True, height_flex=1, scroll_h=True)
+        self.grid_scroller   = Col(self, scroll_v=True, flex_height=1, scroll_h=True)
         self.grid_body       = GridBody(self.grid_scroller)
         self.record_selector = RecordSelector(self, on_change=self.handle_page_change)
         self.grid_scroller.scroll_h_link(self.grid_header)

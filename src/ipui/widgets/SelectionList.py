@@ -22,7 +22,7 @@ class SelectionList(_BaseWidget):
                 "TO FIX: Remove scroll_v=True from the SelectionList constructor."
             )
 
-        self.list_card = CardCol(self, height_flex=1, scroll_v=True)
+        self.list_card = CardCol(self, flex_height=1, scroll_v=True)
         self.items     = []
 
         for name, item_data in self.items_data.items():

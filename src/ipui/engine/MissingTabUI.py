@@ -15,10 +15,10 @@ class MissingTabUI(_BaseTab):
     def pitch(self, parent):
 
         tab_name = self.form.pipeline_read("missing_tab_name") or "???"
-        Spacer(parent, height_flex=1)
+        Spacer(parent, flex_height=1)
         row=Row(parent)
-        Spacer(row,width_flex=1)
-        card = Card(row,pad=20,width_flex=3)
+        Spacer(row,flex_width=1)
+        card = Card(row,pad=20,flex_width=3)
         Spacer(card)
         c = Plate(card, pad=20,hug_parent=True)
         Banner(c, "Houston,", glow=True,text_align=CENTER,hug_parent=True)
@@ -29,41 +29,22 @@ class MissingTabUI(_BaseTab):
         Heading(msg,f"The {tab_name} tab is listed in TAB_LAYOUT,",text_align=CENTER,hug_parent=True)
         Heading(msg, f"but IPUI couldn\'t find a matching file for it.", text_align=CENTER)
 
-        Spacer(c, height_flex=1)
+        Spacer(c, flex_height=1)
         #c = Plate(card, pad=20)
         Title(c, " ")
         Title(c, "Pick a template", text_align=CENTER, hug_parent=True)
         Title(c, "We'll forge it for you.", glow=True,text_align=CENTER)
         Body(c, f'Tab name: "{tab_name}"', text_align=CENTER)
-        Spacer(row,width_flex=1)
-        Spacer(card, height_flex=1)
-        Spacer(parent, height_flex=1)
+        Spacer(row,flex_width=1)
+        Spacer(card, flex_height=1)
+        Spacer(parent, flex_height=1)
 
 
     def choices(self, parent):
         card = parent
         Title(card,"")
         Title(card, "Choose Your Weapon", glow=True,text_align=CENTER)
-        Spacer(card, height_flex=1)
-
-        self.make_option(card,
-            "Bare\nBones",
-            "Skeleton only. Stubs, no fluff",
-            "For speed demons",
-            Style.COLOR_BUTTON_SECONDARY,
-            lambda: self.generate_file("bare"))
-
-
-        Spacer(card, height_flex=1)
-
-        self.make_option(card,
-            "Starter\nKit",
-            "Stubs + basics (Cards, Titles, Body)",
-            "Instant screen life",
-            Style.COLOR_BUTTON_SECONDARY,
-            lambda: self.generate_file("StarterKit"))
-
-        Spacer(card, height_flex=1)
+        Spacer(card, flex_height=1)
 
         self.make_option(card,
             "Full\nShowcase",
@@ -72,8 +53,23 @@ class MissingTabUI(_BaseTab):
             Style.COLOR_BUTTON_CTA,
             lambda: self.generate_file("showcase"))
 
-        Spacer(card, height_flex=1)
+        Spacer(card, flex_height=1)
+        self.make_option(card,
+            "Starter\nKit",
+            "Stubs + basics (Cards, Titles, Body)",
+            "Instant screen life",
+            Style.COLOR_BUTTON_SECONDARY,
+            lambda: self.generate_file("StarterKit"))
 
+        Spacer(card, flex_height=1)
+        self.make_option(card,
+            "Bare\nBones",
+            "Skeleton only. Stubs, no fluff",
+            "For speed demons",
+            Style.COLOR_BUTTON_SECONDARY,
+            lambda: self.generate_file("bare"))
+
+        Spacer(card, flex_height=1)
         self.make_option(card,
             "Nah,\nI Got This",
             "Close this and create the file yourself.",
@@ -81,14 +77,14 @@ class MissingTabUI(_BaseTab):
             Style.COLOR_BUTTON_DANGER,
             self.dismiss)
 
-        Spacer(card, height_flex=1)
+        Spacer(card, flex_height=1)
 
     def make_option(self, parent, label, desc, snark, color, action=None):
-        row = CardRow(parent, width_flex=1)
-        btn = Button(row, label, color_bg=color,pad=10,border=3,width_flex=3)
+        row = CardRow(parent, flex_width=1)
+        btn = Button(row, label, color_bg=color,pad=10,border=3,flex_width=3)
         if action:  # NEW
             btn.on_click = action  # NEW
-        col = CardCol(row, width_flex=8, border=0)
+        col = CardCol(row, flex_width=8, border=0)
         col.color_bg = None
         Body(col, desc)
         Detail(col, snark)

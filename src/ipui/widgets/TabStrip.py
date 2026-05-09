@@ -30,8 +30,8 @@ class TabStrip(_BaseWidget):
     note:        When using _BaseForm with TAB_LAYOUT, all api methods are available directly on the form.
     """
     def build(self):
-        self.width_flex  = 1
-        self.height_flex = 1
+        self.flex_width  = 1
+        self.flex_height = 1
         self.active_tab  = None
         self.pad=0
         self.border=-2
@@ -82,17 +82,17 @@ class TabStrip(_BaseWidget):
     # ============================================================
     def build_tab_buttons(self):
         outer          = CardRow(self, pad=2)
-        self.tab_row   = CardRow(outer, width_flex=1,pad=2)
+        self.tab_row   = CardRow(outer, flex_width=1,pad=2)
 
     def build_content_area(self):
-        self.content = Row(self, width_flex=1, height_flex=1)
+        self.content = Row(self, flex_width=1, flex_height=1)
         self.panes   = []
         self.rebuild_tab_buttons()
 
     def rebuild_tab_buttons(self):
         self.tab_row.children.clear()
         for tab_name in self.data:
-            btn          = Button(self.tab_row, tab_name, color_bg=Style.COLOR_TAB_BG, width_flex=1,border_radius=0)
+            btn          = Button(self.tab_row, tab_name, color_bg=Style.COLOR_TAB_BG, flex_width=1,border_radius=0)
             btn.on_click = lambda name=tab_name: self.switch_tab(name)
 
 
@@ -281,16 +281,16 @@ class TabStrip(_BaseWidget):
         for i, entry in enumerate(pane_list):
             builder, weight = entry[0], entry[1]
             if builder is None:
-                #Col(self.content, width_flex=weight, height_flex=1)
+                #Col(self.content, flex_width=weight, flex_height=1)
                 current_area = None
-                pane = Pane(self.content, width_flex=weight, height_flex=1)
+                pane = Pane(self.content, flex_width=weight, flex_height=1)
                 pane.color_bg  = None
                 pane.border_top = None
                 self.panes[i]  = pane
             else:
-                if current_area is None:  current_area = TabArea(self.content, width_flex=0, height_flex=1)
-                current_area.width_flex += weight
-                pane = Pane(current_area.inner, width_flex=weight, height_flex=1)
+                if current_area is None:  current_area = TabArea(self.content, flex_width=0, flex_height=1)
+                current_area.flex_width += weight
+                pane = Pane(current_area.inner, flex_width=weight, flex_height=1)
                 self.panes[i] = pane
 
     def run_pane_builders(self, name, pane_list):
@@ -313,7 +313,7 @@ class TabStrip(_BaseWidget):
 
     def ensure_pane_count(self, needed):
         while len(self.panes) < needed:
-            pane = CardCol(self.content, width_flex=1, height_flex=1)
+            pane = CardCol(self.content, flex_width=1, flex_height=1)
             self.panes.append(pane)
 
     def invoke_builder(self,   tab_name, builder, pane, *args, **kwargs):
@@ -466,7 +466,7 @@ class TabStrip(_BaseWidget):
             else:
                 pane                        = self.panes[index]
                 if pane is None: return
-                pane.width_flex = weight
+                pane.flex_width = weight
                 pane.children.clear()
                 self.invoke_builder         ( tab_name, builder, pane, *args, **kwargs)
             # Removed 4/22 self.form.layout_engine.RunLayout()

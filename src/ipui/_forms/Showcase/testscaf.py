@@ -59,9 +59,9 @@ class ShowcaseTemplate(_BaseTab):
     def cookbook_menu(self, parent):
         Title(parent, "Cookbook", glow=True)
         Body(parent, "Pick a pattern to see it live")
-        card = Card(parent, scroll_v=True, height_flex=1)
+        card = Card(parent, scroll_v=True, flex_height=1)
         for name, label in self.discover_demos():
-            Button(card, label, on_click=lambda n=name: self.show_demo(n),width_flex=1,text_align='l')
+            Button(card, label, on_click=lambda n=name: self.show_demo(n),flex_width=1,text_align='l')
 
     def cookbook_demo(self, parent):
 
@@ -69,10 +69,10 @@ class ShowcaseTemplate(_BaseTab):
         Title(parent, "Pick something from the menu",  name="explorer_placeholder",text_align=CENTER)
         Spacer(parent)
         row = Row(parent)
-        Spacer(row,width_flex=.1)
-        plate= Plate(row,width_flex=.8)
+        Spacer(row,flex_width=.1)
+        plate= Plate(row,flex_width=.8)
         Title(plate, "If you like it", glow=True,text_align=CENTER)
-        Spacer(row, width_flex=.1)
+        Spacer(row, flex_width=.1)
         Title(parent, "just hit copy!",text_align=CENTER)
 
         Spacer(parent)
@@ -135,32 +135,32 @@ class ShowcaseTemplate(_BaseTab):
         Body    ( parent, "Text input with placeholder, submit, and pipeline:")
         TextBox ( parent, placeholder="Type here...")
         TextBox ( parent, placeholder="Hit enter...",  on_submit=lambda t: self.show_modal(f"You said: {t}"))
-        TextBox ( parent, initial_value="Pre-filled",  width_flex=1)
+        TextBox ( parent, initial_value="Pre-filled",  flex_width=1)
 
     def demo_040_cards_and_layout(self, parent):
         Title   ( parent, "Cards & Layout", glow=True)
         Body    ( parent, "Vertical and horizontal grouping:")
-        row     = Row(parent, width_flex=1)
-        left    = CardCol(row, width_flex=1)
+        row     = Row(parent, flex_width=1)
+        left    = CardCol(row, flex_width=1)
         Heading ( left,   "Left Column")
         Body    ( left,   "Cards stack vertically by default.")
-        right   = CardCol(row, width_flex=1)
+        right   = CardCol(row, flex_width=1)
         Title   ( right,  "Right Column")
         Body    ( right,  "Use Row to go horizontal.")
 
     def demo_050_flex_layout(self, parent):
         Title   ( parent, "Flex Layout", glow=True)
-        Body    ( parent, "width_flex controls proportional sizing:")
-        row     = Row(parent, width_flex=1)
-        CardCol ( row, width_flex=1).tap(lambda c: Title(c, "flex=1"))
-        CardCol ( row, width_flex=2).tap(lambda c: Title(c, "flex=2"))
-        CardCol ( row, width_flex=1).tap(lambda c: Title(c, "flex=1"))
+        Body    ( parent, "flex_width controls proportional sizing:")
+        row     = Row(parent, flex_width=1)
+        CardCol ( row, flex_width=1).tap(lambda c: Title(c, "flex=1"))
+        CardCol ( row, flex_width=2).tap(lambda c: Title(c, "flex=2"))
+        CardCol ( row, flex_width=1).tap(lambda c: Title(c, "flex=1"))
         Body    ( parent, "The middle column gets 50% of the space.")
 
     def demo_060_spacer(self, parent):
         Title   ( parent, "Spacer", glow=True)
         Body    ( parent, "Push widgets apart with invisible flex:")
-        row     = Row(parent, width_flex=1)
+        row     = Row(parent, flex_width=1)
         Button  ( row,    "Left")
         Spacer  ( row)
         Button  ( row,    "Right")
@@ -169,7 +169,7 @@ class ShowcaseTemplate(_BaseTab):
     def demo_070_scroll_v_card(self, parent):
         Title   ( parent, "Scrollable Card", glow=True)
         Body    ( parent, "Any Card becomes scroll_v with one parameter:")
-        card    = Card(parent, scroll_v=True, height_flex=1)
+        card    = Card(parent, scroll_v=True, flex_height=1)
         for i in range(20):
             Body( card,   f"Row {i + 1} — scroll me!")
 
@@ -182,7 +182,7 @@ class ShowcaseTemplate(_BaseTab):
             {"Name": "Charlie", "Score": 71,  "Grade": "C"},
             {"Name": "Diana",   "Score": 98,  "Grade": "A"},
         ]
-        grid    = PowerGrid(parent, height_flex=1)
+        grid    = PowerGrid(parent, flex_height=1)
         grid.set_data(data)
         grid.on_row_click(lambda row: self.show_modal(f"{row['Name']}: {row['Score']}"))
 
@@ -212,12 +212,12 @@ class ShowcaseTemplate(_BaseTab):
     def demo_095_master_detail(self, parent):
         Title   ( parent, "Master / Detail", glow=True)
         Body    ( parent, "Click a row — detail updates in the same pane:")
-        row     = Row(parent, width_flex=1, height_flex=1)
+        row     = Row(parent, flex_width=1, flex_height=1)
         items   = ["Alpha", "Bravo", "Charlie", "Delta", "Echo"]
-        card    = CardCol(row, width_flex=1)
+        card    = CardCol(row, flex_width=1)
         for item in items:
             Button( card,  item, on_click=lambda i=item: self.show_detail(i))
-        self.detail_card = CardCol(row, width_flex=2)
+        self.detail_card = CardCol(row, flex_width=2)
         Body    ( self.detail_card, "Click an item on the left.")
 
     def show_detail(self, item):
@@ -231,14 +231,14 @@ class ShowcaseTemplate(_BaseTab):
         Title   ( parent, "DropDown", glow=True)
         Body    ( parent, "Single-select dropdown with search filtering:")
         items   = {"Red": {}, "Green": {}, "Blue": {}, "Orange": {}, "Purple": {}}
-        dd      = DropDown(parent, text="Pick a color", data=items, width_flex=1)
+        dd      = DropDown(parent, text="Pick a color", data=items, flex_width=1)
         dd.on_change = lambda sel: self.show_modal(f"Selected: {sel}")
 
     def demo_110_selection_list(self, parent):
         Title   ( parent, "SelectionList", glow=True)
         Body    ( parent, "Multi-select with toggle and filter:")
         items   = {"Python": {}, "Rust": {}, "Go": {}, "TypeScript": {}, "C++": {}}
-        sel     = SelectionList(parent, text="Languages", data=items, height_flex=1)
+        sel     = SelectionList(parent, text="Languages", data=items, flex_height=1)
         Button  ( parent, "Show Selected", color_bg=Style.COLOR_BUTTON_CTA,
                   on_click=lambda: self.show_modal(f"Selected: {sel.get_selected()}"))
 
@@ -247,14 +247,14 @@ class ShowcaseTemplate(_BaseTab):
         Body    ( parent, "Add single_select=True for radio-button behavior:")
         items   = {"Small": {}, "Medium": {}, "Large": {}, "XL": {}}
         sel     = SelectionList(parent, text="Size", data=items,
-                                single_select=True, height_flex=1)
+                                single_select=True, flex_height=1)
         Button  ( parent, "Show Choice", color_bg=Style.COLOR_BUTTON_CTA,
                   on_click=lambda: self.show_modal(f"Chose: {sel.get_selected()}"))
 
     def demo_130_textarea(self, parent):
         Title   ( parent, "TextArea", glow=True)
         Body    ( parent, "Multi-line text input — great for SQL, notes, config:")
-        ta      = TextArea(parent, height_flex=1, initial_value="SELECT *\nFROM users\nWHERE active = 1")
+        ta      = TextArea(parent, flex_height=1, initial_value="SELECT *\nFROM users\nWHERE active = 1")
         Button  ( parent, "Run", color_bg=Style.COLOR_BUTTON_CTA,
                   on_click=lambda: self.show_modal(f"Query:\n{ta.text}"))
 
@@ -281,7 +281,7 @@ class ShowcaseTemplate(_BaseTab):
     def demo_210_pipeline_read_write(self, parent):
         Title   ( parent, "Pipeline — Read & Write", glow=True)
         Body    ( parent, "Share data across panes without passing references:")
-        row     = Row(parent, width_flex=1)
+        row     = Row(parent, flex_width=1)
         Button  ( row,    "Set Count = 42", color_bg=Style.COLOR_BUTTON_CTA,
                   on_click=lambda: self.form.pipeline_set("explorer_count", 42))
         Button  ( row,    "Set Count = 0",  color_bg=Style.COLOR_BUTTON_DANGER,
@@ -295,7 +295,7 @@ class ShowcaseTemplate(_BaseTab):
         Title   ( parent, "State Machine", glow=True)
         Body    ( parent, "Delegate-based states with auto-transitions:")
         Body    ( parent, " ", name="lbl_explorer_state")
-        row     = Row(parent, width_flex=1)
+        row     = Row(parent, flex_width=1)
         Button  ( row,    "Go IDLE",    on_click=lambda: self.ip.state("explorer").go("IDLE"))
         Button  ( row,    "Go RUNNING", on_click=lambda: self.ip.state("explorer").go("RUNNING"),
                   color_bg=Style.COLOR_BUTTON_CTA)
@@ -339,7 +339,7 @@ class ShowcaseTemplate(_BaseTab):
     def demo_320_icons(self, parent):
         Title   ( parent, "Icons", glow=True)
         Body    ( parent, "Twemoji PNG icons — use them anywhere:")
-        row     = Row(parent, width_flex=1)
+        row     = Row(parent, flex_width=1)
         Icon    ( row, "rocket")
         Icon    ( row, "fire")
         Icon    ( row, "star")
@@ -371,7 +371,7 @@ class ShowcaseTemplate(_BaseTab):
     def demo_420_hide_show_tabs(self, parent):
         Title   ( parent, "Hide & Show Tabs", glow=True)
         Body    ( parent, "Control which tabs are visible at runtime:")
-        row     = Row(parent, width_flex=1)
+        row     = Row(parent, flex_width=1)
         Button  ( row,    "Hide Designer", color_bg=Style.COLOR_BUTTON_DANGER,
                   on_click=lambda: self.form.hide_tab("Designer"))
         Button  ( row,    "Show Designer", color_bg=Style.COLOR_BUTTON_CTA,
@@ -383,21 +383,21 @@ class ShowcaseTemplate(_BaseTab):
         Title   ( parent, "Justify Spread & Center", glow=True)
         Body    ( parent, "Distribute children evenly or center them:")
         Body    ( parent, "justify_spread=True:")
-        row1    = Row(parent, width_flex=1, justify_spread=True)
+        row1    = Row(parent, flex_width=1, justify_spread=True)
         Button  ( row1,   "A")
         Button  ( row1,   "B")
         Button  ( row1,   "C")
         Body    ( parent, "justify_center=True:")
-        row2    = Row(parent, width_flex=1, justify_center=True)
+        row2    = Row(parent, flex_width=1, justify_center=True)
         Button  ( row2,   "X")
         Button  ( row2,   "Y")
 
     def demo_510_fit_content(self, parent):
         Title   ( parent, "Fit Content Width", glow=True)
         Body    ( parent, "Buttons normally stretch. fit_content=True hugs the text:")
-        Button  ( parent, "I stretch to fill", width_flex=1)
+        Button  ( parent, "I stretch to fill", flex_width=1)
         Button  ( parent, "I hug my text",     fit_content=True)
-        row     = Row(parent, width_flex=1)
+        row     = Row(parent, flex_width=1)
         Button  ( row,    "Save",   fit_content=True, color_bg=Style.COLOR_BUTTON_CTA)
         Button  ( row,    "Cancel", fit_content=True)
         Spacer  ( row)
@@ -409,12 +409,12 @@ class ShowcaseTemplate(_BaseTab):
         Body    ( parent, "Cards inside cards — natural grouping:")
         outer   = CardCol(parent)
         Title   ( outer,  "User Profile")
-        row     = Row(outer, width_flex=1)
-        info    = CardCol(row, width_flex=1)
+        row     = Row(outer, flex_width=1)
+        info    = CardCol(row, flex_width=1)
         Heading ( info,   "Contact")
         Body    ( info,   "alice@example.com")
         Body    ( info,   "555-0123")
-        stats   = CardCol(row, width_flex=1)
+        stats   = CardCol(row, flex_width=1)
         Heading ( stats,  "Stats")
         Body    ( stats,  "Projects: 12")
         Body    ( stats,  "Commits: 847")
@@ -422,11 +422,11 @@ class ShowcaseTemplate(_BaseTab):
     def demo_530_dynamic_list(self, parent):
         Title   ( parent, "Dynamic List", glow=True)
         Body    ( parent, "Build a list from data — add and remove at runtime:")
-        self.demo_list_card = Card(parent, scroll_v=True, height_flex=1)
+        self.demo_list_card = Card(parent, scroll_v=True, flex_height=1)
         self.demo_list_items = ["Alpha", "Bravo", "Charlie"]
         self.rebuild_demo_list()
-        row     = Row(parent, width_flex=1)
-        self.demo_list_input = TextBox(row, placeholder="New item...", width_flex=1,
+        row     = Row(parent, flex_width=1)
+        self.demo_list_input = TextBox(row, placeholder="New item...", flex_width=1,
                                         on_submit=lambda t: self.list_add())
         Button  ( row,    "Add", color_bg=Style.COLOR_BUTTON_CTA,
                   on_click=self.list_add)
@@ -434,8 +434,8 @@ class ShowcaseTemplate(_BaseTab):
     def rebuild_demo_list(self):
         self.demo_list_card.clear_children()
         for i, item in enumerate(self.demo_list_items):
-            row     = CardRow(self.demo_list_card, width_flex=1, justify_spread=True)
-            Body    ( row,    f"{i + 1}. {item}", width_flex=1)
+            row     = CardRow(self.demo_list_card, flex_width=1, justify_spread=True)
+            Body    ( row,    f"{i + 1}. {item}", flex_width=1)
             Button  ( row,    "X", color_bg=Style.COLOR_BUTTON_DANGER, fit_content=True,
                       on_click=lambda idx=i: self.list_remove(idx))
 
@@ -453,21 +453,21 @@ class ShowcaseTemplate(_BaseTab):
     def demo_540_row_col_nesting(self, parent):
         Title   ( parent, "Row & Col Nesting", glow=True)
         Body    ( parent, "Alternate Row and Col to build any layout:")
-        row     = Row(parent, width_flex=1, height_flex=1)
-        left    = CardCol(row, width_flex=1)
+        row     = Row(parent, flex_width=1, flex_height=1)
+        left    = CardCol(row, flex_width=1)
         Title   ( left,   "Sidebar")
         Button  ( left,   "Nav 1")
         Button  ( left,   "Nav 2")
         Button  ( left,   "Nav 3")
         Spacer  ( left)
         Detail  ( left,   "v0.1.0")
-        right   = Col(row, width_flex=3)
-        top     = CardCol(right, width_flex=1)
+        right   = Col(row, flex_width=3)
+        top     = CardCol(right, flex_width=1)
         Title   ( top,    "Main Content")
         Body    ( top,    "This is a classic sidebar + main layout.")
-        bot     = Row(right, width_flex=1)
-        CardCol ( bot, width_flex=1).tap(lambda c: Body(c, "Footer Left"))
-        CardCol ( bot, width_flex=1).tap(lambda c: Body(c, "Footer Right"))
+        bot     = Row(right, flex_width=1)
+        CardCol ( bot, flex_width=1).tap(lambda c: Body(c, "Footer Left"))
+        CardCol ( bot, flex_width=1).tap(lambda c: Body(c, "Footer Right"))
 
     def demo_600_on_click_me(self, parent):
         Title   ( parent, "on_click_me", glow=True)
@@ -481,7 +481,7 @@ class ShowcaseTemplate(_BaseTab):
         Title   ( parent, "Widget Registry", glow=True)
         Body    ( parent, "Name a widget. Find it from anywhere:")
         Body    ( parent, "Hello!", name="lbl_registry_demo")
-        row     = Row(parent, width_flex=1)
+        row     = Row(parent, flex_width=1)
         Button  ( row,    "Change Text", color_bg=Style.COLOR_BUTTON_CTA,
                   on_click=lambda: self.form.widgets["lbl_registry_demo"].set_text("Changed!"))
         Button  ( row,    "Reset",       color_bg=Style.COLOR_BUTTON_SECONDARY,

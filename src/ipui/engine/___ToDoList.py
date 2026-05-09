@@ -63,7 +63,7 @@ Clean up list
 33) DONE in colosseum put status up and remove that first card on left pane.
 66) DONE not loving the Text's names for sizes.  label1,2,3,4,5 might work better...
 71) DONE: Add Codebox
-80) Improve (Scrollable containers forbidding width_flex/height_flex on children
+80) Improve (Scrollable containers forbidding flex_width/flex_height on children
 71) DONE: Codebox not showing full length
 73) DONE: 2nd registry by form.
 75) DONE: Add DAG Info To WidgetTree
@@ -79,7 +79,7 @@ Clean up list
 90) Tackle scrolling issue and ITERATIVE FLEX ALLOCATION
 86) DONE: kill the log intercept
 91) DONE: Fixed layout issue on widgets.
-96) DONE: Rename width_flex and height_flex
+96) DONE: Rename flex_width and flex_height
 112) DONE: Fixed defect with textbox not syncing to pyline on open.
 97) DONE:Move src\_forms to src\ipui\_forms
 35) DONE:Eliminate drift for printing newline. (example: parent.form.show_modal(f"Coming Soon:\n{sel[0]})
@@ -300,14 +300,14 @@ Clean up list
 283) DONE:display_name upgrade — first_child_text property on _BaseWidget peeks two levels deep for child text content, so unnamed containers show CardCol('Welcome to...') instead of CardCol('CardCol')
 284) DONE:Error message restructure — "A widget collapsed and cannot display its children" → ROOT CAUSE → FIX → EXAMPLE
 285) DONE:Origin link fixed — File: "..."  Class: ...  Method: ... format, and gets file from method instead of class to avoid the __main__ built-in class bug
-286) DONE:Welcome.py fix — removed competing height_flex values that caused the starvation
+286) DONE:Welcome.py fix — removed competing flex_height values that caused the starvation
 
 ######################################################################
 4/18
 ######################################################################
 225) DONE:Heat seeking missle from debug tree
 287) DONE:Finished verbiage on welcome page.
-274) DONE:Fix ez.Err message origin in MgrSanity... identify by removing height_flex=1 from welcome.py ProudFeatures SCroller.  Origin- not clickable... at worst case... in class NewTab, not on NewTab.
+274) DONE:Fix ez.Err message origin in MgrSanity... identify by removing flex_height=1 from welcome.py ProudFeatures SCroller.  Origin- not clickable... at worst case... in class NewTab, not on NewTab.
 278) DONE:WHY DOES  welcomeWhyCOLLAPSE, collapse.
 213) DONE:In baseform, hwo do we fix the event handling fiasco
 257) DONE:add ip_activated to readme.
@@ -461,6 +461,19 @@ Clean up list
 380) DONE: Added image support to MarkdownBody
 381) DONE: be consistent in naming docs... lets do underscores
 382) DONE: still issue creating db in neuroforge with enter key vs button
+383) DONE: Tested every  link in Readme TOC
+
+######################################################################
+5/9
+######################################################################
+double checked all code in readme.
+read all readme one more time
+fixed 3 issue in reactive if more than one lol.
+renamed width_flex to flex_width
+renamed height_fle to flex_height
+changed res independence to be based on window size instead of screen size.
+
+
 ######################################################################
 Pending for V0.1
 ######################################################################

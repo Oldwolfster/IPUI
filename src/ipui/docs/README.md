@@ -1,5 +1,5 @@
 # IPUI - Idiot Proof UI - Because we've all spent 3 hours debugging a button!
-**Version: 0.1.0 Rev 055**
+**Version: 0.1.0 Rev 057**
 
 A lightweight, opinionated Python/Pygame UI framework that makes building complex tabbed interfaces *ridiculously* simple.
 
@@ -24,6 +24,7 @@ python -m pip install ipui
 ## Table of Contents
 
 - [The IPUI Advantage](#the-ipui-advantage)
+- [Any Screen](#Resolution-Independence)
 - [Installation](#Installation)
 - [Important Note: Why IPUI Does Things Differently](#important-note-why-ipui-does-things-differently)
 - [Quick Start](#quick-start)
@@ -41,6 +42,7 @@ python -m pip install ipui
 - [The IPUI WAY](#the-ipui-way)
 - [Updating the UI](#updating-the-ui)
   - [Imperative — Direct, Surgical](#imperative--direct-surgical)
+  - [Pipeline — Works across tabs](#Pipeline)
   - [Reactive — Declare Relationships, Let the Framework Propagate](#reactive--declare-relationships-let-the-framework-propagate)
   - [Which One Should You Use?](#which-one-should-you-use)
 - [Lifecycle Hooks](#lifecycle-hooks)
@@ -56,8 +58,6 @@ python -m pip install ipui
   - [Tab Control at Runtime](#tab-control-at-runtime)
   - [Guarding Tab Switches with `tab_on_change`](#guarding-tab-switches-with-tab_on_change)
 - [Tabless Mode](#tabless-mode)
-- [Reactive Pipeline](#reactive-pipeline)
-- [Imperative Approach](#imperative-approach)
 - [Construction-Time Safety](#construction-time-safety)
 - [Inline Parent — Construction is Attachment](#inline-parent---construction-is-attachment)
 - [Two Paths to `on_click`](#two-paths-to-on_click)
@@ -73,12 +73,11 @@ python -m pip install ipui
 
 ---
 
-
 ## Additional Documentation
 - [Why IPUI Does Things Differently](https://github.com/Oldwolfster/IPUI/blob/main/docs/Why_IPUI_Does_Things_Differently.md)
 - [Lifecycle Timing](https://github.com/Oldwolfster/IPUI/blob/main/docs/Lifecycle_Timing.md)
 - [Layout Guide](https://github.com/Oldwolfster/IPUI/blob/main/docs/IPUI_Layout_Guide_Original_Flex.md)
-- [Naming Conventions](https://github.com/Oldwolfster/IPUI/blob/main/docs/NamingAndConventions.md)
+- [Naming Conventions](https://github.com/Oldwolfster/IPUI/blob/main/docs/Naming_And_Conventions.md)
 - [Reading IPUI Source Code](https://github.com/Oldwolfster/IPUI/blob/main/docs/Reading_IPUI_Source_Code.md)
 
 ---
@@ -99,6 +98,7 @@ python -m pip install ipui
 - 📜 **One-Touch Scrolling:** Make any Card scrollable with a single parameter—no complex viewport setup required. Scrollbars are styled automatically.
 - 📱 **Resolution Independent:** UI scales automatically to physical screen height, so it stays usable on an old laptop or a 4K monitor.  **Changing aspect ratio can still cause issues**
 - 🔄 **Multiple Update Styles:** Use DAG-based reactivity, pipeline-driven synchronization, or direct widget access—whichever fits the job best.
+- 🎨 **Styles and Palettes you can skin to whatever tastes/colors you need.
 - ⛓️ **Data Pipeline:** Bind widgets to a Pipeline Key and let IPUI propagate updates automatically. Derives stay in sync with zero manual update code.
 - 🎮 **Pygame Lifecycle Hooks:** `ip_think`, `ip_draw`, and `ip_draw_hud` give you full access to the game loop without fighting the framework.
 - 💡 **Multi-Tier Tooltips:** Choose between standard hover tips or "Super Tooltips"—pinnable, scrollable windows capable of displaying deep technical data.
@@ -109,6 +109,70 @@ python -m pip install ipui
 - 📊 **Grid:** The baddest grid in the pygame ecosystem — and not just because it looks good. Feed it lists, dicts, SQLite tables, or SQL queries; it handles pagination, sorting across pages, and query-wrapped filtering/sorting for database-backed views.  It adapts to your workflow.
 - 📚 **Self-Documenting:** Documentation stays in sync with the framework by reading the source code directly.
 - 📈 **Live Matplotlib Charts:** Embed real-time updating research visuals directly in your pygame UI—useful for training curves, experiment monitoring, and diagnostics.
+
+---
+## Resolution Independence
+
+Can you tell which of these is running at 700×450 and which is at 3840×2160?
+
+![Showcase Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/welcome_700X450.png)
+
+
+![Showcase Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/welcome_4k.png)
+
+
+*Neither should embarrass you on a laptop or a 4K monitor.*
+
+IPUI handles resolution automatically through three layered mechanisms:
+
+**1. Declarative layout is inherently unitless.**
+Flex ratios, pane weights, and container relationships are all proportional. There are no hardcoded pixel coordinates to break when the window grows.
+
+**2. Text widgets are semantic, not sized.**
+You don't ask for "14pt bold." You ask for a `Title`, `Heading`, `Body`, or `Detail`. IPUI maps those roles to sizes tuned for the current resolution — automatically.
+
+**3. Spacing tokens scale with the display.**
+Padding, gaps, borders, and scrollbars are all derived from a single multiplier that snaps to a resolution bucket at startup:
+
+| Screen Height | Multiplier | Vibe |
+|---------------|------------|------|
+| < 600px       | 1×         | Tiny / embedded |
+| 600–1199px    | 2×         | Laptop / 1080p  |
+| 1200–1999px   | 3×         | 1440p / ultrawide |
+| 2000px+       | 4×         | 4K and up |
+
+**Want autopilot?** Do nothing — it just works.
+**Want fine-grained control?** Override `Style.TOKEN_MULTIPLIER` and call `Style.recalculate()` to tune any token to your exact spec.
+
+
+---
+
+## Performance
+
+No guessing here! IPUI ships a benchmark tool — open the dev tools(F12), hit **Optimizer**, and run the numbers yourself.
+
+Three scenarios, 5 samples each, N=1000:
+
+| Scenario   | What it tests                              | med ms  |
+|------------|--------------------------------------------|---------|
+| Flat Wall  | 1,000 stacked Labels in a Card             | ~75 ms  |
+| Wide Tree  | 1,000 sibling Cards under one root         | ~110 ms |
+| Wrap Storm | 1,000 wrapping Body widgets (multi-pass)   | ~430 ms |
+
+A typical IPUI screen has 20–200 widgets. At that scale, layout runs in low double-digit milliseconds.
+
+Not bad for an interpreted language (if you need raw speed C++, Go, or Assembler would serve you better)  
+
+> IPUI isn't about speed of widget rendering.  
+> **It's about speed** of putting together a UI with a minimal amount of code.
+> and a minimal amount of hassle!
+
+Wrap-heavy layouts cost more — text wrapping forces a second layout pass. If you're building a wall of wrapping prose, you'll feel it. Everything else is comfortably fast for Python UI work.
+
+Run it before and after an engine change. The delta tells you everything.
+
+![Showcase Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/optimizer.png)
+
 
 ---
 
@@ -125,7 +189,11 @@ Create and activate a virtual environment:
 
 ```bat
 python -m venv testenv
+rem This may take a moment. If it succeeds, Python returns to the prompt without printing a success message.
+
 testenv\Scripts\activate.bat
+rem After activation, your prompt should change to something like:
+rem (testenv) C:\ipui-test
 ```
 
 Install `ipui`:
@@ -197,13 +265,12 @@ from ipui import *
 
 class SmokeTest(_BaseForm):                 # ← Doesn't need to match file but can
     TAB_LAYOUT = {
-        "Hello World"   :["welcome"     ],  # ← This tab works immediately...
-                                            #   Due to the welcome method below
-        "Widgets"       :["demo","demo2"],  # ← Will trigger template picker
-        "Bouncing Ball" :["arena", None ],  # ← Will trigger template picker
+        "Hello World"   :["welcome"     ],   # ← The "Hello World" tab runs the builder 'welcome'
+        "Widgets"       :["demo","demo2"],   # ← Will trigger template picker
+        "Bouncing Ball" :["arena", None ],   # ← Will trigger template picker
     }
     
-    def welcome(self, parent):               # ← matches "welcome" in TAB_LAYOUT
+    def welcome(self, parent):               # ← Builder from "Hello World" in TAB_LAYOUT
         Banner  (parent, "IPUI"              , text_align=CENTER, glow=True)
         Body    (parent, "Easy to get right!", text_align=CENTER)
         Heading (parent, "Hard to get wrong.", text_align=CENTER)
@@ -309,9 +376,9 @@ Main Form ➔ Tab File (Hey_There.py) ➔ Pane Methods (def welcome(self):)
 This unconventional approach solves three major UI development headaches:
 - Visual Project Structure: You can find tab logic by looking at your file explorer tree. There is no need to open files just to hunt down class names.
 - **NO IMPORTS NEEDED** — not needing them is nice. Not needing to maintain them as you revise content is even nicer.
-- **NO CIRCULAR IMPORTS**  No extra imports.  No extra risk of this nasty little error. 
+- **NO CIRCULAR IMPORTS**  No extra imports.  No extra risk of throwing this little party :) 
 
-And it's really easy for IPUI to auto-scaffold the small bit of boilerplate for the 'skeleton'  of what you setup in Tab_Layout (it isn't much - but it's details you don't need to get correct)  
+> The less we need to get right, the better!
 
 
 ```python
@@ -366,25 +433,25 @@ class of "widget exists but isn't visible" bugs is gone.
 Need to go deeper? Same rule:
 
 ```python
-def demo(self, parent):                 # ← parent is root widget.     
-    card  = Card(parent)                # This Card's parent is parent.
-    Title(card, "My Tree")              # This Heading's parent is card.
-    Heading(card, "Same parent")
-
-    inner = Card(card)                  # A card nested inside the first card
-    Body(inner, "I'm one level deeper") # A branch of inner
-    Body(inner, "So am I")
-
-    plate= Plate(inner)
-    row1 = Row(plate)                   # back in the outer card, now horizontal
-    Body(row1, "We Are")
-    Body(row1, "Stuck")
-    Body(row1, "Together")
-
-    row2 = Row(plate,justify_spread=True)                 
-    Body(row2, "We Have")
-    Body(row2, "Plenty")
-    Body(row2, "of Space")
+        def demo(self, parent):                 # ← parent is root widget.     
+            card  = Card(parent)                # This Card's parent is parent.
+            Title(card, "My Tree")              # This Heading's parent is card.
+            Heading(card, "Same parent")
+        
+            inner = Card(card)                  # A card nested inside the first card
+            Body(inner, "I'm one level deeper") # A branch of inner
+            Body(inner, "So am I")
+        
+            plate= Plate(inner)
+            row1 = Row(plate)                   # back in the outer card, now horizontal
+            Body(row1, "We Are")
+            Body(row1, "Stuck")
+            Body(row1, "Together")
+        
+            row2 = Row(plate,justify_spread=True)                 
+            Body(row2, "We Have")
+            Body(row2, "Plenty")
+            Body(row2, "of Space")
 
 ```
 
@@ -392,23 +459,25 @@ Everything stacks vertically by default. Need widgets side by side? `Row` is a
 transparent horizontal container — pure structure, no visual chrome:
 
 ```python
-def demo(self, parent):            # ← parent is the pane root
-    card  = Card(parent)           # card attaches to the pane
-    Title(card, "My Tree")         # Title attaches to card
-    Heading(card, "Same parent")
-
-    inner = Card(card)
-    Body(inner, "I'm one level deeper")
-    Body(inner, "So am I")
-
-    row = Row(card)                 # back in the outer card, now horizontal
-    Body(row, "Left")
-    Body(row, "Middle")
-    Body(row, "Right")
+    def demo(self, parent):            # ← parent is the pane root
+        card  = Card(parent)           # card attaches to the pane
+        Title(card, "My Tree")         # Title attaches to card
+        Heading(card, "Same parent")
+    
+        inner = Card(card)
+        Body(inner, "I'm one level deeper")
+        Body(inner, "So am I")
+    
+        row = Row(card)                 # back in the outer card, now horizontal
+        Body(row, "Left")
+        Body(row, "Middle")
+        Body(row, "Right")
 ```
 
-The pattern never changes: first argument is the parent, attachment is
-immediate. Build the tree by building widgets.
+> **The pattern never changes:** 
+> - First argument is the parent, 
+> - Attachment is Immediate.
+> - Build the tree by building widgets.
 ---
 
 ### Where does your logic live? — `ip_*` hooks
@@ -428,7 +497,10 @@ The framework calls these; you override them. Together with pane methods, that's
 
 > **If it lays out widgets, it goes in a pane method. If it ticks, decides, animates, or paints custom graphics, it goes in an `ip_*` hook.**
 
-Here's the split in a complete working example:
+> Run SmokeTest
+> Click Bouncing Ball
+> Try scaffolding 'Bare Bones'
+> BareBones.py is created
 
 ```python
 from ipui import *
@@ -511,34 +583,71 @@ Most real apps use all three: imperative for one-off direct updates, pipeline fo
 Store widget references, update them by hand:
 
 ```python
-def arena(self, parent):                                # ← pane method: parent root of widget tree for this parent
-    self.lbl_quadrant  = Body(parent, "Quadrant: —")    # NOTE: Now we are storing reference to the widgets
-    self.lbl_direction = Body(parent, "Direction: —")
-    self.lbl_warning   = Body(parent, "")
+    # REPLACE METHOD ARENA
+    def arena(self, parent):                                # ← pane method: builds the UI
+        self.lbl_quadrant  = Body(parent, "Quadrant: —")    # NOTE: Now we are storing reference to the widgets
+        self.lbl_direction = Body(parent, "Direction: —")
+        self.lbl_warning   = Body(parent, "")
 
-def ip_think(self, ip):
-    self.ball_x += self.ball_dx * ip.dt
-    self.ball_y += self.ball_dy * ip.dt
-    self.bounce_off_walls()
 
-    self.lbl_quadrant .set_text(f"Quadrant: {self.compute_quadrant()}")
-    self.lbl_direction.set_text(f"Direction: {self.compute_direction()}")
-    self.lbl_warning  .set_text(self.compute_warning())
+    def ip_think(self, ip):
+        self.ball_x += self.ball_dx * ip.dt                 # No change
+        self.ball_y += self.ball_dy * ip.dt                 # No change
+        self.bounce_off_walls()                             # No change
+        
+        # Imperative Update
+        self.lbl_quadrant .set_text(f"Quadrant: {self.compute_quadrant()}")
+        self.lbl_direction.set_text(f"Direction: {self.compute_direction()}")
+        self.lbl_warning  .set_text(self.compute_warning())
 
-def compute_quadrant_text (self, ball_x,  ball_y):  return f"Quadrant: {('NW' if ball_y<0.5 else 'SW') if ball_x<0.5 else ('NE' if ball_y<0.5 else 'SE')}"
-def compute_direction_text(self, ball_dx, ball_dy): return f"Direction: {'→' if ball_dx>0 else '←'}{'↓' if ball_dy>0 else '↑'}"
-def compute_warning_text  (self, ball_x,  ball_y):  return "⚠ OMG we are going to crash!" if min(ball_x, ball_y, 1-ball_x, 1-ball_y) < 0.05 else ""
+    # No change to ip_setup and ip_draw
+        
+    # Add these three methods
+    def compute_quadrant_text (self, ball_x,  ball_y):  return f"Quadrant: {('NW' if self.ball_y<0.5 else 'SW') if self.ball_x<0.5 else ('NE' if self.ball_y<0.5 else 'SE')}"
+    def compute_direction_text(self, ball_dx, ball_dy): return f"Direction: {'→' if self.ball_dx>0 else '←'}{'↓' if self.ball_dy>0 else '↑'}"
+    def compute_warning_text  (self, ball_x,  ball_y):  return "⚠ OMG we are going to crash!" if min(self.ball_x, self.ball_y, 1-self.ball_x, 1-self.ball_y) < 0.05 else ""
 ```
 
 Every update is an explicit line you can grep for and breakpoint on. Great when one widget reflects one piece of state.
 
 ---
 
+### Pipeline
+
+The pipeline is a centralized key-value store. Write to it, and any widget that declared a dependency is automatically updated:
+
+```python
+# Write
+self.form.pipeline_set("training_active", True)
+
+# Read
+active = self.form.pipeline_read("training_active")
+```
+
+> The pipeline also pushes values back to source widgets 
+> — if you call `pipeline_set("my_key", "")`
+> all widgets with `pipeline_key="my_key"` updates its displayed text automatically.
+
+**Seeding initial values:** declare `PIPELINE_DEFAULTS` on your form to populate the pipeline at startup:
+
+```python
+class MyApp(_BaseForm):             # Be sure to put this in form - not a _BaseTab file.
+    PIPELINE_DEFAULTS = {
+        "training_active": False,
+        "epoch":           3141596,
+        "config_valid":    True,
+    }
+```
+
+
 ### Reactive — declare relationships, let the framework propagate
 
 `BINDINGS` is a class-level dict that wires pipeline keys to widget properties. When a key changes, the framework calls your compute method and applies the result — no manual update code needed:
 
 ```python
+from ipui import *
+import pygame
+
 class BouncingBall(_BaseTab):
 
     BINDINGS = {
@@ -547,21 +656,50 @@ class BouncingBall(_BaseTab):
         "lbl_warning":   {"property": "text", "compute": "compute_warning",   "triggers": ["ball_x", "ball_y"]},
     }
 
+    # replace Arena with this - Reactive uses named widgets instead of instance references
+    def arena(self, parent):
+        Body(parent, "Quadrant: —"  , name="lbl_quadrant" ) # NOTE: No self.lbl_quadrant
+        Body(parent, "Direction: —" , name="lbl_direction") # NOTE: No self.lbl_direction
+        Body(parent, ""             , name="lbl_warning"  ) # NOTE: No self.lbl_warning
+
+        
+    def ip_setup(self, ip):                          # ← runs once
+        self.ball_x,  self.ball_y  = 0.5, 0.5        # start in the middle (normalized)
+        self.ball_dx, self.ball_dy = 0.4, 0.3        # velocity (normalized units / sec)
+
+        
     def ip_think(self, ip):
-        self.ball_x += self.ball_dx * ip.dt
-        self.ball_y += self.ball_dy * ip.dt
-        self.bounce_off_walls()
-        self.form.pipeline_set("ball_x",  self.ball_x)   # framework sees the change,
-        self.form.pipeline_set("ball_y",  self.ball_y)   # calls the right compute methods,
-        self.form.pipeline_set("ball_dx", self.ball_dx)  # and updates the widgets.
+        self.ball_x += self.ball_dx * ip.dt                 # No change
+        self.ball_y += self.ball_dy * ip.dt                 # No change
+        self.bounce_off_walls()                             # No change
+
+        # Replace Imperative update with Reactive update.   # Set pipeline values
+        self.form.pipeline_set("ball_x",  self.ball_x)      # framework sees the change,
+        self.form.pipeline_set("ball_y",  self.ball_y)      # calls the right compute methods,
+        self.form.pipeline_set("ball_dx", self.ball_dx)     # and updates the widgets.
         self.form.pipeline_set("ball_dy", self.ball_dy)
 
-    def compute_quadrant (self, ball_x, ball_y):  return f"Quadrant: {('NW' if ball_y<0.5 else 'SW') if ball_x<0.5 else ('NE' if ball_y<0.5 else 'SE')}"
-    def compute_direction(self, ball_dx, ball_dy): return f"Direction: {'→' if ball_dx>0 else '←'}{'↓' if ball_dy>0 else '↑'}"
-    def compute_warning  (self, ball_x, ball_y):  return "⚠ near wall" if min(ball_x, ball_y, 1-ball_x, 1-ball_y) < 0.05 else ""
-```
 
-Add a fourth widget? One new entry in `BINDINGS`. `ip_think` doesn't grow.
+    def ip_draw(self, ip):                           # ← custom rendering
+        pos = ip.to_screen(self.ball_x, self.ball_y) # normalized → screen pixels
+        r   = ip.scale_y(0.02)                       # normalized radius → pixels
+        pygame.draw.circle(ip.surface, (255, 160, 40), pos, r)
+
+        
+    def compute_quadrant (self, ball_x, ball_y):  return f"Quadrant: {('NW' if ball_y<0.5 else 'SW') if ball_x<0.5 else ('NE' if ball_y<0.5 else 'SE')}"
+    def compute_direction(self, ball_dx, ball_dy): return f"Direction: {'Right ' if ball_dx>0 else 'Left '}{'Down' if ball_dy>0 else 'Up'}"
+    def compute_warning  (self, ball_x, ball_y):  return "I don't want to hit the wall" if min(ball_x, ball_y, 1-ball_x, 1-ball_y) < 0.05 else ""
+
+
+    def bounce_off_walls(self):
+        if self.ball_x < 0: self.ball_dx =  0.4
+        if self.ball_x > 1: self.ball_dx = -0.4
+        if self.ball_y < 0: self.ball_dy =  0.3
+        if self.ball_y > 1: self.ball_dy = -0.3
+```
+Feels like a little more work doesn't it?
+But add a fourth widget? One new entry in `BINDINGS`. `ip_think` doesn't grow.
+
 
 ---
 
@@ -766,7 +904,7 @@ def ip_think(self, ip):
         self.run_physics(ip)
 ```
 
-**Simple Default** — if you just need one, the syntax is a bit simpler.
+**Simple Default** — if you just need one, easiest to use 'ip.state'.
 
 **Multiple state machines** — if you need more than one you can name them.
 
@@ -968,20 +1106,22 @@ All text widgets support `glow=True` (molten-orange forge effect) and `text_alig
 
 ### Layout Containers
 
-> **A note on IPUI architecture:** widgets are not divided into rigid categories like "containers" and "leaves." Shared behaviors live in the framework layer, and individual widgets opt into the behaviors they need.
->
-> **Any widget can be a container/parent.** Drop an icon inside a button, or a whole subtree inside a label, if that's what your UI needs.
->
-> The widgets below were designed to be containers to make layout easier.
+> - IPUI widgets are not divided into rigid categories like "containers" and "leaves."
+> - Shared behaviors live in the framework layer.
+> - Widgets become what they are by opting into the behaviors they need.
+
+
+> Any widget can be a container/parent. Drop an icon inside a button; that button is a parent.
+> But these widgets are setup to **make nice containers for you**
 
 
 | Widget    | Direction  | Chrome          | Usage                                    |
 |-----------|------------|-----------------|------------------------------------------|
 | `Row`     | Horizontal | None            | `Row(parent, justify_spread=True)`       |
 | `Col`     | Vertical   | None            | `Col(parent)`                            |
-| `CardRow` | Horizontal | Beveled, filled | `CardRow(parent, width_flex=1)`       |
+| `CardRow` | Horizontal | Beveled, filled | `CardRow(parent, flex_width=1)`       |
 | `CardCol` | Vertical   | Beveled, filled | `CardCol(parent, scroll_v=True)`       |
-| `Card`    | Vertical   | Beveled, filled | `Card(parent, height_flex=1)`         |
+| `Card`    | Vertical   | Beveled, filled | `Card(parent, flex_height=1)`         |
 
 `Row`/`Col` are invisible structure. `CardRow`/`CardCol`/`Card` have a background and beveled edges.
 
@@ -992,7 +1132,7 @@ All text widgets support `glow=True` (molten-orange forge effect) and `text_alig
 Button(parent, "Launch",
     color_bg = Style.COLOR_BUTTON_CTA,
     on_click = self.launch_training,
-    width_flex = 2)
+    flex_width = 2)
 ```
 Automatic hover brightening, press bevel inversion, disabled dimming using HSL math.
 > Note:  Automatically generating hover/disabled colors saves a lot of work but isn't always perfect.
@@ -1053,7 +1193,7 @@ Sorting works across pages — sort the full dataset, then paginate the sorted r
 
 **Chart**
 ```python
-chart = Chart(parent, width_flex=1, height_flex=1)
+chart = Chart(parent, flex_width=1, flex_height=1)
 chart.set_data(
     lines   = {"Train Loss": [(0, 0.9), (1, 0.7), (2, 0.5)],
                "Val Loss":   [(0, 0.95),(1, 0.75),(2, 0.6)]},
@@ -1066,19 +1206,19 @@ chart.set_data(
 
 ## Layout System
 
-IPUI uses a flex-inspired layout. Set `width_flex` or `height_flex` to a weight; the remaining space is distributed proportionally:
+IPUI uses a flex-inspired layout. Set `flex_width` or `flex_height` to a weight; the remaining space is distributed proportionally:
 
 ```python
 row = Row(parent)
-Col(row, width_flex=1)   # gets 1/3 of width
-Col(row, width_flex=2)   # gets 2/3 of width
+Col(row, flex_width=1)   # gets 1/3 of width
+Col(row, flex_width=2)   # gets 2/3 of width
 ```
 
 Unset (or `0`) means the widget takes its natural size. No explicit pixel math required.
 
 **Scrollable containers:**
 ```python
-CardCol(parent, scroll_v=True, height_flex=1)
+CardCol(parent, scroll_v=True, flex_height=1)
 ```
 Scrollable containers clip and scroll their children automatically. Scrollbars support both mouse wheel and click-and-drag.
 
@@ -1213,29 +1353,27 @@ Skip `TAB_LAYOUT` entirely. Build widgets in `build()`. Use the same lifecycle h
 
 ### Minimal Example
 ```python
-    from ipui import *
+from ipui import *
 
-    class MyApp(_BaseForm):
-        def build(self):
-            Banner(self, "My App", glow=True, text_align=CENTER)
-            Title(self, "No tabs. No panes. Just widgets.", text_align=CENTER)
-            Body(self, "Everything lives right here.", text_align=CENTER)
-            Button(self, "Do Something",
-                color_bg=Style.COLOR_BUTTON_CTA,
-                on_click=self.do_something)
+class MyApp(_BaseForm):
+    def build(self):
+        Banner(self, "My App", glow=True, text_align=CENTER)
+        Title(self, "No tabs. No panes. Just widgets.", text_align=CENTER)
+        Body(self, "Everything lives right here.", text_align=CENTER)
+        Button(self, "Do Something", color_bg=Style.COLOR_BUTTON_CTA, on_click=self.do_something)
 
-        def do_something(self):
-            self.show_modal("It works!")
+    def do_something(self):
+        self.show_modal("It works!")
 
-    if __name__ == "__main__":
-        show(MyApp)
+if __name__ == "__main__":
+    show(MyApp)
 ```
 
 No `TAB_LAYOUT`. No `_BaseTab`. One class, one file, name it whatever you want.
 
 ---
 
-### Using Lifecycle Hooks
+### Tabless Lifecycle Hooks are the Same
 
 The same hooks work on a tabless form as on any `_BaseTab` pane:
 ```python
@@ -1292,116 +1430,12 @@ Every hook — `ip_setup`, `ip_activated`, `ip_think`, `ip_draw`, `ip_draw_hud` 
 
 Tabless is the on-ramp. Tabs are the highway. Both use the same engine.
 
----
-
-### Layout Without Panes
-
-In tabbed mode, panes give you automatic side-by-side columns. In tabless mode, use `Row` and `Col` directly:
-
-```python
-    class Dashboard(_BaseForm):
-        def build(self):
-            row = Row(self, width_flex=1, height_flex=1)
-
-            sidebar = CardCol(row, width_flex=1)
-            Title(sidebar, "Controls")
-            Button(sidebar, "Reset", on_click=self.reset)
-
-            main = CardCol(row, width_flex=3)
-            Title(main, "Output")
-            self.lbl_result = Body(main, "Ready")
-```
-
-You get the same layout flexibility — just with explicit containers instead of pane slots.
 
 ---
+### Wanna nerd out with me????
 
-## Reactive Pipeline
-
-The pipeline is a centralized key-value store. Write to it, and any widget that declared a dependency is automatically updated:
-
-```python
-# Write
-self.form.pipeline_set("training_active", True)
-
-# Read
-active = self.form.pipeline_read("training_active")
-```
-
-**The pipeline works on its own.** Any widget with a `pipeline_key=` parameter is bound — no `BINDINGS` required. Write to the key, every bound widget updates. This alone is enough to drive serious workloads: in NeuroForge, batches of 20,000+ neural-network configurations are wired through nothing but pipeline keys and `PIPELINE_DEFAULTS`.
-
-`BINDINGS` is the optional layer on top, for derived display logic. Use it when a widget's property depends on a *combination* of pipeline keys, or needs a compute step before display.
-
-Declare widget reactions in `BINDINGS` at the top of your _BaseTab:
-
-```python
-class TrainingPane(_BaseTab):
-    BINDINGS = {
-        "btn_start": {
-            "property": "enabled",
-            "compute":  "compute_start_enabled",
-            "triggers": ["training_active", "config_valid"],
-        },
-        "lbl_epoch": {
-            "property": "text",
-            "compute":  "compute_epoch_label",
-            "triggers": ["epoch"],
-        },
-    }
-
-    def compute_start_enabled(self, training_active, config_valid):
-        if training_active:
-            return "Training in progress"   # disabled with tooltip reason
-        return True                         # enabled
-
-    def compute_epoch_label(self, epoch):
-        return f"Epoch: {epoch}"
-```
-
-Each entry maps a widget name (`name=` parameter) → property → compute method → trigger keys. When any trigger key changes, the compute method runs and the property is updated. No manual wiring. No update-ordering bugs.
-
-The pipeline also pushes values back to source widgets — if you call `pipeline_set("my_key", "")`, any TextBox with `pipeline_key="my_key"` updates its displayed text automatically.
-
-**Seeding initial values:** declare `PIPELINE_DEFAULTS` on your form to populate the pipeline at startup:
-
-```python
-class MyApp(_BaseForm):
-    PIPELINE_DEFAULTS = {
-        "training_active": False,
-        "epoch":           0,
-        "config_valid":    True,
-    }
-```
-
----
-
-## Imperative Approach
-
-Store widget references and drive them yourself:
-
-```python
-class MyPane(_BaseTab):
-    def widgets(self, parent):
-        self.lbl_count = Body(parent, "0 selected", name="lbl_count")
-        self.btn_run   = Button(parent, "Run",
-                             color_bg = Style.COLOR_BUTTON_CTA,
-                             on_click = self.on_run)
-
-    def on_selection_changed(self, count):
-        self.lbl_count.set_text(f"{count} selected")
-        if count == 0:
-            self.btn_run.enabled=False
-            self.btn_run.tooltip="Select at least one item"
-        else:
-            self.btn_run.enabled=True
-```
-
-Access named widgets from anywhere via `self.form.widgets["widget_name"]`.
-
----
-
-> 🧠 **The IPUI Philosophy: Engineering for Fitts's Law**
-> IPUI doesn't just put pixels on the screen; it optimizes for the human hand and eye. Every interaction is designed to minimize cognitive load and physical movement.
+> 🧠 **Engineering for Fitts's Law**
+> IPUI doesn't just put pixels/ on the screen; it optimizes for the human hand and eye. Every interaction is designed to minimize cognitive load and physical movement.
 >
 > 🎯 **The Prime Pixel & The Zero-Distance Pin**
 > We leverage **Fitts's Law** — which states that the time to acquire a target is determined by **distance** and **size** — to make your workflow feel instantaneous.
@@ -1444,14 +1478,14 @@ IPUI error messages always announce themselves with the same banner: `Houston we
 Want to wrap a Row in a Plate? Just do it:
 
 ```python
-right = Row(Plate(header, width_flex=1), width_flex=1, pad_y=0)
+right = Row(Plate(header, flex_width=1), flex_width=1, pad_y=0)
 ```
 
 Same as:
 
 ```python
-plate_wrapper = Plate(header, width_flex=1)
-right = Row(plate_wrapper, width_flex=1, pad_y=0)
+plate_wrapper = Plate(header, flex_width=1)
+right = Row(plate_wrapper, flex_width=1, pad_y=0)
 ```
 
 ---
@@ -1520,13 +1554,15 @@ Both tools work on any IPUI app with zero setup — no flags, no config, no impo
 
 ---
 
-## Launching Your App
+## Launching Your App From a Different File
+
+> I personally like to have a 'main.py' at the top of the pyramid that at least makes it easy to see where it starts.
 
 ```python
 import ipui
 from myapp import MyApp
 
-ipui.show(MyApp, "My Application")
+ipui.show(MyApp, "My Application")  #MyApp is your _BaseForm class - IMPORT REQUIRED
 ```
 
 `ipui.show()` starts the Pygame loop on the first call. On subsequent calls (from within a running app) it switches the active form — letting you navigate between entirely different screens. Use `ipui.back()` to return to the previous form.
@@ -1573,8 +1609,8 @@ All widgets accept these parameters:
 | `parent`          | widget   | —            | Parent widget (auto-attaches on construction) |
 | `text`            | str      | None         | Display text                                  |
 | `name`            | str      | None         | Registers widget in `form.widgets`            |
-| `width_flex`      | int      | 0            | Flex weight horizontal (0 = natural size)     |
-| `height_flex`     | int      | 0            | Flex weight vertical (0 = natural size)       |
+| `flex_width`      | int      | 0            | Flex weight horizontal (0 = natural size)     |
+| `flex_height`     | int      | 0            | Flex weight vertical (0 = natural size)       |
 | `pad`             | int      | TOKEN_PAD    | Internal padding                              |
 | `gap`             | int      | TOKEN_GAP    | Gap between children                          |
 | `border`          | int      | TOKEN_BORDER | Chrome border thickness                       |
@@ -1975,8 +2011,8 @@ deterministic, no infinite loops, no convergence math.
 
 A two-phase walk over the entire tree.
 
-**Measure (bottom-up).**  Each widget caches `width_minimum` and
-`height_minimum` based on its own surface, its children's mins, and its frame
+**Measure (bottom-up).**  Each widget caches `min_width` and
+`min_height` based on its own surface, its children's mins, and its frame
 (pad + border + gap). Flex children clamp their min to just their frame —
 agreeing to be squeezable in exchange for getting fair-share growth later.
 
@@ -2045,7 +2081,7 @@ its own pad and border.
 
 Two hard rules:
 
-- **Floor:** never below the parent's `width_minimum` / `height_minimum`.
+- **Floor:** never below the parent's `min_width` / `min_height`.
 - **Ceiling:** never beyond the rect Pass 3 settled on. Hug only shrinks.
 
 Children never move. The parent stays centered on its original center, both
@@ -2060,7 +2096,7 @@ can't hug to content size if the content's surfaces are still about to wrap.
 
 | Pass | Mutates | Reads |
 |------|---------|-------|
-| 1. Layout | `width_minimum`, `height_minimum`, `rect`, `scroll_active`, `scroll_offset` | surfaces, frame, flex weights, children |
+| 1. Layout | `min_width`, `min_height`, `rect`, `scroll_active`, `scroll_offset` | surfaces, frame, flex weights, children |
 | 2. Wrap | `my_surface` (text leaves only) | `rect`, `wrap`, surface, frame |
 | 3. Layout | same as Pass 1 | same as Pass 1, with new wrapped surfaces |
 | 4. Hug | `rect` (parents of hug children only) | `hug_parent`, sibling rects, mins |
@@ -2076,7 +2112,7 @@ Every widget in the tree has:
 
 - A `rect` that reflects its final on-screen position and size.
 - A `my_surface` sized correctly for its rect (including any wrapping).
-- A `width_minimum` / `height_minimum` consistent with its current surface.
+- A `min_width` / `min_height` consistent with its current surface.
 - A `scroll_active` flag and `scroll_offset` clamped to the legal range.
 
 `render()` then walks the tree drawing each widget into its rect. The drawing

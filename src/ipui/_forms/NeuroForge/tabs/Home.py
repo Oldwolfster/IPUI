@@ -8,7 +8,7 @@ from ipui import *
 class EZ_Pane(_BaseTab):
 
     def welcome(self, parent):
-        card = CardCol(parent, width_flex=1, height_flex=1)
+        card = CardCol(parent, flex_width=1, flex_height=1)
         Title(card, "Welcome to IPUI", glow=True)
         sub = Plate(card)
         Heading(sub, "Easy to get right:", glow=True)
@@ -32,7 +32,7 @@ class EZ_Pane(_BaseTab):
         Body(row, value, glow=glow, text_align="r")
 
     def metaphor(self, parent):
-        card = CardCol(parent, width_flex=1, height_flex=1)
+        card = CardCol(parent, flex_width=1, flex_height=1)
         Title(card, "Our Metaphor", glow=True)
 
         sub = Plate(card)
@@ -57,7 +57,7 @@ class EZ_Pane(_BaseTab):
         btn = Button(header, "+New", color_bg=Style.COLOR_BUTTON_CTA)
         btn.on_click = lambda: self.form.set_pane(1, self.name_project)
 
-        scroller = CardCol(parent, height_flex=1, scroll_v=True)
+        scroller = CardCol(parent, flex_height=1, scroll_v=True)
         for project_info in projects:
             item = ProjectListItem(scroller, data=project_info)
             item.on_click = lambda p=project_info: self.do_select_project(p.path)

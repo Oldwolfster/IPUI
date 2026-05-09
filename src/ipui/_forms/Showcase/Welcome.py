@@ -207,8 +207,8 @@ class We_HopeYouLoveIPUI(_BaseTab):
         card = Card(scroll)
         Heading(card, "Flex Splits the Remainder", glow=True)
         Body(card, "After fixed-size children are measured, leftover space is divided "
-                   "among flex children by weight. width_flex=2 gets twice the space "
-                   "of width_flex=1. No pixel math required.")
+                   "among flex children by weight. flex_width=2 gets twice the space "
+                   "of flex_width=1. No pixel math required.")
 
         card = Card(scroll)
         Heading(card, "Cards Stack, Rows Flow", glow=True)
@@ -697,6 +697,11 @@ class We_HopeYouLoveIPUI(_BaseTab):
         Body(parent,"",name="IPUI Mantras")
         Title(parent, "Easy to get right - Hard to get wrong", text_align=CENTER)
         Spacer(parent)
-        Title(parent, "Other frameworks hand you the choke, the crank, and the spark. IPUI hands you the key: Where to?", text_align=CENTER)
+        Title(parent, "Other frameworks hand you", text_align=CENTER)
+        Title(parent, "the choke, the crank, and the spark.", text_align=CENTER)
+        Body(parent," ")
+        Title(parent,"IPUI hands you the key!", text_align=CENTER,glow=True)
+        Body(parent, " ")
+        Title(parent,"Where to?", text_align=CENTER)
         Spacer(parent)
         Image(parent, "assets/images/houston.png")

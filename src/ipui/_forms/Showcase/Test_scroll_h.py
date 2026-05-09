@@ -27,7 +27,7 @@ class TestScrollH(_BaseTab):
         Title(parent, text, text_align=CENTER)
 
     def test_box(self, parent, title):
-        box = Card(parent, scroll_v=True, height_flex=1, pad=6, gap=6)
+        box = Card(parent, scroll_v=True, flex_height=1, pad=6, gap=6)
         Heading(box, title, text_align=CENTER)
         return box
 
@@ -77,7 +77,7 @@ class TestScrollH(_BaseTab):
 
     def test_vertical_scroll_with_horizontal_child(self, parent):
         box = self.test_box(parent, "7. Vertical scroll parent, horizontal child")
-        outer = Card(box, scroll_v=True, height_flex=1, pad=8, gap=8)
+        outer = Card(box, scroll_v=True, flex_height=1, pad=8, gap=8)
         for n in range(4):
             Body(outer, f"Vertical filler line {n}")
         row = Row(outer, scroll_h=True, pad=8, gap=8)
@@ -88,7 +88,7 @@ class TestScrollH(_BaseTab):
 
     def test_horizontal_and_vertical_same_widget(self, parent):
         box = self.test_box(parent, "8. Card(scroll_v=True, scroll_h=True)")
-        both = Card(box, scroll_v=True, scroll_h=True, height_flex=1, pad=8, gap=8)
+        both = Card(box, scroll_v=True, scroll_h=True, flex_height=1, pad=8, gap=8)
         for r in range(8):
             row = Row(both, gap=8)
             for c in range(8):

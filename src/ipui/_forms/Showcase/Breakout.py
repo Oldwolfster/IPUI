@@ -10,7 +10,6 @@ class Breakout(_BaseTab):
     # ══════════════════════════════════════════════════════════════
     # SETUP
     # ══════════════════════════════════════════════════════════════
-
     def ip_setup(self, ip):
         self.ball_r         = 0.015
         self.paddle_w       = 0.15
@@ -33,16 +32,6 @@ class Breakout(_BaseTab):
         ip.state.debug()
         self.start_demo()
 
-    def state_demo_playing(self):
-        if not self.bricks or self.lives <= 0:
-            self.start_demo()
-            return
-        if self.ip.key_pressed(Key.Q) or self.ip.key_pressed(Key.SPACE):
-            self.start_game()
-            return
-        self.auto_paddle = self.ball_x
-        self.run_physics(self.ip)
-
     def start_game(self):
         self.score      = 0
         self.lives      = 3
@@ -59,10 +48,6 @@ class Breakout(_BaseTab):
         self.ball_dx = speed * 0.8
         self.ball_dy = -speed
 
-    # ══════════════════════════════════════════════════════════════
-    # STATE DELEGATES
-    # ══════════════════════════════════════════════════════════════
-
     def start_demo(self):
         self.score = 0
         self.lives = 3
@@ -72,6 +57,9 @@ class Breakout(_BaseTab):
         self.ip.state.go("DEMO_PLAYING")
         self.build_hud()
 
+    # ══════════════════════════════════════════════════════════════════════════
+    # STATE DELEGATES - One of these is called depending on the current state
+    # ══════════════════════════════════════════════════════════════════════════
     def state_ready(self):
         ip = self.ip
         self.ball_x = self.paddle_x(ip)
@@ -81,6 +69,16 @@ class Breakout(_BaseTab):
             return
         if ip.mouse_pressed(Mouse.LEFT) and ip.mouse_inside_pane():
             ip.state.go("PLAYING")
+
+    def state_demo_playing(self):
+        if not self.bricks or self.lives <= 0:
+            self.start_demo()
+            return
+        if self.ip.key_pressed(Key.Q) or self.ip.key_pressed(Key.SPACE):
+            self.start_game()
+            return
+        self.auto_paddle = self.ball_x
+        self.run_physics(self.ip)
 
     def state_playing(self):
         self.run_physics(self.ip)
@@ -334,7 +332,7 @@ class Breakout(_BaseTab):
         Spacer(card)
         row  = Row(card)
         Body(row,"      ")
-        hill = Plate(row,pad=0,width_flex=1 ,border=8)
+        hill = Plate(row,pad=0,flex_width=1 ,border=8)
         Body(row,"      ")
         Banner (hill, "BREAKOUT", glow=True,text_align=CENTER,pad=0)
         Spacer(card)
@@ -354,7 +352,7 @@ class Breakout(_BaseTab):
         card = Card(parent)
         Heading( card,   "You Can Build This!", glow=True)
         Body   ( card,   "A real Breakout game. Right here. Right now.\n"
-                         "10 minutes if you're fast.\n"
+                         "10 minutes if you're really fast.\n"
                          "60 minutes if you just learned what a keyboard is.\n"
                          "Either way, you'll be smashing bricks before lunch.")
 
@@ -376,6 +374,6 @@ class Breakout(_BaseTab):
     def code(self, parent):
         Title(parent, "Example of Simple State Machine", glow=True)
 
-        card = Card(parent, scroll_v=True, height_flex=99)
+        card = Card(parent, scroll_v=True, flex_height=99)
         CodeBox(card,
             data  = __file__,)

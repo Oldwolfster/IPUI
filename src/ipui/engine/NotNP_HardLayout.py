@@ -26,7 +26,7 @@ from ipui.engine._BaseWidget import _BaseWidget
 #   7. Set rect on every kid; recurse.
 # ══════════════════════════════════════════════════════════════════
 # Two phases:
-#   MEASURE — bottom-up. Cache width_minimum / height_minimum.
+#   MEASURE — bottom-up. Cache min_width / min_height.
 #   LAYOUT  — top-down.  Resolve flex, assign rect.
 #
 # DRAW is NOT a phase of this engine — _BaseWidget owns drawing,
@@ -45,7 +45,7 @@ class NotNP_HardLayout:
     Single source of truth for min sizes, flex resolution, rect assignment, and
     scrollbar math. Two phases internally:
 
-        MEASURE — bottom-up. Cache width_minimum / height_minimum on every node
+        MEASURE — bottom-up. Cache min_width / min_height on every node
                   from its surface, its children, frame (pad + border), and gap.
                   Flex children clamp their min to frame_x / frame_y so they
                   agree to be squeezable.
@@ -85,7 +85,7 @@ class NotNP_HardLayout:
         return screen.inflate(-margin * 2, -margin * 2)
 
     # ══════════════════════════════════════════════════════════════
-    # PHASE 1: MEASURE — bottom-up, cache width_minimum / height_minimum
+    # PHASE 1: MEASURE — bottom-up, cache min_width / min_height
     # ══════════════════════════════════════════════════════════════
 
     def measure_tree(self, node):
@@ -96,25 +96,25 @@ class NotNP_HardLayout:
 
 
     def measure_node(self, node):
-        """Set width_minimum / height_minimum on one node. Children already measured."""
+        """Set min_width / min_height on one node. Children already measured."""
         width_of_surface,   height_of_surface = self.measure_surface(node)
         width_of_children,  height_of_children = self.measure_children(node)
-        node.width_minimum  = max(width_of_surface, width_of_children)
-        node.height_minimum = max(height_of_surface, height_of_children)
+        node.min_width  = max(width_of_surface, width_of_children)
+        node.min_height = max(height_of_surface, height_of_children)
         self.cap_scroll_v_min(node)
-        if node.width_flex > 0: node.width_minimum   = node.frame_x
-        if node.height_flex > 0: node.height_minimum = node.frame_y
+        if node.flex_width > 0: node.min_width   = node.frame_x
+        if node.flex_height > 0: node.min_height = node.frame_y
 
 
     def cap_scroll_v_min(self, node):
         """Scrollable containers keep content size for scroll math but report minimal min to flex."""
         if not node.scroll_v: return
         if node.horizontal:
-            node.content_size  = node.width_minimum
-            node.width_minimum = node.frame_x
+            node.content_size  = node.min_width
+            node.min_width     = node.frame_x
         else:
-            node.content_size   = node.height_minimum
-            node.height_minimum = node.frame_y
+            node.content_size  = node.min_height
+            node.min_height    = node.frame_y
 
 
 
@@ -135,11 +135,11 @@ class NotNP_HardLayout:
         cross = 0
         for child in kids:
             if node.horizontal:
-                main  += child.width_minimum
-                cross  = max(cross, child.height_minimum)
+                main  += child.min_width
+                cross  = max(cross, child.min_height)
             else:
-                main  += child.height_minimum
-                cross  = max(cross, child.width_minimum)
+                main  += child.min_height
+                cross  = max(cross, child.min_width)
         main += node.gap * max(0, len(kids) - 1)
         if node.horizontal:
             return (main + node.frame_x, cross + node.frame_y)
@@ -182,9 +182,9 @@ class NotNP_HardLayout:
 
     def apply_scroll(self, node, inner):
         """Adjust inner rect for scroll state."""
-        #content   = node.height_minimum if not node.horizontal else node.width_minimum
-        content   = getattr(node, 'content_size', node.height_minimum)
-        getattr(node, 'content_size', node.height_minimum)
+        #content   = node.min_height if not node.horizontal else node.min_width
+        content   = getattr(node, 'content_size', node.min_height)
+        getattr(node, 'content_size', node.min_height)
         main_size = inner.width if node.horizontal else inner.height
         #print(f"SCROLL: {node.display_name} content={content} main_size={main_size} kids={len(node.visible_children)}")    # NEW
         node.scroll_active = content > main_size
@@ -212,9 +212,9 @@ class NotNP_HardLayout:
         sizes     = [None] * len(kids)
         # Lock non-flex children at their minimum
         for i, child in enumerate(kids):
-            flex = child.width_flex if horiz else child.height_flex
+            flex = child.flex_width if horiz else child.flex_height
             if flex == 0:
-                sizes[i] = child.width_minimum if horiz else child.height_minimum
+                sizes[i] = child.min_width if horiz else child.min_height
                 budget   -= sizes[i]
         # Iterative flex resolution
         budget = max(0, budget)
@@ -244,7 +244,7 @@ class NotNP_HardLayout:
         for i, child in enumerate(kids):
             if sizes[i] is not None:
                 continue
-            flex = child.width_flex if horiz else child.height_flex
+            flex = child.flex_width if horiz else child.flex_height
             if flex > 0:
                 pool[i] = flex
         return pool
@@ -255,7 +255,7 @@ class NotNP_HardLayout:
         worst_over = 0
         for idx, flex in pool.items():
             child   = kids[idx]
-            minimum = child.width_minimum if horiz else child.height_minimum
+            minimum = child.min_width if horiz else child.min_height
             share   = fair_unit * flex
             over    = minimum - share
             if over > worst_over:
@@ -264,7 +264,7 @@ class NotNP_HardLayout:
         if worst_idx is None:
             return None
         child = kids[worst_idx]
-        return (worst_idx, child.width_minimum if horiz else child.height_minimum)
+        return (worst_idx, child.min_width if horiz else child.min_height)
 
     def assign_fair_shares(self, kids, sizes, pool, fair_unit):
         """Give remaining pool members their fair share."""
@@ -309,8 +309,8 @@ class NotNP_HardLayout:
             return pygame.Rect(int(pos), inner.top, int(size), inner.height)
         w = inner.width
         x = inner.left
-        if child and getattr(child, 'fit_content', False) and child.width_flex == 0:
-            w = min(w, child.width_minimum)
+        if child and getattr(child, 'fit_content', False) and child.flex_width == 0:
+            w = min(w, child.min_width)
             x = inner.left + (inner.width - w) // 2
         return pygame.Rect(x, int(pos), w, int(size))
     # ══════════════════════════════════════════════════════════════
@@ -324,8 +324,8 @@ class NotNP_HardLayout:
         indent = "  " * depth
         name   = node.name or node.display_name
         rect   = node.rect if node.rect else 'None'
-        width_minimum  = getattr(node, 'width_minimum', '?')
-        height_minimum  = getattr(node, 'height_minimum', '?')
-        print(f"{indent}{type(node).__name__:15} {name:20} min=({width_minimum},{height_minimum})  rect={rect}")
+        min_width  = getattr(node, 'min_width', '?')
+        min_height  = getattr(node, 'min_height', '?')
+        print(f"{indent}{type(node).__name__:15} {name:20} min=({min_width},{min_height})  rect={rect}")
         for child in node.children:
             self.dump_tree(child, depth + 1)

@@ -17,7 +17,7 @@ class TodoApp(_BaseTab):
     def input(self, parent):
         Title(parent, "Add Task")
         self.txt_task = TextBox(parent, placeholder="What needs doing?",
-                                on_submit=self.add_task, width_flex=1)
+                                on_submit=self.add_task, flex_width=1)
         Row(parent)
         Button(parent, "Add",              color_bg=Style.COLOR_BUTTON_CTA,
                on_click=self.add_task)
@@ -28,7 +28,7 @@ class TodoApp(_BaseTab):
         self.update_stats()
 
     def task_list_pane(self, parent):
-        self.task_list = CardCol(parent, scroll_v=True, height_flex=1)
+        self.task_list = CardCol(parent, scroll_v=True, flex_height=1)
         self.render_task_list()
 
     # ══════════════════════════════════════════════════════════════
@@ -47,9 +47,9 @@ class TodoApp(_BaseTab):
         self.update_stats()
 
     def render_task_row(self, index, task):
-        row    = CardRow(self.task_list, width_flex=1)
+        row    = CardRow(self.task_list, flex_width=1)
         prefix = "✓" if task["done"] else "•"
-        Body(row, f"{prefix} {task['text']}", width_flex=1)
+        Body(row, f"{prefix} {task['text']}", flex_width=1)
         Detail(row, "Done" if task["done"] else "Todo")
         Button(row, "Toggle", on_click=lambda i=index: self.toggle_task(i))
         Button(row, "Delete", on_click=lambda i=index: self.delete_task(i))

@@ -18,7 +18,7 @@ class EZ_Pane(_BaseTab):
         Title(parent, "Widget Catalog", glow=True)
         Body(parent, f"{len(self.catalog.entries)} widgets discovered at runtime")
 
-        card = CardCol(parent, height_flex=1, scroll_v=True,name="andrew",pad=0)
+        card = CardCol(parent, flex_height=1, scroll_v=True,name="andrew",pad=0)
         grid = PowerGrid(card, name="grid_widgets")
         grid.set_data(self.catalog.as_grid_data())
         #grid.set_column_max("Description")

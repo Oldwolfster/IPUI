@@ -21,20 +21,20 @@ class Designer(_BaseTab):
 
     def tab_map(self, parent):
         Title(parent, "App Map", glow=True)
-        self.map_card = CardCol(parent, height_flex=1, scroll_v=True)
+        self.map_card = CardCol(parent, flex_height=1, scroll_v=True)
         self.rebuild_tab_map()
         return
         card = CardCol(parent)                                          
         self.txt_name = TextBox(card, placeholder="Tab or Pane name")   
         row = Row(card)                                                 
         Button(row, "+ Tab",  color_bg=Style.COLOR_BUTTON_CTA,      
-            width_flex=1, on_click=self.add_tab)                        
+            flex_width=1, on_click=self.add_tab)                        
         Button(row, "- Tab",  color_bg=Style.COLOR_BUTTON_DANGER,        
-            width_flex=1, on_click=self.delete_tab)                     
+            flex_width=1, on_click=self.delete_tab)                     
         Button(row, "+ Pane", color_bg=Style.COLOR_BUTTON_CTA,      
-            width_flex=1, on_click=self.add_pane)                       
+            flex_width=1, on_click=self.add_pane)                       
         Button(row, "- Pane", color_bg=Style.COLOR_BUTTON_DANGER,        
-            width_flex=1, on_click=self.delete_pane)                    
+            flex_width=1, on_click=self.delete_pane)                    
 
     def rebuild_tab_map(self):
         self.map_card.clear_children()
@@ -50,7 +50,7 @@ class Designer(_BaseTab):
     def build_tab_header(self, tab_name):
         btn = Button(self.map_card, tab_name,
                      color_bg=Style.COLOR_TAB_BG,
-                     width_flex=1)
+                     flex_width=1)
         is_selected = (tab_name == self.selected_tab and self.selected_pane is None)
         if is_selected:
             btn.set_radiate()
@@ -63,11 +63,11 @@ class Designer(_BaseTab):
                        and method_name == self.selected_pane)
         color = Style.COLOR_BUTTON_CTA if is_selected else Style.COLOR_BUTTON_BG
         row = Row(self.map_card)
-        btn = Button(row, method_name,  color_bg=color,width_flex=4,text_align=LEFT)
+        btn = Button(row, method_name,  color_bg=color,flex_width=4,text_align=LEFT)
         if is_selected:
             btn.set_radiate()
         btn.on_click = lambda t=tab_name, m=method_name: self.select_pane(t, m)
-        Spacer(row, width_flex=1)
+        Spacer(row, flex_width=1)
 
     def normalize_entries(self, entries):
         result = []
@@ -86,14 +86,14 @@ class Designer(_BaseTab):
         Title(parent, "Preview", glow=True)
         Spacer(parent)
         row=Row(parent)
-        Spacer(row,width_flex=1)
+        Spacer(row,flex_width=1)
         pt= Plate(row)
         Title(pt, "Inspect your entire app",hug_parent=True,text_align=CENTER)
         Title(pt, "from one place",text_align=CENTER)
         Title(pt,"")
         Title(pt, "one day", text_align=CENTER)
         Title(pt, "maybe build", text_align=CENTER)
-        Spacer(row, width_flex=1)
+        Spacer(row, flex_width=1)
 
         Spacer(parent)
         Spacer(parent)
@@ -112,7 +112,7 @@ class Designer(_BaseTab):
                 and self.selected_pane == "preview"):
             Body(pane, "You're looking at it.")
             return
-        preview_area = CardCol(pane, height_flex=1)
+        preview_area = CardCol(pane, flex_height=1)
         instance = self.form.tab_strip.resolve_tab(self.selected_tab)
         if instance and hasattr(instance, self.selected_pane):
             self.try_render_pane(preview_area, instance)
@@ -137,12 +137,12 @@ class Designer(_BaseTab):
         Heading(parent, self.selected_tab)
         entries = self.form.TAB_LAYOUT.get(self.selected_tab, [])
         panes = self.normalize_entries(entries)
-        card = CardCol(parent, height_flex=1)
+        card = CardCol(parent, flex_height=1)
         for method_name, weight in panes:
             if not isinstance(method_name, str):
                 continue
             row = Row(card)
-            Body(row, method_name, width_flex=1)
+            Body(row, method_name, flex_width=1)
             Body(row, f"flex: {weight}")
 
     # ══════════════════════════════════════════════════════════════

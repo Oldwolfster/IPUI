@@ -13,7 +13,7 @@ class NotNP_HardHug:
     original center, both edges crawling inward equally.
 
     Bounds:
-        Floor   — never below the parent's width_minimum / height_minimum.
+        Floor   — never below the parent's min_width / min_height.
         Ceiling — never beyond the rect NotNP_HardLayout settled on. Hug only
                   shrinks; it never grows.
 
@@ -87,8 +87,8 @@ class NotNP_HardHug:
         return rect
 
     def clamp_to_floor(self, parent, rect):
-        rect.width  = max(rect.width,  parent.width_minimum  or 0)
-        rect.height = max(rect.height, parent.height_minimum or 0)
+        rect.width  = max(rect.width,  parent.min_width  or 0)
+        rect.height = max(rect.height, parent.min_height or 0)
         return rect
 
     def recenter(self, parent, rect):

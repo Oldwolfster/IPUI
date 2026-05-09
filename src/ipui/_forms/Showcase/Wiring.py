@@ -39,14 +39,14 @@ class YourChoice(_BaseTab):
         Title    ( header, "Two Styles", glow=True)
 
     def react_column_left(self, two_cols):
-        col_1    = Col(two_cols, width_flex=2)
+        col_1    = Col(two_cols, flex_width=2)
         card     = Card(col_1)
         Body     ( card, "Declare relationships.")
         Body     ( card, "Engine handles the rest.")
         self    . reactive_name_game(col_1)
 
     def react_column_rite(self, two_cols):
-        card     = Card(two_cols                        , width_flex=3)
+        card     = Card(two_cols                        , flex_width=3)
         Heading  ( card, "Steps:"                   ,text_align=RIGHT)
         Spacer   ( card)
         Body     ( card, "Create two methods"       ,text_align=RIGHT)
@@ -58,14 +58,14 @@ class YourChoice(_BaseTab):
 
 
     def reactive_code_box(self, main_left_window):
-        card     = Card(main_left_window, scroll_v=True, height_flex=99)
+        card     = Card(main_left_window, scroll_v=True, flex_height=99)
         CodeBox  ( card,                        ####################################
                    data=__file__,               # These 4 lines are what creates
                    start="# ═══",               # The CodeBox you are reading now :)
                    end="IMPERATIVE — manual",)  ####################################
 
     def reactive_name_game(self, parent):
-        card            = CardCol (parent, width_flex    =1)
+        card            = CardCol (parent, flex_width    =1)
         row             = Row     (card  )
 
         TextBox(row,                            ################################################
@@ -73,7 +73,7 @@ class YourChoice(_BaseTab):
             pipeline_key= "first",              #### BINDINGS has that covered.
                 )                               ################################################
 
-        Spacer(row,width_flex=.01)
+        Spacer(row,flex_width=.01)
 
         TextBox(row,
             placeholder = "Last name",     ################################################
@@ -87,7 +87,7 @@ class YourChoice(_BaseTab):
             on_click    = self.reactive_clear,
             enabled     = False)
 
-        Spacer          (row   , height_flex=.1)
+        Spacer          (row   , flex_height=.1)
         Body            (card   , YourChoice.DEFAULT_MESSAGE,
             name        = "lbl_snark",
             text_align  = 'c')
@@ -106,7 +106,7 @@ class YourChoice(_BaseTab):
         self     . imp_header(parent)           # call method to create imperative header row
         two_cols = Row(parent)                  # create a row called two columns.
         self     . imperative_left(two_cols)    # first column  (Name game)
-        #Spacer   ( two_cols, width_flex=.3)
+        #Spacer   ( two_cols, flex_width=.3)
         self     . imperative_right(two_cols)   #
         self     . imperative_code(parent)
 
@@ -118,7 +118,7 @@ class YourChoice(_BaseTab):
         Title   ( header, "Imperative", glow=True)
 
     def imperative_left(self, two_cols):          #### LEFT = steps (faces reactive's right)
-        card     = Card(two_cols, width_flex=3)
+        card     = Card(two_cols, flex_width=3)
         Heading  ( card, "Steps:")
         Spacer   ( card)
         Body     ( card, "Create two methods")
@@ -129,26 +129,26 @@ class YourChoice(_BaseTab):
         Body     (card,  "What is simplest for the task at hand?",glow=True)
 
     def imperative_right(self, two_cols):         #### RIGHT = demo (faces reactive's left)
-        col      = Col(two_cols, width_flex=2)
+        col      = Col(two_cols, flex_width=2)
         card     = Card(col)
         Body     ( card, "Full control and simple."   ,text_align=RIGHT)
         Body     ( card, "(My personal favorite ;)" ,text_align=RIGHT)
         self     . imperative_name_game(col)
 
     def imperative_name_game(self, parent):
-        card    = CardCol(parent, width_flex=1)
+        card    = CardCol(parent, flex_width=1)
         row     = Row    (card)
 
         # Storing direct references instead of relying on the registry
         self.txt_first = TextBox(row, placeholder="First name",
                                       on_change=self.imp_name_changed)
-        Spacer(row,width_flex=.01)
+        Spacer(row,flex_width=.01)
         self.txt_last  = TextBox(row, placeholder="Last name",
                                       on_change=self.imp_name_changed)
 
 
         row            = Row(card)
-        Spacer(row, height_flex=.1)
+        Spacer(row, flex_height=.1)
         self.btn_clear = Button(row, "Clear",
                                       color_bg=Style.COLOR_BUTTON_CTA,
                                       on_click=self.imp_clear,
@@ -174,7 +174,7 @@ class YourChoice(_BaseTab):
         self.btn_clear.enabled = False
 
     def imperative_code(self, parent):
-        card     = Card(parent, scroll_v=True, height_flex=99)
+        card     = Card(parent, scroll_v=True, flex_height=99)
         CodeBox  ( card,                  ####################################
             data  = __file__,             # These 3 lines are what creates
             start = "#═════════",         # The CodeBox you are reading now :)

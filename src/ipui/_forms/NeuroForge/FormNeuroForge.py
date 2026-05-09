@@ -62,10 +62,10 @@ class FormNeuroForge(_BaseForm):
 
     def build_header_row(self):
         header       = Row(self, justify_spread=True)
-        btn          = Button(header, "Back to\nShowcase",   color_bg=Style.COLOR_TAB_BG,width_flex=1)
+        btn          = Button(header, "Back to\nShowcase",   color_bg=Style.COLOR_TAB_BG,flex_width=1)
         btn.on_click = lambda: IPUI.back()
-        Banner(header, "NeuroForge", text_align='c', glow=True,width_flex=12)
-        btn          = Button(header, "Launch", color_bg=Style.COLOR_BUTTON_CTA,  name="btnLaunch",width_flex=1)
+        Banner(header, "NeuroForge", text_align='c', glow=True,flex_width=12)
+        btn          = Button(header, "Launch", color_bg=Style.COLOR_BUTTON_CTA,  name="btnLaunch",flex_width=1)
         btn.enabled  = False
         btn.Tooltip  = "Select Project To Enable"
         btn.on_click = lambda: self.launch_colosseum()

@@ -11,10 +11,10 @@ class TodoApp(_BaseForm):
         Banner(self, "IPUI Todo", glow=True, text_align=CENTER)
         Detail(self, f"Saving to: {self.DATA_FILE}", text_align=CENTER)
 
-        main_row = Row(self, width_flex=1, height_flex=1)
+        main_row = Row(self, flex_width=1, flex_height=1)
 
-        left = CardCol(main_row, width_flex=2, height_flex=1)
-        right = CardCol(main_row, width_flex=3, height_flex=1, scroll_v=True)
+        left = CardCol(main_row, flex_width=2, flex_height=1)
+        right = CardCol(main_row, flex_width=3, flex_height=1, scroll_v=True)
         self.task_list = right
 
         Title(left, "Add Task")
@@ -22,7 +22,7 @@ class TodoApp(_BaseForm):
             left,
             placeholder="What needs doing?",
             on_submit=self.add_task,
-            width_flex=1,
+            flex_width=1,
         )
 
         Row(left)
@@ -106,10 +106,10 @@ class TodoApp(_BaseForm):
             Body(self.task_list, "No tasks yet. Add one on the left.")
         else:
             for index, task in enumerate(self.tasks):
-                row = CardRow(self.task_list, width_flex=1)
+                row = CardRow(self.task_list, flex_width=1)
                 status = "Done" if task["done"] else "Todo"
                 prefix = "✓" if task["done"] else "•"
-                Body(row, f"{prefix} {task['text']}", width_flex=1)
+                Body(row, f"{prefix} {task['text']}", flex_width=1)
                 Detail(row, status)
                 Button(row, "Toggle", on_click=lambda i=index: self.toggle_task(i))
                 Button(row, "Delete", on_click=lambda i=index: self.delete_task(i))

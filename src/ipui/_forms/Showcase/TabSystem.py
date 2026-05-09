@@ -25,8 +25,8 @@ class TabSystemShowcase(_BaseTab):
         #Icon(row, "muscle")
         # Heading(row, "To keep it simple - The key does double duty")
         row2 = CardRow(card)
-        c1 = Plate(row2, width_flex=1,name="myplate")
-        c2 = Plate(row2, width_flex=1)
+        c1 = Plate(row2, flex_width=1,name="myplate")
+        c2 = Plate(row2, flex_width=1)
         Heading(c1, "Each key is a tab\nin your form", text_align=CENTER)
         Heading(c2, "Each list item\nis a pane in that tab", text_align=CENTER)
         #Body(card, "No IMPORT REQUIRED!  No Circular Import Baloney!", text_align=CENTER)
@@ -36,7 +36,7 @@ class TabSystemShowcase(_BaseTab):
         row   = Row(card)
         Icon  ( row, "fire")
         Heading(row, "Example: Pet Volcano", glow=True)
-        Spacer (row, width_flex=1)
+        Spacer (row, flex_width=1)
         Heading(row, "4 Tabs, Status, Record, Training, Care ")
         CodeBox(card, data=VOLCANO_EXAMPLE)
         #Body  ( card, "Because someone has to keep an eye on these things.")
@@ -62,8 +62,8 @@ class TabSystemShowcase(_BaseTab):
         Icon(row, "selfdoc")
         Heading(row, "Each pane builds one branch of the widget tree")
         #row2 = CardRow(card)
-        #c1 = Card(row2, width_flex=1)
-        #c2 = Card(row2, width_flex=1)
+        #c1 = Card(row2, flex_width=1)
+        #c2 = Card(row2, flex_width=1)
         #Heading(c1, "Each Pane is like a\n'branch' from the widget tree", text_align=CENTER)
         #Heading(c2, "IPUI will auto-scaffold\nthe class and pane method stubs", text_align=CENTER)
         #Body(card, "No IMPORT REQUIRED!  No Circular Import Baloney!", text_align=CENTER)
@@ -88,13 +88,13 @@ class TabSystemShowcase(_BaseTab):
         row   = Row(card)
         Icon  ( row, "boom")
         Title ( row, "This App, Right Now", glow=True)
-        Spacer(parent,width_flex=0.2)
+        Spacer(parent,flex_width=0.2)
         card = CardCol(parent)
         Body  ( card, "Everything you see in this showcase: "
                       "every tab, every pane, every layout,\n"
                       "is driven by the TAB_LAYOUT below.")
         Body(card, "No routing code. No navigation stack. Just the dictionary.")
-        Spacer(parent, width_flex=0.2)
+        Spacer(parent, flex_width=0.2)
         card  = CardCol(parent)
         #Body(card, "Note: You can give panes a 'flex number' to change how space is allocated to panes within the tab.  By default it's equal")
         row = Row(card)
@@ -107,7 +107,7 @@ class TabSystemShowcase(_BaseTab):
         card    = CardCol(parent)
         layout  = self.form.TAB_LAYOUT
         Heading ( card, f"{len(layout)} Tabs · {self.count_panes(layout)} Panes", glow=True)
-        Spacer  ( card, height_flex=0.2)
+        Spacer  ( card, flex_height=0.2)
         for tab_name, panes in layout.items():
             self.showcase_tab_card(card, tab_name, panes)
 
@@ -135,7 +135,7 @@ class TabSystemShowcase(_BaseTab):
         else:
             label  = pane_spec
             bg     = Style.COLOR_TAB_STATUS_LINKED
-        chip = Card(parent, color_bg=bg, width_flex=1, border=2)
+        chip = Card(parent, color_bg=bg, flex_width=1, border=2)
         Body ( chip, label, text_align=CENTER)
 
     def showcase_codebox(self, parent):

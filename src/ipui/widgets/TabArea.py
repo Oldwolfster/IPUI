@@ -18,6 +18,6 @@ class TabArea(_BaseWidget):
         self.color_bg = Style.COLOR_CARD_BG
         self.pad=2
         MgrColor        .apply_bevel(self, "sunken")
-        self.inner    = CardRow(self, width_flex=1, height_flex=1,pad=1)
+        self.inner    = CardRow(self, flex_width=1, flex_height=1,pad=1)
         self.inner.widget_type = "TabArea Content"
-        # outer = CardCol(self, width_flex=1, height_flex=1, pad=2)
+        # outer = CardCol(self, flex_width=1, flex_height=1, pad=2)

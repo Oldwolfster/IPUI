@@ -21,21 +21,20 @@ class Reference(_BaseTab):
     def build_menu(self, parent):
         row = Row(parent, justify_center=True)
         modes = [
-            ("Widgets", self.pane_widgets),
-            ("ReadMe", self.pane_markdown),
-            ("Layout", self.pane_markdown),
-            ("Lifecycle", self.pane_markdown),  # ← None signals stub
-            ("Examples", None),  # ← None signals stub
-
+            ("Widgets"  , self.pane_widgets),
+            ("ReadMe"   , self.pane_markdown),
+            ("Layout"   , self.pane_markdown),
+            ("Lifecycle", self.pane_markdown),
+            ("Why"      , self.pane_markdown),
         ]
         for label, builder in modes:
             is_active = (label.lower() == self.active_mode)
             color = Style.COLOR_BUTTON_CTA if is_active else Style.COLOR_TAB_BG
             if builder:
-                Button(row, label, color_bg=color, width_flex=1,
+                Button(row, label, color_bg=color, flex_width=1,
                        on_click=lambda b=builder, l=label: self.set_mode(l.lower(), b))
             else:
-                Button(row, label, color_bg=color, width_flex=1,
+                Button(row, label, color_bg=color, flex_width=1,
                        on_click=self.show_stub)
 
     def set_mode(self, mode, builder):
@@ -48,6 +47,7 @@ class Reference(_BaseTab):
             "readme": "docs/README.md",
             "layout": "docs/IPUI_Layout_Guide_Original_Flex.md",
             "lifecycle": "docs/Lifecycle_Timing.md",
+            "why":"docs/Why_IPUI_Does_Things_Differently.md",
         }
         return files.get(self.active_mode)
 
@@ -63,7 +63,7 @@ class Reference(_BaseTab):
         Title(parent, "Widget Catalog", glow=True)
         Body(parent, f"{len(self.catalog.entries)} widgets discovered at runtime")
 
-        card = CardCol(parent, height_flex=1, scroll_v=True)
+        card = CardCol(parent, flex_height=1, scroll_v=True)
         grid = PowerGrid(card, name="grid_ref_widgets")
         grid.set_data(self.catalog.as_grid_data())
         grid.set_column_max("Description", 500)
@@ -77,7 +77,7 @@ class Reference(_BaseTab):
     def pane_markdown(self, parent):
         self.build_menu(parent)
         from ipui.widgets.MarkdownTOC import MarkdownTOC
-        MarkdownTOC(parent, data=self.md_file_for_mode(), height_flex=1,
+        MarkdownTOC(parent, data=self.md_file_for_mode(), flex_height=1,
                     on_change=self.handle_toc_selected,
                     initial_value=getattr(self, 'active_toc_item', None))
 
@@ -91,7 +91,7 @@ class Reference(_BaseTab):
 
     def pane_md_section(self, parent, title):
         from ipui.widgets.MarkdownBody import MarkdownBody
-        card = CardCol(parent, height_flex=1, scroll_v=True)
+        card = CardCol(parent, flex_height=1, scroll_v=True)
         MarkdownBody(card, data=self.md_file_for_mode(), text=title)
 
     # ══════════════════════════════════════════════════════════════
@@ -135,7 +135,7 @@ class Reference(_BaseTab):
             Heading(sub, "Example:")
             Body(sub, entry["example"])
 
-        sub = CardCol(parent, height_flex=1, scroll_v=True)
+        sub = CardCol(parent, flex_height=1, scroll_v=True)
         Heading(sub, "Source:")
         CodeBox(sub, data=entry.get("source", ""))
 

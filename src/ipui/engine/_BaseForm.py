@@ -311,8 +311,8 @@ class _BaseForm(_BaseWidget):
         if widget.rect is None:
             return
         r = widget.rect
-        if (widget.width_flex > 0
-        or widget.height_flex > 0):         color = (255, 160, 40)
+        if (widget.flex_width > 0
+        or widget.flex_height > 0):         color = (255, 160, 40)
         elif r.width == 0 or r.height == 0: color = (255, 40, 40)
         elif widget.children:               color = (80, 140, 255)
         else:                               color = (80, 220, 80)

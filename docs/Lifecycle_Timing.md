@@ -506,7 +506,7 @@ Items uncovered while developing IPUI's lifecycle. Some have been resolved; some
 
 - **`set_pane` in `ip_activated` raised AttributeError** on `tab_strip` during cold boot. Root cause: `TabStrip.build()` called `switch_tab` from inside its own constructor, so user lifecycle hooks fired before `_BaseForm.setup_tabs` had finished assigning `self.tab_strip`. Fixed in **Phase 1** by lifting the initial `switch_tab` out of `TabStrip.build` into an explicit call from `_BaseForm.setup_tabs` after assignment.
 
-- **Weights passed via `set_pane(weight=…)` were ignored.** Root cause: warm-path of `TabStrip.set_pane` updated `tab_layout` but never updated the live Pane widget's `width_flex`. Fixed in **Phase 1.5** with a one-line update of the Pane's `width_flex` before re-running the builder.
+- **Weights passed via `set_pane(weight=…)` were ignored.** Root cause: warm-path of `TabStrip.set_pane` updated `tab_layout` but never updated the live Pane widget's `flex_width`. Fixed in **Phase 1.5** with a one-line update of the Pane's `flex_width` before re-running the builder.
 
 - **Pane builders couldn't read state set in `ip_setup`.** Root cause: pane builders ran before `ip_setup` fired, so any `self.X = ...` in `ip_setup` was invisible to builders. Fixed in **Phase 2.5** by introducing `ip_setup_early(self, ip)` — fires before `build_tabs_widget_tree` so pane builders can read state set there. `ip_setup` retains its (now correct) post-widget semantics.
 

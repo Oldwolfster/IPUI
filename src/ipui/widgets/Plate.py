@@ -9,7 +9,7 @@ class Plate(Card):
     desc:        Card's raised cousin — same shape, opposite bevel direction.
     when_to_use: Inside a Card to break the recessed-on-recessed visual chain.
     best_for:    Alternating depth so nested containers stay visually distinct.
-    example:     Plate(parent, height_flex=1)
+    example:     Plate(parent, flex_height=1)
     api:         (layout only — no custom methods)
     """
     def build(self):

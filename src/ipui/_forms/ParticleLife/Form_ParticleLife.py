@@ -61,7 +61,7 @@ class Form_ParticleLife(_BaseForm):
         Spacer       ( row)
         Heading      ( row,"This is O(N^2) so expect poor FPS")
         Spacer(row)
-        btn          = Button(row, "Back to\nShowcase",   color_bg=Style.COLOR_TAB_BG,width_flex=0)
+        btn          = Button(row, "Back to\nShowcase",   color_bg=Style.COLOR_TAB_BG,flex_width=0)
         btn.on_click = lambda: IPUI.back()
 
 

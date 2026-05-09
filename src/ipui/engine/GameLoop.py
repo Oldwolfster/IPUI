@@ -86,7 +86,7 @@ class GameLoop:
     def init_pygame(self, title, fullscreen=False, width=0, height=0):
         if title is None: title = "IPUI Framework"
         pygame.display.set_caption(title)
-        MgrFont.init()
+        # Moved 2026_05_09 MgrFont.init()
         MgrColor.init()
         info = pygame.display.Info()
         if fullscreen:
@@ -94,11 +94,12 @@ class GameLoop:
 
             self.__class__.screen = pygame.display.set_mode(
                 ( info.current_w, info.current_h),
-                pygame.FULLSCREEN | pygame.SCALED)
+                pygame.FULLSCREEN )#| pygame.SCALED)
         else:
             if width  == 0: width  = info.current_w
             if height == 0: height = int(info.current_h * 0.85)
             self.__class__.screen = pygame.display.set_mode(
-                (width, height),
-                pygame.SCALED)
+                (width, height))#,                pygame.SCALED)
+        print(f"self.__class__.screen.get_height()= {self.__class__.screen.get_height()}, height {height}, info.current_h {info.current_h}")
+        MgrFont.init(self.__class__.screen.get_height())
         pygame.scrap.init()

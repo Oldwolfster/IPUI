@@ -103,7 +103,7 @@ class Particles(_BaseTab):
     def particles(self, parent):
         root = Card(parent, scroll_v=True)
         self.field_cards = {}
-        header = CardRow(root, width_flex=1, justify_spread=True)
+        header = CardRow(root, flex_width=1, justify_spread=True)
         Heading(header, "Particles", glow=True)
         Button(header, "Add",
                color_bg=Style.COLOR_BUTTON_CTA,
@@ -119,35 +119,35 @@ class Particles(_BaseTab):
 
 
 
-        top = CardRow(row, width_flex=1, justify_spread=True)
+        top = CardRow(row, flex_width=1, justify_spread=True)
         Heading(top, f"Type {pid}")
 
         Button(top, "Delete",
                color_bg=Style.COLOR_BUTTON_DANGER,
                on_click=lambda pid=pid: self._delete_particle(pid))
 
-        fields = CardRow(row, width_flex=1)
+        fields = CardRow(row, flex_width=1)
         self.field_cards[pid] = fields
 
         TextBox(fields, placeholder="Name",
                 pipeline_key=f"pl.p.{pid}.name",
-                width_flex=2)
+                flex_width=2)
 
         TextBox(fields, placeholder="R",
                 pipeline_key=f"pl.p.{pid}.r",
-                width_flex=1)
+                flex_width=1)
 
         TextBox(fields, placeholder="G",
                 pipeline_key=f"pl.p.{pid}.g",
-                width_flex=1)
+                flex_width=1)
 
         TextBox(fields, placeholder="B",
                 pipeline_key=f"pl.p.{pid}.b",
-                width_flex=1)
+                flex_width=1)
 
         TextBox(fields, placeholder="Count",
                 pipeline_key=f"pl.p.{pid}.count",
-                width_flex=1)
+                flex_width=1)
 
 
     # ===========================================
@@ -245,7 +245,7 @@ class Particles(_BaseTab):
         root = CardCol(parent, scroll_v=True)
 
         # Header + buttons
-        header = CardRow(root, width_flex=1, justify_spread=True)
+        header = CardRow(root, flex_width=1, justify_spread=True)
         Heading(header, "Interaction Matrix", glow=True)
 
         btns = CardRow(header)
@@ -264,14 +264,14 @@ class Particles(_BaseTab):
         grid = Card(root)
 
         # Column headers
-        top = CardRow(grid, width_flex=1)
+        top = CardRow(grid, flex_width=1)
         Body(top, "")  # top-left corner spacer (row labels column)
         for col_id in ids:
             Body(top, col_id)
 
         # Rows
         for row_id in ids:
-            r = CardRow(grid, width_flex=1)
+            r = CardRow(grid, flex_width=1)
 
             # Row label
             Body(r, row_id)
@@ -281,5 +281,5 @@ class Particles(_BaseTab):
                 TextBox(
                     r,
                     pipeline_key=self._g_key(row_id, col_id),
-                    width_flex=1
+                    flex_width=1
                 )

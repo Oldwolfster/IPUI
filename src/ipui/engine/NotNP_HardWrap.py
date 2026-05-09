@@ -102,7 +102,7 @@ class NotNP_HardWrap:
         # (Nothing to do here except ensure scroll_v stays true if the widget was configured that way.)
         if bool(getattr(node, "scroll_v", False)):
             # Leave the surface as-is; NotNP_HardLayout will set scroll_active based on content_size.
-            # But content_size for scroll_vs is computed from height_minimum/width_minimum during MEASURE.
+            # But content_size for scroll_vs is computed from min_height/min_width during MEASURE.
             # Since we didn't rebuild surface, nothing else to change here.
             return changed_any
 

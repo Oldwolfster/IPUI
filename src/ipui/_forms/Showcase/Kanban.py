@@ -47,7 +47,7 @@ class MiniBoard(_BaseTab):
         Title(parent, f"To Do ({len(self.cards['todo'])})")
 
         row = Row(parent)
-        TextBox(row, placeholder="New card", pipeline_key="new_card_text", width_flex=1)
+        TextBox(row, placeholder="New card", pipeline_key="new_card_text", flex_width=1)
         Button(row, "Add", on_click=self.add_card)
 
         self.build_card_list(parent, "todo")
@@ -62,7 +62,7 @@ class MiniBoard(_BaseTab):
         Button(parent, "Clear Done", on_click=self.clear_done)
 
     def build_card_list(self, parent, column):
-        list_box = CardCol(parent, height_flex=1, scroll_v=True)
+        list_box = CardCol(parent, flex_height=1, scroll_v=True)
 
         for text in self.cards[column]:
             card = Card(list_box)
@@ -71,7 +71,7 @@ class MiniBoard(_BaseTab):
             if column != "todo":
                 Button(row, "<", on_click=lambda text=text, column=column: self.move_left(text, column))
 
-            Body(row, text, width_flex=1)
+            Body(row, text, flex_width=1)
 
             if column != "done":
                 Button(row, ">", on_click=lambda text=text, column=column: self.move_right(text, column))

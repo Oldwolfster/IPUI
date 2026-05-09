@@ -5,7 +5,7 @@
 from ipui.engine._BaseWidget    import _BaseWidget
 from ipui.widgets.Card          import Card
 from ipui.widgets.CodeBoxNoScroll import CodeBoxNoScroll
-# CodeBox.py  Update: method wrap_and_inject  -  default height_flex=1 so the outer composite doesn't collapse
+# CodeBox.py  Update: method wrap_and_inject  -  default flex_height=1 so the outer composite doesn't collapse
 
 class CodeBox(_BaseWidget):
     """
@@ -24,8 +24,8 @@ class CodeBox(_BaseWidget):
         return getattr(self.parent, "scroll_v", False)
 
     def wrap_and_inject(self):
-        self.height_flex = 1  # FIX: was guarded by `is None`, but framework init sets it to 0
-        card = Card(self, scroll_v=True, scroll_h=True, height_flex=1, pad=0)
+        self.flex_height = 1  # FIX: was guarded by `is None`, but framework init sets it to 0
+        card = Card(self, scroll_v=True, scroll_h=True, flex_height=1, pad=0)
         CodeBoxNoScroll(card, **self.passthrough())
 
     def passthrough(self):

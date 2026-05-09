@@ -30,7 +30,7 @@ class EZ_Pane(_BaseTab):
         TextBox(row,
             placeholder = "Search messages...",
             name        = "txt_log_keyword",
-            width_flex  = 1,
+            flex_width  = 1,
             on_change   = lambda text: self.refresh(),  # TODO: NIP — TextBox callback
         )
         TextBox(row,
@@ -55,7 +55,7 @@ class EZ_Pane(_BaseTab):
 
     def build_list(self, parent) -> None:
         """Scrollable log body."""
-        sub = CardCol(parent, height_flex=1, scroll_v=True)
+        sub = CardCol(parent, flex_height=1, scroll_v=True)
         Body(sub, "(no log entries)", name="lbl_log")
 
     # ══════════════════════════════════════════════════════════════

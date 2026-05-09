@@ -17,7 +17,7 @@ class TextArea(TextBox):
     desc:        Multi-line text editor built on TextBox. Wraps, scrolls, full editing.
     when_to_use: SQL queries, notes, code input, any multi-line text.
     best_for:    The SQL tab query box, config editors, comment fields.
-    example:     TextArea(parent, placeholder="Enter SQL...", height_flex=1)
+    example:     TextArea(parent, placeholder="Enter SQL...", flex_height=1)
     api:         set_text(text), set_focus(), sync_from_pipeline()
     """
 

@@ -46,7 +46,7 @@ class SQL(_BaseTab):
             row,
             os.path.basename(self.db_path),
             color_bg   = Style.COLOR_TAB_BG,
-            width_flex = 1,
+            flex_width = 1,
             on_click   = self.handle_pick_db_clicked,
         )
         self.private_btn_db.tooltip = self.db_path
@@ -56,7 +56,7 @@ class SQL(_BaseTab):
 
     def build_filter_row(self, parent):
         row = Row(parent, name="row_sql_filter")
-        Detail(row, "View:", width_flex=0, fit_content=True)
+        Detail(row, "View:", flex_width=0, fit_content=True)
         self.build_filter_buttons(row)
 
     def build_filter_buttons(self, parent):
@@ -65,7 +65,7 @@ class SQL(_BaseTab):
             color = Style.COLOR_BUTTON_CTA if is_active else Style.COLOR_TAB_BG
             Button(parent, mode,
                    color_bg=color,
-                   width_flex=1,
+                   flex_width=1,
                    on_click=self.make_filter_click(mode))
 
     def make_filter_click(self, mode):
@@ -73,7 +73,7 @@ class SQL(_BaseTab):
 
         return clicked
     def build_grid_card(self, parent):
-        card = CardCol(parent, name="card_sql_tables_grid", height_flex=1, pad=0)
+        card = CardCol(parent, name="card_sql_tables_grid", flex_height=1, pad=0)
         grid = PowerGrid(card, name="grid_sql_tables")
         grid.on_row_click       (self.handle_table_row_clicked,   "Name")
         grid.on_row_double_click(self.handle_table_row_dbl_click, "Name")
@@ -84,16 +84,16 @@ class SQL(_BaseTab):
         self.build_table_mode_buttons(row)
 
     def build_table_mode_buttons(self, parent):
-        Button(parent, "Preview",  color_bg=Style.COLOR_TAB_BG,         width_flex=1, on_click=self.handle_preview_clicked, tooltip="testing")
-        Button(parent, "Script",   color_bg=Style.COLOR_TAB_BG,         width_flex=1, on_click=self.handle_script_clicked)
-        Button(parent, "Index",    color_bg=Style.COLOR_TAB_BG,         width_flex=1, on_click=self.handle_index_clicked)
-        Button(parent, "Analyze",  color_bg=Style.COLOR_BUTTON_ACCENT,  width_flex=1, on_click=self.handle_analyze_clicked)
-        Button(parent, "Refresh",  color_bg=Style.COLOR_TAB_BG,         width_flex=1, on_click=self.handle_refresh_clicked)
+        Button(parent, "Preview",  color_bg=Style.COLOR_TAB_BG,         flex_width=1, on_click=self.handle_preview_clicked, tooltip="testing")
+        Button(parent, "Script",   color_bg=Style.COLOR_TAB_BG,         flex_width=1, on_click=self.handle_script_clicked)
+        Button(parent, "Index",    color_bg=Style.COLOR_TAB_BG,         flex_width=1, on_click=self.handle_index_clicked)
+        Button(parent, "Analyze",  color_bg=Style.COLOR_BUTTON_ACCENT,  flex_width=1, on_click=self.handle_analyze_clicked)
+        Button(parent, "Refresh",  color_bg=Style.COLOR_TAB_BG,         flex_width=1, on_click=self.handle_refresh_clicked)
 
     def build_field_mode_buttons(self, parent):
-        Button(parent, "← Back",   color_bg=Style.COLOR_BUTTON_SECONDARY, width_flex=1, on_click=self.handle_back_clicked)
-        Button(parent, "Sample 10",color_bg=Style.COLOR_TAB_BG,           width_flex=1, on_click=self.handle_sample_clicked)
-        Button(parent, "DISTINCT", color_bg=Style.COLOR_TAB_BG,           width_flex=1, on_click=self.handle_distinct_clicked)
+        Button(parent, "← Back",   color_bg=Style.COLOR_BUTTON_SECONDARY, flex_width=1, on_click=self.handle_back_clicked)
+        Button(parent, "Sample 10",color_bg=Style.COLOR_TAB_BG,           flex_width=1, on_click=self.handle_sample_clicked)
+        Button(parent, "DISTINCT", color_bg=Style.COLOR_TAB_BG,           flex_width=1, on_click=self.handle_distinct_clicked)
 
 
     # ══════════════════════════════════════════════════════════════
@@ -256,7 +256,7 @@ class SQL(_BaseTab):
         row = self.form.widgets.get("row_sql_filter")
         if not row: return
         row.clear_children()
-        Detail(row, "View:", width_flex=0, fit_content=True)
+        Detail(row, "View:", flex_width=0, fit_content=True)
         self.build_filter_buttons(row)
 
     # ══════════════════════════════════════════════════════════════
@@ -479,8 +479,8 @@ class SQL(_BaseTab):
         sql_card = Card(parent,scroll_v=True,pad=2)
         default_sql = "select optimizer, loss_function, count(epoch_count) as run_count, round(avg(epoch_count),2)  as epochs_to_solve\n\nfrom batch_history\n\ngroup by optimizer, loss_function\n\norder by 4"
 
-        #TextArea(sql_card, "SELECT * FROM batch_history LIMIT 696", name="code_sql", height_flex=1)
-        TextArea(sql_card, default_sql , name="code_sql", height_flex=1)
+        #TextArea(sql_card, "SELECT * FROM batch_history LIMIT 696", name="code_sql", flex_height=1)
+        TextArea(sql_card, default_sql , name="code_sql", flex_height=1)
         row = Row(parent)
         Button(row, "Run Query",
                color_bg=Style.COLOR_BUTTON_CTA,
@@ -535,7 +535,7 @@ class SQL(_BaseTab):
 
     def results(self, parent):
         Title         (parent, text="Results", glow=True)
-        card = CardCol(parent, height_flex=1, pad=0)
+        card = CardCol(parent, flex_height=1, pad=0)
         PowerGrid     (card,   name="grid_sql_results")
 
     # ══════════════════════════════════════════════════════════════

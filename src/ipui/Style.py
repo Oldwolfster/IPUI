@@ -1,4 +1,5 @@
 # Style.py  Update:  Semantic roles only, imports from Palette
+
 from ipui.utils.Palette import Palette
 
 
@@ -82,14 +83,40 @@ class Style:
     # ============================================================
     # TOKENS — Spacing (multiplier-based)
     # ============================================================
-    TOKEN_MULTIPLIER          = 2
-    TOKEN_PAD                 = TOKEN_MULTIPLIER * 8
-    TOKEN_PAD_TIGHT           = TOKEN_MULTIPLIER * 1
-    TOKEN_GAP                 = TOKEN_MULTIPLIER * 3
-    TOKEN_GAP_TIGHT           = TOKEN_MULTIPLIER * 2
-    TOKEN_BORDER              = TOKEN_MULTIPLIER * 1
-    TOKEN_SCROLLBAR           = 12
-    TOKEN_CORNER_RADIUS       = 4
+
+    # ============================================================
+    # Token TOKEN_MULTIPLIER gets set automatically from
+    # MgrFont IF it has a value of zero.
+    # It bases it roughly on the resolutions
+    TOKEN_MULTIPLIER = 0
+    # Set it to non zero to override it.
+    # ============================================================
+
+    TOKEN_BASE_PAD              = 8
+    TOKEN_BASE_PAD_TIGHT        = 1
+    TOKEN_BASE_GAP              = 3
+    TOKEN_BASE_GAP_TIGHT        = 2
+    TOKEN_BASE_BORDER           = 1
+    TOKEN_BASE_SCROLLBAR        = 6
+    TOKEN_BASE_CORNER_RADIUS    = 2
+
+
+    @classmethod
+    def recalculate(cls, new_multiplier):
+
+        cls.TOKEN_MULTIPLIER     = new_multiplier
+        print(f"Token Multiplier ={new_multiplier}")
+        cls.TOKEN_PAD           = cls.TOKEN_BASE_PAD            * cls.TOKEN_MULTIPLIER
+        cls.TOKEN_PAD_TIGHT     = cls.TOKEN_BASE_PAD_TIGHT      * cls.TOKEN_MULTIPLIER
+        cls.TOKEN_GAP           = cls.TOKEN_BASE_GAP            * cls.TOKEN_MULTIPLIER
+        cls.TOKEN_GAP_TIGHT     = cls.TOKEN_BASE_GAP_TIGHT      * cls.TOKEN_MULTIPLIER
+        cls.TOKEN_BORDER        = cls.TOKEN_BASE_BORDER         * cls.TOKEN_MULTIPLIER
+        cls.TOKEN_SCROLLBAR     = cls.TOKEN_BASE_SCROLLBAR      * cls.TOKEN_MULTIPLIER
+        cls.TOKEN_CORNER_RADIUS = cls.TOKEN_BASE_CORNER_RADIUS  * cls.TOKEN_MULTIPLIER
+
+        print(f"In recalculateB TokenPad={cls.TOKEN_PAD}")
+
+
 
     # User preference (0.0 to 1.0, future slider target)
     FONT_SCALE                = .369

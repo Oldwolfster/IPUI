@@ -4,7 +4,6 @@ from ipui import *
 class FormShowcase(_BaseForm):
 
     TAB_LAYOUT = {
-
         "Welcome"       : ["left_pane"      ,"proud_features"   ,"detail"       ],
         "Tab System"    : ["explain"        ,"showcase"                         ],
         "Widgets"       : ["catalog_grid"   ,"detail"                           ],
@@ -23,9 +22,9 @@ class FormShowcase(_BaseForm):
 
     def build_header(self):
         header = Row(self)
-        left = Row(header, width_flex=1)  # NEW - left container
-        Banner(header, "IPUI", text_align='c', glow=True, width_flex=0,fit_content=True)
-        right = Row(header, width_flex=1)  # NEW - right container
+        left = Row(header, flex_width=1)  # NEW - left container
+        Banner(header, "IPUI", text_align='c', glow=True, flex_width=0,fit_content=True)
+        right = Row(header, flex_width=1)  # NEW - right container
 
         # Left content
         Button(left, "Documentation", on_click=lambda: self.show_modal("Press F12 - then select 'Documentation' tab"))

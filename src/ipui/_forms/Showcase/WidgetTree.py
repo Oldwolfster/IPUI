@@ -9,7 +9,7 @@ class Tree(_BaseTab):
     def widget_tree(self, parent):
         header = Row(parent, justify_spread=True)
         Title(header, "Widget Tree", glow=True)
-        PowerGrid(parent, name="grid_tree", height_flex=1)
+        PowerGrid(parent, name="grid_tree", flex_height=1)
         self.refresh_tree()
 
     # ══════════════════════════════════════════════════════════════
@@ -18,7 +18,7 @@ class Tree(_BaseTab):
 
     def widget_detail(self, parent):
         Title(parent, "Widget Detail", glow=True)
-        PowerGrid(parent, name="grid_detail", height_flex=1)
+        PowerGrid(parent, name="grid_detail", flex_height=1)
 
     # ══════════════════════════════════════════════════════════════
     # TREE WALKER
@@ -92,8 +92,8 @@ class Tree(_BaseTab):
             ["visible",     str(widget.visible)],
             ["enabled",     str(widget.enabled)],
             ["children",    str(len(widget.children))],
-            ["width_flex",  str(widget.width_flex)],
-            ["height_flex", str(widget.height_flex)],
+            ["flex_width",  str(widget.flex_width)],
+            ["flex_height", str(widget.flex_height)],
             ["pad_x",       str(widget.pad_x)],                                          # NEW
             ["pad_y",       str(widget.pad_y)],
             ["border",      str(widget.border)],

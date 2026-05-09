@@ -8,7 +8,7 @@ from ipui.engine._BaseWidget import _BaseWidget
 from ipui.widgets.Card    import Card
 from ipui.widgets.CodeBox import CodeBox
 from ipui.widgets.Spacer  import Spacer
-from ipui.widgets.Label   import Title, Heading, Body
+from ipui.widgets.Label import Title, Heading, Body, Banner
 from ipui.utils.general_text import strip_emojis, strip_for_md_toc
 import re
 
@@ -116,7 +116,7 @@ class MarkdownBody(_BaseWidget):
                on_click=(lambda: self.goto(slugs[idx - 1])) if has_prev else None)
         Icon(bt,"Left")
         title = titles[idx] if idx >= 0 else self.text or ""
-        Heading(row, title, width_flex=1, text_align=CENTER)
+        Banner(row, title, flex_width=1, text_align=CENTER, glow=True)
         bt  = Button(row,
                enabled=has_next,
                on_click=(lambda: self.goto(slugs[idx + 1])) if has_next else None)

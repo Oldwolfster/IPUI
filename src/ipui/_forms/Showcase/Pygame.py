@@ -56,14 +56,14 @@ class PygameBall(_BaseTab):
         Title(card, "Speed", glow=True,text_align=CENTER)
         row = Row(card)
         Button(row, "Slower",               on_click=self.go_slower)
-        Body(row, "1.0x", name="lbl_speed", text_align='c', width_flex=1)
+        Body(row, "1.0x", name="lbl_speed", text_align='c', flex_width=1)
         Button(row, "Faster", on_click=self.go_faster)
 
         Body(parent,"")     #small spacer
-        card = Card(parent,height_flex=1,pad=0)
+        card = Card(parent,flex_height=1,pad=0)
         Title(card, "The Source", glow=True,text_align=CENTER)
-        card = Card(card, scroll_v=True, scroll_h=True, height_flex=99)
-        CodeBox(card,    data  = __file__, height_flex=1)
+        card = Card(card, scroll_v=True, scroll_h=True, flex_height=99)
+        CodeBox(card,    data  = __file__, flex_height=1)
 
     # ══════════════════════════════════════════════════════════════
     # SPEED CONTROLS

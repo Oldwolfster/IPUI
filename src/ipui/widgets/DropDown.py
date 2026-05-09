@@ -127,7 +127,7 @@ class DropDown(_BaseWidget):
     def compute_panel_rect(self):
         """Place panel directly below the textbox, matching its width."""
         tb          = self.textbox.rect
-        row_h       = (self.list.items and self.list.items[0].height_minimum) or 24
+        row_h       = (self.list.items and self.list.items[0].min_height) or 24
         row_h       = row_h + (Style.TOKEN_BORDER+ Style.TOKEN_PAD) *2
         item_count  = len([i for i in self.list.items if i.visible])
         show_count  = max(1, min(item_count, self.max_visible))

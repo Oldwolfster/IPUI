@@ -32,7 +32,7 @@ class MarkdownTOC(_BaseWidget):
         self.sel = SelectionList(self,
             data          = items,
             single_select = True,
-            height_flex   = 1,
+            flex_height   = 1,
             on_change     = self.handle_item_changed,
         )
         self.preselect()
