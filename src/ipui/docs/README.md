@@ -549,6 +549,7 @@ You already used it in the example above: `ip.dt` for frame timing, `ip.to_scree
 
 ```python
 # ── Without ip (spelunking) ──────────────────────────────────────
+# THIS IS THE CODE YOU DO NOT WANT TO RUN!!!!
 def ip_draw(self, ip):
     arena = self.form.tab_strip.panes[1].rect             # find the canvas by hand
     sx    = arena.left + int(self.ball_x * arena.width)   # offset + scale manually
@@ -751,6 +752,14 @@ No event loop setup. No manual sizing. No coordinate math. IPUI handles the Pyga
 | `ip.frame` | int | Monotonically increasing frame counter |
 | `ip.elapsed` | float | Total seconds since app started |
 
+### Rendering
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `ip.surface` | Surface | The pygame draw surface |
+| `ip.events` | list | All pygame events this frame |
+| `ip.unhandled` | list | Events the UI did not consume |
+
 ### Geometry
 
 | Attribute | Type | Description |
@@ -813,13 +822,7 @@ Constants live on the `Key` class — autocomplete shows everything. Examples:
 `Key.TAB`, `Key.BACKSPACE`, `Key.A`–`Key.Z`, `Key.NUM_0`–`Key.NUM_9`, `Key.F1`–`Key.F12`,
 `Key.HOME`, `Key.END`, `Key.PAGEUP`, `Key.PAGEDOWN`, `Key.DELETE`.
 
-### Rendering
 
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `ip.surface` | Surface | The pygame draw surface |
-| `ip.events` | list | All pygame events this frame |
-| `ip.unhandled` | list | Events the UI did not consume |
 
 ### Cache
 
@@ -1571,14 +1574,14 @@ ipui.show(MyApp, "My Application")  #MyApp is your _BaseForm class - IMPORT REQU
 
 ### BaseForm Class Attributes
 
-| Attribute            | Type   | Description                                         |
-|----------------------|--------|-----------------------------------------------------|
-| `TAB_LAYOUT`         | dict   | Tab name → list of pane method names                |
-| `PIPELINE_DEFAULTS`  | dict   | Initial pipeline keys/values seeded at form creation |
-| `tab_early_load`     | list   | Tab names to pre-build at startup                   |
-| `tab_on_change`      | str    | Name of method on this form to call before every tab switch. Signature: `method(name, current)`. Return `False` to veto the switch. |
-| `tab_hidden`         | list   | Tab names initially hidden                          |
-| `pipeline_debug`     | bool   | Log all pipeline activity to console                |
+| Attribute            | Type   | Description                                                                                                                               |
+|----------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| `TAB_LAYOUT`         | dict   | Tab name → list of pane method names                                                                                                      |
+| `PIPELINE_DEFAULTS`  | dict   | Initial pipeline keys/values seeded at form creation                                                                                      |
+| `tab_early_load`     | list   | Tab names to pre-build at startup                                                                                                         |
+| `tab_on_change`      | str    | Name of method on this form to call before every tab switch. Signature: `method(self, name, current)`. Return `False` to veto the switch. |
+| `tab_hidden`         | list   | Tab names initially hidden                                                                                                                |
+| `pipeline_debug`     | bool   | Log all pipeline activity to console                                                                                                      |
 
 ### BaseForm Methods
 

@@ -25,7 +25,7 @@ class Optimizer(_BaseTab):
     TARGET_PANE   = 3
     SAMPLES       = 5
 
-    WRAP_TEXT     = ("The quick brown fox jumps over the lazy dog. "
+    WRAP_TEXT     = ("The quick brown fox jumps over the lazy good for nothing dog. "
                      "Pack my box with five dozen liquor jugs. "
                      "How vexingly quick daft zebras jump. "
                      "Sphinx of black quartz, judge my vow. ")

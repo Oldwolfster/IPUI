@@ -19,7 +19,7 @@ IPUI treats width and height differently — because screens do.
 
 **Height** is measured **bottom-up**. Your content decides how tall you are. If there's more content than space, the container scrolls.
 
-This matches how every UI actually works: you know your width (the screen gives it to you), but your height depends on what you're showing. IPUI just makes it explicit.
+This matches many UIs: you know your width (the screen gives it to you), but your height depends on what you're showing. IPUI just makes it explicit.
 
 ---
 

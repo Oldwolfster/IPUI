@@ -466,10 +466,10 @@ Clean up list
 ######################################################################
 5/9
 ######################################################################
-double checked all code in readme.
-read all readme one more time
-fixed 3 issue in reactive if more than one lol.
-renamed width_flex to flex_width
+384) double checked all code in readme.
+385) read all readme one more time
+386) ixed 3 issue in reactive if more than one lol.
+387)renamed width_flex to flex_width
 renamed height_fle to flex_height
 changed res independence to be based on window size instead of screen size.
 
