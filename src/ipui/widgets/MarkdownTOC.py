@@ -66,7 +66,7 @@ class MarkdownTOC(_BaseWidget):
         if not explicit:
             return all_headings
         explicit_titles = {slug: title for title, slug in explicit}
-        result = []
+        result = [("Preamble", "preamble")]
         for title, slug in all_headings:
             display = explicit_titles.get(slug, title)
             result.append((display, slug))
@@ -74,8 +74,8 @@ class MarkdownTOC(_BaseWidget):
 
 
     def extract_explicit_toc(self, lines):
-        in_toc = False
-        entries = []
+        in_toc  = False
+        entries = [("Preamble", "preamble")]
         for line in lines:
             if line.strip().lower().startswith("## table of contents"):
                 in_toc = True

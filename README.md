@@ -1,5 +1,5 @@
 # IPUI - Idiot Proof UI - Because we've all spent 3 hours debugging a button!
-**Version: 0.1.0 Rev 054**
+**Version: 0.1.0 Rev 055**
 
 A lightweight, opinionated Python/Pygame UI framework that makes building complex tabbed interfaces *ridiculously* simple.
 
@@ -14,7 +14,7 @@ A lightweight, opinionated Python/Pygame UI framework that makes building comple
 > IPUI is developed and tested against `pygame-ce`. It is imported in code as `pygame`.
 
 
-> Full installation in section 2 but if you are just looking pip command...
+> Full installation in section 2 but if you are just looking for the  pip command...
 
 ```bash
 python -m pip install ipui
@@ -86,12 +86,13 @@ python -m pip install ipui
 ## The IPUI Advantage
 
 - 🗂️ **First-Class Tab System:** Define your app's tabs, panes, and flex ratios from a single simple dictionary. IPUI scaffolds the structure and keeps each tab cleanly modular:
-  ```python
+```python
   TAB_LAYOUT = {
       "Dashboard": ["main_view"],                             # 1 full-screen pane
       "Settings" : ["sidebar", "options"],                    # 2 equal panes
       "Analytics": [("nav", .2), ("graph", .6), ("log", .2)]  # Custom flex sizing
-  }  
+  }
+```
 - 📐 **Declarative Layout:** Simple, flexible syntax that handles the math so you can focus on the logic.
 - 🔗 **Construction IS Attachment:** No floating widgets or `add()` calls. If you build it inside a container, it's attached automatically.
 - 🧩 **Built to Extend:** Custom widgets get layout, events, and styling automatically. Standard widgets take 5–10 LOC; even tools like a network diagram widget come in under 150 LOC.
@@ -186,7 +187,7 @@ Get it running first. Then let IPUI help you split things out as your app grows.
 
 
 ```bat
-notepad smoketest.py
+notepad SmokeTest.py
 ```
 copy the below code and save.
 
@@ -524,9 +525,9 @@ def ip_think(self, ip):
     self.lbl_direction.set_text(f"Direction: {self.compute_direction()}")
     self.lbl_warning  .set_text(self.compute_warning())
 
-def compute_quadrant_text (self, ball_x,  ball_y):  return f"Quadrant: {('NW' if ball_y<0.5 else 'SW') if ball_x<0.5 else ('NE' if ball_y<0.5 else 'SE')}"
-def compute_direction_text(self, ball_dx, ball_dy): return f"Direction: {'→' if ball_dx>0 else '←'}{'↓' if ball_dy>0 else '↑'}"
-def compute_warning_text  (self, ball_x,  ball_y):  return "⚠ OMG we are going to crash!" if min(ball_x, ball_y, 1-ball_x, 1-ball_y) < 0.05 else ""
+def compute_quadrant_text (self, ball_x,  ball_y):  return f"Quadrant: {('NW' if self.ball_y<0.5 else 'SW') if self.ball_x<0.5 else ('NE' if self.ball_y<0.5 else 'SE')}"
+def compute_direction_text(self, ball_dx, ball_dy): return f"Direction: {'→' if self.ball_dx>0 else '←'}{'↓' if self.ball_dy>0 else '↑'}"
+def compute_warning_text  (self, ball_x,  ball_y):  return "⚠ OMG we are going to crash!" if min(self.ball_x, self.ball_y, 1-self.ball_x, 1-self.ball_y) < 0.05 else ""
 ```
 
 Every update is an explicit line you can grep for and breakpoint on. Great when one widget reflects one piece of state.
@@ -1211,7 +1212,7 @@ Skip `TAB_LAYOUT` entirely. Build widgets in `build()`. Use the same lifecycle h
 ---
 
 ### Minimal Example
-
+```python
     from ipui import *
 
     class MyApp(_BaseForm):
@@ -1228,6 +1229,7 @@ Skip `TAB_LAYOUT` entirely. Build widgets in `build()`. Use the same lifecycle h
 
     if __name__ == "__main__":
         show(MyApp)
+```
 
 No `TAB_LAYOUT`. No `_BaseTab`. One class, one file, name it whatever you want.
 
@@ -1236,7 +1238,7 @@ No `TAB_LAYOUT`. No `_BaseTab`. One class, one file, name it whatever you want.
 ### Using Lifecycle Hooks
 
 The same hooks work on a tabless form as on any `_BaseTab` pane:
-
+```python
     from ipui import *
     import pygame
 
@@ -1273,6 +1275,7 @@ The same hooks work on a tabless form as on any `_BaseTab` pane:
 
     if __name__ == "__main__":
         show(Asteroids)
+```
 
 Every hook — `ip_setup`, `ip_activated`, `ip_think`, `ip_draw`, `ip_draw_hud` — works identically whether it lives on a `_BaseForm` or a `_BaseTab`. Move code between the two freely.
 
@@ -1295,6 +1298,7 @@ Tabless is the on-ramp. Tabs are the highway. Both use the same engine.
 
 In tabbed mode, panes give you automatic side-by-side columns. In tabless mode, use `Row` and `Col` directly:
 
+```python
     class Dashboard(_BaseForm):
         def build(self):
             row = Row(self, width_flex=1, height_flex=1)
@@ -1306,6 +1310,7 @@ In tabbed mode, panes give you automatic side-by-side columns. In tabless mode, 
             main = CardCol(row, width_flex=3)
             Title(main, "Output")
             self.lbl_result = Body(main, "Ready")
+```
 
 You get the same layout flexibility — just with explicit containers instead of pane slots.
 
@@ -1469,10 +1474,10 @@ Both end up at the same place (`self.on_click`). Use the kwarg for inline constr
 All styling lives in `Style`. Import and use constants — don't hard-code colors or sizes:
 
 ```python
-from ipui import Style
+from ipui import * 
 
-Button(parent, "Go", color_bg=Style.COLOR_BUTTON_CTA)
-Body(parent,   "Status", font=Style.FONT_BODY)
+Button(parent, "Go"     , color_bg  =Style.COLOR_BUTTON_CTA)
+Body(parent,   "Status" , font      =Style.FONT_BODY)
 ```
 
 **Color constants:** `COLOR_BACKGROUND`, `COLOR_MODAL_BG`, `COLOR_PANEL_BG`, `COLOR_CARD_BG`, `COLOR_TEXT`, `COLOR_TEXT_SECONDARY`, `COLOR_TEXT_MUTED`, `COLOR_TEXT_ACCENT`, `COLOR_BORDER`, `COLOR_BORDER_SUBTLE`, `COLOR_BUTTON_BG`, `COLOR_BUTTON_CTA` (green), `COLOR_BUTTON_DANGER` (red), `COLOR_BUTTON_SECONDARY` (blue), `COLOR_BUTTON_ACCENT` (orange), `COLOR_BUTTON_WARNING`, `COLOR_CODE_BG`

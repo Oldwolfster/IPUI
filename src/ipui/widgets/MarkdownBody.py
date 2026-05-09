@@ -3,7 +3,7 @@ import re
 import ipui
 from pathlib import Path
 
-from ipui import Style, Plate, Button, CENTER, Row, Image, Icon
+from ipui import Style, Plate, Button, CENTER, Row, Image, Icon, CardRow
 from ipui.engine._BaseWidget import _BaseWidget
 from ipui.widgets.Card    import Card
 from ipui.widgets.CodeBox import CodeBox
@@ -20,6 +20,7 @@ RX_BOLD          = re.compile(r'\*\*([^*]+)\*\*')
 RX_ITALIC        = re.compile(r'(?<!\*)\*([^*]+)\*(?!\*)')
 RX_INLINE_CODE   = re.compile(r'`([^`]+)`')
 RX_LINK_LINE     = re.compile(r'^\s*-?\s*\[([^\]]+)\]\(#([^)]+)\)\s*$')
+RX_BADGE_URL     = re.compile(r'shields\.io/badge/([^)]+)')
 
 class MarkdownBody(_BaseWidget):
     """
@@ -36,6 +37,7 @@ class MarkdownBody(_BaseWidget):
             return
         self.gap = Style.TOKEN_GAP * 2
         lines   = self.read_file()
+        self.text = self.text or "preamble" #hhmm
         section = self.find_section(lines, self.text or "")
         self.render_nav_header()
         self.render_lines(section)
@@ -55,6 +57,8 @@ class MarkdownBody(_BaseWidget):
     # ══════════════════════════════════════════════════════════════
 
     def find_section(self, lines, slug):
+
+        if preamble := self.find_preamble(slug, lines): return preamble
         found  = False
         result = []
         for line in lines:
@@ -69,6 +73,23 @@ class MarkdownBody(_BaseWidget):
         if not result:
             return [f"Section '{slug}' not found."]
         return result
+
+    def find_preamble(self, slug, lines):
+        if slug != "preamble":
+            return None
+        result = []
+        started = False
+        for line in lines:
+            if line.startswith("# ") and not started:
+                started = True
+                continue
+            if started and line.startswith("## "):
+                break
+            if started:
+                result.append(line)
+        return result or ["No preamble content found."]
+
+
 
     def heading_to_slug(self, heading):
         cleaned = strip_for_md_toc(heading).lower()
@@ -111,10 +132,14 @@ class MarkdownBody(_BaseWidget):
                 i = self.render_blockquote(lines, i)
             elif self.is_skippable(line):
                 pass
+            elif self.is_badge_line(line):                          # NEW
+                i = self.render_badges(lines, i)
+
             elif RX_IMAGE_LINE.match(line):
                 self.render_image(line)
             elif RX_LINK_LINE.match(line):
                 self.render_link_line(line)
+
             elif line.startswith("### "):
                 Heading(self, self.clean_inline(line[4:]))
             elif line.startswith("# "):
@@ -134,7 +159,8 @@ class MarkdownBody(_BaseWidget):
         m = RX_LINK_LINE.match(line)
         text = self.clean_inline(m.group(1))
         slug = m.group(2).lower()
-        Button(self, text, color_bg=Style.COLOR_BUTTON_CTA,
+
+        Button(self, f"    {text}     ", color_bg=Style.COLOR_BUTTON_CTA,
                on_click=lambda s=slug: self.goto(s))
 
     def is_skippable(self, line):
@@ -143,6 +169,9 @@ class MarkdownBody(_BaseWidget):
         if not stripped:                       return False
         if stripped.startswith("<!--"):        return True
         return False
+
+    def is_badge_line(self, line):
+        return RX_IMAGE_LINE.match(line) and "shields.io/badge" in line
 
     def clean_inline(self, text):
         """Strip emojis, HTML comments, and inline markdown markers; keep the words."""
@@ -234,8 +263,71 @@ class MarkdownBody(_BaseWidget):
 
 
 
+
+
+
+
+############## BADGES ###################
+    def render_badges(self, lines, start):
+
+        i   = start
+        self.did_badge_card = False
+        card=None
+        while i < len(lines) and self.is_badge_line(lines[i]):
+            if self.did_badge_card==False:
+                self.did_badge_card=True
+                Body(self, "")
+                r2 = Row(self)
+                pt= Plate(r2)
+                Spacer(r2)
+                row = Row(pt)
+                card=CardRow(row ,gap=25)
+                Spacer(row)
+                Body(self, "")
+            #self.render_one_badge(row, lines[i])
+            self.render_one_badge(card, lines[i])
+            i += 1
+        return i - 1
+
+    def render_one_badge(self, parent, line):
+        m = RX_BADGE_URL.search(line)
+        if not m:
+            return
+        parts = self.parse_badge_parts(m.group(1))
+        if not parts:
+            return
+        label, value, color = parts
+
+        row=Row(Plate(parent))
+        Icon(row,"Shield",data=3) #Data scales the icon
+        Button(row, f"{label} {value}", color_bg=self.badge_color(color))
+
+    def parse_badge_parts(self, path):
+        from urllib.parse import unquote
+        path  = unquote(path)
+        path  = path.replace("--", "\x00")
+        parts = path.split("-")
+        parts = [p.replace("\x00", "-") for p in parts]
+        if len(parts) < 3:
+            return None
+        color = parts[-1]
+        value = parts[-2]
+        label = "-".join(parts[:-2])
+        return label, value, color
+
+    def badge_color(self, color):
+        colors = {
+            "blue":   (54, 114, 181),
+            "orange": (222, 120, 30),
+            "green":  (68, 153, 72),
+            "red":    (200, 60, 60),
+            "yellow": (200, 180, 40),
+        }
+        return colors.get(color, Style.COLOR_BUTTON_BG)
+
+
+
 def Style_quote_bg():
     """Slightly different bg so blockquote card reads as 'quoted', not 'random card'."""
     from ipui.Style import Style
     return Style.COLOR_TAB_BG
-

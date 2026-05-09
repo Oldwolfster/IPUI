@@ -459,16 +459,14 @@ Clean up list
 378) DONE: Added next/prev buttons to MarkdownBody header
 379) DONE: Fixed issue in MArkdownTOC that missed some content if they had double has but were not listed in toc.
 380) DONE: Added image support to MarkdownBody
-
+381) DONE: be consistent in naming docs... lets do underscores
+382) DONE: still issue creating db in neuroforge with enter key vs button
 ######################################################################
 Pending for V0.1
 ######################################################################
 
-What is left to publish
-be consistent in naming docs... lets do underscores
+What is left to fix publish
 
-
-still issue creating db in neuroforge with enter key vs button
 sqlarea not scrolling
 
 
@@ -518,7 +516,7 @@ Punting to phase 2 of NeuroForge
 ##########################################################
 
 10) add adam parameters to config options.  Do not show in middle panel
-130) Error on Percy's story
+
 
 APPENDIX A:  Lambda-Free Callbacks for _BaseWidget
 Every widget always passes form first, then whatever that widget naturally produces. No lambdas, no closures, no timing bugs. Form resolved at fire time from self.form.

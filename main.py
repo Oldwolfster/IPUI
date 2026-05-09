@@ -5,10 +5,17 @@ from ipui import *
 
 
 if __name__ == '__main__':
-    docs() #opens showcase
+    #docs() #opens showcase
     #show(TestTiming, "Test event timing")
     #Normal usage below
-    #show(FormShowcase, "IPUI Guide",width=500,height=800)
+    show(FormShowcase, "IPUI Guide")
+    #show(FormShowcase, "IPUI Guide",width=640,height=480) #no bueno
+    #show(FormShowcase, "IPUI Guide", width=768, height=432)
+
+
+
+    #480X270
+    #768X432
 
 
 

@@ -15,7 +15,7 @@ class Magic(_BaseTab):
     # LEFT PANE (Teaching)
     # ============================================================
 
-    def debug_magic_teach(self, parent):
+    def magic_explain(self, parent):
         self.magic_globals(parent)
         self.magic_teaching_cards(parent)
 

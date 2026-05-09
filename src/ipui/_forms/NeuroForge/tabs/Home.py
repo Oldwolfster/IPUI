@@ -91,10 +91,15 @@ class EZ_Pane(_BaseTab):
 
     def create_project(self, name):
         clean_name = ProjectManager.sanitize_filename(name)
-        self.form.show_modal(f"Creating Project: {clean_name}",
-                             work_func=lambda: ProjectManager.create_project(name),                             )
+        txt = self.form.widgets.get("txt_project_name")
+        if txt:
+            txt.set_text("")
+            txt.focused = False
+        self.form.show_modal(f"Creating Project: {clean_name}", work_func=lambda: ProjectManager.create_project(name),                             )
         path = ProjectManager.PROJECTS_FOLDER / f"{clean_name}.nf"
+        self.form.set_pane(1, self.select_project)
         self.do_select_project(path)
+
 
 
     def default_project_name(self):
@@ -109,6 +114,7 @@ class EZ_Pane(_BaseTab):
             ProjectManager.set_active_project(path)
             self.form.active_project = ProjectManager.get_project_info(path)
 
+        print(f"do_select_project: {path}, exists={path.exists()}")
         self.form.show_modal("Loading Project...", 0.1, do_load)
         btn = self.form.widgets["btnLaunch"]
         if btn:
@@ -116,10 +122,3 @@ class EZ_Pane(_BaseTab):
         self.form.calc_total_runs()
         self.form.switch_tab("Armory")
 
-        def create_project(self, name):
-            clean_name = ProjectManager.sanitize_filename(name)
-            self.form.show_modal(f"Creating Project: {clean_name}",
-                            lambda: ProjectManager.create_project(name),
-                            min_seconds=1.0)
-            path = ProjectManager.PROJECTS_FOLDER / f"{clean_name}.nf"
-            self.do_select_project(path)

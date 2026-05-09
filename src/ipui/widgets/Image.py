@@ -56,5 +56,5 @@ class Image(_BaseWidget):
             f"  2) {pkg}\n"
             f"Provide a valid relative, absolute, or package-relative path.\n"
             f'Example: Image(parent, "photos/cat.png")',
-            locate="Image(", exc_type=FileNotFoundError
+            origin="Image(", exc_type=FileNotFoundError
         )
