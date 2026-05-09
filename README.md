@@ -213,7 +213,7 @@ docs()
 ```
 
 <!-- SCREENSHOT: ipui/assets/images/showcase.png — demo apps and tutorials -->
-![Showcase Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/showcase.png)
+![Showcase Screenshot](https://raw.githubusercontent.com/Oldwolfster/IPUI/main/src/ipui/assets/images/neuroforge.png)
 
 ---
 
@@ -496,10 +496,10 @@ The framework calls these; you override them. Together with pane methods, that's
 
 > **If it lays out widgets, it goes in a pane method. If it ticks, decides, animates, or paints custom graphics, it goes in an `ip_*` hook.**
 
-> Run SmokeTest
-> Click Bouncing Ball
-> Try scaffolding 'Bare Bones'
-> BareBones.py is created
+> - Run SmokeTest
+> - Click Bouncing Ball
+> - Try scaffolding 'Bare Bones'
+> - It will create BouncingBall.py with the methods and parameter ready to go.
 
 ```python
 from ipui import *
@@ -508,19 +508,23 @@ import pygame
 class BouncingBall(_BaseTab):
     
     def arena(self, parent):                         # ← pane method: builds the UI
-        Title(parent, text="Bouncing Ball")
+        Title(parent, text="Bouncing Ball - Your Code")
         card = Card(parent, scroll_v=True)
         CodeBox(card, data=__file__)
-
-    def ip_setup(self, ip):                          # ← runs once
-        self.ball_x,  self.ball_y  = 0.5, 0.5        # start in the middle (normalized)
-        self.ball_dx, self.ball_dy = 0.4, 0.3        # velocity (normalized units / sec)
 
     def ip_think(self, ip):                          # ← runs every frame
         self.ball_x += self.ball_dx * ip.dt          # ip.dt = seconds since last frame
         self.ball_y += self.ball_dy * ip.dt
         self.bounce_off_walls()
 
+    #####################################################################
+    ##### Nothing below here changes in the next examples ###############
+    #####################################################################
+    
+    def ip_setup(self, ip):                          # ← runs once
+        self.ball_x,  self.ball_y  = 0.5, 0.5        # start in the middle (normalized)
+        self.ball_dx, self.ball_dy = 0.4, 0.3        # velocity (normalized units / sec)
+        
     def ip_draw(self, ip):                           # ← custom rendering
         pos = ip.to_screen(self.ball_x, self.ball_y) # normalized → screen pixels
         r   = ip.scale_y(0.02)                       # normalized radius → pixels
@@ -582,29 +586,30 @@ Most real apps use all three: imperative for one-off direct updates, pipeline fo
 Store widget references, update them by hand:
 
 ```python
+class BouncingBall(_BaseTab):
+    
     # REPLACE METHOD ARENA
     def arena(self, parent):                                # ← pane method: builds the UI
         self.lbl_quadrant  = Body(parent, "Quadrant: —")    # NOTE: Now we are storing reference to the widgets
         self.lbl_direction = Body(parent, "Direction: —")
         self.lbl_warning   = Body(parent, "")
 
-
+    # Add bottom 3 lines to ip_think
     def ip_think(self, ip):
         self.ball_x += self.ball_dx * ip.dt                 # No change
         self.ball_y += self.ball_dy * ip.dt                 # No change
         self.bounce_off_walls()                             # No change
         
         # Imperative Update
-        self.lbl_quadrant .set_text(f"Quadrant: {self.compute_quadrant()}")
-        self.lbl_direction.set_text(f"Direction: {self.compute_direction()}")
-        self.lbl_warning  .set_text(self.compute_warning())
+        self.lbl_quadrant .set_text(f"Quadrant: {self.compute_quadrant(self.ball_x, self.ball_y)}")
+        self.lbl_direction.set_text(f"Direction: {self.compute_direction(self.ball_x, self.ball_y)}")
+        self.lbl_warning  .set_text(self.compute_warning(self.ball_x, self.ball_y))
 
-    # No change to ip_setup and ip_draw
-        
-    # Add these three methods
-    def compute_quadrant_text (self, ball_x,  ball_y):  return f"Quadrant: {('NW' if self.ball_y<0.5 else 'SW') if self.ball_x<0.5 else ('NE' if self.ball_y<0.5 else 'SE')}"
-    def compute_direction_text(self, ball_dx, ball_dy): return f"Direction: {'→' if self.ball_dx>0 else '←'}{'↓' if self.ball_dy>0 else '↑'}"
-    def compute_warning_text  (self, ball_x,  ball_y):  return "⚠ OMG we are going to crash!" if min(self.ball_x, self.ball_y, 1-self.ball_x, 1-self.ball_y) < 0.05 else ""
+            
+    # Add these three methods (safe to put in the won't change area :)
+    def compute_quadrant (self, ball_x, ball_y):  return f"Quadrant: {('NW' if ball_y<0.5 else 'SW') if ball_x<0.5 else ('NE' if ball_y<0.5 else 'SE')}"
+    def compute_direction(self, ball_dx, ball_dy): return f"Direction: {'Right ' if ball_dx>0 else 'Left '}{'Down' if ball_dy>0 else 'Up'}"
+    def compute_warning  (self, ball_x, ball_y):  return "I don't want to hit the wall" if min(ball_x, ball_y, 1-ball_x, 1-ball_y) < 0.05 else ""
 ```
 
 Every update is an explicit line you can grep for and breakpoint on. Great when one widget reflects one piece of state.
@@ -662,11 +667,7 @@ class BouncingBall(_BaseTab):
         Body(parent, ""             , name="lbl_warning"  ) # NOTE: No self.lbl_warning
 
         
-    def ip_setup(self, ip):                          # ← runs once
-        self.ball_x,  self.ball_y  = 0.5, 0.5        # start in the middle (normalized)
-        self.ball_dx, self.ball_dy = 0.4, 0.3        # velocity (normalized units / sec)
-
-        
+  
     def ip_think(self, ip):
         self.ball_x += self.ball_dx * ip.dt                 # No change
         self.ball_y += self.ball_dy * ip.dt                 # No change
@@ -684,11 +685,9 @@ class BouncingBall(_BaseTab):
         r   = ip.scale_y(0.02)                       # normalized radius → pixels
         pygame.draw.circle(ip.surface, (255, 160, 40), pos, r)
 
-        
     def compute_quadrant (self, ball_x, ball_y):  return f"Quadrant: {('NW' if ball_y<0.5 else 'SW') if ball_x<0.5 else ('NE' if ball_y<0.5 else 'SE')}"
     def compute_direction(self, ball_dx, ball_dy): return f"Direction: {'Right ' if ball_dx>0 else 'Left '}{'Down' if ball_dy>0 else 'Up'}"
     def compute_warning  (self, ball_x, ball_y):  return "I don't want to hit the wall" if min(ball_x, ball_y, 1-ball_x, 1-ball_y) < 0.05 else ""
-
 
     def bounce_off_walls(self):
         if self.ball_x < 0: self.ball_dx =  0.4
