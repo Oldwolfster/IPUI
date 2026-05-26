@@ -24,7 +24,8 @@ __all__ = [
     # Utilities
     "smart_format", "WidgetCatalog", "CodeBox","RecordSelector", #,"CodeBoxNoScroll"
     "LEFT", "CENTER", "RIGHT","Image",
-    "Icon"
+    "Icon",
+    "MgrMsgBox", "MSG_BTNS_OK", "MSG_BTNS_OK_CANCEL", "MSG_BTNS_YES_NO", "MSG_ICON_INFO", "MSG_ICON_QUESTION", "MSG_ICON_WARNING", "MSG_ICON_CRITICAL", "MSG_DEFAULT_1", "MSG_DEFAULT_2", "MSG_DEFAULT_3", "MSG_RESULT_OK", "MSG_RESULT_CANCEL", "MSG_RESULT_YES", "MSG_RESULT_NO"
 ]
 from ipui.engine.IPUI import IPUI
 from ipui.Style        import Style
@@ -95,6 +96,7 @@ from ipui.utils.MgrPkgPath              import MgrPkgPath
 
 from ipui.utils.Align                   import Align, LEFT,CENTER,RIGHT
 from ipui.widgets.Icon                  import Icon
+from ipui.utils.MgrMsgBox               import MgrMsgBox, MSG_BTNS_OK, MSG_BTNS_OK_CANCEL, MSG_BTNS_YES_NO, MSG_ICON_INFO, MSG_ICON_QUESTION, MSG_ICON_WARNING, MSG_ICON_CRITICAL, MSG_DEFAULT_1, MSG_DEFAULT_2, MSG_DEFAULT_3, MSG_RESULT_OK, MSG_RESULT_CANCEL, MSG_RESULT_YES, MSG_RESULT_NO
 
 
 

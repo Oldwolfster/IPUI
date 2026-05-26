@@ -21,7 +21,7 @@ class _BaseForm(_BaseWidget):
     when_to_use: Every screen in your app. Subclass it, override build(), done.
     best_for:    Top-level application _forms with or without tabs.
     example:     class MyApp(_BaseForm):TAB_LAYOUT = {"Home": ["welcome"], "Log": ["log"]}\n                 def build(self): self.build_header()
-    api:         switch_tab(name), set_pane(tab, idx, builder), hide_tab(name), show_tab(name), get_tab(name), prepare(name), show_modal(msg, fn), pipeline_set(k, v), pipeline_read(k)
+    api:         switch_tab(name), set_pane(tab, idx, builder), hide_tab(name), show_tab(name), get_tab(name), prepare(name), show_modal(msg, fn),msgbox(text, flags, title, on_result), pipeline_set(k, v), pipeline_read(k)
     declares:    TAB_LAYOUT(dict), tab_early_load(list), tab_on_change(str), tab_hidden(list), tab_border(int)
     """
 
@@ -274,6 +274,13 @@ class _BaseForm(_BaseWidget):
         if elapsed < min_seconds:
             time.sleep(min_seconds - elapsed)
         self.modal_msg = None
+
+    # method: msgbox  NEW  async modal with buttons. Bitmask flags (MSG_BTNS_* + MSG_ICON_* + MSG_DEFAULT_*).
+    # Callback fires when user picks a button or presses Enter/Esc.
+    # Example: self.msgbox("Resume?", MSG_BTNS_YES_NO + MSG_ICON_QUESTION + MSG_DEFAULT_2, "Confirm", on_result=self.handle_pick)
+    def msgbox(self, text, flags=0, title="", on_result=None):
+        from ipui.utils.MgrMsgBox import MgrMsgBox
+        MgrMsgBox.show(self, text, flags, title, on_result)
 
     def force_render_modal(self):
         surface = IPUI.screen

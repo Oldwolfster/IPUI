@@ -62,7 +62,10 @@ class GameLoop:
                     ip.mouse_wheel += (-1 if event.button == 4 else 1)
 
         # ── MgrInput — all dispatch in one place ──────────────
-        MgrInput.process_frame(ip, form)
+        #MgrInput.process_frame(ip, form)
+        from ipui.utils.MgrMsgBox import MgrMsgBox
+        if MgrMsgBox.is_active(): MgrMsgBox.handle_events(ip.events)
+        else:                     MgrInput.process_frame(ip, form)
 
         # ── THINK ─────────────────────────────────────────────
         if form: form.dispatch_ip_think(ip)
@@ -76,6 +79,7 @@ class GameLoop:
 
         # ── UI Draw ───────────────────────────────────────────
         IPUI.render(GameLoop.screen)
+        MgrMsgBox.draw(GameLoop.screen)
 
         # ── RENDER POST ───────────────────────────────────────
         if form: form.dispatch_ip_render(ip, "ip_draw_hud")

@@ -515,12 +515,28 @@ class _BaseWidget(MixinScrollH):
         pygame.draw.line(surface, Style.COLOR_TAB_INDICATOR, (r.left + 4, glow_y), (r.right - 4, glow_y), 2)
 
     def draw_overlay(self, surface: pygame.Surface) -> None:
-        """Override to draw floating content outside normal layout.
+        """Draw overlay children (do_not_allocate + is_overlay).
 
         Called after the main draw pass but before tooltips.
-        Used by widgets like DropDown that need to render above siblings.
+        Hosts get overlay-child drawing for free; subclasses overriding
+        this should call super() to preserve it.
         """
-        pass
+        for child in self.children:
+            if child.do_not_allocate and child.is_overlay and child.visible:
+                child.draw(surface)
+
+    def setup_overlay_button(self, label, payload_fn):
+        """Attach a floating copy button to this widget.
+
+        Call from build():
+            self.setup_overlay_button("Copy", lambda: self.text)
+
+        The button anchors top-right, copies payload_fn() result to clipboard,
+        and flashes "Copied!" for ~1s. No layout impact.
+        """
+        from ipui.widgets.CopyButton import CopyButton
+        CopyButton(self, data=label, on_change=payload_fn)
+
 
     def compute_content_position(self) -> tuple[int, int]:
         """Where to blit my_surface within my rect, respecting text_align."""

@@ -126,6 +126,7 @@ class PowerGrid(_BaseWidget):
         self.on_double_click    = self.on_grid_double_click
         self.build_body()
         if self.data            : self.set_data(self.data)
+        #self.setup_overlay_button("Copy", self.copy_payload_tsv)
         self.row_dbl_click_callback = None
         self.row_dbl_click_column   = None
 
@@ -188,6 +189,16 @@ class PowerGrid(_BaseWidget):
         RowClickValidator.validate_callback(callback)
         self.row_dbl_click_callback = callback
         self.row_dbl_click_column   = column
+
+    def copy_payload_tsv(self):
+        rows = self.rows_sorted or self.rows_all
+        if not rows: return None
+        header = "\t".join(str(c) for c in self.columns)
+        if 0 <= self.selected_row < len(rows):
+            body = "\t".join(str(c) for c in rows[self.selected_row])
+        else:
+            body = "\n".join("\t".join(str(c) for c in r) for r in rows)
+        return f"{header}\n{body}"
 
     # ══════════════════════════════════════════════════════════════
     # PAGINATION

@@ -164,6 +164,40 @@ Version control is the archive. Ship clean. <- screw that.  i'll trust git when 
 
 Before release: delete all `aaa_` methods, `*Old` methods, and duplicates.  Delete all 'Backup' classes After release: use `IPUI_DEPRECATED_` prefix, remove after one minor version.
 
+# Dashboard.py  Naming_And_Conventions.md  NEW section: Anti-Rug-Slide Rules
+# Lessons from the expected_runs/resolve_total incident, May 14 2026.
+
+## Anti-Rug-Slide Rules (a.k.a. "How To Stop Silent Failures")
+
+These rules exist because silent failures are the opposite of the Sacred Laws.
+A column that doesn't exist returning 0 looks identical to a column that exists and is zero.
+A `try/except: return None` looks identical to a clean no-result. Loud errors are gifts.
+
+1. **Verify names against live code, not greps.**
+   A grep hit can be a comment, a stale variable, or a dead code path.
+   Before relying on a name (column, method, attribute), confirm it appears in
+   currently-running code, not just somewhere in the source tree.
+
+2. **No `or 0` / `or ""` / `or []` on database results unless NULL is a
+   designed-for valid value.**
+   A column in the SELECT that returns NULL should be handled by an explicit
+   `if x is None:` branch with reasoning. `or 0` collapses three states
+   (NULL, 0, missing column) into one, hiding bugs.
+
+3. **No averaging / max-ing / picking between two sources of the same fact.**
+   If you don't know which source is authoritative, stop and ask.
+   "Take the bigger one" is superstition, not engineering. Exactly one
+   source is the truth; the other doesn't exist or is wrong.
+
+4. **No bare `except Exception: return None` in new code.**
+   Either catch a specific expected exception, or let it propagate so EZ.err
+   reports the real problem with the real location. Bare catches turn a
+   3-second fix into a 3-day mystery.
+
+5. **Screenshots of schemas, errors, and UI state are ground truth.**
+   If a screenshot shows the schema, use that schema. Don't half-remember
+   what columns "probably exist." Re-read the screenshot every time SQL is
+   written.
 ---
 
 ## Quick Reference
@@ -184,12 +218,3 @@ Before release: delete all `aaa_` methods, `*Old` methods, and duplicates.  Dele
 
 ---
 
-## Deferred to v0.2
-
-These names are imperfect but changing them now costs more than it's worth:
-
-| Name | Issue | Why Wait |
-|------|-------|----------|
-| `my_surface` | Unusual `my_` prefix | Same — deep refactor, low payoff. |
-| `do_not_allocate` | Negative boolean | Rarely user-facing. Rename risks subtle bugs. |
-| `on_click_me()` | "Temporary" name | Needs design discussion: merge into `on_click`? |

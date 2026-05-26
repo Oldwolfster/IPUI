@@ -470,10 +470,43 @@ Clean up list
 385) read all readme one more time
 386) ixed 3 issue in reactive if more than one lol.
 387)renamed width_flex to flex_width
-renamed height_fle to flex_height
-changed res independence to be based on window size instead of screen size.
+388) renamed height_fle to flex_height
+389) changed res independence to be based on window size instead of screen size.
+View at: https://pypi.org/project/ipui/0.1.0/
 
 
+######################################################################
+5/14
+######################################################################
+390) Created ms-access to sqllite conversion utility in sql.py
+390) Renamed LUDUS to Dashboard
+
+
+######################################################################
+5/20
+################################################################
+
+391) IPUI's first real "this is what the framework is for" battle test
+392) A self-organizing ETL dashboard driven by name-prefix conventions
+393) A schema mixin that owns table definitions declaratively
+394) A gd-everywhere column normalization with the rename
+395) WITHOUT ROWID + gd-first PKs for append-only clustering
+396) 7 sync methods that all share the same set-based pattern via run_sync
+397) Dependency-aware UI that hides unsafe actions
+398) A nuke button with proper async confirmation
+399) Pandas → SQL ingest with clean column normalization
+400) A working Log5 prediction at full scale (with the right pessimism about whether it beats naive)
+401) The Bayesian shrinkage diagnosis as the next-obvious improvement
+
+✅ Doubleheader PK bug found and fixed
+✅ MLB Stats API integrated with schedule + probable pitchers
+✅ game_pk join verified (99.5% on the side we care about)
+✅ Predict tab — pipeline end-to-end, MAE 0.761 baseline
+✅ Master-detail UI with drilldown and back navigation
+✅ Model-as-view convention (model_* prefix, zero LOC per model)
+✅ N-pane comparison via Add Pane button
+✅ Auto-refresh on date change
+✅ All of it self-discovered from sqlite_master + IPUI's TAB_LAYOUT
 ######################################################################
 Pending for V0.1
 ######################################################################

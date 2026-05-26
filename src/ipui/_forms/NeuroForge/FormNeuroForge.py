@@ -14,7 +14,8 @@ class FormNeuroForge(_BaseForm):
     TAB_LAYOUT = {
         #TAB NAME       PANEL 1                     , PANEL X (as many as you want)     , [Panel Flex, 2](to change size)
         "Home"      : ["welcome"                    , "select_project"                  , "metaphor"],
-        "Ludus"     : ["batches"                    , "batch_runs"                      , "best_runs"],
+        "Dashboard" : ["batches"                    , "batch_runs"                      , "best_runs"],
+        "Lab"       : ["cohort"                     , "runs"                            , "viz"],
         "Armory"    : ["match_hints"                , "match_settings"                  , "config_prep"],
         "Forge"     : ["info"                       , "workbench"                       , "preview"],
         "Colosseum" : ["status"                     , "runs"                            , "analysis"],

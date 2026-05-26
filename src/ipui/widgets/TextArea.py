@@ -38,6 +38,7 @@ class TextArea(TextBox):
         self.on_click            = self.handle_click_position
         self.on_double_click     = self.select_word_at_mouse
 
+        self.setup_overlay_button("Copy", lambda: self.text)
     # ══════════════════════════════════════════════════════════════
     # SURFACE — rebuild for multi-line
     # ══════════════════════════════════════════════════════════════

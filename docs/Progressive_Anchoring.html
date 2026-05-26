@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progressive Anchoring — or, how I was wrong about software design for 45 years</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Inter+Tight:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:        #f6f1e7;
+    --paper-edge:   #ebe3d1;
+    --ink:          #1a1714;
+    --ink-soft:     #4a4137;
+    --ink-faint:    #8a7e6a;
+    --rust:         #b8431f;
+    --rust-deep:    #8b2f15;
+    --moss:         #5d6b3a;
+    --gold:         #c08a2e;
+    --rule:         #d6cdb8;
+    --code-bg:      #1a1714;
+    --code-text:    #e8dfc8;
+    --code-comment: #8a7e6a;
+    --code-accent:  #d4a04a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 19px;
+    line-height: 1.65;
+    font-feature-settings: "ss01", "ss02", "kern";
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(at 20% 10%, rgba(184, 67, 31, 0.04) 0%, transparent 50%),
+      radial-gradient(at 80% 80%, rgba(93, 107, 58, 0.04) 0%, transparent 50%);
+    min-height: 100vh;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.09 0 0 0 0 0.07 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    z-index: 1;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 80px 32px 120px;
+    position: relative;
+    z-index: 2;
+  }
+  .eyebrow {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--rust);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(38px, 5.5vw, 58px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    font-variation-settings: "opsz" 144;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--rust);
+    font-weight: 500;
+  }
+  .subtitle {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1.4;
+    color: var(--ink-soft);
+    margin-bottom: 48px;
+    max-width: 620px;
+  }
+  .byline {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 13px;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+    padding-bottom: 56px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 64px;
+  }
+  .byline strong { color: var(--ink-soft); font-weight: 600; }
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 32px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 80px 0 28px;
+    color: var(--ink);
+    font-variation-settings: "opsz" 72;
+  }
+  h2::before {
+    content: '§';
+    color: var(--rust);
+    margin-right: 16px;
+    font-style: italic;
+    font-weight: 400;
+  }
+  h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1.3;
+    margin: 48px 0 16px;
+    color: var(--ink);
+  }
+  p { margin-bottom: 22px; }
+  p + p { margin-top: -4px; }
+  strong { font-weight: 600; color: var(--ink); }
+  em { font-style: italic; }
+  a {
+    color: var(--rust);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    text-decoration-color: rgba(184, 67, 31, 0.4);
+    transition: text-decoration-color 0.2s;
+  }
+  a:hover { text-decoration-color: var(--rust); }
+  .lede::first-letter {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 76px;
+    line-height: 0.85;
+    float: left;
+    margin: 8px 12px 0 0;
+    color: var(--rust);
+    font-variation-settings: "opsz" 144;
+  }
+  blockquote {
+    margin: 40px -20px;
+    padding: 28px 32px 28px 36px;
+    border-left: 3px solid var(--rust);
+    background: rgba(184, 67, 31, 0.03);
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 21px;
+    line-height: 1.5;
+    color: var(--ink);
+    position: relative;
+  }
+  blockquote::before {
+    content: '"';
+    position: absolute;
+    top: -8px;
+    left: 12px;
+    font-size: 60px;
+    color: var(--rust);
+    opacity: 0.25;
+    font-weight: 700;
+    line-height: 1;
+  }
+  blockquote cite {
+    display: block;
+    margin-top: 12px;
+    font-style: normal;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.86em;
+    background: rgba(26, 23, 20, 0.06);
+    color: var(--rust-deep);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+  pre {
+    margin: 16px -8px 32px -8px;
+    padding: 24px 28px;
+    background: var(--code-bg);
+    border-radius: 4px;
+    overflow-x: auto;
+    box-shadow:
+      0 1px 0 rgba(0,0,0,0.05),
+      0 8px 24px -8px rgba(26, 23, 20, 0.2);
+    position: relative;
+  }
+  pre::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 28px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), transparent);
+    border-radius: 4px 4px 0 0;
+    pointer-events: none;
+  }
+  pre code {
+    background: none;
+    color: var(--code-text);
+    padding: 0;
+    font-size: 13.5px;
+    line-height: 1.7;
+    font-weight: 400;
+  }
+  .c-comment { color: var(--code-comment); font-style: italic; }
+  .c-key     { color: var(--code-accent); }
+  .c-str     { color: #9bb87a; }
+  .c-dim     { color: #6e6452; font-style: italic; }
+  .code-label {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 24px 0 0 4px;
+  }
+  .code-label.after { color: var(--moss); }
+  ul, ol { margin: 20px 0 24px 0; padding-left: 28px; }
+  li { margin-bottom: 10px; padding-left: 6px; }
+  ul li::marker { color: var(--rust); }
+  ol li::marker { color: var(--rust); font-family: 'Fraunces', serif; font-weight: 600; font-style: italic; }
+  .compare {
+    margin: 40px -8px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(246, 241, 231, 0.5);
+  }
+  .compare table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+  .compare th {
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 600;
+    text-align: left;
+    padding: 14px 18px;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .compare th:first-child { width: 28%; }
+  .compare td {
+    padding: 14px 18px;
+    border-top: 1px solid var(--rule);
+    vertical-align: top;
+    font-family: 'Fraunces', serif;
+    line-height: 1.5;
+  }
+  .compare td:first-child {
+    font-weight: 600;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+  .compare td:nth-child(2) { color: var(--ink-soft); }
+  .compare td:nth-child(3) { color: var(--ink); }
+  .heuristics { margin: 32px 0; display: grid; gap: 14px; }
+  .heuristic {
+    padding: 18px 22px;
+    background: rgba(255, 255, 255, 0.4);
+    border-left: 2px solid var(--moss);
+    border-radius: 0 4px 4px 0;
+    font-size: 16.5px;
+    line-height: 1.55;
+  }
+  .heuristic strong {
+    display: block;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--moss);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .divider {
+    margin: 80px auto;
+    width: 60px;
+    text-align: center;
+    color: var(--rust);
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    letter-spacing: 0.8em;
+    opacity: 0.6;
+  }
+  .mountain {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.3;
+    color: var(--ink-soft);
+    margin: 32px 0;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    white-space: pre;
+    overflow-x: auto;
+    text-align: center;
+    border: 1px solid var(--rule);
+  }
+  .mountain .anchor { color: var(--rust); font-weight: 600; }
+  .mountain .summit { color: var(--gold); font-weight: 600; }
+  .coda {
+    margin-top: 100px;
+    padding-top: 56px;
+    border-top: 1px solid var(--rule);
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 17px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+  .coda strong { font-style: normal; color: var(--ink); }
+  @media (max-width: 640px) {
+    body { font-size: 17px; }
+    .container { padding: 48px 22px 80px; }
+    blockquote { margin: 32px 0; padding: 22px 24px; font-size: 18px; }
+    pre { margin: 12px -22px 24px -22px; border-radius: 0; padding: 20px 22px; }
+    .compare { margin: 32px -22px; border-radius: 0; border-left: 0; border-right: 0; }
+    .lede::first-letter { font-size: 60px; }
+    h2 { font-size: 26px; margin: 56px 0 20px; }
+    .mountain { font-size: 9.5px; padding: 16px 12px; }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .container > * { animation: fadeUp 0.7s ease-out backwards; }
+  .container > *:nth-child(1) { animation-delay: 0.05s; }
+  .container > *:nth-child(2) { animation-delay: 0.12s; }
+  .container > *:nth-child(3) { animation-delay: 0.19s; }
+  .container > *:nth-child(4) { animation-delay: 0.26s; }
+</style>
+</head>
+<body>
+
+<article class="container">
+
+  <div class="eyebrow">An essay on how we actually build</div>
+
+  <h1>Progressive Anchoring<br><em>or, how I was wrong about software design for 45 years</em></h1>
+
+  <p class="subtitle">Functional decomposition is a beautiful method. It's also a lie about how anyone actually writes code. Here's what really happens — and the method nobody named.</p>
+
+  <p class="byline">By <strong>Oldwolfster</strong> &nbsp;·&nbsp; A field report from the other side of a paradigm shift</p>
+
+  <p class="lede">My favorite uncle moved to my home city when I was eight. He was ten years older than me, studying computer science, and the kind of nerd who actually wanted to babysit his weird little nephew so they could talk about computers. He handed me <em>The C Programming Language</em> — K&amp;R, the white book — and I coded through it.</p>
+
+  <p>The thing he taught me, over and over, in every example and every problem we worked, was decomposition. Take the big thing. Break it into pieces. Each piece breaks into smaller pieces. Eventually you're looking at a few lines of code you can actually write. Build it up. Snap it together. Done.</p>
+
+  <p>I believed it. I built my career on it. I taught it to junior engineers for four and a half decades. <strong>If you can describe it, you can build it,</strong> I'd tell them, <strong>because you're just breaking off pieces of the description until it's all done!</strong></p>
+
+  <p>Then, about a year ago, I sat down to automate my own coding process. The kind of project where you build a system that builds systems. To do that, I had to write down — precisely — how I actually decompose problems. I'd been preaching this method since 1981. Writing it down should have taken an afternoon.</p>
+
+  <p>It took a week. And at the end of the week I had to admit something so disorienting I was shell-shocked for six hours and stoned off my ass for the next twenty-four: <strong>I don't actually code that way. I never have. Nobody does.</strong></p>
+
+  <p>This essay is what came out the other side. There's a method I've been using my whole career that I'd never named. It works <em>with</em> functional decomposition, not against it. And I think I finally understand why every project I've ever taught the "right way" still felt like I was sneaking some other process in through the back door.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>The Method I Preached</h2>
+
+  <p>Functional decomposition, the way I taught it, looks like this:</p>
+
+  <p>Start with one sentence that fully describes the system. <em>Build a Pac-Man game.</em> That's the root.</p>
+
+  <p>Break that sentence into 3–8 chunks that together cover 100% of the obligation. Nothing more. Nothing less. For Pac-Man:</p>
+
+  <ul>
+    <li>Logic for credit granted / game start</li>
+    <li>Initialize</li>
+    <li>Play the game</li>
+    <li>End game when over</li>
+    <li>Check if high score and manage it</li>
+  </ul>
+
+  <p>Each chunk must fully discharge its parent's responsibility. If "play the game" doesn't cover everything that happens during a Pac-Man round, your cut is wrong. Fix the cut.</p>
+
+  <p>Then you recurse. <em>Play the game</em> becomes <em>check input → move Pac-Man → move ghosts → update score → check collisions</em>. Each of those decomposes further. Eventually you bottom out at functions of a few lines, and you write them.</p>
+
+  <p>This method is <strong>gorgeous</strong>. It produces clean code. It produces clean documentation. It produces architecture diagrams that fit on one page and explain themselves. Niklaus Wirth wrote a paper called "Program Development by Stepwise Refinement" in 1971 that says essentially this, and the paper still holds up. I'd recommend it to anyone.</p>
+
+  <p>There's just one problem.</p>
+
+  <blockquote>
+    Functional decomposition only works when you already know where the seams are. And you almost never already know where the seams are.
+  </blockquote>
+
+  <p>Pac-Man is a fine example because Pac-Man has been built ten thousand times. The shape is <em>known</em>. We know what "play the game" means before we write a line of code. So the decomposition writes itself. It feels like the method is doing the work — but actually, history did the work. We're just re-implementing a shape humanity already discovered.</p>
+
+  <p>Try the same method on a system nobody has built before. <em>Build a workbench for experimenting with neural networks.</em> Now decompose. Four to eight chunks that fully cover the goal. Go.</p>
+
+  <p>You can't. There <em>is</em> no top sentence yet. You don't know what the system <em>is</em> until you build enough of it to find out. The act of decomposition presupposes an understanding that the act of building is supposed to <em>produce</em>.</p>
+
+  <p>This was the moment I'd been dodging for 45 years.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>What I Actually Do</h2>
+
+  <p>When I stopped trying to write down "the method I preach" and started watching what I actually <em>do</em>, here's what I found.</p>
+
+  <p>I want to build Pac-Man. I sit down at the machine. I don't decompose anything. I do this:</p>
+
+  <p><strong>I get the screen into video mode.</strong> Two lines of inline assembly. The screen flips. Solid rock. I can stand on it.</p>
+
+  <p>But here's the part the textbooks skip. Those two lines are <em>ugly</em>. They look like this:</p>
+
+  <div class="code-label">before</div>
+<pre><code><span class="c-key">main</span>():
+    mov ax, 0013h    <span class="c-comment">; what a weird comment symbol... was it first? Maybe we are the weird ones.</span>
+    int 10h
+    <span class="c-dim">[50 more commands to draw Pac-Man]</span>
+    <span class="c-dim">[20 more commands to poll the joystick]</span></code></pre>
+
+  <p>Magic numbers. Cryptic primitives. Three things crammed into one place with no names declaring what any of them are. The code <em>works</em>, but it's ugly to read. Something in my gut says <em>no, fix this first.</em></p>
+
+  <p>So before I drive the next anchor, I name the ugliness away:</p>
+
+  <div class="code-label after">after</div>
+<pre><code><span class="c-key">main</span>():
+    set_video_mode()
+    draw_pacman()
+    check_input()</code></pre>
+
+  <p>Same code. Same behavior. But now <code>main()</code> is a clean orchestration layer. The mess got pushed down one level into named children, and the names — <code>set_video_mode</code>, <code>draw_pacman</code>, <code>check_input</code> — convert mechanics into intent. The reader doesn't need to know what <code>0013h</code> means anymore. The name tells them.</p>
+
+  <p>That's a decomposition. It happened on the very first anchor. It wasn't a "later phase." It happened immediately, the moment the code felt ugly to read.</p>
+
+  <p>And then I climb. <strong>Draw a Pac-Man sprite.</strong> Get him moving with the arrow keys. Add a board. Make him respect the walls. Each new anchor is working code, kept and built upon. Each new anchor, the moment it lands, gets the same treatment: does this feel ugly to read? If yes, pull out named helpers until it doesn't.</p>
+
+  <p>This is the method. I call it <strong>progressive anchoring</strong>, and the metaphor is climbing.</p>
+
+  <div class="mountain"><span class="summit">                                    ▲  Pac-Man (the target)
+                                 ╱
+                              ╱
+                          <span class="anchor">●</span>  collision rules
+                       ╱
+                   <span class="anchor">●</span>  board exists
+                ╱
+            <span class="anchor">●</span>  movement
+         ╱
+     <span class="anchor">●</span>  Pac-Man drawn
+   ╱
+<span class="anchor">●</span>  video mode
+─────────────────────────── you start here</span></div>
+
+  <p>You're climbing a mountain. The summit is the target — <em>build Pac-Man.</em> The target gives you direction, so you don't wander. But you can't see the route from the bottom. You don't know which holds are good and which ones crumble until you put weight on them.</p>
+
+  <p>So you drive an axe into the rock at the first place you can reach. Stand on it. Look at it — is it ugly? Clean it up. Then look around. Drive the next axe somewhere reachable from where you're standing. Stand on that. Clean it. Repeat.</p>
+
+  <p>You never have two unfinished anchors at once. The program is <em>always running</em>, just doing less than it eventually will. Every anchor is load-bearing. You don't throw any of them away.</p>
+
+  <blockquote>
+    Functional decomposition draws the map. Progressive anchoring picks where to walk first — and lets the working code reveal the seams.
+    <cite>The thesis of this essay</cite>
+  </blockquote>
+
+  <div class="divider">· · ·</div>
+
+  <h2>The Burn Shows the Seams</h2>
+
+  <p>Here is the part of the theory I want to dwell on, because it took me 45 years to see it and I think it's the load-bearing insight.</p>
+
+  <p>When you decompose code, you're cutting it along its seams. The question is: <strong>how do you know where the seams are?</strong></p>
+
+  <p>Functional decomposition assumes you can see the seams from outside the code — that by thinking hard about the problem, you can draw the cuts before you write a line. This works for known shapes (Pac-Man, calculators, CRUD apps) because the seams are inherited from collective memory. It fails for novel shapes because you can't see what you don't yet understand.</p>
+
+  <p>Progressive anchoring works differently. You don't <em>decide</em> where the seams are. <strong>You write code, and the code burns.</strong></p>
+
+  <p>The burn is a felt sense. You're coding along in a method, happy as a pig in shit, and at some point the method starts feeling wrong. Not broken — wrong. Maybe it's gotten long. Maybe it's doing more than its name promised. Maybe it's full of magic numbers. Maybe it's just <em>ugly</em>. Whatever flavor of wrong it is, your gut chirps: <em>this needs to come apart.</em></p>
+
+  <p>That feeling is the seam revealing itself.</p>
+
+  <p>You couldn't have seen the seam from outside. The seam <em>didn't exist</em> until the code did. The act of writing the code generated the seam, and the burn is your perception detecting it. <strong>The decomposition isn't designed. It's discovered.</strong></p>
+
+  <p>This is why progressive anchoring isn't just functional decomposition done bottom-up. A naive critic might say: <em>"You're just decomposing the same way, you just write the code first."</em> And the critic would be partly right — there <em>is</em> decomposition happening. But the trigger is fundamentally different. FD places seams from a model in the head. Progressive anchoring places seams where the working code says they belong. The seams come from <em>evidence</em>, not from <em>prediction</em>.</p>
+
+  <p>And — this is important — the same root mistake that breaks FD at the system level breaks pre-planned decomposition at any scale. If you tried to design the children of an anchor before writing the anchor, you'd be guessing about seams you can't see yet, just at smaller scale. <strong>The mistake isn't about size. It's about direction.</strong> Acting on a model in your head instead of evidence from the code is the same error whether the code is a whole system or twelve lines.</p>
+
+  <p>(There's a Knuth principle that has more teeth than ours, but the shape is the same. He named <em>premature optimization</em> as the root of all evil — making code fast before you know it needs to be fast. The companion principle is <strong>premature decomposition</strong> — splitting code before you know where the seams are. Both stem from the same root: acting on a model instead of evidence.)</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>Why Not Just Decompose First?</h2>
+
+  <p>I want to give the critic their full hearing. The objection goes:</p>
+
+  <p><em>"Okay, but if you're going to end up decomposing anyway, why not just do it up front? Sketch out</em> <code>set_video_mode</code> <em>and</em> <code>draw_pacman</code> <em>and</em> <code>check_input</code> <em>before you write any code. Same destination, less rework."</em></p>
+
+  <p>This argument is seductive and wrong, and unpacking why is most of the point of this essay.</p>
+
+  <p>The destination <em>looks</em> the same — three named functions either way. But the path you took to get there determined whether those are the <em>right</em> three names. If I sketched them up front, before writing any code, those names came from my <em>guess</em> about how the program would naturally split. Sometimes I'd guess right. Often I'd guess wrong, and I'd carry that wrong guess forward for the rest of the project, fitting subsequent code into a structure that doesn't actually match the work.</p>
+
+  <p>You see this in real codebases all the time. A class named <code>UserManager</code> that's somehow grown to handle payment processing and email sending, because at some point someone needed those features and the existing structure didn't have anywhere obvious to put them, so they got jammed into <code>UserManager</code>. The class is doing three unrelated things because the <em>name</em> was wrong from day one — and the wrongness was invisible until enough code had been written to reveal it.</p>
+
+  <p>The wrong name codifies a misunderstanding of the shape. Every subsequent anchor has to fit a shape that isn't real. The compounding cost is enormous and almost entirely invisible at the point where it's incurred.</p>
+
+  <p>Now compare progressive anchoring. I write the raw asm. It works. It's ugly. I look at it and ask: <em>what is this actually doing?</em> Three things, it turns out — setting the video mode, drawing the character, polling input. I didn't have to <em>predict</em> those three things. The code <em>told me</em> there were three. I just named what was already there.</p>
+
+  <blockquote>
+    You don't design the seams. You detect them. The working code does the designing; your job is to listen.
+  </blockquote>
+
+  <p>The names that emerge from this process are honest, because they describe code that already exists. The names that emerge from top-down planning are guesses, because they describe code that doesn't exist yet. Honest names hold up under future change. Guessed names get warped to fit code they were never designed for.</p>
+
+  <p>This is also why progressive anchoring resists being automated. The burn — the felt sense of wrongness — lives in a human head, calibrated by experience, triggered by reading code against intent. No linter will ever detect it. No static analyzer. <strong>A method called</strong> <code>draw_pacman()</code> <strong>that polls the joystick is not syntactically broken.</strong> Only a reader who knows what <code>draw_pacman</code> is supposed to mean can notice the mismatch.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>The Rhythm</h2>
+
+  <p>So the actual practice isn't "anchor for a while, then decompose for a while." It's a continuous weave. The rhythm goes:</p>
+
+  <ol>
+    <li>Drive an anchor. Get working code.</li>
+    <li>Look at it. Does it feel ugly, full, cryptic, biff-prone, or wrong in any way? If yes, name the ugliness away into helpers.</li>
+    <li>Climb to the next anchor.</li>
+    <li>Repeat.</li>
+  </ol>
+
+  <p>The decomposition isn't a separate phase. It happens inside the rhythm, on every anchor, immediately when the burn fires. And the rhythm is <strong>fractal</strong> — the same motion runs at every scale.</p>
+
+  <p>Early on, <code>main()</code> is the container that fills, and the split happens there. Later, when you're inside <code>draw_pacman()</code> and it grows to 40 lines, <em>that's</em> the container that fills, and the split happens one level down. Later still, the helpers inside <code>draw_pacman()</code> grow and split themselves. Same rhythm. Same trigger. Different level.</p>
+
+  <p>Over many cycles, the system grows upward (new anchors at the top) and inward-downward (existing anchors decompose, their children eventually decompose too). The clean tree you see in finished documentation? It got assembled this way, layer by layer, burn by burn. Not designed top-down. <strong>Grown.</strong></p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>How They Differ</h2>
+
+  <div class="compare">
+    <table>
+      <thead>
+        <tr><th></th><th>Functional Decomposition</th><th>Progressive Anchoring</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Purpose</td><td>Create structure</td><td>Create <em>working</em> structure</td></tr>
+        <tr><td>Direction</td><td>Top-down</td><td>Outward from where you stand</td></tr>
+        <tr><td>Seams placed by</td><td>Developer's prediction</td><td>The working code's burn</td></tr>
+        <tr><td>Metric</td><td>Coverage of concept</td><td>Confirmation of truth</td></tr>
+        <tr><td>Assumes</td><td>You understand the shape</td><td>You'll discover the shape</td></tr>
+        <tr><td>Best for</td><td>Re-implementing known shapes</td><td>Building shapes nobody knows yet</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The "best for" row is the one that matters. Pac-Man is a known shape; functional decomposition handles it cleanly because the shape is in the collective memory of the field. A novel framework, a new neural network workbench, a piece of software that hasn't been built before — those are unknown shapes. Decomposition can't help with the discovery; anchoring can.</p>
+
+  <p>Almost every interesting project in our field is closer to the second category than the first. We just don't admit it.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>How To Actually Do It</h2>
+
+  <p>The hard part of progressive anchoring is choosing the next anchor and listening for the burn. Here are the heuristics I've developed over the years — most of them learned by failing to follow them and watching the consequences.</p>
+
+  <div class="heuristics">
+
+    <div class="heuristic">
+      <strong>Aggressive when you're flowing, tiny when you're getting your ass beat</strong>
+      Climbers do this instinctively. When the holds are solid and you can read the route, you make bigger reaches. When your forearms are pumped and the next hold is ambiguous, you shrink your moves. Hand to hand to hand, tiny, until you re-stabilize. Code is the same. If the last three things you tried worked first try, take bigger swings. If you've been debugging for an hour, the next anchor should be the smallest testable thing you can imagine.
+    </div>
+
+    <div class="heuristic">
+      <strong>Discomfort of any kind is the canary, and decomposition is the cure</strong>
+      Ugly, complicated, easy to biff, doing several things, hard to follow — whatever makes the code feel wrong is the signal. Pull a named helper out. Even two lines deserve their own function if the name converts mechanics into intent. <code>set_video_mode()</code> containing <code>mov ax, 0013h / int 10h</code> is <em>less</em> ugly than the inline version, even though the LOC is identical. The decomposition doesn't reduce code — it converts mechanics into intent. Naming is the cure; the function is just where you put it.
+    </div>
+
+    <div class="heuristic">
+      <strong>Method length is a canary, not a rule</strong>
+      Long methods chirp the canary. The chirp tells you to <em>look</em>, not to automatically split. Sometimes one objective is honestly thirty lines — TCP packet slicing, say — and that's fine. Leave it. But most long methods are doing more than their name promised, and the length is just how you noticed. The line count never decides. You decide, by looking. The line count just makes sure you bother to look.
+    </div>
+
+    <div class="heuristic">
+      <strong>Honest names enable the canary; vague names disable it</strong>
+      The whole feedback loop depends on the function's name being an honest description of intent. <code>draw_pacman()</code> is honest — you can tell at a glance whether the body matches it. <code>process_data()</code> or <code>handle_thing()</code> is useless, because it's vague enough to "contain" anything. A vague name silences the canary. You literally lose the ability to detect when a function has overflowed its purpose, because there's no clear purpose to overflow.
+    </div>
+
+    <div class="heuristic">
+      <strong>Name the high-level slot early, even if it does almost nothing</strong>
+      If you know you'll eventually have a <code>parse_sdlc()</code> function, call your read-the-file code <code>parse_sdlc()</code> from day one, even if all it currently does is read lines. The orchestration shape is what your future self needs. The implementation can grow into it.
+    </div>
+
+    <div class="heuristic">
+      <strong>When it gets ugly inside, rename and push down a level</strong>
+      Your nice clean <code>parse_sdlc()</code> is now 40 lines and three nested loops. Don't try to clean it in place. Rename it to <code>read_all_lines()</code>, write a new clean <code>parse_sdlc()</code> that calls it, and let the mess live one level down where it's contained. This is the bricklayer's move — the rough work goes inside the wall, the smooth surface stays smooth.
+    </div>
+
+    <div class="heuristic">
+      <strong>If you can't reach the next anchor, decompose the gap</strong>
+      When the climb stalls, the move is to step back and decompose the gap between where you are and where you're trying to be. This is functional decomposition arriving exactly when it's useful: as a tool for crossing a specific stuck place, not as a top-down master plan.
+    </div>
+
+    <div class="heuristic">
+      <strong>Abstractions are earned, not assumed</strong>
+      No base class, no interface, no DRY pattern until the code <em>proves</em> it deserves the structure. The cost of a premature abstraction isn't writing it — it's that it codifies a misunderstanding of the shape, and now every subsequent anchor has to fit a shape that isn't real.
+    </div>
+
+    <div class="heuristic">
+      <strong>Keep everything that works</strong>
+      Anchors are not prototypes. They are not exploratory spikes you throw away. The Pac-Man you see on screen at step 2 is the same Pac-Man in the finished game. The video-mode init from step 1 is still doing its job at the end. You climb <em>through</em> your anchors; you don't replace them.
+    </div>
+
+  </div>
+
+  <div class="divider">· · ·</div>
+
+  <h2>The Top-Down Myth</h2>
+
+  <p>The realization that sent me into 24 hours of stoned reorientation was this: <strong>nobody built software top-down. Ever. Not Knuth. Not Parnas. Especially not Carmack(props bro). Not me.</strong> The top-down story is what we tell after the fact, because the finished artifact happens to be hierarchical and clean.</p>
+
+  <p>Three things conspired to keep this hidden:</p>
+
+  <p><strong>One.</strong> Documentation systematically erases the anchoring phase. David Parnas told us in 1986 to write up rational design processes as if they'd been planned that way, even when they weren't. He was right that the artifact should look clean. But the side effect is that every textbook, every architecture diagram, every "how we built this" talk shows the cleaned-up artifact and never the climbing process that produced it. The reader sees the map and assumes the cartographer drew it before walking the land. They didn't.</p>
+
+  <p><strong>Two.</strong> Teaching examples are always known shapes. Every CS curriculum walks students through building Pac-Man, or a calculator, or a to-do list — things that have been built so many times the decomposition is collective memory. Students learn that "decomposition works" because they're only ever asked to decompose problems that have already been solved by humanity at large. They never get to feel the failure mode, because they never face an unknown shape.</p>
+
+  <p><strong>Three.</strong> The anchoring phase feels like "just getting started" rather than "real engineering." So senior engineers do it for ten minutes, forget about it, and then teach the next four hours of decomposition as if that's where the work happens. The first ten minutes is where the <em>understanding</em> happens. The next four hours is just execution.</p>
+
+  <p>I taught it that way for 45 years.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>What Changes Now</h2>
+
+  <p>If you're a senior engineer reading this, the practical move is small but real: <strong>notice the phase you're in.</strong></p>
+
+  <p>When you sit down to a problem and reach for the whiteboard and start drawing boxes, ask: do I actually know the shape of this system, or am I pretending I do? If you're re-implementing something well-understood — sure, decompose. If you're building something genuinely new, put the whiteboard away and drive your first axe into the rock. Get <em>something</em> running. Then look at it. Listen for the burn. Name what's there. Climb.</p>
+
+  <p>When you mentor junior engineers, teach them <em>both</em> methods. Tell them decomposition is real and necessary — but it's triggered by the burn, not by planning. Tell them which trigger to listen to based on whether they understand the problem yet. Don't let them suffer for ten years preaching one and using the other.</p>
+
+  <p>When you document a finished system, follow Parnas: write it top-down, present the clean artifact. But when you teach the <em>process</em>, be honest. Show the messy climb. Show the wrong turns. Show the moment a small ugly anchor became the foundation of something good.</p>
+
+  <p>I spent four and a half decades telling people that if they could describe a thing, they could build it. I still believe that. <strong>I was just wrong about which direction the describing flows.</strong> It doesn't flow top-down from a clean root sentence. It flows outward from working code — anchor by anchor, burn by burn, helper by helper — until enough of the system exists that the description finally becomes possible.</p>
+
+  <p>You don't describe the mountain and then climb it. You climb the mountain, and the description is what you can write when you reach the top.</p>
+
+  <div class="coda">
+    <p><strong>A note on prior art.</strong> Almost nothing in this essay is original. David Parnas wrote about information hiding and design-for-change in 1972, and about faking rational design processes in 1986. Frederick Brooks wrote "plan to throw one away" in 1975. Alistair Cockburn described "walking skeletons." The Pragmatic Programmer talks about "tracer bullets." The XP community talks about spike solutions. Peter Naur wrote "Programming as Theory Building" in 1985 and may have come closest to the spirit of this idea.</p>
+    <p>What I'm hoping to contribute is a <strong>name</strong> for the specific move — anchors as load-bearing working code, kept and built upon, with decomposition triggered by the burn — and a <strong>reconciliation</strong> with the functional decomposition tradition that taught most of us to code. If you find yourself nodding while reading this, the chances are you already work this way and just hadn't named it either. That's the goal. Naming makes it teachable.</p>
+  </div>
+
+</article>
+
+</body>
+</html>
