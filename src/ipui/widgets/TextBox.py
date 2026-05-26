@@ -60,6 +60,11 @@ class TextBox(Label):
         self.rebuild_surface()
         self.sync_from_pipeline()
 
+
+        self.private_undo_stack    = [(self.text, self.cursor_pos, self.selection_anchor)]  # NEW
+        self.private_redo_stack    = []                                          # NEW
+        self.private_undo_last_time= 0                                           # NEW
+        self.private_undo_last_len = len(self.text)
         self.on_click              = self.handle_click_position
         self.on_double_click       = self.select_word_at_mouse
 
@@ -266,6 +271,11 @@ class TextBox(Label):
         elif ctrl and key == Key.C:self.copy();                    return True
         elif ctrl and key == Key.V:self.paste();                   return True
         elif ctrl and key == Key.X:self.cut();                     return True
+        elif ctrl and shift and key == Key.Z: self.do_redo();      return True
+        elif ctrl and key == Key.Z:           self.do_undo();      return True
+        elif ctrl and key == Key.Y:           self.do_redo();      return True
+
+
         elif char:
             self.insert_char(char)
             return True
@@ -276,6 +286,7 @@ class TextBox(Label):
     # ══════════════════════════════════════════════════════════════
 
     def move_left(self, ctrl=False, shift=False):
+        self.flush_undo_chunk()
         if self.cursor_pos <= 0:
             if not shift:
                 self.selection_anchor = self.cursor_pos
@@ -289,6 +300,7 @@ class TextBox(Label):
         self.cursor_timer = 0
 
     def move_right(self, ctrl=False, shift=False):
+        self.flush_undo_chunk()
         if self.cursor_pos >= len(self.text):
             if not shift:
                 self.selection_anchor = self.cursor_pos
@@ -302,12 +314,14 @@ class TextBox(Label):
         self.cursor_timer = 0
 
     def move_home(self, shift=False):
+        self.flush_undo_chunk()
         self.cursor_pos   = 0
         if not shift:
             self.selection_anchor = self.cursor_pos
         self.cursor_timer = 0
 
     def move_end(self, shift=False):
+        self.flush_undo_chunk()
         self.cursor_pos   = len(self.text)
         if not shift:
             self.selection_anchor = self.cursor_pos
@@ -417,6 +431,7 @@ class TextBox(Label):
     # ══════════════════════════════════════════════════════════════
 
     def on_text_changed(self):
+        self.record_undo()
         self.rebuild_surface()
         self.fire_change()
 
@@ -470,3 +485,63 @@ class TextBox(Label):
     def set_focus(self):
         self.is_focused   = True
         self.cursor_timer = 0
+
+
+
+    # ══════════════════════════════════════════════════════════════
+    # UNDO / REDO ENGINE
+    # ══════════════════════════════════════════════════════════════
+
+    # TextBox.py  method: snapshot_state   NEW   Capture current editable state as a tuple.
+    def snapshot_state(self):
+        return (self.text, self.cursor_pos, self.selection_anchor)
+
+    # TextBox.py  method: restore_state    NEW   Apply a snapshot, refresh surface, notify pipeline/on_change.
+    def restore_state(self, snap):
+        self.text, self.cursor_pos, self.selection_anchor = snap
+        self.cursor_timer          = 0
+        self.private_undo_last_len = len(self.text)
+        self.private_undo_last_time= 0                                       # force next edit to start fresh chunk
+        self.rebuild_surface()
+        self.fire_change()                                                   # pipeline + on_change stay in sync with visible text
+
+    # TextBox.py  method: record_undo      NEW   Called from on_text_changed. Coalesce-or-push snapshot.
+    def record_undo(self):
+        now          = time.time()
+        new_len      = len(self.text)
+        delta        = new_len - self.private_undo_last_len
+        idle         = (now - self.private_undo_last_time) > 0.7            # 700ms idle = chunk boundary
+        kind_flipped = (delta > 0) != (self.private_undo_last_len < new_len + (new_len - self.private_undo_last_len))  # type vs delete
+        big_jump     = abs(delta) > 1                                       # paste / cut / multi-char op
+        new_chunk    = idle or big_jump or self.private_undo_last_time == 0
+
+        if new_chunk:                                                       # push a fresh snapshot
+            self.private_undo_stack.append(self.snapshot_state())
+            if len(self.private_undo_stack) > 100:
+                self.private_undo_stack.pop(0)                              # cap memory at 100
+        else:                                                               # coalesce: update top-of-stack
+            self.private_undo_stack[-1] = self.snapshot_state()
+
+        self.private_redo_stack.clear()                                     # any new edit kills redo history
+        self.private_undo_last_time= now
+        self.private_undo_last_len = new_len
+
+    # TextBox.py  method: flush_undo_chunk NEW   Force next edit to start a new undo chunk (caret moves call this).
+    def flush_undo_chunk(self):
+        self.private_undo_last_time = 0
+
+    # TextBox.py  method: do_undo          NEW   Pop undo, push current onto redo, restore.
+    def do_undo(self):
+        if len(self.private_undo_stack) <= 1:                               # stack always holds at least the seed
+            return
+        current = self.private_undo_stack.pop()
+        self.private_redo_stack.append(current)
+        self.restore_state(self.private_undo_stack[-1])
+
+    # TextBox.py  method: do_redo          NEW   Pop redo, push onto undo, restore.
+    def do_redo(self):
+        if not self.private_redo_stack:
+            return
+        snap = self.private_redo_stack.pop()
+        self.private_undo_stack.append(snap)
+        self.restore_state(snap)

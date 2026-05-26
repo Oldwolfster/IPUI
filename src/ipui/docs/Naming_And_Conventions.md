@@ -164,6 +164,69 @@ Version control is the archive. Ship clean. <- screw that.  i'll trust git when 
 
 Before release: delete all `aaa_` methods, `*Old` methods, and duplicates.  Delete all 'Backup' classes After release: use `IPUI_DEPRECATED_` prefix, remove after one minor version.
 
+
+### 11. C(n) — Code Complexity Notation
+
+Big-O notation measures **runtime cost** as input grows. C(n) measures **code cost** as the system grows.
+
+It is *not* about how much code it took to build a feature the first time. The first write is a one-time tax nobody remembers a week later. C(n) is about the **ongoing friction** of extending the system: once the ETL system exists, what does it cost to add the Nth table? Once the widget system exists, what does it cost to add the Nth widget? Once the form system exists, what does it cost to add the Nth tab?
+
+- **C(1)** — Adding the Nth thing costs the same as adding the 1st. The framework absorbs growth. You write the thing; nothing else changes.
+- **C(log n)** — A small, bounded edit somewhere central (registry, dispatcher) per addition. Tolerable, but watch for drift.
+- **C(n)** — Every new addition is another paper cut at a call site, a registry, a dispatch table, a migration. The cuts compound. The system gets *harder* to extend the more it grows.
+
+Framework design is the business of trading a one-time cleverness tax (the `scan_methods` machinery, the `TAB_LAYOUT` engine, the `_BaseWidget` capability layer) for a **permanent C(1) extension cost**. That trade is almost always worth it. Cleverness pays off forever; friction compounds forever.
+
+#### Example: ETL Schema Registration
+
+```python
+# C(n) — every new table is another edit to build_schema()
+def build_schema(self):
+    self.create_runs_table()
+    self.create_batches_table()
+    self.create_metrics_table()
+    self.create_checkpoints_table()
+    # ...add the next table here, AND here, AND remember the dispatch list...
+
+# C(1) — scan_methods does the registration; adding a table IS registering it
+def build_schema(self):
+    for name, method in self.scan_methods("schema_"):
+        method()
+
+def schema_runs(self):         ...
+def schema_batches(self):      ...
+def schema_metrics(self):      ...
+def schema_checkpoints(self):  ...
+# Adding schema_foo() is the entire change. No central edits, ever.
+```
+
+#### Example: IPUI's C(1) Bets
+
+- **Adding a widget to `_BaseWidget` capability layer** → every existing widget gains the behavior for free. C(1) on a permanent axis.
+- **Adding a tab to a form** → one entry in `TAB_LAYOUT`. C(1).
+- **Adding a new style token** → one entry in `Style`. C(1) globally.
+- **Adding a custom widget** → subclass `_BaseWidget`. Layout, events, scrolling, styling come free. C(1).
+- **Adding a column to a `PowerGrid`** → one entry in the column declaration. C(1).
+
+#### When to Reach For It
+
+C(n) is a **design lens**, not a label to slap on after the fact. The right time to ask it is *before* committing to an API shape:
+
+> "What's the C(n) of adding the Nth X through this interface?"
+
+If the answer is C(n), the design is wrong and the cost will be paid forever. Stop, redesign, push the work down to the framework so users pay C(1).
+
+#### Vocabulary Note
+
+C(n) is distinct from O(n). When the context is ambiguous, say **"code complexity"** or **"extension cost"**. When the context is clear (a design discussion, a commit message about API shape), `C(1)` and `C(n)` read naturally and pattern-match the existing big-O muscle memory.
+
+---
+
+
+
+
+
+
 # Dashboard.py  Naming_And_Conventions.md  NEW section: Anti-Rug-Slide Rules
 # Lessons from the expected_runs/resolve_total incident, May 14 2026.
 

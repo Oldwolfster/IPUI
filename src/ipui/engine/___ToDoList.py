@@ -507,6 +507,25 @@ View at: https://pypi.org/project/ipui/0.1.0/
 ✅ N-pane comparison via Add Pane button
 ✅ Auto-refresh on date change
 ✅ All of it self-discovered from sqlite_master + IPUI's TAB_LAYOUT
+
+
+
+######################################################################
+05/26
+######################################################################
+Schema-as-data architecture — _tables holds the column defs, Schema_Bootstrap.SCHEMA is the Python seed, the materializer enforces convention (GD/TS auto-injection, WITHOUT ROWID, PK assembly)
+BB.py singleton service — configured once by Pipe, caches the LAYERS dict, owns query/execute/log
+MgrDT — all date logic in one place, drift killed before it became drift
+The transposed four-column Pipe view — raw → etl → feet → forest reading left-to-right, with table cards showing live row counts and date ranges
+pull_raw_pitches — pybaseball pull with GD INT conversion in transit, delete-by-day then insert, full forensic trail in _run_log
+The pull_<tbl> convention — Python methods for raw, SQL views for everything else, framework auto-discovers
+The orchestration layer — update_all is pure dispatch, run_view_into_table handles purge → find view → match columns → insert with date window
+Real data flowing — 22K pitches → 3K PAs → 1.3K batter-game rows, all in ~28 seconds, with timestamps proving each step
+wOBA-ready — the BA query is just the start; same shape gets OBP, SLG, wOBA from data that's already there
+
+Added 'undo to textbox.
+
+
 ######################################################################
 Pending for V0.1
 ######################################################################
@@ -514,6 +533,8 @@ Pending for V0.1
 What is left to fix publish
 
 sqlarea not scrolling
+bigtoooltip generalized to all widgets.  but how to deliver the data.
+/pause
 
 
 

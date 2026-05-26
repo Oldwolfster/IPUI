@@ -80,7 +80,7 @@ Because every table is `WITHOUT ROWID` and PK leads with `GD`, the dominant acce
   
 ```
                         
-                                 slugging
+                                 slugging    moonphases.
 
 5/26    1   Babe Ruth   .354    .355
 5/26    3   Babe Ruth   .364    .365

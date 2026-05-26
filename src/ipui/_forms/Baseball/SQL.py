@@ -742,3 +742,54 @@ class SQL(_BaseTab):
             return True
         self.set_status("Select a table first")
         return False
+
+
+
+        ############
+        # Connection from pipe
+        ###
+
+
+    def load_query_for_table(self, tbl, db_path, start_gd=None, end_gd=None):
+        self.db_path = db_path
+        self.save_prefs()
+        self.update_db_size_label()
+        self.selected_table = tbl
+        sql = self.build_select_all(tbl, start_gd, end_gd)
+        self.push_query(sql, f"Loaded {tbl}")
+        self.run_query (sql)
+
+
+    # ════════════════════════════════════════════════════════════════════════════
+    # SQL.py  method: build_select_all  NEW: vertical SELECT with PRAGMA-order cols
+    # ════════════════════════════════════════════════════════════════════════════
+
+    def build_select_all(self, tbl, start_gd, end_gd):
+        cols       = self.fetch_column_names(tbl)
+        col_block  = ",\n    ".join(cols) if cols else "*"
+        where      = self.build_gd_where(cols, start_gd, end_gd)
+        return f"SELECT\n    {col_block}\nFROM {tbl}{where}\nLIMIT 200"
+
+
+    # ════════════════════════════════════════════════════════════════════════════
+    # SQL.py  method: fetch_column_names  NEW: PRAGMA-order column list
+    # ════════════════════════════════════════════════════════════════════════════
+
+    def fetch_column_names(self, tbl):
+        conn = sqlite3.connect(self.db_path)
+        try:
+            cur = conn.execute(f"PRAGMA table_info({self.quote_ident(tbl)})")
+            return [r[1] for r in cur.fetchall()]
+        finally:
+            conn.close()
+
+
+    # ════════════════════════════════════════════════════════════════════════════
+    # SQL.py  method: build_gd_where  NEW: GD range filter when table has a GD col
+    # Skips the WHERE if start/end aren't given OR if the table has no GD column.
+    # ════════════════════════════════════════════════════════════════════════════
+
+    def build_gd_where(self, cols, start_gd, end_gd):
+        if start_gd is None or end_gd is None: return ""
+        if "GD" not in cols:                   return ""
+        return f"\nWHERE GD BETWEEN {start_gd} AND {end_gd}"
