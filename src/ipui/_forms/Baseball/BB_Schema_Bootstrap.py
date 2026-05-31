@@ -1,13 +1,17 @@
-# Schema_Bootstrap.py  class: Schema_Bootstrap  Update: renamed from BB_Schema, raw_pitches expanded to all Statcast columns
+# BB_Schema_Bootstrap.py  class: BB_Schema_Bootstrap  FULL REPLACEMENT
+# Reverted to pre-position state. Only addition vs your original: rebuild_table().
 
 import re
 import sqlite3
 from pathlib import Path
+
+from ipui._forms.Baseball.BB import BB
 from ipui.utils.MgrDT import MgrDT
+
 
 class BB_Schema_Bootstrap:
 
-    DB_PATH = str(Path.home() / ".neuroforge" / "projects" / "baseball.db")  # canonical location
+    DB_PATH = str(Path.home() / ".neuroforge" / "projects" / "baseball.db")
 
 
     # ══════════════════════════════════════════════════════════════
@@ -19,19 +23,15 @@ class BB_Schema_Bootstrap:
         cls.check_tables_table              (db)
         cls.sync_hardcoded_SCHEMA           (db)
         cls.materialize_tables_from_metadata(db)
-        # more steps to come
 
 
     # ══════════════════════════════════════════════════════════════
-    # STEP 1 — ensure _tables exists. The one ROWID exception (metadata table).
+    # STEP 1 — ensure _tables exists.
     # ══════════════════════════════════════════════════════════════
-
-    # Schema_Bootstrap.py  method: check_tables_table  Update: rename ts → DS in _run_log
-    # Replace the existing check_tables_table (whole method).
 
     @classmethod
     def check_tables_table(cls, db):
-        Path(db).parent.mkdir(parents=True, exist_ok=True)               # ensure dir
+        Path(db).parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(db)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS _tables (
@@ -54,6 +54,8 @@ class BB_Schema_Bootstrap:
         """)
         conn.commit()
         conn.close()
+
+
     # ══════════════════════════════════════════════════════════════
     # STEP 2 — insert SCHEMA rows that aren't already in _tables.
     # Idempotent at row level: existing (tbl, col) pairs are untouched.
@@ -65,7 +67,7 @@ class BB_Schema_Bootstrap:
         existing = cls.fetch_existing_pairs(conn)
         missing  = [(tbl, col) for (tbl, col) in cls.SCHEMA if (tbl, col) not in existing]
         for tbl, col in missing:
-            layer = tbl.split('_')[0]                                    # derive layer from prefix
+            layer = tbl.split('_')[0]
             conn.execute("INSERT INTO _tables (tbl, layer, col) VALUES (?, ?, ?)", (tbl, layer, col))
         conn.commit()
         conn.close()
@@ -89,15 +91,15 @@ class BB_Schema_Bootstrap:
     @classmethod
     def materialize_one_table(cls, conn, tbl):
         rows         = conn.execute("SELECT col FROM _tables WHERE tbl=? ORDER BY id", (tbl,)).fetchall()
-        layer        = tbl.split('_')[0]                                 # derive layer
-        col_decls    = ["GD              INTEGER"]                       # auto-injected, always PK col 1
+        layer        = tbl.split('_')[0]
+        col_decls    = ["GD              INTEGER"]
         pk_cols      = ["GD"]
-        if layer == 'feet':                                              # auto-inject TS on feet_*
+        if layer == 'feet':
             col_decls.append("TS              INTEGER")
             pk_cols  .append("TS")
         for (raw_col,) in rows:
             is_pk, decl = cls.parse_col_row(raw_col)
-            col_name    = decl.split()[0]                                # first token = column name
+            col_name    = decl.split()[0]
             col_decls.append(decl)
             if is_pk:
                 pk_cols.append(col_name)
@@ -105,6 +107,21 @@ class BB_Schema_Bootstrap:
         body         = ",\n    ".join(col_decls + [pk_clause])
         sql          = f"CREATE TABLE IF NOT EXISTS {tbl} (\n    {body}\n) WITHOUT ROWID"
         conn.execute(sql)
+
+
+    # ══════════════════════════════════════════════════════════════
+    # REBUILD ONE TABLE — drop physical, recreate from _tables metadata.
+    # Delegates to materialize_one_table. Used by Workbench Add/Delete Column.
+    # ══════════════════════════════════════════════════════════════
+
+    @classmethod
+    def rebuild_table(cls, tbl):
+        conn = sqlite3.connect(cls.DB_PATH)
+        conn.execute(f"DROP TABLE IF EXISTS {tbl}")
+        cls.materialize_one_table(conn, tbl)
+        conn.commit()
+        conn.close()
+        BB.log(tbl, "INFO", "rebuilt from _tables")
 
 
     # ══════════════════════════════════════════════════════════════
@@ -139,12 +156,6 @@ class BB_Schema_Bootstrap:
     # ══════════════════════════════════════════════════════════════
     # SCHEMA — the seed. (tbl, col_declaration) per row.
     # GD and TS are NEVER in SCHEMA — materializer injects them.
-    # PK columns flagged by 'PK' prefix (parser is tolerant of case/spacing).
-    # Layer derived from tbl prefix at insert. Order in list = column order.
-    #
-    # raw_pitches: every column Statcast returns via pybaseball.statcast().
-    # Pandas type misreads corrected: xBA/xwOBA/xSLG/iso_value/babip_value/launch_angle
-    # are REAL despite pandas inferring INTEGER on NULL-heavy samples.
     # ══════════════════════════════════════════════════════════════
 
     SCHEMA = [

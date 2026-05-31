@@ -155,8 +155,9 @@ class Pipe(_BaseTab):
         Body(card, f"Range:  {rng}")
         btns = Row(card)
         Button(btns, "Refresh"  ,   on_click=lambda: self.refresh_table(tbl))
-        Button(btns, "Workbench",   on_click=self.passme)
+        Button(btns, "Workbench",   on_click=lambda: self.view_in_workbench(tbl))
         Button(btns, "SQL"      ,   on_click=lambda: self.view_in_sql(tbl))
+
 
 
     def view_in_sql(self, tbl):
@@ -250,7 +251,7 @@ class Pipe(_BaseTab):
     def replace_day_pitches(self, gd_int, df):
         import sqlite3
         conn = sqlite3.connect(BB.db_path)
-        cur  = conn.execute("DELETE FROM raw_pitches WHERE GD = ?", (gd_int,))
+        cur = conn.execute("DELETE FROM raw_pitches WHERE GD = ?", (gd_int,))
         if cur.rowcount > 0:
             BB.log("raw_pitches", "INFO", f"GD {gd_int} replaced {cur.rowcount} existing rows")
         df.to_sql("raw_pitches", conn, if_exists="append", index=False)
@@ -267,6 +268,16 @@ class Pipe(_BaseTab):
     def known_raw_pitches_cols(self):
         rows = BB.query("PRAGMA table_info(raw_pitches)")
         return set(r[1] for r in rows)
+
+
+    def view_in_workbench(self, tbl):
+        self.form.switch_tab("Workbench")                                    # construct if first visit
+        wb = self.form.get_tab("Workbench")
+        if wb is None:
+            BB.log("view_in_workbench", "ERROR", "Workbench tab not found after switch")
+            return
+        wb.load_table(tbl)
+
 
 
     # ══════════════════════════════════════════════════════════════
