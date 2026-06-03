@@ -485,8 +485,8 @@ class SQL(_BaseTab):
     def build_query_slot(self, parent, slot):
         """One TextArea + Run/Open/Save button row for the given slot."""
         initial  = self.current_query if slot == 1 and hasattr(self, "current_query") else ""
-        sql_card = Card(parent, scroll_v=True, pad=2, flex_height=1)
-        txt = TextArea(sql_card, initial, name=f"code_sql_{slot}", flex_height=1, wrap=False, scroll_h=True)
+        sql_card = Card(parent, scroll_v=True, pad=2)
+        txt = TextArea(sql_card, initial, name=f"code_sql_{slot}", wrap=False, scroll_h=True)
         Button(txt, "rocket")
         row = Row(parent)
         Button(row, "Run Query", color_bg=Style.COLOR_BUTTON_CTA,       on_click=self.make_run_click(slot))

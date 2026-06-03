@@ -4,6 +4,7 @@ from datetime import date, timedelta, datetime
 from pathlib import Path
 
 from ipui import *
+from ipui._forms.Baseball.BB import BB
 
 
 class Predict(_BaseTab):
@@ -11,6 +12,7 @@ class Predict(_BaseTab):
     DB_PATH      = str(Path.home() / ".neuroforge" / "projects" / "baseball.db")
     MODEL_PREFIX = "model_"
     NEW_PANE_WEIGHT = 0.75
+    ABs_PER_GAME = 3.8
 
     # ══════════════════════════════════════════════════════════════
     # LIFECYCLE
@@ -34,7 +36,7 @@ class Predict(_BaseTab):
 
         row1 = Row(card)
         Body(row1, "From:")
-        TextBox(row1, initial_value=self.default_start_date(),
+        TextBox(row1, initial_value="2026-03-27", #self.default_start_date(),
                 name="txt_predict_start",
                 on_submit=lambda val: self.on_dates_changed())
 
@@ -172,14 +174,12 @@ class Predict(_BaseTab):
     # ══════════════════════════════════════════════════════════════
 
     def list_models(self):
-        conn = self.open_db()
-        rows = conn.execute("""
+        rows =  BB.query("""
             SELECT name FROM sqlite_master
             WHERE  type = 'view'
               AND  name LIKE ?
             ORDER  BY name
-        """, (self.MODEL_PREFIX + "%",)).fetchall()
-        conn.close()
+        """, (self.MODEL_PREFIX + "%",))
         return [r[0][len(self.MODEL_PREFIX):] for r in rows]
 
     def list_models_dict(self):
@@ -189,51 +189,54 @@ class Predict(_BaseTab):
     # QUERIES
     # ══════════════════════════════════════════════════════════════
 
+
+    # Predict.py  method: query_daily_summary  UPDATE: scale predicted in MAE calc
     def query_daily_summary(self, model_view, start_str, end_str):
+        start_gd = int(start_str.replace("-", ""))
+        end_gd = int(end_str.replace("-", ""))
         sql = f"""
             SELECT
-                bg.gd                                   AS gd,
-                COUNT(*)                                AS predictions,
-                AVG(ABS(m.predicted - bg.hits))         AS mae,
-                MIN(m.predicted - bg.hits)              AS min_err,
-                MAX(m.predicted - bg.hits)              AS max_err
+                bg.GD                                           AS gd,
+                COUNT(*)                                        AS predictions,
+                AVG(ABS(m.predicted * {self.ABs_PER_GAME} - bg.hits))  AS mae,
+                MIN(m.predicted * {self.ABs_PER_GAME} - bg.hits)        AS min_err,
+                MAX(m.predicted * {self.ABs_PER_GAME} - bg.hits)        AS max_err
             FROM       batter_games   bg
             INNER JOIN {model_view}   m
-                       ON  m.gd      = bg.gd
+                       ON  m.GD      = bg.GD
                       AND  m.batter  = bg.batter
                       AND  m.game_pk = bg.game_pk
-            WHERE      bg.gd BETWEEN ? AND ?
-            GROUP  BY  bg.gd
-            ORDER  BY  bg.gd
+            WHERE      bg.GD BETWEEN ? AND ?
+            GROUP  BY  bg.GD
+            ORDER  BY  bg.GD
         """
-        conn = self.open_db()
-        rows = conn.execute(sql, (start_str, end_str)).fetchall()
-        conn.close()
-        return rows
+        return BB.query(sql, (start_gd, end_gd))
+
+
 
     def query_predictions_for(self, model_view, gd):
+        gd_int = int(str(gd).replace("-", ""))
         sql = f"""
             SELECT
-                bg.batter                              AS batter_id,
-                COALESCE(b.name, '#' || bg.batter)     AS name,
-                bg.game_pk                             AS game_pk,
-                bg.hits                                AS actual,
-                m.predicted                            AS predicted,
-                m.predicted - bg.hits                  AS error
+                bg.batter                                               AS batter_id,
+                COALESCE(p.full_name, '#' || bg.batter)                AS name,
+                COALESCE(t.abbreviation, '???')                        AS team,
+                p.position                                             AS pos,
+                bg.game_pk                                             AS game_pk,
+                bg.hits                                                AS actual,
+                ROUND(m.predicted * {self.ABs_PER_GAME}, 2)           AS predicted,
+                ROUND(m.predicted * {self.ABs_PER_GAME} - bg.hits, 2) AS error
             FROM       batter_games   bg
             INNER JOIN {model_view}   m
-                       ON  m.gd      = bg.gd
+                       ON  m.GD      = bg.GD
                       AND  m.batter  = bg.batter
                       AND  m.game_pk = bg.game_pk
-            LEFT  JOIN batters        b
-                       ON  b.id      = bg.batter
-            WHERE      bg.gd = ?
+            LEFT  JOIN raw_players    p   ON  p.player_id = bg.batter
+            LEFT  JOIN raw_teams      t   ON  t.team_id   = p.team_id
+            WHERE      bg.GD = ?
             ORDER  BY  bg.hits DESC, m.predicted DESC
         """
-        conn = self.open_db()
-        rows = conn.execute(sql, (gd,)).fetchall()
-        conn.close()
-        return rows
+        return BB.query(sql, (gd_int,))
 
     def overall_mae(self, days):
         total_preds = sum(d[1] for d in days)
@@ -263,8 +266,23 @@ class Predict(_BaseTab):
                 "name"      : r[1],
                 "game_pk"   : r[2],
                 "actual"    : r[3],
-                "predicted" : round(r[4], 2) if r[4] is not None else None,
-                "error"     : round(r[5], 2) if r[5] is not None else None,
+                "predicted" : round(r[4] * self.ABs_PER_GAME, 2) if r[4] is not None else None,
+                "error"     : round((r[4] * self.ABs_PER_GAME) - r[3], 2) if r[4] is not None else None,
+            }
+            for r in rows
+        ]
+
+    # Predict.py  method: format_preds_rows  UPDATE: include team and pos columns
+    def format_preds_rows(self, rows):
+        return [
+            {
+                "name"      : r[1],
+                "team"      : r[2],
+                "pos"       : r[3],
+                "game_pk"   : r[4],
+                "actual"    : r[5],
+                "predicted" : r[6],
+                "error"     : r[7],
             }
             for r in rows
         ]

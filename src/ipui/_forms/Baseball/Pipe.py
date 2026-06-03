@@ -1,3 +1,4 @@
+from ipui._forms.Baseball.XGBoostMixin import XGBoostMixin
 from ipui.utils.MgrDT import MgrDT
 from ipui._forms.Baseball.BB_Schema_Bootstrap import BB_Schema_Bootstrap
 from datetime import date, timedelta, datetime
@@ -13,7 +14,7 @@ import pybaseball
 
 
 
-class Pipe(_BaseTab):
+class Pipe(_BaseTab, XGBoostMixin):
 
     DB_PATH = str(Path.home() / ".neuroforge" / "projects" / "baseball.db")
 
@@ -64,11 +65,11 @@ class Pipe(_BaseTab):
         Spacer(header)
         Button(header, "Update all",color_bg=Style.COLOR_BUTTON_CTA,on_click=self.update_all)
 
-        TextBox(header, initial_value="2026-03-18", name="txt_start_date")
+        TextBox(header, initial_value="2026-03-27", name="txt_start_date")
         Body(header, "to:")
-        TextBox(header, initial_value="2026-03-20", name="txt_end_date")
+        TextBox(header, initial_value="2026-05-31", name="txt_end_date")
         Spacer(header)
-        Button(header, "blah ", on_click=self.passme)
+        Button(header, "Train XGB", on_click=self.train_xgb)
         Button(header, "blah", on_click=self.passme)
         Button(header, "Phoenix", on_click=self.nuke_clicked, color_bg=Style.COLOR_BUTTON_DANGER)
 
@@ -84,15 +85,29 @@ class Pipe(_BaseTab):
             on_result=self.nuke_confirmed,
         )
 
+
     def nuke_confirmed(self, result):
         if result != MSG_RESULT_YES:
             BB.log("nuke", "INFO", "cancelled by user")
             return
-        for tbl in BB.layer_tables("etl") + BB.layer_tables("feet"):
+        for tbl in BB.layer_tables("etl") + BB.layer_tables("feet") + BB.layer_tables("forest"):  # CHANGE
             BB.drop_table(tbl)
+            BB.execute("DELETE FROM _tables WHERE tbl = ?", (tbl,))
+        self.drop_views_for_layers(["etl", "feet", "forest"])  # CHANGE
         BB.refresh()
-        BB.log("nuke", "DONE", "etl + feet layers nuked")
+        BB.log("nuke", "DONE", "etl + feet + forest layers nuked")  # CHANGE
         self.refresh_pane()
+
+    def drop_views_for_layers(self, layers):
+        for layer in layers:
+            rows = BB.query(
+                "SELECT name FROM sqlite_master WHERE type='view' AND name LIKE ?",
+                (f"pull_{layer}_%",)
+            )
+            for (name,) in rows:
+                BB.execute(f"DROP VIEW IF EXISTS {name}")
+                BB.log(name, "INFO", "dropped view")
+
 
     def refresh_table(self, tbl):
         dates = self.get_start_and_end_dates()
@@ -101,7 +116,7 @@ class Pipe(_BaseTab):
         layer = BB.layer_of(tbl)
         BB.log(tbl, "INFO", f"refresh requested for GD {start_gd} → {end_gd}  (layer={layer})")
         if   layer == "raw" : self.refresh_raw_table   (tbl, start_gd, end_gd)
-        elif layer in ("etl","feet"): self.refresh_derived_table(tbl, start_gd, end_gd)
+        elif layer in ("etl","feet","forest"): self.refresh_derived_table(tbl, start_gd, end_gd)
         else: BB.log(tbl, "WARN", f"refresh not supported for layer '{layer}'")
         self.refresh_pane()
 
@@ -280,6 +295,82 @@ class Pipe(_BaseTab):
 
 
 
+
+    # Pipe.py  method: pull_raw_teams  UPDATE: GD = today, conflict on (GD, team_id)
+    def pull_raw_teams(self, start_gd, end_gd):
+        BB.log("raw_teams", "INFO", "pulling teams")
+        import statsapi
+        gd = MgrDT.today_gd()
+        teams = statsapi.get('teams', {'sportId': 1})['teams']
+        rows = 0
+        for t in teams:
+            if not t.get('active'):                                      continue
+            BB.execute("""
+                INSERT INTO raw_teams (GD, team_id, team_name, abbreviation, location_name, league, division)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(GD, team_id) DO UPDATE SET
+                    team_name     = excluded.team_name,
+                    abbreviation  = excluded.abbreviation,
+                    location_name = excluded.location_name,
+                    league        = excluded.league,
+                    division      = excluded.division
+            """, (
+                gd,
+                t['id'],
+                t['name'],
+                t.get('abbreviation', ''),
+                t.get('locationName', ''),
+                t.get('league', {}).get('name', ''),
+                t.get('division', {}).get('name', ''),
+            ))
+            rows += 1
+        BB.log("raw_teams", "DONE", "teams loaded", rows=rows)
+
+    # Pipe.py  method: pull_raw_players  UPDATE: GD = today, conflict on (GD, player_id)
+    def pull_raw_players(self, start_gd, end_gd):
+        BB.log("raw_players", "INFO", "pulling players")
+        import statsapi
+        gd = MgrDT.today_gd()
+        ids = [r[0] for r in BB.query("""
+            SELECT DISTINCT batter  FROM etl_pa
+            UNION
+            SELECT DISTINCT pitcher FROM etl_pa
+        """)]
+        BB.log("raw_players", "INFO", f"found {len(ids)} unique player IDs")
+        rows = 0
+        for i in range(0, len(ids), 100):
+            batch = ids[i:i + 100]
+            id_str = ",".join(str(x) for x in batch)
+            people = statsapi.get('people', {'personIds': id_str, 'hydrate': 'currentTeam'})['people']
+            for p in people:
+                BB.execute("""
+                    INSERT INTO raw_players
+                        (GD, player_id, full_name, use_name, boxscore_name, position, bat_side, throw_hand, team_id, jersey_number)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(GD, player_id) DO UPDATE SET
+                        full_name     = excluded.full_name,
+                        use_name      = excluded.use_name,
+                        boxscore_name = excluded.boxscore_name,
+                        position      = excluded.position,
+                        bat_side      = excluded.bat_side,
+                        throw_hand    = excluded.throw_hand,
+                        team_id       = excluded.team_id,
+                        jersey_number = excluded.jersey_number
+                """, (
+                    gd,
+                    p['id'],
+                    p.get('fullName', ''),
+                    p.get('useName', ''),
+                    p.get('boxscoreName', ''),
+                    p.get('primaryPosition', {}).get('abbreviation', ''),
+                    p.get('batSide', {}).get('code', ''),
+                    p.get('pitchHand', {}).get('code', ''),
+                    p.get('currentTeam', {}).get('id'),
+                    p.get('primaryNumber', ''),
+                ))
+                rows += 1
+        BB.log("raw_players", "DONE", "players loaded", rows=rows)
+
     # ══════════════════════════════════════════════════════════════
     # Pipe.py  method: gd_int_to_date  NEW: 20240715 → date(2024, 7, 15)
     # ══════════════════════════════════════════════════════════════
@@ -436,6 +527,11 @@ class Pipe(_BaseTab):
         common      = view_cols & target_cols
         extras      = view_cols - target_cols
         missing     = target_cols - view_cols
+
+        print(f"view_cols: {sorted(view_cols)}")
+        print(f"target_cols: {sorted(target_cols)}")
+        print(f"common: {sorted(common)}")
+
         if extras:
             BB.log(tbl, "WARN", f"view '{view}' has extra columns (will drop): {sorted(extras)}")
         if missing:
