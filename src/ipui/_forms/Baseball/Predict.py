@@ -4,7 +4,7 @@ from datetime import date, timedelta, datetime
 from pathlib import Path
 
 from ipui import *
-from ipui._forms.Baseball.BB import BB
+from ipui._forms.Baseball.BbDB import BbDB
 
 
 class Predict(_BaseTab):
@@ -174,7 +174,7 @@ class Predict(_BaseTab):
     # ══════════════════════════════════════════════════════════════
 
     def list_models(self):
-        rows =  BB.query("""
+        rows =  BbDB.query("""
             SELECT name FROM sqlite_master
             WHERE  type = 'view'
               AND  name LIKE ?
@@ -190,7 +190,6 @@ class Predict(_BaseTab):
     # ══════════════════════════════════════════════════════════════
 
 
-    # Predict.py  method: query_daily_summary  UPDATE: scale predicted in MAE calc
     def query_daily_summary(self, model_view, start_str, end_str):
         start_gd = int(start_str.replace("-", ""))
         end_gd = int(end_str.replace("-", ""))
@@ -198,9 +197,9 @@ class Predict(_BaseTab):
             SELECT
                 bg.GD                                           AS gd,
                 COUNT(*)                                        AS predictions,
-                AVG(ABS(m.predicted * {self.ABs_PER_GAME} - bg.hits))  AS mae,
-                MIN(m.predicted * {self.ABs_PER_GAME} - bg.hits)        AS min_err,
-                MAX(m.predicted * {self.ABs_PER_GAME} - bg.hits)        AS max_err
+                AVG(ABS(m.predicted - bg.hits))                 AS mae,
+                MIN(m.predicted - bg.hits)                      AS min_err,
+                MAX(m.predicted - bg.hits)                      AS max_err
             FROM       batter_games   bg
             INNER JOIN {model_view}   m
                        ON  m.GD      = bg.GD
@@ -210,8 +209,33 @@ class Predict(_BaseTab):
             GROUP  BY  bg.GD
             ORDER  BY  bg.GD
         """
-        return BB.query(sql, (start_gd, end_gd))
+        return BbDB.query(sql, (start_gd, end_gd))
 
+    # ── query_predictions_for  UPDATE: drop ABs_PER_GAME multiplier ──
+
+    def query_predictions_for(self, model_view, gd):
+        gd_int = int(str(gd).replace("-", ""))
+        sql = f"""
+            SELECT
+                bg.batter                                               AS batter_id,
+                COALESCE(p.full_name, '#' || bg.batter)                AS name,
+                COALESCE(t.abbreviation, '???')                        AS team,
+                p.position                                             AS pos,
+                bg.game_pk                                             AS game_pk,
+                bg.hits                                                AS actual,
+                ROUND(m.predicted, 2)                                  AS predicted,
+                ROUND(m.predicted - bg.hits, 2)                        AS error
+            FROM       batter_games   bg
+            INNER JOIN {model_view}   m
+                       ON  m.GD      = bg.GD
+                      AND  m.batter  = bg.batter
+                      AND  m.game_pk = bg.game_pk
+            LEFT  JOIN raw_players    p   ON  p.player_id = bg.batter
+            LEFT  JOIN raw_teams      t   ON  t.team_id   = p.team_id
+            WHERE      bg.GD = ?
+            ORDER  BY  bg.hits DESC, m.predicted DESC
+        """
+        return BbDB.query(sql, (gd_int,))
 
 
     def query_predictions_for(self, model_view, gd):
@@ -224,8 +248,8 @@ class Predict(_BaseTab):
                 p.position                                             AS pos,
                 bg.game_pk                                             AS game_pk,
                 bg.hits                                                AS actual,
-                ROUND(m.predicted * {self.ABs_PER_GAME}, 2)           AS predicted,
-                ROUND(m.predicted * {self.ABs_PER_GAME} - bg.hits, 2) AS error
+                ROUND(m.predicted, 2)                                  AS predicted,
+                ROUND(m.predicted - bg.hits, 2)                        AS error
             FROM       batter_games   bg
             INNER JOIN {model_view}   m
                        ON  m.GD      = bg.GD
@@ -236,8 +260,7 @@ class Predict(_BaseTab):
             WHERE      bg.GD = ?
             ORDER  BY  bg.hits DESC, m.predicted DESC
         """
-        return BB.query(sql, (gd_int,))
-
+        return BbDB.query(sql, (gd_int,))
     def overall_mae(self, days):
         total_preds = sum(d[1] for d in days)
         total_err   = sum(d[1] * d[2] for d in days)

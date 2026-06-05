@@ -524,7 +524,11 @@ Real data flowing — 22K pitches → 3K PAs → 1.3K batter-game rows, all in ~
 wOBA-ready — the BA query is just the start; same shape gets OBP, SLG, wOBA from data that's already there
 
 Added 'undo to textbox.
+######################################################################
+6/3
+######################################################################
 
+added after_paint
 
 ######################################################################
 Pending for V0.1

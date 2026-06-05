@@ -204,6 +204,7 @@ class MgrMsgBox:
     @classmethod
     def button_at(cls, pos):
         """Return index of button rect under pos, or -1 if none."""
+        if cls.private_active is None: return -1  # NEW
         for i, rect in enumerate(cls.private_active["button_rects"]):
             if rect.collidepoint(pos):                          return i
         return -1

@@ -1,9 +1,9 @@
 
 import numpy   as np
-from ipui._forms.Baseball.BB import BB
+from ipui._forms.Baseball.BbDB import BbDB
 
 
-class XGBoostMixin:
+class MixinXGBoost:
 
     XGB_MODEL_NAME  = "xgb_v1"                                          # matches predict_xgb_v1 table
     XGB_TABLE       = "predict_xgb_v1"
@@ -16,23 +16,23 @@ class XGBoostMixin:
 
     def train_xgb(self):
 
-        BB.log(self.XGB_TABLE, "INFO",  "loading forest")
+        BbDB.log(self.XGB_TABLE,  "loading forest")
         rows = self.load_forest()
         if not rows:
-            BB.log(self.XGB_TABLE, "WARN",  "forest is empty — run Update All first")
+            BbDB.log(self.XGB_TABLE,  "forest is empty — run Update All first")
             return
-        BB.log(self.XGB_TABLE, "INFO",  f"training on {len(rows)} rows")
+        BbDB.log(self.XGB_TABLE, f"training on {len(rows)} rows")
         model = self.fit_model(rows)
-        BB.log(self.XGB_TABLE, "INFO",  "writing predictions")
+        BbDB.log(self.XGB_TABLE,   "writing predictions")
         self.write_predictions(model, rows)
-        BB.log(self.XGB_TABLE, "DONE",  "model_xgb_v1 ready")
+        BbDB.log(self.XGB_TABLE,   "model_xgb_v1 ready")
 
     # ══════════════════════════════════════════════════════════════
     # LOAD — pull forest rows; skip rows with NULL features.
     # ══════════════════════════════════════════════════════════════
 
     def load_forest(self):
-        return BB.query("""
+        return BbDB.query("""
             SELECT GD, batter, game_pk, hits,
                    b_ba, p_ba_against, p_throws, b_stand
             FROM   forest
@@ -87,9 +87,12 @@ class XGBoostMixin:
         X, _   = self.build_xy(rows)
         preds  = model.predict(X)
         for row, pred in zip(rows, preds):
-            BB.execute("""
+            BbDB.execute("""
                 INSERT INTO predict_xgb_v1 (GD, batter, game_pk, predicted)
                 VALUES (?, ?, ?, ?)
                 ON CONFLICT(GD, batter, game_pk) DO UPDATE SET
                     predicted = excluded.predicted
             """, (row[0], row[1], row[2], float(pred)))
+
+        BbDB.update_summary(self.XGB_TABLE)  # NEW
+        self.refresh_pane()

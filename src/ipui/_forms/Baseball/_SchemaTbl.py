@@ -1,6 +1,15 @@
-class _Schema_tbl:
+
+
+class _SchemaTbl:
 
     SCHEMA = [
+        # ═══ _summary ═══
+        ('_summary', 'PK tbl                                       TEXT'),
+        ('_summary', '   rows                                      INTEGER'),
+        ('_summary', '   cols                                      INTEGER'),
+        ('_summary', '   min_gd                                    INTEGER'),
+        ('_summary', '   max_gd                                    INTEGER'),
+
 
         # ═══ raw_pitches ═══ Full Statcast pitch shape. PK = (GD, game_pk, at_bat_number, pitch_number).
         # GD is auto-injected as PK col 1 by the materializer; the rest of the PK is flagged here.
@@ -295,7 +304,5 @@ class _Schema_tbl:
         ('predict_xgb_v1', 'PK batter                                    INTEGER'),
         ('predict_xgb_v1', 'PK game_pk                                   INTEGER'),
         ('predict_xgb_v1', '   predicted                                 REAL'   ),
-
-
 
     ]

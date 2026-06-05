@@ -731,10 +731,23 @@ class _BaseWidget(MixinScrollH):
     # STATE
     # ==============================================================
 
+    @property
+    def text(self):
+        return getattr(self, "private_text", None)
+
+    @text.setter
+    def text(self, value):
+        prev = getattr(self, "private_text", None)
+        self.private_text = value
+        if value == prev: return                              # unchanged → skip
+        if getattr(self, "private_build_comp", False):        # post-construction only (no flag anymore)
+            self.build()
+
+    # _BaseWidget.py  method: set_text  Update: thin alias — the property does the work
     def set_text(self, text: str) -> None:
-        """Update text and rebuild the widget."""
         self.text = text
-        if hasattr(self, 'build'): self.build()
+
+
 
     @property
     def enabled(self):

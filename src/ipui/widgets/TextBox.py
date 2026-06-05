@@ -476,6 +476,13 @@ class TextBox(Label):
     # PUBLIC API
     # ══════════════════════════════════════════════════════════════
 
+    # TextBox.py  property: text setter override  New: editors set the backing store, never build
+    # Reuses _BaseWidget's getter (via Label); refresh is handled by rebuild_surface(), not build().
+    @Label.text.setter
+    def text(self, value):
+        self.private_text = value
+
+
     def set_text(self, text):
         self.text             = text
         self.cursor_pos       = len(self.text)

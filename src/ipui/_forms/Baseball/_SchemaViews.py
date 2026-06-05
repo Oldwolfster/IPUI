@@ -3,7 +3,7 @@
 import sqlite3
 
 
-class _Schema_views:
+class _SchemaViews:
 
     @classmethod
     def create_all(cls, db):
@@ -63,36 +63,6 @@ class _Schema_views:
             WHERE events IS NOT NULL;
         """
 
-
-
-
-
-
-    @classmethod
-    def view_pull_feet_batter(cls):
-        return """
-            SELECT
-        GD,
-        1                                                                  AS TS,
-        batter,
-        COUNT(*)                                                           AS pa,
-        SUM(is_ab)                                                         AS ab,
-        SUM(is_hit)                                                        AS hits,
-        SUM(is_hr)                                                         AS hr,
-        SUM(is_bb)                                                         AS bb,
-        SUM(is_k)                                                          AS k,
-        SUM(total_bases)                                                   AS total_bases,
-        SUM(launch_speed)                                                  AS sum_launch_speed,
-        SUM(xba)                                                           AS sum_xba,
-        SUM(woba_value)                                                    AS sum_woba_value,
-        SUM(woba_denom)                                                    AS sum_woba_denom,
-        SUM(CASE WHEN launch_speed >= 95 THEN 1 ELSE 0 END)                AS hard_hit_count
-    FROM etl_pa
-    GROUP BY GD, batter;
-        
-    """
-
-
     @classmethod
     def view_pull_feet_batter(cls):
         return """
@@ -121,7 +91,6 @@ class _Schema_views:
             GROUP BY GD, batter, p_throws;
         """
 
-
     @classmethod
     def view_pull_feet_bat2(cls):
         return """
@@ -149,8 +118,6 @@ class _Schema_views:
             FROM feet_batter
         """
 
-
-        # _Schema_views.py  method: view_pull_feet_pitcher  NEW: pitcher primitives from etl_pa
     @classmethod
     def view_pull_feet_pitcher(cls):
         return """
@@ -179,7 +146,6 @@ class _Schema_views:
             GROUP BY GD, pitcher, stand;
         """
 
-    # _Schema_views.py  method: view_pull_feet_pitch2  NEW: feet_pitcher + ba_against ratio
     @classmethod
     def view_pull_feet_pitch2(cls):
         return """
@@ -207,38 +173,11 @@ class _Schema_views:
             FROM feet_pitcher
         """
 
+        # _SchemaViews.py  class: deleteme
 
-
-    # _Schema_views.py  method: view_model_log5  UPDATE: expose formula components in SELECT
     @classmethod
-    def view_model_log5(cls):
-        """
-        Log5 hit probability model — Bill James, 1981.
-
-        Estimates the probability of a hit given a specific batter/pitcher matchup,
-        adjusting both players' batting averages relative to league average.
-
-        Formula:
-            hit_score  =  b * p / lg
-            out_score  =  (1-b) * (1-p) / (1-lg)
-            predicted  =  hit_score / (hit_score + out_score)
-
-        Where:
-            b   = batter BA (season to date, split by pitcher handedness)
-            p   = pitcher BA-against (season to date, split by batter stance)
-            lg  = league BA (season to date, all PA)
-
-        Intuition:
-            p/lg is the pitcher's multiplier — how much better or worse than average.
-            b * (p/lg) is the batter's BA adjusted for that pitcher's quality.
-            Dividing by (hit_score + out_score) normalizes back to a valid probability,
-            since the raw scores are relative weights, not probabilities.
-
-        Notes:
-            - Pitcher is the game starter, identified as MIN(at_bat_number) per game_pk.
-            - Unknown pitchers (not in feet_pitch2) fall back to lg_ba via LEFT JOIN + COALESCE.
-            - Season-to-date BAs include the target day (bleeding deferred to v2).
-        """
+    def view_model_log5(cls):  # UPDATE: scale to hits-per-game
+        """Log5 hit probability — output scaled to expected hits per game."""
         return """
             WITH
             league AS (
@@ -246,48 +185,27 @@ class _Schema_views:
                     SUM(is_hit) * 1.0 / NULLIF(SUM(is_ab), 0)             AS lg_ba
                 FROM etl_pa
             ),
-            matchups AS (
-                SELECT DISTINCT
-                    GD,
-                    batter,
-                    game_pk,
-                    p_throws,
-                    pitcher,
-                    stand
-                FROM etl_pa
-                WHERE at_bat_number = (
-                    SELECT MIN(at_bat_number)
-                    FROM   etl_pa e2
-                    WHERE  e2.game_pk = etl_pa.game_pk
-                )
-            ),
-            batter_ba AS (
-                SELECT batter, p_throws,
-                    SUM(hits) * 1.0 / NULLIF(SUM(ab), 0)    AS ba
-                FROM feet_bat2
-                GROUP BY batter, p_throws
-            ),
-            pitcher_ba AS (
-                SELECT pitcher, stand,
-                    SUM(hits_allowed) * 1.0 / NULLIF(SUM(ab_against), 0)    AS ba_against
-                FROM feet_pitch2
-                GROUP BY pitcher, stand
-            ),
             scores AS (
                 SELECT
-                    m.GD,
-                    m.batter,
-                    m.pitcher,
-                    m.game_pk,
-                    l.lg_ba,
-                    b.ba                                                    AS batter_ba,
-                    p.ba_against                                            AS pitcher_ba,
-                    (b.ba * p.ba_against / l.lg_ba)                        AS hit_score,
-                    ((1-b.ba) * (1-p.ba_against) / NULLIF(1-l.lg_ba, 0))  AS out_score
-                FROM        matchups   m
-                INNER JOIN  batter_ba  b  ON  b.batter   = m.batter   AND b.p_throws = m.p_throws
-                INNER JOIN  pitcher_ba p  ON  p.pitcher  = m.pitcher  AND p.stand    = m.stand
-                CROSS JOIN  league     l
+                    matchup.GD,
+                    matchup.batter,
+                    matchup.pitcher,
+                    matchup.game_pk,
+                    league.lg_ba,
+                    batter_season.ba                                        AS batter_ba,
+                    pitcher_season.ba_against                               AS pitcher_ba,
+                    (batter_season.ba * pitcher_season.ba_against / league.lg_ba)
+                                                                           AS hit_score,
+                    ((1-batter_season.ba) * (1-pitcher_season.ba_against) / NULLIF(1-league.lg_ba, 0))
+                                                                           AS out_score
+                FROM      pull_forest_mixin_matchup        matchup
+                INNER JOIN pull_forest_mixin_batter_season  batter_season
+                           ON  batter_season.batter   = matchup.batter
+                          AND  batter_season.p_throws = matchup.p_throws
+                INNER JOIN pull_forest_mixin_pitcher_season pitcher_season
+                           ON  pitcher_season.pitcher = matchup.pitcher
+                          AND  pitcher_season.stand   = matchup.stand
+                CROSS JOIN league
             )
             SELECT
                 GD,
@@ -299,13 +217,10 @@ class _Schema_views:
                 pitcher_ba,
                 hit_score,
                 out_score,
-                hit_score / NULLIF(hit_score + out_score, 0)               AS predicted
+                hit_score / NULLIF(hit_score + out_score, 0) * 3.8         AS predicted
             FROM scores
         """
 
-
-
-    # _Schema_views.py  method: view_model_ba_baseline  UPDATE: starter filter to match log5 grain
     @classmethod
     def view_model_ba_baseline(cls):
         return """
@@ -338,7 +253,77 @@ class _Schema_views:
 
 
     @classmethod
-    def view_pull_forest(cls):
+    def view_model_xgb_v1(cls):
+        """XGBoost v1 — reads from predict_xgb_v1 table written by trainer."""
+        return """
+            SELECT
+                GD,
+                batter,
+                game_pk,
+                predicted
+            FROM predict_xgb_v1
+        """
+
+        # _SchemaViews.py  class: deleteme
+
+        # ═══ MIXIN VIEWS — building blocks, never materialized ═══
+
+        # _SchemaViews.py  class: deleteme
+
+    @classmethod
+    def view_pull_forest_mixin_matchup(cls):  # UPDATE: verbose aliases
+        """Who faced whom — every batter × starting pitcher per game."""
+        return """
+            SELECT DISTINCT
+                batters.GD,
+                batters.batter,
+                batters.game_pk,
+                starters.pitcher,
+                starters.p_throws,
+                batters.stand
+            FROM (
+                SELECT DISTINCT GD, batter, game_pk, stand
+                FROM etl_pa
+            ) batters
+            JOIN (
+                SELECT DISTINCT game_pk, pitcher, p_throws
+                FROM etl_pa
+                WHERE at_bat_number = (
+                    SELECT MIN(at_bat_number)
+                    FROM   etl_pa e2
+                    WHERE  e2.game_pk = etl_pa.game_pk
+                )
+            ) starters ON starters.game_pk = batters.game_pk
+        """
+
+    @classmethod
+    def view_pull_forest_mixin_batter_season(cls):  # NEW: batter season aggregates
+        """Season-to-date batter BA split by pitcher handedness."""
+        return """
+            SELECT
+                batter,
+                p_throws,
+                SUM(hits) * 1.0 / NULLIF(SUM(ab), 0)                      AS ba
+            FROM  feet_bat2
+            GROUP BY batter, p_throws
+        """
+
+    @classmethod
+    def view_pull_forest_mixin_pitcher_season(cls):  # NEW: pitcher season aggregates
+        """Season-to-date pitcher BA-against split by batter stance."""
+        return """
+            SELECT
+                pitcher,
+                stand,
+                SUM(hits_allowed) * 1.0 / NULLIF(SUM(ab_against), 0)      AS ba_against
+            FROM  feet_pitch2
+            GROUP BY pitcher, stand
+        """
+
+    # ═══ pull_forest — REWRITE to use mixin views ═══
+
+    @classmethod
+    def view_pull_forest(cls):  # UPDATE: compose from mixins
         return """
             SELECT
                 m.GD,
@@ -349,43 +334,12 @@ class _Schema_views:
                 p.ba_against                                               AS p_ba_against,
                 m.p_throws,
                 m.stand                                                    AS b_stand
-            FROM (
-                SELECT DISTINCT GD, batter, game_pk, pitcher, p_throws, stand
-                FROM   etl_pa
-                WHERE  at_bat_number = (
-                    SELECT MIN(at_bat_number)
-                    FROM   etl_pa e2
-                    WHERE  e2.game_pk = etl_pa.game_pk
-                )
-            ) m
-            LEFT JOIN batter_games  bg  ON  bg.GD      = m.GD
-                                        AND bg.batter  = m.batter
-                                        AND bg.game_pk = m.game_pk
-            LEFT JOIN (
-                SELECT batter, p_throws,
-                    SUM(hits) * 1.0 / NULLIF(SUM(ab), 0)                  AS ba
-                FROM  feet_bat2
-                GROUP BY batter, p_throws
-            ) b  ON  b.batter   = m.batter
-                 AND b.p_throws = m.p_throws
-            LEFT JOIN (
-                SELECT pitcher, stand,
-                    SUM(hits_allowed) * 1.0 / NULLIF(SUM(ab_against), 0)  AS ba_against
-                FROM  feet_pitch2
-                GROUP BY pitcher, stand
-            ) p  ON  p.pitcher = m.pitcher
-                 AND p.stand   = m.stand
-        """
-
-
-    @classmethod
-    def view_model_xgb_v1(cls):
-        """XGBoost v1 — reads from predict_xgb_v1 table written by trainer."""
-        return """
-            SELECT
-                GD,
-                batter,
-                game_pk,
-                predicted
-            FROM predict_xgb_v1
+            FROM      pull_forest_mixin_matchup        m
+            LEFT JOIN batter_games                     bg ON  bg.GD      = m.GD
+                                                          AND bg.batter  = m.batter
+                                                          AND bg.game_pk = m.game_pk
+            LEFT JOIN pull_forest_mixin_batter_season  b  ON  b.batter   = m.batter
+                                                          AND b.p_throws = m.p_throws
+            LEFT JOIN pull_forest_mixin_pitcher_season p  ON  p.pitcher  = m.pitcher
+                                                          AND p.stand    = m.stand
         """

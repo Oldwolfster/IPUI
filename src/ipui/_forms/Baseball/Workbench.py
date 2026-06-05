@@ -6,7 +6,7 @@
 
 import inspect
 from ipui import *
-from ipui._forms.Baseball.BB import BB
+from ipui._forms.Baseball.BbDB import BbDB
 
 
 class Workbench(_BaseTab):
@@ -59,8 +59,9 @@ class Workbench(_BaseTab):
 
     def build_table_header(self, parent):
         tbl   = self.current_table
-        layer = BB.layer_of(tbl) if tbl else None
-        rows  = BB.row_count(tbl) if tbl else 0
+        layer = BbDB.layer_of(tbl) if tbl else None
+
+        rows  = -32565#BbDB.row_count(tbl) if tbl else 0
         text  = f"Table: {tbl or '—'}    Layer: {layer or '—'}    Rows: {rows:,}"
         Detail(parent, text, name="lbl_wb_header")
 
@@ -80,7 +81,7 @@ class Workbench(_BaseTab):
         grid.set_data(rows, columns=cols)
 
     def scan_columns(self, tbl):
-        info = BB.query(f"PRAGMA table_info({tbl})")
+        info = BbDB.query(f"PRAGMA table_info({tbl})")
         out  = []
         for cid, name, ctype, _notnull, _dflt, pk in info:
             stats = self.analysis_cache.get(name, ("—", "—", "—", "—"))
@@ -120,7 +121,7 @@ class Workbench(_BaseTab):
     def fetch_source_text(self):
         tbl = self.current_table
         if not tbl: return "-- No table selected\n"
-        layer = BB.layer_of(tbl)
+        layer = BbDB.layer_of(tbl)
         body  = self.fetch_raw_source(tbl) if layer == "raw" else self.fetch_view_source(tbl)
         return body if body.endswith("\n") else body + "\n"
 
@@ -132,7 +133,7 @@ class Workbench(_BaseTab):
         except Exception as e: return f"-- Could not read source: {e}"
 
     def fetch_view_source(self, tbl):
-        rows = BB.query(
+        rows = BbDB.query(
             "SELECT name, sql FROM sqlite_master "
             "WHERE type='view' AND name LIKE ? ORDER BY name",
             (f"pull_{tbl}%",),
@@ -150,10 +151,10 @@ class Workbench(_BaseTab):
     # ══════════════════════════════════════════════════════════════
 
     def refresh_all_panes(self):
-        self.set_pane(0, self.columns)
-        self.set_pane(1, self.controls)
-        self.set_pane(2, self.source)
 
+        self.set_pane(0, self.controls)
+        self.set_pane(1, self.source)
+        self.set_pane(2, self.columns)
 
 # ════════════════════════════════════════════════════════════════════════════════
 # Workbench.py  —  Add Column form (UI only, all submits/toggles are passme stubs)

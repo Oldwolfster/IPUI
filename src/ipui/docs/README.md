@@ -699,7 +699,6 @@ class BouncingBall(_BaseTab):
 Feels like a little more work doesn't it?
 But add a fourth widget? One new entry in `BINDINGS`. `ip_think` doesn't grow.
 
-
 ---
 
 ### Which one should you use?
@@ -822,6 +821,18 @@ Constants live on the `Key` class — autocomplete shows everything. Examples:
 `Key.TAB`, `Key.BACKSPACE`, `Key.A`–`Key.Z`, `Key.NUM_0`–`Key.NUM_9`, `Key.F1`–`Key.F12`,
 `Key.HOME`, `Key.END`, `Key.PAGEUP`, `Key.PAGEDOWN`, `Key.DELETE`.
 
+
+
+### Deferring Work Until After the Paint
+- ⏭️ **Paint-Then-Work:** `ip.after_paint(fn, *args)` fires your callback one frame later—*after* the screen repaints. Set a label to "Loading…", schedule the slow query, and the user actually sees the label before the work blocks. No more dragging the window to check if it's alive.
+
+>  Problem it solves:  Set a widget, then immediately start slow work, and the widget never shows—the work blocks the loop before it can repaint. `ip.after_paint()` fixes the *ordering*: the current frame finishes drawing your change and flips to screen, **then** your callback runs.
+
+    def refresh_table(self, tbl, body_rows):
+        body_rows.set_text("refreshing...")            # painted this frame
+        ip.after_paint(self.do_the_work, tbl)          # runs next frame, after the flip
+
+It's a one-shot scheduler—the callback fires exactly once. Anything it schedules lands in the *next* frame, never the current one. (Note: this orders work around the paint; it doesn't run it in the background. For genuinely long jobs, a second process is still the move.)
 
 
 ### Cache

@@ -5,7 +5,7 @@ class FormBaseball(_BaseForm):
 
     TAB_LAYOUT = {
         "Pipe"      : ["all_in_one"                                         ],
-        "Workbench" : [("columns" ,1)   ,("controls",.7)    ,("source"  ,1.2)], 
+        "Workbench" : [("controls",.3)    ,("source"  ,1.2), ("columns" ,1) ],
         "Predict"   : [("controls", 0.2),("by_model", 0.75)                 ],
         "Tree"      : ["TBD"                                                ],
         "SQL"       : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
@@ -13,15 +13,14 @@ class FormBaseball(_BaseForm):
         "Kanban"    : ["todo"           ,"doing"            ,"done"         ],
         "Breakout"  : ["greet"          , None              , "code"        ],
     }
-    def ip_setup(self,ip):
-        print("from form")
+
     def build(self):
         self.build_header()
 
     def build_header(self):
         header = Row(self)
         left = Row(header, flex_width=1)  # NEW - left container
-        Banner(header, "IPUI - Baseball", text_align='c', glow=True, flex_width=0,fit_content=True)
+        Banner(header, "IPUI - Baseball v3", text_align='c', glow=True, flex_width=0,fit_content=True)
         right = Row(header, flex_width=1)  # NEW - right container
 
         # Left content
@@ -50,8 +49,3 @@ class FormBaseball(_BaseForm):
 
     def open_particle_life(self):
         IPUI.show(Form_ParticleLife, "IPUI - Easy to get right, hard to get wrong!")
-
-    def ip_setup(self, ip): #WTF is this 5/25/2026
-        from pathlib import Path
-        atest = Path(__file__).parent / "atest.py"
-        if atest.exists(): atest.unlink()

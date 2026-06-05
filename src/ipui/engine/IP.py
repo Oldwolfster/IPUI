@@ -14,7 +14,7 @@
 
 import pygame
 from ipui.engine.StateMachine import StateMachine
-
+from ipui.utils.EZ import EZ
 
 class IP:
     """IPUI Service Portal — one object, everything you need.
@@ -34,7 +34,7 @@ class IP:
         self.form_name          = ""        # name of active form
         self.tab                = None      # active _BaseTab instance
         self.tab_name           = ""        # name of active tab
-        self.is_active_tab     = False      # is the current tab the visible one?
+        self.is_active_tab      = False      # is the current tab the visible one?
 
         # ── Timing ────────────────────────────────────────────
         self.dt                 = 0.0       # seconds since last frame
@@ -72,6 +72,10 @@ class IP:
         # ── Cache (local scratch pad — NOT pipeline) ──────────
         self.private_cache      = {}
         self.private_machines   = {}
+        self.private_machines   = {}                       # REFERENCE
+        self.actions_after_paint = []                      # NEW  (callback, args) to fire after next flip
+
+
 
     # ══════════════════════════════════════════════════════════════
     # FRAME UPDATE — called by GameLoop each frame, NOT by user code
@@ -317,6 +321,23 @@ class IP:
     def cache_del(self, key):
         """Remove key from cache."""
         self.private_cache.pop(key, None)
+
+
+    def after_paint(self, callback, *args):
+        """Run callback(*args) once, after the next frame paints. (ip stays reachable via self.ip.)"""
+        if not callable(callback):
+            EZ.err(f"ip.after_paint expects a callable, got {type(callback).__name__}", TypeError)
+        self.actions_after_paint.append((callback, args))
+
+    def flush_after_paint(self):
+        """Fire every queued action once. Re-schedules land in NEXT frame's queue, not this one."""
+        if not self.actions_after_paint:
+            return
+        pending                  = self.actions_after_paint
+        self.actions_after_paint = []
+        for callback, args in pending:
+            callback(*args)
+
 
     # ══════════════════════════════════════════════════════════════
     # INVALIDATION — scaffolded for future optimization

@@ -2,6 +2,7 @@
 import datetime
 import sqlite3
 from ipui.utils.MgrDT import MgrDT
+from datetime import date, timedelta, datetime
 
 
 class BB:
@@ -102,6 +103,8 @@ class BB:
         rows = cls.query(f"SELECT MIN(GD), MAX(GD) FROM {tbl}")
         return rows[0]                                                   # (min_gd, max_gd) — either may be None when empty
 
+    def date_relative_to_today(self,days_back):
+        return (date.today() - timedelta(days=days_back)).strftime("%Y-%m-%d")
 
 
     # ══════════════════════════════════════════════════════════════

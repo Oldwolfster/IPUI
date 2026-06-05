@@ -86,6 +86,7 @@ class GameLoop:
 
         # ── Flip ──────────────────────────────────────────────
         pygame.display.flip()
+        ip.flush_after_paint()
 
     def init_pygame(self, title, fullscreen=False, width=0, height=0):
         if title is None: title = "IPUI Framework"
