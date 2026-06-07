@@ -161,6 +161,17 @@ class _SchemaTbl:
         ('raw_teams',    '   division                                   TEXT'   ),
 
 
+        # ═══ raw_test9 ═══
+        ('raw_test9', 'PK batter                                  INTEGER'),
+        ('raw_test9', 'PK game_pk                                 INTEGER'),
+        ('raw_test9', '   hits                                    INTEGER'),
+        ('raw_test9', '   b_ba                                    REAL'),
+        ('raw_test9', '   p_ba_against                            REAL'),
+        ('raw_test9', '   p_throws                                TEXT'),
+        ('raw_test9', '   b_stand                                 TEXT'),
+        ('raw_test9', '   test                                    TEXT'),
+
+
         # ═══ etl_pa ═══ One row per plate appearance. Cleaned event grain.
         ('etl_pa',        'PK batter                                     INTEGER'),
         ('etl_pa',        'PK game_pk                                    INTEGER'),
@@ -185,24 +196,28 @@ class _SchemaTbl:
         ('etl_pa',        '   woba_value                                 REAL'   ),
         ('etl_pa',        '   woba_denom                                 INTEGER'),
 
-        # ═══ feet_batter ═══ Per-batter, per-timeslice, per-pitcher-hand aggregates.
-        ('feet_batter', 'PK batter                                     INTEGER'),
-        ('feet_batter', 'PK p_throws                                   TEXT'),
-        ('feet_batter', '   pa                                         INTEGER'),
-        ('feet_batter', '   ab                                         INTEGER'),
-        ('feet_batter', '   hits                                       INTEGER'),
-        ('feet_batter', '   hr                                         INTEGER'),
-        ('feet_batter', '   bb                                         INTEGER'),
-        ('feet_batter', '   k                                          INTEGER'),
-        ('feet_batter', '   total_bases                                INTEGER'),
-        ('feet_batter', '   launch_speed                               REAL'),
-        ('feet_batter', '   launch_speed_cnt                           INTEGER'),
-        ('feet_batter', '   xba                                        REAL'),
-        ('feet_batter', '   xba_cnt                                    INTEGER'),
-        ('feet_batter', '   woba_value                                 REAL'),
-        ('feet_batter', '   woba_denom                                 INTEGER'),
-        ('feet_batter', '   hard_hit                                   INTEGER'),
-        ('feet_batter', '   barrel                                     INTEGER'),
+
+        # ═══ feet_batter ═══
+        ('feet_batter', 'PK batter                                  INTEGER'),
+        ('feet_batter', 'PK p_throws                                TEXT'),
+        ('feet_batter', '   pa                                      INTEGER'),
+        ('feet_batter', '   ab                                      INTEGER'),
+        ('feet_batter', '   hits                                    INTEGER'),
+        ('feet_batter', '   ba                                      REAL'),
+        ('feet_batter', '   hr                                      INTEGER'),
+        ('feet_batter', '   bb                                      INTEGER'),
+        ('feet_batter', '   total_bases                             INTEGER'),
+        ('feet_batter', '   launch_speed                            REAL'),
+        ('feet_batter', '   launch_speed_cnt                        INTEGER'),
+        ('feet_batter', '   xba                                     REAL'),
+        ('feet_batter', '   xba_cnt                                 INTEGER'),
+        ('feet_batter', '   woba_value                              REAL'),
+        ('feet_batter', '   woba_denom                              INTEGER'),
+        ('feet_batter', '   hard_hit                                INTEGER'),
+        ('feet_batter', '   barrel                                  INTEGER'),
+
+
+
 
 
 
@@ -212,6 +227,7 @@ class _SchemaTbl:
         ('feet_pitcher', '   bf                                         INTEGER'),
         ('feet_pitcher', '   ab_against                                 INTEGER'),
         ('feet_pitcher', '   hits_allowed                               INTEGER'),
+        ('feet_pitcher', '   ba_against                                 REAL'),
         ('feet_pitcher', '   hr_allowed                                 INTEGER'),
         ('feet_pitcher', '   bb_allowed                                 INTEGER'),
         ('feet_pitcher', '   k_pitcher                                  INTEGER'),
@@ -225,57 +241,57 @@ class _SchemaTbl:
         ('feet_pitcher', '   hard_hit_allowed                           INTEGER'),
         ('feet_pitcher', '   barrel_allowed                             INTEGER'),
 
-        # ═══ feet_pitch2
-        ('feet_pitch2', 'PK pitcher                                    INTEGER'),
-        ('feet_pitch2', 'PK stand                                      TEXT'),
-        ('feet_pitch2', '   bf                                         INTEGER'),
-        ('feet_pitch2', '   ab_against                                 INTEGER'),
-        ('feet_pitch2', '   hits_allowed                               INTEGER'),
-        ('feet_pitch2', '   ba_against                                 REAL'),
-        ('feet_pitch2', '   hr_allowed                                 INTEGER'),
-        ('feet_pitch2', '   bb_allowed                                 INTEGER'),
-        ('feet_pitch2', '   k_pitcher                                  INTEGER'),
-        ('feet_pitch2', '   total_bases_allowed                        INTEGER'),
-        ('feet_pitch2', '   launch_speed                               REAL'),
-        ('feet_pitch2', '   launch_speed_cnt                           INTEGER'),
-        ('feet_pitch2', '   xba_allowed                                REAL'),
-        ('feet_pitch2', '   xba_cnt                                    INTEGER'),
-        ('feet_pitch2', '   woba_value                                 REAL'),
-        ('feet_pitch2', '   woba_denom                                 INTEGER'),
-        ('feet_pitch2', '   hard_hit_allowed                           INTEGER'),
-        ('feet_pitch2', '   barrel_allowed                             INTEGER'),
 
-        # ═══ feet_bat2 ═══ Per-batter, per-timeslice, per-pitcher-hand aggregates.
-        ('feet_bat2', 'PK batter                                     INTEGER'),
-        ('feet_bat2', 'PK p_throws                                   TEXT'),
-        ('feet_bat2', '   pa                                         INTEGER'),
-        ('feet_bat2', '   ab                                         INTEGER'),
-        ('feet_bat2', '   hits                                       INTEGER'),
-        ('feet_bat2', '   ba                                         REAL'),
-        ('feet_bat2', '   hr                                         INTEGER'),
-        ('feet_bat2', '   bb                                         INTEGER'),
-        ('feet_bat2', '   k                                          INTEGER'),
-        ('feet_bat2', '   total_bases                                INTEGER'),
-        ('feet_bat2', '   launch_speed                               REAL'),
-        ('feet_bat2', '   launch_speed_cnt                           INTEGER'),
-        ('feet_bat2', '   xba                                        REAL'),
-        ('feet_bat2', '   xba_cnt                                    INTEGER'),
-        ('feet_bat2', '   woba_value                                 REAL'),
-        ('feet_bat2', '   woba_denom                                 INTEGER'),
-        ('feet_bat2', '   hard_hit                                   INTEGER'),
-        ('feet_bat2', '   barrel                                     INTEGER'),
+        # ═══ feet_test8 ═══
+        ('feet_test8', 'PK batter                                  INTEGER'),
+        ('feet_test8', 'PK p_throws                                TEXT'),
+        ('feet_test8', '   pa                                      INTEGER'),
+        ('feet_test8', '   ab                                      INTEGER'),
+        ('feet_test8', '   hits                                    INTEGER'),
+        ('feet_test8', '   ba                                      REAL'),
+        ('feet_test8', '   hr                                      INTEGER'),
+        ('feet_test8', '   bb                                      INTEGER'),
+        ('feet_test8', '   k                                       INTEGER'),
+        ('feet_test8', '   total_bases                             INTEGER'),
+        ('feet_test8', '   launch_speed                            REAL'),
+        ('feet_test8', '   launch_speed_cnt                        INTEGER'),
+        ('feet_test8', '   xba                                     REAL'),
+        ('feet_test8', '   xba_cnt                                 INTEGER'),
+        ('feet_test8', '   woba_value                              REAL'),
+        ('feet_test8', '   woba_denom                              INTEGER'),
+        ('feet_test8', '   hard_hit                                INTEGER'),
+        ('feet_test8', '   barrel                                  INTEGER'),
 
-        # ═══ forest ═══ Flat training matrix v1. One row per (GD, batter, game_pk).
-        ('forest', 'PK batter                                     INTEGER'),
-        ('forest', 'PK game_pk                                    INTEGER'),
-        ('forest', '   hits                                       INTEGER'),
-        ('forest', '   b_ba                                       REAL'),
-        ('forest', '   p_ba_against                               REAL'),
-        ('forest', '   p_throws                                   TEXT'),
-        ('forest', '   b_stand                                    TEXT'),
+
+        # ═══ forest ═══
+        ('forest', 'PK batter                                  INTEGER'),
+        ('forest', 'PK game_pk                                 INTEGER'),
+        ('forest', '   hits                                    INTEGER'),
+        ('forest', '   b_ba                                    REAL'),
+        ('forest', '   p_ba_against                            REAL'),
+        ('forest', '   p_throws                                TEXT'),
+        ('forest', '   b_stand                                 TEXT'),
+        ('forest', '   test                                    TEXT'),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         # _Schema_tbl.py  forest block  REPLACE: full feature matrix schema
-        # ═══ forest ═══ Wide flat training matrix. One row per (GD, batter, game_pk).
         ('forest_1002', 'PK batter                                     INTEGER'),
         ('forest_1002', 'PK game_pk                                    INTEGER'),
         ('forest_1002', '   actual_hits                                INTEGER'),
@@ -300,9 +316,111 @@ class _SchemaTbl:
         ('forest_1002', '   log5_predicted                             REAL'),
 
 
+        ('forest_forest3', 'PK batter                                  INTEGER'),
+        ('forest_forest3', 'PK game_pk                                 INTEGER'),
+        ('forest_forest3', '   hits                                    INTEGER'),
+        ('forest_forest3', '   b_ba                                    REAL'),
+        ('forest_forest3', '   p_ba_against                            REAL'),
+        ('forest_forest3', '   p_throws                                TEXT'),
+        ('forest_forest3', '   b_stand                                 TEXT'),
+        ('forest_forest3', '   test                                    TEXT'),
+
+
+        ('forest_tesst2', 'PK batter                                  INTEGER'),
+        ('forest_tesst2', 'PK game_pk                                 INTEGER'),
+        ('forest_tesst2', '   hits                                    INTEGER'),
+        ('forest_tesst2', '   b_ba                                    REAL'),
+        ('forest_tesst2', '   p_ba_against                            REAL'),
+        ('forest_tesst2', '   p_throws                                TEXT'),
+        ('forest_tesst2', '   b_stand                                 TEXT'),
+        ('forest_tesst2', '   test                                    TEXT'),
+
+
+        ('forest_test', 'PK batter                                  INTEGER'),
+        ('forest_test', 'PK game_pk                                 INTEGER'),
+        ('forest_test', '   hits                                    INTEGER'),
+        ('forest_test', '   b_ba                                    REAL'),
+        ('forest_test', '   p_ba_against                            REAL'),
+        ('forest_test', '   p_throws                                TEXT'),
+        ('forest_test', '   b_stand                                 TEXT'),
+        ('forest_test', '   test                                    TEXT'),
+
+
+        ('forest_test5', 'PK batter                                  INTEGER'),
+        ('forest_test5', 'PK game_pk                                 INTEGER'),
+        ('forest_test5', '   hits                                    INTEGER'),
+        ('forest_test5', '   b_ba                                    REAL'),
+        ('forest_test5', '   p_ba_against                            REAL'),
+        ('forest_test5', '   p_throws                                TEXT'),
+        ('forest_test5', '   b_stand                                 TEXT'),
+        ('forest_test5', '   test                                    TEXT'),
+
+
+        ('forest_test7', 'PK batter                                  INTEGER'),
+        ('forest_test7', 'PK game_pk                                 INTEGER'),
+        ('forest_test7', '   hits                                    INTEGER'),
+        ('forest_test7', '   b_ba                                    REAL'),
+        ('forest_test7', '   p_ba_against                            REAL'),
+        ('forest_test7', '   p_throws                                TEXT'),
+        ('forest_test7', '   b_stand                                 TEXT'),
+        ('forest_test7', '   test                                    TEXT'),
+
+
         # ═══ predict_xgb_v1 ═══ XGBoost v1 model predictions.
         ('predict_xgb_v1', 'PK batter                                    INTEGER'),
         ('predict_xgb_v1', 'PK game_pk                                   INTEGER'),
         ('predict_xgb_v1', '   predicted                                 REAL'   ),
+
+        # ═══ etl_testg ═══
+        ('etl_testg', 'PK batter                                  INTEGER'),
+        ('etl_testg', 'PK game_pk                                 INTEGER'),
+        ('etl_testg', 'PK at_bat_number                           INTEGER'),
+        ('etl_testg', '   pitcher                                 INTEGER'),
+        ('etl_testg', '   stand                                   TEXT'),
+        ('etl_testg', '   p_throws                                TEXT'),
+        ('etl_testg', '   home                                    INTEGER'),
+        ('etl_testg', '   pit_team                                TEXT'),
+        ('etl_testg', '   park                                    TEXT'),
+        ('etl_testg', '   events                                  TEXT'),
+        ('etl_testg', '   is_hit                                  INTEGER'),
+        ('etl_testg', '   is_ab                                   INTEGER'),
+        ('etl_testg', '   is_k                                    INTEGER'),
+        ('etl_testg', '   is_bb                                   INTEGER'),
+        ('etl_testg', '   is_hr                                   INTEGER'),
+        ('etl_testg', '   total_bases                             INTEGER'),
+        ('etl_testg', '   launch_angle                            REAL'),
+        ('etl_testg', '   xba                                     REAL'),
+        ('etl_testg', '   woba_value                              REAL'),
+        ('etl_testg', '   woba_denom                              INTEGER'),
+
+
+
+
+        # ═══ etl_testj ═══
+        ('etl_testj', 'PK batter                                  INTEGER'),
+        ('etl_testj', 'PK game_pk                                 INTEGER'),
+        ('etl_testj', 'PK at_bat_number                           INTEGER'),
+        ('etl_testj', '   pitcher                                 INTEGER'),
+        ('etl_testj', '   stand                                   TEXT'),
+        ('etl_testj', '   p_throws                                TEXT'),
+        ('etl_testj', '   home                                    INTEGER'),
+        ('etl_testj', '   bat_team                                TEXT'),
+        ('etl_testj', '   pit_team                                TEXT'),
+        ('etl_testj', '   park                                    TEXT'),
+        ('etl_testj', '   is_k                                    INTEGER'),
+        ('etl_testj', '   total_bases                             INTEGER'),
+        ('etl_testj', '   launch_angle                            REAL'),
+        ('etl_testj', '   woba_value                              REAL'),
+        ('etl_testj', '   woba_denom                              INTEGER'),
+        ('etl_testj', '   asdasd                                  TEXT'),
+
+
+
+
+
+
+
+
+
 
     ]

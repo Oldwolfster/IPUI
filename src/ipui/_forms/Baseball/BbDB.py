@@ -9,6 +9,7 @@ class BbDB:
     DB_PATH = str(Path.home() / ".neuroforge" / "projects" / "baseball.db")
     Summary = namedtuple('Summary', 'gd rows cols min_gd max_gd')
     pipe_log_display = None
+    pipe_log_text = ""
 
     # ══════════════════════════════════════════════════════════════
     # ENTRY POINT — one call at startup, everything exists after.
@@ -83,7 +84,7 @@ class BbDB:
 
     @classmethod
     def update_summary(cls, tbl):
-        from ipui.utils.MgrDT import MgrDT
+        from ipui._forms.Baseball.MgrDT import MgrDT
         gd     = MgrDT.today_gd()
         rows   = cls.query(f"SELECT COUNT(*) FROM {tbl}")[0][0]
         cols   = len(cls.query(f"PRAGMA table_info({tbl})"))
@@ -136,7 +137,8 @@ class BbDB:
         ts   = datetime.now().strftime("%H:%M:%S")
         line = f"[{ts}] {target:20s} {msg}"
         print(line)
-        if cls.pipe_log_display: cls.pipe_log_display.text = f"{cls.pipe_log_display.text}\n{line}"
+        cls.pipe_log_text=f"{line}\n{cls.pipe_log_text}"
+        if cls.pipe_log_display: cls.pipe_log_display.text = cls.pipe_log_text
 
     # ══════════════════════════════════════════════════════════════
     # MATERIALIZATION — _SchemaTbl.SCHEMA → physical tables.

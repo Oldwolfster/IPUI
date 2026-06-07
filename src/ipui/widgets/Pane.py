@@ -15,4 +15,4 @@ class Pane(_BaseWidget):
     def build(self):
         self.color_bg   = Style.COLOR_CARD_BG
         MgrColor        . apply_bevel(self, "sunken")
-        self.pad        = 0
+        self.pad        = 4

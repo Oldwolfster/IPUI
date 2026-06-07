@@ -18,6 +18,8 @@ class SelectableListItem(_BaseWidget):
         self.color_bg     = Style.COLOR_CARD_BG
         self.color_txt    = Style.COLOR_TEXT
         self.is_selected  = False
+        self.pad_y =4 #TODO Stop stopping in the event someone sets this.
+        self.pad_x = 12
         self.show_glow    = False
         self.my_surface   = self.font.render(self.text, True, self.color_txt)
         MgrColor.apply_bevel(self, "raised")

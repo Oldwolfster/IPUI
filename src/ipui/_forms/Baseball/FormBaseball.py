@@ -5,9 +5,10 @@ class FormBaseball(_BaseForm):
 
     TAB_LAYOUT = {
         "Pipe"      : ["all_in_one"                                         ],
-        "Workbench" : [("controls",.3)    ,("source"  ,1.2), ("columns" ,1) ],
+        #"Workbench" : [("controls",.2)    ,("source"  ,1.2), ("columns" ,.69),("tbl_ctrls",.2)],
+        "Workshop": [("controls", .2), ("source", 1.2), ("columns", .69), ("tbl_ctrls", .369)],
         "Predict"   : [("controls", 0.2),("by_model", 0.75)                 ],
-        "Tree"      : ["TBD"                                                ],
+        #"Tree"      : ["TBD"                                                ],
         "SQL"       : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
         "Docs"      : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
         "Kanban"    : ["todo"           ,"doing"            ,"done"         ],

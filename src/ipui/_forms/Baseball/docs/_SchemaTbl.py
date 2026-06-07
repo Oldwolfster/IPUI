@@ -1,166 +1,16 @@
-# BB_Schema_Bootstrap.py  class: BB_Schema_Bootstrap  FULL REPLACEMENT
-# Reverted to pre-position state. Only addition vs your original: rebuild_table().
+#27th 147 .447 -1.71 1.48
+#28th 282 .374 -2.05 1.42
 
-import re
-import sqlite3
-from pathlib import Path
-from ipui._forms.Baseball._Schema_tbl import _Schema_tbl
-from ipui._forms.Baseball.BB import BB
-from ipui._forms.Baseball._Schema_views import _Schema_views
-from ipui.utils.MgrDT import MgrDT
+class _SchemaTbl:
 
+    SCHEMA = [
+        # ═══ _summary ═══
+        ('_summary', 'PK tbl                                       TEXT'),
+        ('_summary', '   rows                                      INTEGER'),
+        ('_summary', '   cols                                      INTEGER'),
+        ('_summary', '   min_gd                                    INTEGER'),
+        ('_summary', '   max_gd                                    INTEGER'),
 
-class BB_Schema_Bootstrap:
-
-    DB_PATH = str(Path.home() / ".neuroforge" / "projects" / "baseball.db")
-
-
-    # ══════════════════════════════════════════════════════════════
-    # ENTRY POINT — pure dispatch. Each step independently re-runnable.
-    # ══════════════════════════════════════════════════════════════
-
-    @classmethod
-    def bootstrap(cls, db):
-        cls.check_tables_table              (db)
-        cls.sync_hardcoded_SCHEMA           (db)
-        cls.materialize_tables_from_metadata(db)
-        _Schema_views.create_all(db)
-
-
-    # ══════════════════════════════════════════════════════════════
-    # STEP 1 — ensure _tables exists.
-    # ══════════════════════════════════════════════════════════════
-
-    @classmethod
-    def check_tables_table(cls, db):
-        Path(db).parent.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(db)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS _tables (
-                id      INTEGER PRIMARY KEY AUTOINCREMENT,
-                tbl     TEXT,
-                layer   TEXT,
-                col     TEXT
-            )
-        """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS _run_log (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                DS          TEXT,
-                target      TEXT,
-                level       TEXT,
-                rows        INTEGER,
-                elapsed_ms  INTEGER,
-                message     TEXT
-            )
-        """)
-        conn.commit()
-        conn.close()
-
-
-    # ══════════════════════════════════════════════════════════════
-    # STEP 2 — insert SCHEMA rows that aren't already in _tables.
-    # Idempotent at row level: existing (tbl, col) pairs are untouched.
-    # ══════════════════════════════════════════════════════════════
-
-    @classmethod
-    def sync_hardcoded_SCHEMA(cls, db):
-        conn     = sqlite3.connect(db)
-        existing = cls.fetch_existing_pairs(conn)
-        missing  = [(tbl, col) for (tbl, col) in _Schema_tbl.SCHEMA if (tbl, col) not in existing]
-        for tbl, col in missing:
-            layer = tbl.split('_')[0]
-            conn.execute("INSERT INTO _tables (tbl, layer, col) VALUES (?, ?, ?)", (tbl, layer, col))
-        conn.commit()
-        conn.close()
-
-
-    # ══════════════════════════════════════════════════════════════
-    # STEP 3 — materialize physical tables from _tables metadata.
-    # GD auto-injected as PK col 1. TS auto-injected as PK col 2 on feet_*.
-    # PK columns flagged by 'PK' prefix (case/whitespace/underscore tolerant).
-    # ══════════════════════════════════════════════════════════════
-
-    @classmethod
-    def materialize_tables_from_metadata(cls, db):
-        conn = sqlite3.connect(db)
-        for tbl in cls.fetch_distinct_tables(conn):
-            cls.materialize_one_table(conn, tbl)
-        conn.commit()
-        conn.close()
-
-
-    @classmethod
-    def materialize_one_table(cls, conn, tbl):
-        rows         = conn.execute("SELECT col FROM _tables WHERE tbl=? ORDER BY id", (tbl,)).fetchall()
-        layer        = tbl.split('_')[0]
-        col_decls    = ["GD              INTEGER"]
-        pk_cols      = ["GD"]
-        if layer == 'feet':
-            col_decls.append("TS              INTEGER")
-            pk_cols  .append("TS")
-        for (raw_col,) in rows:
-            is_pk, decl = cls.parse_col_row(raw_col)
-            col_name    = decl.split()[0]
-            col_decls.append(decl)
-            if is_pk:
-                pk_cols.append(col_name)
-        pk_clause    = f"PRIMARY KEY ({', '.join(pk_cols)})"
-        body         = ",\n    ".join(col_decls + [pk_clause])
-        sql          = f"CREATE TABLE IF NOT EXISTS {tbl} (\n    {body}\n) WITHOUT ROWID"
-        conn.execute(sql)
-
-
-    # ══════════════════════════════════════════════════════════════
-    # REBUILD ONE TABLE — drop physical, recreate from _tables metadata.
-    # Delegates to materialize_one_table. Used by Workbench Add/Delete Column.
-    # ══════════════════════════════════════════════════════════════
-
-    @classmethod
-    def rebuild_table(cls, tbl):
-        conn = sqlite3.connect(cls.DB_PATH)
-        conn.execute(f"DROP TABLE IF EXISTS {tbl}")
-        cls.materialize_one_table(conn, tbl)
-        conn.commit()
-        conn.close()
-        BB.log(tbl, "INFO", "rebuilt from _tables")
-
-
-    # ══════════════════════════════════════════════════════════════
-    # PARSER — tolerant of pk/Pk/PK/pK, leading whitespace, underscore-or-space after marker.
-    # Returns (is_pk: bool, cleaned_decl: str).
-    # ══════════════════════════════════════════════════════════════
-
-    @classmethod
-    def parse_col_row(cls, raw):
-        stripped = raw.strip()
-        match    = re.match(r'^(pk)([\s_]+)(.+)$', stripped, flags=re.IGNORECASE)
-        if match:
-            return True,  match.group(3).strip()
-        return     False, stripped
-
-
-    # ══════════════════════════════════════════════════════════════
-    # HELPERS
-    # ══════════════════════════════════════════════════════════════
-
-    @classmethod
-    def fetch_existing_pairs(cls, conn):
-        rows = conn.execute("SELECT tbl, col FROM _tables").fetchall()
-        return set((tbl, col) for (tbl, col) in rows)
-
-    @classmethod
-    def fetch_distinct_tables(cls, conn):
-        rows = conn.execute("SELECT tbl, MIN(id) AS first_id FROM _tables GROUP BY tbl ORDER BY first_id").fetchall()
-        return [tbl for (tbl, _) in rows]
-
-
-    # ══════════════════════════════════════════════════════════════
-    # SCHEMA — the seed. (tbl, col_declaration) per row.
-    # GD and TS are NEVER in SCHEMA — materializer injects them.
-    # ══════════════════════════════════════════════════════════════
-
-    SCHEMAOLD = [
 
         # ═══ raw_pitches ═══ Full Statcast pitch shape. PK = (GD, game_pk, at_bat_number, pitch_number).
         # GD is auto-injected as PK col 1 by the materializer; the rest of the PK is flagged here.
@@ -293,6 +143,25 @@ class BB_Schema_Bootstrap:
         ('raw_schedule',  '   venue                                      TEXT'   ),
         ('raw_schedule',  '   game_type                                  TEXT'   ),
 
+
+        ('raw_players',  'PK player_id                                  INTEGER'),
+        ('raw_players',  '   full_name                                  TEXT'   ),
+        ('raw_players',  '   use_name                                   TEXT'   ),
+        ('raw_players',  '   boxscore_name                              TEXT'   ),
+        ('raw_players',  '   position                                   TEXT'   ),
+        ('raw_players',  '   bat_side                                   TEXT'   ),
+        ('raw_players',  '   throw_hand                                 TEXT'   ),
+        ('raw_players',  '   team_id                                    INTEGER'),
+        ('raw_players',  '   jersey_number                              TEXT'   ),
+
+        ('raw_teams',    'PK team_id                                    INTEGER'),
+        ('raw_teams',    '   team_name                                  TEXT'   ),
+        ('raw_teams',    '   abbreviation                               TEXT'   ),
+        ('raw_teams',    '   location_name                              TEXT'   ),
+        ('raw_teams',    '   league                                     TEXT'   ),
+        ('raw_teams',    '   division                                   TEXT'   ),
+
+
         # ═══ etl_pa ═══ One row per plate appearance. Cleaned event grain.
         ('etl_pa',        'PK batter                                     INTEGER'),
         ('etl_pa',        'PK game_pk                                    INTEGER'),
@@ -317,46 +186,124 @@ class BB_Schema_Bootstrap:
         ('etl_pa',        '   woba_value                                 REAL'   ),
         ('etl_pa',        '   woba_denom                                 INTEGER'),
 
-        # ═══ feet_batter ═══ Per-batter, per-timeslice aggregates. SUMABLE METRICS ONLY.
-        ('feet_batter',   'PK batter                                     INTEGER'),
-        ('feet_batter',   '   pa                                         INTEGER'),
-        ('feet_batter',   '   ab                                         INTEGER'),
-        ('feet_batter',   '   hits                                       INTEGER'),
-        ('feet_batter',   '   hr                                         INTEGER'),
-        ('feet_batter',   '   bb                                         INTEGER'),
-        ('feet_batter',   '   k                                          INTEGER'),
-        ('feet_batter',   '   total_bases                                INTEGER'),
-        ('feet_batter',   '   sum_launch_speed                           REAL'   ),
-        ('feet_batter',   '   sum_xba                                    REAL'   ),
-        ('feet_batter',   '   sum_woba_value                             REAL'   ),
-        ('feet_batter',   '   sum_woba_denom                             INTEGER'),
-        ('feet_batter',   '   hard_hit_count                             INTEGER'),
-        ('feet_batter',   '   barrel_count                               INTEGER'),
+        # ═══ feet_batter ═══ Per-batter, per-timeslice, per-pitcher-hand aggregates.
+        ('feet_batter', 'PK batter                                     INTEGER'),
+        ('feet_batter', 'PK p_throws                                   TEXT'),
+        ('feet_batter', '   pa                                         INTEGER'),
+        ('feet_batter', '   ab                                         INTEGER'),
+        ('feet_batter', '   hits                                       INTEGER'),
+        ('feet_batter', '   hr                                         INTEGER'),
+        ('feet_batter', '   bb                                         INTEGER'),
+        ('feet_batter', '   k                                          INTEGER'),
+        ('feet_batter', '   total_bases                                INTEGER'),
+        ('feet_batter', '   launch_speed                               REAL'),
+        ('feet_batter', '   launch_speed_cnt                           INTEGER'),
+        ('feet_batter', '   xba                                        REAL'),
+        ('feet_batter', '   xba_cnt                                    INTEGER'),
+        ('feet_batter', '   woba_value                                 REAL'),
+        ('feet_batter', '   woba_denom                                 INTEGER'),
+        ('feet_batter', '   hard_hit                                   INTEGER'),
+        ('feet_batter', '   barrel                                     INTEGER'),
+
+
 
         # ═══ feet_pitcher ═══ Mirror of feet_batter, pitcher perspective. SUMABLE ONLY.
-        ('feet_pitcher',  'PK pitcher                                    INTEGER'),
-        ('feet_pitcher',  '   bf                                         INTEGER'),
-        ('feet_pitcher',  '   ab_against                                 INTEGER'),
-        ('feet_pitcher',  '   hits_allowed                               INTEGER'),
-        ('feet_pitcher',  '   hr_allowed                                 INTEGER'),
-        ('feet_pitcher',  '   bb_allowed                                 INTEGER'),
-        ('feet_pitcher',  '   k_pitcher                                  INTEGER'),
-        ('feet_pitcher',  '   total_bases_allowed                        INTEGER'),
-        ('feet_pitcher',  '   sum_launch_speed                           REAL'   ),
-        ('feet_pitcher',  '   sum_xba_allowed                            REAL'   ),
-        ('feet_pitcher',  '   sum_woba_value                             REAL'   ),
-        ('feet_pitcher',  '   sum_woba_denom                             INTEGER'),
-        ('feet_pitcher',  '   hard_hit_allowed                           INTEGER'),
-        ('feet_pitcher',  '   barrel_allowed                             INTEGER'),
+        ('feet_pitcher', 'PK pitcher                                    INTEGER'),
+        ('feet_pitcher', 'PK stand                                      TEXT'),
+        ('feet_pitcher', '   bf                                         INTEGER'),
+        ('feet_pitcher', '   ab_against                                 INTEGER'),
+        ('feet_pitcher', '   hits_allowed                               INTEGER'),
+        ('feet_pitcher', '   hr_allowed                                 INTEGER'),
+        ('feet_pitcher', '   bb_allowed                                 INTEGER'),
+        ('feet_pitcher', '   k_pitcher                                  INTEGER'),
+        ('feet_pitcher', '   total_bases_allowed                        INTEGER'),
+        ('feet_pitcher', '   launch_speed                               REAL'),
+        ('feet_pitcher', '   launch_speed_cnt                           INTEGER'),
+        ('feet_pitcher', '   xba_allowed                                REAL'),
+        ('feet_pitcher', '   xba_cnt                                    INTEGER'),
+        ('feet_pitcher', '   woba_value                                 REAL'),
+        ('feet_pitcher', '   woba_denom                                 INTEGER'),
+        ('feet_pitcher', '   hard_hit_allowed                           INTEGER'),
+        ('feet_pitcher', '   barrel_allowed                             INTEGER'),
 
-        # ═══ forest ═══ Wide flat training matrix. Skeleton; many versions will live here.
-        #                Forest is its own "layer" via prefix-split semantics ('forest'.split('_')[0] == 'forest').
-        ('forest',        'PK batter                                     INTEGER'),
-        ('forest',        'PK game_pk                                    INTEGER'),
-        ('forest',        '   bat_pa_season                              INTEGER'),
-        ('forest',        '   bat_ba_season                              REAL'   ),
-        ('forest',        '   bat_xwoba_season                           REAL'   ),
-        ('forest',        '   pit_xwoba_30                               REAL'   ),
-        ('forest',        '   target_fantasy_pts                         REAL'   ),
+        # ═══ feet_pitch2
+        ('feet_pitch2', 'PK pitcher                                    INTEGER'),
+        ('feet_pitch2', 'PK stand                                      TEXT'),
+        ('feet_pitch2', '   bf                                         INTEGER'),
+        ('feet_pitch2', '   ab_against                                 INTEGER'),
+        ('feet_pitch2', '   hits_allowed                               INTEGER'),
+        ('feet_pitch2', '   ba_against                                 REAL'),
+        ('feet_pitch2', '   hr_allowed                                 INTEGER'),
+        ('feet_pitch2', '   bb_allowed                                 INTEGER'),
+        ('feet_pitch2', '   k_pitcher                                  INTEGER'),
+        ('feet_pitch2', '   total_bases_allowed                        INTEGER'),
+        ('feet_pitch2', '   launch_speed                               REAL'),
+        ('feet_pitch2', '   launch_speed_cnt                           INTEGER'),
+        ('feet_pitch2', '   xba_allowed                                REAL'),
+        ('feet_pitch2', '   xba_cnt                                    INTEGER'),
+        ('feet_pitch2', '   woba_value                                 REAL'),
+        ('feet_pitch2', '   woba_denom                                 INTEGER'),
+        ('feet_pitch2', '   hard_hit_allowed                           INTEGER'),
+        ('feet_pitch2', '   barrel_allowed                             INTEGER'),
+
+        # ═══ feet_bat2 ═══ Per-batter, per-timeslice, per-pitcher-hand aggregates.
+        ('feet_bat2', 'PK batter                                     INTEGER'),
+        ('feet_bat2', 'PK p_throws                                   TEXT'),
+        ('feet_bat2', '   pa                                         INTEGER'),
+        ('feet_bat2', '   ab                                         INTEGER'),
+        ('feet_bat2', '   hits                                       INTEGER'),
+        ('feet_bat2', '   ba                                         REAL'),
+        ('feet_bat2', '   hr                                         INTEGER'),
+        ('feet_bat2', '   bb                                         INTEGER'),
+        ('feet_bat2', '   k                                          INTEGER'),
+        ('feet_bat2', '   total_bases                                INTEGER'),
+        ('feet_bat2', '   launch_speed                               REAL'),
+        ('feet_bat2', '   launch_speed_cnt                           INTEGER'),
+        ('feet_bat2', '   xba                                        REAL'),
+        ('feet_bat2', '   xba_cnt                                    INTEGER'),
+        ('feet_bat2', '   woba_value                                 REAL'),
+        ('feet_bat2', '   woba_denom                                 INTEGER'),
+        ('feet_bat2', '   hard_hit                                   INTEGER'),
+        ('feet_bat2', '   barrel                                     INTEGER'),
+
+        # ═══ forest ═══
+        ('forest', 'PK batter                                  INTEGER'),
+        ('forest', 'PK game_pk                                 INTEGER'),
+        ('forest', '   hits                                    INTEGER'),
+        ('forest', '   b_ba                                    REAL'),
+        ('forest', '   p_ba_against                            REAL'),
+        ('forest', '   p_throws                                TEXT'),
+        ('forest', '   b_stand                                 TEXT'),
+
+
+        # _Schema_tbl.py  forest block  REPLACE: full feature matrix schema
+        ('forest_1002', 'PK batter                                     INTEGER'),
+        ('forest_1002', 'PK game_pk                                    INTEGER'),
+        ('forest_1002', '   actual_hits                                INTEGER'),
+        ('forest_1002', '   b_pa                                       INTEGER'),
+        ('forest_1002', '   b_ab                                       INTEGER'),
+        ('forest_1002', '   b_hits                                     INTEGER'),
+        ('forest_1002', '   b_ba                                       REAL'),
+        ('forest_1002', '   b_k_pct                                    REAL'),
+        ('forest_1002', '   b_bb_pct                                   REAL'),
+        ('forest_1002', '   b_hard_hit_pct                             REAL'),
+        ('forest_1002', '   b_xba                                      REAL'),
+        ('forest_1002', '   p_bf                                       INTEGER'),
+        ('forest_1002', '   p_ab_against                               INTEGER'),
+        ('forest_1002', '   p_hits_allowed                             INTEGER'),
+        ('forest_1002', '   p_ba_against                               REAL'),
+        ('forest_1002', '   p_k_pct                                    REAL'),
+        ('forest_1002', '   p_bb_pct                                   REAL'),
+        ('forest_1002', '   p_hard_hit_pct                             REAL'),
+        ('forest_1002', '   p_xba_against                              REAL'),
+        ('forest_1002', '   p_throws                                   TEXT'),
+        ('forest_1002', '   b_stand                                    TEXT'),
+        ('forest_1002', '   log5_predicted                             REAL'),
+
+
+        # ═══ predict_xgb_v1 ═══ XGBoost v1 model predictions.
+        ('predict_xgb_v1', 'PK batter                                    INTEGER'),
+        ('predict_xgb_v1', 'PK game_pk                                   INTEGER'),
+        ('predict_xgb_v1', '   predicted                                 REAL'   ),
 
     ]

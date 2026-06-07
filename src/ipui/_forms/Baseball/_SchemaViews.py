@@ -92,33 +92,6 @@ class _SchemaViews:
         """
 
     @classmethod
-    def view_pull_feet_bat2(cls):
-        return """
-            SELECT
-                GD,
-                TS,
-                batter,
-                p_throws,
-                pa,
-                ab,
-                hits,
-                hits * 1.0 / NULLIF(ab, 0)                             AS ba,
-                hr,
-                bb,
-                k,
-                total_bases,
-                launch_speed,
-                launch_speed_cnt,
-                xba,
-                xba_cnt,
-                woba_value,
-                woba_denom,
-                hard_hit,
-                barrel
-            FROM feet_batter
-        """
-
-    @classmethod
     def view_pull_feet_pitcher(cls):
         return """
             SELECT
@@ -145,35 +118,6 @@ class _SchemaViews:
             FROM etl_pa
             GROUP BY GD, pitcher, stand;
         """
-
-    @classmethod
-    def view_pull_feet_pitch2(cls):
-        return """
-            SELECT
-                GD,
-                TS,
-                pitcher,
-                stand,
-                bf,
-                ab_against,
-                hits_allowed,
-                hits_allowed * 1.0 / NULLIF(ab_against, 0)                    AS ba_against,
-                hr_allowed,
-                bb_allowed,
-                k_pitcher,
-                total_bases_allowed,
-                launch_speed,
-                launch_speed_cnt,
-                xba_allowed,
-                xba_cnt,
-                woba_value,
-                woba_denom,
-                hard_hit_allowed,
-                barrel_allowed
-            FROM feet_pitcher
-        """
-
-        # _SchemaViews.py  class: deleteme
 
     @classmethod
     def view_model_log5(cls):  # UPDATE: scale to hits-per-game
@@ -229,9 +173,10 @@ class _SchemaViews:
                 e.batter,
                 e.game_pk,
                 b.ba                                                       AS predicted
-            FROM      etl_pa    e
-            JOIN      feet_bat2 b  ON  b.batter   = e.batter
-                                   AND b.p_throws  = e.p_throws
+            FROM      etl_pa      e
+            JOIN      feet_batter b  ON  b.batter   = e.batter
+                                      AND b.p_throws  = e.p_throws
+                                      AND b.TS         = 200
             WHERE e.at_bat_number = (
                 SELECT MIN(at_bat_number)
                 FROM   etl_pa e2
@@ -297,49 +242,244 @@ class _SchemaViews:
         """
 
     @classmethod
-    def view_pull_forest_mixin_batter_season(cls):  # NEW: batter season aggregates
-        """Season-to-date batter BA split by pitcher handedness."""
-        return """
-            SELECT
-                batter,
-                p_throws,
-                SUM(hits) * 1.0 / NULLIF(SUM(ab), 0)                      AS ba
-            FROM  feet_bat2
-            GROUP BY batter, p_throws
-        """
-
-    @classmethod
-    def view_pull_forest_mixin_pitcher_season(cls):  # NEW: pitcher season aggregates
+    def view_pull_forest_mixin_pitcher_season(cls):
         """Season-to-date pitcher BA-against split by batter stance."""
         return """
-            SELECT
-                pitcher,
-                stand,
-                SUM(hits_allowed) * 1.0 / NULLIF(SUM(ab_against), 0)      AS ba_against
-            FROM  feet_pitch2
-            GROUP BY pitcher, stand
+            SELECT pitcher, stand, ba_against
+            FROM   feet_pitcher
+            WHERE  TS = 200
         """
 
     # ═══ pull_forest — REWRITE to use mixin views ═══
 
     @classmethod
-    def view_pull_forest(cls):  # UPDATE: compose from mixins
+    def view_pull_forest(cls):
         return """
             SELECT
-                m.GD,
-                m.batter,
-                m.game_pk,
-                bg.hits                                                    AS hits,
-                b.ba                                                       AS b_ba,
-                p.ba_against                                               AS p_ba_against,
-                m.p_throws,
-                m.stand                                                    AS b_stand
-            FROM      pull_forest_mixin_matchup        m
-            LEFT JOIN batter_games                     bg ON  bg.GD      = m.GD
-                                                          AND bg.batter  = m.batter
-                                                          AND bg.game_pk = m.game_pk
-            LEFT JOIN pull_forest_mixin_batter_season  b  ON  b.batter   = m.batter
-                                                          AND b.p_throws = m.p_throws
-            LEFT JOIN pull_forest_mixin_pitcher_season p  ON  p.pitcher  = m.pitcher
-                                                          AND p.stand    = m.stand
+                                                    m.GD,6,
+                                                    m.batter,
+                                                    m.game_pk,
+                                                    bg.hits                                                    AS hits,
+                                                    b.ba                                                       AS b_ba,
+                                                    p.ba_against                                               AS p_ba_against,
+                                                    m.p_throws,
+                                                    m.stand                                                    AS b_stand
+                                                FROM      pull_forest_mixin_matchup        m
+                                                LEFT JOIN batter_games                     bg ON  bg.GD      = m.GD
+                                                                                              AND bg.batter  = m.batter
+                                                                                              AND bg.game_pk = m.game_pk
+                                                LEFT JOIN pull_forest_mixin_batter_season  b  ON  b.batter   = m.batter
+                                                                                              AND b.p_throws = m.p_throws
+                                                LEFT JOIN pull_forest_mixin_pitcher_season p  ON  p.pitcher  = m.pitcher
+                                                                                              AND p.stand    = m.stand
+        """
+    @classmethod
+    def view_update_feet_batter(cls):
+        """Derived ratios for feet_batter — runs after pull + rollup."""
+        return """
+            SELECT GD, TS, batter, p_throws,
+                   hits * 1.0 / NULLIF(ab, 0)    AS ba
+            FROM feet_batter
+        """
+
+    @classmethod
+    def view_update_feet_pitcher(cls):
+        """Derived ratios for feet_pitcher — runs after pull + rollup."""
+        return """
+            SELECT GD, TS, pitcher, stand,
+                   hits_allowed * 1.0 / NULLIF(ab_against, 0)    AS ba_against
+            FROM feet_pitcher
+        """
+
+    @classmethod
+    def view_pull_forest_mixin_batter_season(cls):
+        return """
+            SELECT batter, p_throws, ba,1,2,3,4 ,5 ,6
+                        FROM   feet_batter
+                        WHERE  TS = 200
+        """
+    @classmethod
+    def view_pull_feet_test8(cls):
+        return """
+            SELECT
+                0 AS GD,
+                0 AS TS,
+                0                                            AS batter,
+                ''                                           AS p_throws,
+                0                                            AS pa,
+                0                                            AS ab,
+                0                                            AS hits,
+                0.0                                          AS ba,
+                0                                            AS hr,
+                0                                            AS bb,
+                0                                            AS k,
+                0                                            AS total_bases,
+                0.0                                          AS launch_speed,
+                0                                            AS launch_speed_cnt,
+                0.0                                          AS xba,
+                0                                            AS xba_cnt,
+                0.0                                          AS woba_value,
+                0                                            AS woba_denom,
+                0                                            AS hard_hit,
+                0                                            AS barrel
+        """
+
+    @classmethod
+    def view_pull_raw_test9(cls):
+        return """
+            SELECT
+                0 AS GD,
+                0                                            AS batter,
+                0                                            AS game_pk,
+                0                                            AS hits,
+                0.0                                          AS b_ba,
+                0.0                                          AS p_ba_against,
+                ''                                           AS p_throws,
+                ''                                           AS b_stand,
+                ''                                           AS test
+        """
+
+    @classmethod
+    def view_pull_etl_testc(cls):
+        return """
+            SELECT
+                0 AS GD,
+                0                                            AS batter,
+                0                                            AS game_pk,
+                0                                            AS at_bat_number,
+                0                                            AS pitcher,
+                ''                                           AS stand,
+                ''                                           AS p_throws,
+                0                                            AS home,
+                ''                                           AS bat_team,
+                ''                                           AS pit_team,
+                ''                                           AS park,
+                ''                                           AS events,
+                0                                            AS is_hit,
+                0                                            AS is_ab,
+                0                                            AS is_k,
+                0                                            AS is_bb,
+                0                                            AS is_hr,
+                0                                            AS total_bases,
+                0.0                                          AS launch_speed,
+                0.0                                          AS launch_angle,
+                0.0                                          AS xba,
+                0.0                                          AS woba_value,
+                0                                            AS woba_denom
+        """
+
+    @classmethod
+    def view_pull_etl_testd(cls):
+        return """
+            SELECT
+                0 AS GD,
+                0                                            AS batter,
+                0                                            AS game_pk,
+                0                                            AS at_bat_number,
+                0                                            AS pitcher,
+                ''                                           AS stand,
+                ''                                           AS p_throws,
+                0                                            AS home,
+                ''                                           AS bat_team,
+                ''                                           AS pit_team,
+                ''                                           AS park,
+                ''                                           AS events,
+                0                                            AS is_hit,
+                0                                            AS is_ab,
+                0                                            AS is_k,
+                0                                            AS is_bb,
+                0                                            AS is_hr,
+                0                                            AS total_bases,
+                0.0                                          AS launch_speed,
+                0.0                                          AS launch_angle,
+                0.0                                          AS xba,
+                0.0                                          AS woba_value,
+                0                                            AS woba_denom
+        """
+
+    @classmethod
+    def view_pull_etl_teste(cls):
+        return """
+            SELECT
+                0 AS GD,
+                0                                            AS batter,
+                0                                            AS game_pk,
+                0                                            AS at_bat_number,
+                0                                            AS pitcher,
+                ''                                           AS stand,
+                ''                                           AS p_throws,
+                0                                            AS home,
+                ''                                           AS bat_team,
+                ''                                           AS pit_team,
+                ''                                           AS park,
+                ''                                           AS events,
+                0                                            AS is_hit,
+                0                                            AS is_ab,
+                0                                            AS is_k,
+                0                                            AS is_bb,
+                0                                            AS is_hr,
+                0                                            AS total_bases,
+                0.0                                          AS launch_speed,
+                0.0                                          AS launch_angle,
+                0.0                                          AS xba,
+                0.0                                          AS woba_value,
+                0                                            AS woba_denom
+        """
+
+    @classmethod
+    def view_pull_etl_testg(cls):
+        return """
+            SELECT
+                0 AS GD,
+                0                                            AS batter,
+                0                                            AS game_pk,
+                0                                            AS at_bat_number,
+                0                                            AS pitcher,
+                ''                                           AS stand,
+                ''                                           AS p_throws,
+                0                                            AS home,
+                ''                                           AS bat_team,
+                ''                                           AS pit_team,
+                ''                                           AS park,
+                ''                                           AS events,
+                0                                            AS is_hit,
+                0                                            AS is_ab,
+                0                                            AS is_k,
+                0                                            AS is_bb,
+                0                                            AS is_hr,
+                0                                            AS total_bases,
+                0.0                                          AS launch_speed,
+                0.0                                          AS launch_angle,
+                0.0                                          AS xba,
+                0.0                                          AS woba_value,
+                0                                            AS woba_denom
+        """
+
+    @classmethod
+    def view_pull_etl_testj(cls):
+        return """
+            SELECT
+                0 AS GD,
+                0                                            AS batter,
+                0                                            AS game_pk,
+                0                                            AS at_bat_number,
+                0                                            AS pitcher,
+                ''                                           AS stand,
+                ''                                           AS p_throws,
+                0                                            AS home,
+                ''                                           AS bat_team,
+                ''                                           AS pit_team,
+                ''                                           AS park,
+                ''                                           AS events,
+                0                                            AS is_hit,
+                0                                            AS is_ab,
+                0                                            AS is_k,
+                0                                            AS is_bb,
+                0                                            AS is_hr,
+                0                                            AS total_bases,
+                0.0                                          AS launch_speed,
+                0.0                                          AS launch_angle,
+                0.0                                          AS xba,
+                0.0                                          AS woba_value,
+                0                                            AS woba_denom
         """

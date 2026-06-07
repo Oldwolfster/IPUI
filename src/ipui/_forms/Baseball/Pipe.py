@@ -1,13 +1,13 @@
 from ipui._forms.Baseball.BbDB import BbDB
 from ipui._forms.Baseball.MixinRawPull import MixinRawPull
 from ipui._forms.Baseball.MixinXGBoost import MixinXGBoost
-from ipui.utils.MgrDT import MgrDT
+from ipui._forms.Baseball.MgrDT import MgrDT
 from ipui import *
-from ipui._forms.Baseball.MixinFeet import MixinFeet
+from ipui._forms.Baseball.MixinUpdate import MixinUpdate
 
 
-class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinFeet):#, MixinXGBoost):
-    TSlice = [7,15,28,30,200,9999]
+class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
+    TIME_SLICES = [7,15,28,30,200,9999]
     LAYERS = ["Raw", "ETL", "Feet", "Forest", "Predict"]
     PITCH_BUCKETS = {
         "FF": "fastball", "SI": "fastball", "FC": "fastball", "FA": "fastball",
@@ -16,6 +16,15 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinFeet):#, MixinXGBoost):
     }
     start_date = "2026-03-27"
     end_date   = "2026-03-28"
+
+    def ip_setup_early(self,ip):
+        self.task_queue = []
+        self.private_stale = False
+
+    def on_tab_activated(self):          # called by TabSystem when user switches here
+        if self.private_stale:
+            self.private_stale = False
+            self.refresh_pane()
 
     # ════════════════════════════════════════════════
     # Widget Tree                                  ═══
@@ -29,10 +38,10 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinFeet):#, MixinXGBoost):
 
     def top_section(self, parent):
         row      = Row(parent)
-        frame    = CardCol(row, pad=2, flex_width=4)
+        frame    = CardCol(row, pad=2, flex_width=3.369)
         self     . top_left_section(frame)
-        log      = CardCol(row,flex_width=1.669, pad=0)
-        BbDB.pipe_log_display = Detail(log, "Greetings earthling!")
+        log      = CardCol(row,flex_width=2.669, pad=0)
+        BbDB.pipe_log_display = Detail(Card(log,scroll_v=True,pad_y=0), BbDB.pipe_log_text or "Greetings earthling!")
 
     def top_left_section(self, frame):
         header   = Card(frame     , pad=3)
@@ -132,10 +141,10 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinFeet):#, MixinXGBoost):
 
 
     def view_in_workbench(self, tbl):
-        self.form.switch_tab("Workbench")                                    # construct if first visit
-        wb = self.form.get_tab("Workbench")
+        self.form.switch_tab("Workshop")                                    # construct if first visit
+        wb = self.form.get_tab("Workshop")
         if wb is None:
-            BbDB.log("view_in_workbench", "Workbench tab not found after switch")
+            BbDB.log("View_InWorkshop", "Workbench tab not found after switch")
             return
         wb.load_table(tbl)
 
@@ -153,11 +162,6 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinFeet):#, MixinXGBoost):
     # Running Updates                              ═══
     # ════════════════════════════════════════════════
 
-    # Pipe.py method: refresh_table      Update: after_paint deferred pattern
-    # Pipe.py method: refresh_table_now  New: runs after flip, updates card directly
-
-
-
     def refresh_table(self, tbl, body_rows, body_range):
         dates = self.get_start_and_end_dates()
         if dates is None: return
@@ -169,18 +173,15 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinFeet):#, MixinXGBoost):
         layer = BbDB.layer_of(tbl)
         if layer == "raw":
             method = getattr(self, f"sync_{tbl}", None)
-            if method:
-                method(start_gd, end_gd)
-            else:
-                BbDB.log(tbl, "no sync method found")
+            if method: method(start_gd, end_gd)
+            else:      BbDB.log(tbl, "no sync method found")
+            BbDB.update_summary(tbl)
         else:
-            BbDB.upsert_from_view(tbl, start_gd, end_gd)
-        BbDB.update_summary(tbl)
+            self.update_table(tbl, start_gd, end_gd)
         s = BbDB.get_summary(tbl)
-        body_rows.text = f"Rows: {s.rows:,}"
+        body_rows.text  = f"Rows: {s.rows:,}"
         rng = f"{MgrDT.gd_to_iso(s.min_gd)}  to  {MgrDT.gd_to_iso(s.max_gd)}" if s.min_gd else "—  to  —"
         body_range.text = f"Range: {rng}"
-
 
     def parse_textbox_date_to_gd(self, name):
         raw = self.form.widgets[name].text
@@ -200,35 +201,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinFeet):#, MixinXGBoost):
         Pipe.end_date = self.form.widgets["txt_end_date"].text
         return start_gd, end_gd
 
-    def update_all(self):
-        dates = self.get_start_and_end_dates()
-        if dates is None: return
-        self.btn_refresh_all.text = "Working..."
-        self.ip.after_paint(self.update_all_now, dates)
 
-    def update_all_now(self, dates):
-        start_gd, end_gd = dates
-        self.run_raw_layer(start_gd, end_gd)
-        self.run_layer("etl",  start_gd, end_gd)
-        self.run_layer("feet", start_gd, end_gd)
-        self.run_layer("forest", start_gd, end_gd)
-        #self.run_layer("forest", start_gd, end_gd)
-        self.train_xgb()
-        self.refresh_pane()
-
-    def run_raw_layer(self, start_gd, end_gd):
-        for tbl in BbDB.tables_for_layer("raw"):
-            method = getattr(self, f"sync_{tbl}", None)
-            if method:
-                method(start_gd, end_gd)
-                BbDB.update_summary(tbl)
-            else:
-                BbDB.log(tbl, "no sync method found")
-
-    def run_layer(self, layer, start_gd, end_gd):
-        for tbl in BbDB.tables_for_layer(layer):
-            BbDB.upsert_from_view(tbl, start_gd, end_gd)
-            BbDB.update_summary(tbl)
 
     # ════════════════════════════════════════════════
     # Widget Tree                                  ═══

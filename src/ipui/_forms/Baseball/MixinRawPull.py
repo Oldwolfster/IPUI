@@ -1,7 +1,7 @@
 import time as _time
 import pybaseball
 from ipui._forms.Baseball.BbDB import BbDB
-from ipui.utils.MgrDT import MgrDT
+from ipui._forms.Baseball.MgrDT import MgrDT
 
 
 class MixinRawPull:

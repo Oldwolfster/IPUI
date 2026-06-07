@@ -76,6 +76,17 @@ class MgrDT:
         return cls.date_to_gd(cls.gd_to_date(gd_int) + _dt.timedelta(days=n))
 
     @classmethod
+    def gd_minus_days(cls, gd_expr, days):
+        return cls.gd_add_days(gd_expr, days+1)
+
+    # TODO GET THE ABOVE WORKING
+    def gd_minus_days(cls, gd_expr, days):
+        iso = (f"substr(cast({gd_expr} as text),1,4)||'-'||"
+               f"substr(cast({gd_expr} as text),5,2)||'-'||"
+               f"substr(cast({gd_expr} as text),7,2)")
+        return f"cast(replace(date({iso}, '-{days} days'), '-', '') as integer)"
+
+    @classmethod
     def gd_diff_days(cls, gd_a, gd_b):
         return (cls.gd_to_date(gd_a) - cls.gd_to_date(gd_b)).days
 
