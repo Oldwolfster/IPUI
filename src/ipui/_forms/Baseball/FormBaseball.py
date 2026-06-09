@@ -14,7 +14,7 @@ class FormBaseball(_BaseForm):
         "Kanban"    : ["todo"           ,"doing"            ,"done"         ],
         "Breakout"  : ["greet"          , None              , "code"        ],
     }
-
+    def shutdown(self): raise SystemExit
     def build(self):
         self.build_header()
 
@@ -25,7 +25,7 @@ class FormBaseball(_BaseForm):
         right = Row(header, flex_width=1)  # NEW - right container
 
         # Left content
-        Button(left, "What here?", on_click=lambda: self.show_modal("Press F12 - then select 'Documentation' tab"))
+        Button(left, "    EXIT     ",color_bg= Style.COLOR_BUTTON_DANGER,on_click=self.shutdown)
 
         # Right content
         Spacer(right) #pushes buttons to corner

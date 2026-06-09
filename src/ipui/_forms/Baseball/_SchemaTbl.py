@@ -375,23 +375,22 @@ class _SchemaTbl:
         ('etl_testg', 'PK batter                                  INTEGER'),
         ('etl_testg', 'PK game_pk                                 INTEGER'),
         ('etl_testg', 'PK at_bat_number                           INTEGER'),
-        ('etl_testg', '   pitcher                                 INTEGER'),
         ('etl_testg', '   stand                                   TEXT'),
-        ('etl_testg', '   p_throws                                TEXT'),
-        ('etl_testg', '   home                                    INTEGER'),
-        ('etl_testg', '   pit_team                                TEXT'),
-        ('etl_testg', '   park                                    TEXT'),
-        ('etl_testg', '   events                                  TEXT'),
-        ('etl_testg', '   is_hit                                  INTEGER'),
-        ('etl_testg', '   is_ab                                   INTEGER'),
-        ('etl_testg', '   is_k                                    INTEGER'),
-        ('etl_testg', '   is_bb                                   INTEGER'),
-        ('etl_testg', '   is_hr                                   INTEGER'),
-        ('etl_testg', '   total_bases                             INTEGER'),
-        ('etl_testg', '   launch_angle                            REAL'),
-        ('etl_testg', '   xba                                     REAL'),
-        ('etl_testg', '   woba_value                              REAL'),
-        ('etl_testg', '   woba_denom                              INTEGER'),
+        ('etl_testg', '   test1                                   TEXT'),
+        ('etl_testg', '   test2                                   TEXT'),
+        ('etl_testg', '   test3                                   TEXT'),
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -421,6 +420,31 @@ class _SchemaTbl:
 
 
 
+
+
+        # ═══ etl_test_clone ═══
+        ('etl_test_clone', 'PK batter                                  INTEGER'),
+        ('etl_test_clone', 'PK game_pk                                 INTEGER'),
+        ('etl_test_clone', 'PK at_bat_number                           INTEGER'),
+        ('etl_test_clone', '   pitcher                                 INTEGER'),
+        ('etl_test_clone', '   stand                                   TEXT'),
+        ('etl_test_clone', '   p_throws                                TEXT'),
+        ('etl_test_clone', '   home                                    INTEGER'),
+        ('etl_test_clone', '   bat_team                                TEXT'),
+        ('etl_test_clone', '   pit_team                                TEXT'),
+        ('etl_test_clone', '   park                                    TEXT'),
+        ('etl_test_clone', '   events                                  TEXT'),
+        ('etl_test_clone', '   is_hit                                  INTEGER'),
+        ('etl_test_clone', '   is_ab                                   INTEGER'),
+        ('etl_test_clone', '   is_k                                    INTEGER'),
+        ('etl_test_clone', '   is_bb                                   INTEGER'),
+        ('etl_test_clone', '   is_hr                                   INTEGER'),
+        ('etl_test_clone', '   total_bases                             INTEGER'),
+        ('etl_test_clone', '   launch_speed                            REAL'),
+        ('etl_test_clone', '   launch_angle                            REAL'),
+        ('etl_test_clone', '   xba                                     REAL'),
+        ('etl_test_clone', '   woba_value                              REAL'),
+        ('etl_test_clone', '   woba_denom                              INTEGER'),
 
 
     ]

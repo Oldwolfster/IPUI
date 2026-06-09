@@ -1,9 +1,9 @@
 from ipui._forms.Baseball.BbDB import BbDB
-from ipui._forms.Baseball.MixinRawPull import MixinRawPull
-from ipui._forms.Baseball.MixinXGBoost import MixinXGBoost
+from ipui._forms.Baseball.PipeMixinRawPull import MixinRawPull
+from ipui._forms.Baseball.PipeMixinXGBoost import MixinXGBoost
 from ipui._forms.Baseball.MgrDT import MgrDT
 from ipui import *
-from ipui._forms.Baseball.MixinUpdate import MixinUpdate
+from ipui._forms.Baseball.PipeMixinUpdate import MixinUpdate
 
 
 class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
@@ -21,7 +21,8 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
         self.task_queue = []
         self.private_stale = False
 
-    def on_tab_activated(self):          # called by TabSystem when user switches here
+    def ip_activated(self,ip):          # called by TabSystem when user switches here
+        #print("Am i firing")
         if self.private_stale:
             self.private_stale = False
             self.refresh_pane()
@@ -40,7 +41,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
         row      = Row(parent)
         frame    = CardCol(row, pad=2, flex_width=3.369)
         self     . top_left_section(frame)
-        log      = CardCol(row,flex_width=2.669, pad=0)
+        log      = CardCol(row,flex_width=1.669, pad=0)
         BbDB.pipe_log_display = Detail(Card(log,scroll_v=True,pad_y=0), BbDB.pipe_log_text or "Greetings earthling!")
 
     def top_left_section(self, frame):
@@ -56,7 +57,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
         TextBox(header, initial_value=Pipe.end_date, name="txt_end_date")
         Spacer(header)
         Button(header, "Train XGB"  , on_click=self.train_xgb)
-        Button(header, "blah"       , on_click=self.passme)
+        Button(header, "Refresh"       , on_click=self.refresh_pane)
         Button(header, "Run TS"     , on_click=lambda: self.roll_up_ts("feet_batter"))
         Button(header, "Phoenix"    , on_click=self.nuke_clicked, color_bg=Style.COLOR_BUTTON_DANGER)
 

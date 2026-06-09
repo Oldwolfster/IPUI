@@ -5,19 +5,15 @@ import shutil
 from ipui._forms.Baseball.BbDB import BbDB
 from ipui.utils.EZ import EZ
 
-
 class MgrSchema:
     """Manages schema files and DB sync. Stateless — the files ARE the state."""
-
     VIEWS_FILE  = Path(__file__).parent / "_SchemaViews.py"
     TABLES_FILE = Path(__file__).parent / "_SchemaTbl.py"
     BACKUP_DIR  = Path(__file__).parent / "docs" / "backup"
 
-
     # ══════════════════════════════════════════════════════════════
     # CREATE TABLE — dispatcher
     # ══════════════════════════════════════════════════════════════
-
     @staticmethod
     def create_table(table_name, columns):
         table_name    = MgrSchema.validate_name(table_name)
@@ -52,7 +48,6 @@ class MgrSchema:
         MgrSchema     . drop_and_rebuild_view(view_name)
         BbDB.log      ( view_name, "saved to _SchemaViews.py")
 
-
     # ══════════════════════════════════════════════════════════════
     # SYNC DB — idempotent reload + rebuild
     # ══════════════════════════════════════════════════════════════
@@ -76,12 +71,9 @@ class MgrSchema:
         importlib.reload(_SchemaTbl)
         importlib.reload(_SchemaViews)
         BbDB.configure() #Idiomatic  Won't alter existing but creates if absent... from a view to thw hole db.
-
-
     # ══════════════════════════════════════════════════════════════
     # TABLE SCHEMA — insert block into _SchemaTbl.py
     # ══════════════════════════════════════════════════════════════
-
     @staticmethod
     def insert_table_schema(table_name, columns):
         MgrSchema.backup_file(MgrSchema.TABLES_FILE)
@@ -92,7 +84,6 @@ class MgrSchema:
         final     = ''.join(lines[:insert_at] + block + lines[insert_at:])
         MgrSchema.write_file(MgrSchema.TABLES_FILE, final)
         BbDB.log(table_name, "added to _SchemaTbl.py")
-
 
     @staticmethod
     def find_table_insert_line(lines, layer):
@@ -109,7 +100,6 @@ class MgrSchema:
             idx += 1
         return idx
 
-
     @staticmethod
     def generate_table_block(table_name, columns):
         lines = [f"        # ═══ {table_name} ═══\n"]
@@ -118,11 +108,9 @@ class MgrSchema:
             lines.append(f"        ('{table_name}', '{pk} {col['name']:<40s}{col['type']}'),\n")
         lines.append("\n\n")
         return lines
-
     # ══════════════════════════════════════════════════════════════
     # TABLE SCHEMA — part 2
     # ══════════════════════════════════════════════════════════════
-
     @staticmethod
     def replace_table_schema(table_name, columns):
         """Replace a table's block in _SchemaTbl.py, rebuild DB, update summary."""
@@ -135,7 +123,6 @@ class MgrSchema:
         BbDB          . rebuild_table(table_name)
         BbDB          . update_summary(table_name)
         BbDB          . log(table_name, "replaced in _SchemaTbl.py")
-
 
     @staticmethod
     def find_table_block_lines(file_text, table_name):
@@ -178,7 +165,6 @@ class MgrSchema:
         final_tables    = set(re.findall(r"\('(\w+)',", final))
         missing         = original_tables - final_tables
         if missing: EZ.err(f"Schema replace would lose tables: {missing}")
-
     # ══════════════════════════════════════════════════════════════
     # STUB SELECT — clean SQL for new pull views
     # ══════════════════════════════════════════════════════════════
@@ -192,8 +178,6 @@ class MgrSchema:
             val   = "''" if col['type'] == 'TEXT' else "0.0" if col['type'] == 'REAL' else "0"
             parts.append(f"{val:<45s}AS {col['name']}")
         return "SELECT\n    " + ",\n    ".join(parts)
-
-
     # ══════════════════════════════════════════════════════════════
     # VIEW HELPERS
     # ══════════════════════════════════════════════════════════════
@@ -213,7 +197,6 @@ class MgrSchema:
             msg = f"SQL invalid: {e}"
             BbDB.log(view_name, msg)
             return msg
-
 
     @staticmethod
     def format_method(view_name, select_sql):
@@ -260,12 +243,9 @@ class MgrSchema:
     def insert_method(split_text, method_text):
         file_before, file_after = split_text
         return file_before.rstrip() + "\n" + method_text + file_after
-
-
     # ══════════════════════════════════════════════════════════════
     # FILE I/O
     # ══════════════════════════════════════════════════════════════
-
     @staticmethod
     def backup_file(file_path):
         MgrSchema.BACKUP_DIR.mkdir(parents=True, exist_ok=True)
@@ -283,16 +263,7 @@ class MgrSchema:
 
     @staticmethod
     def validate_name(name):
-        if not name:
-            raise ValueError("Schema name cannot be blank")
-
-        if not name.replace('_', '').isalnum():
-            raise ValueError(f"Invalid schema name: {name}")
-
-        if name[0].isdigit():
-            raise ValueError(f"Schema name cannot start with a number: {name}")
-
+        if not name:         raise ValueError("Schema name cannot be blank")
+        if not name.replace('_', '').isalnum():         raise ValueError(f"Invalid schema name: {name}")
+        if name[0].isdigit():   raise ValueError(f"Schema name cannot start with a number: {name}")
         return name
-
-
-

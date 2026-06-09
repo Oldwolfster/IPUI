@@ -483,3 +483,32 @@ class _SchemaViews:
                 0.0                                          AS woba_value,
                 0                                            AS woba_denom
         """
+
+    @classmethod
+    def view_pull_etl_test_clone(cls):
+        return """
+            SELECT
+                0 AS GD,
+                0                                            AS batter,
+                0                                            AS game_pk,
+                0                                            AS at_bat_number,
+                0                                            AS pitcher,
+                ''                                           AS stand,
+                ''                                           AS p_throws,
+                0                                            AS home,
+                ''                                           AS bat_team,
+                ''                                           AS pit_team,
+                ''                                           AS park,
+                ''                                           AS events,
+                0                                            AS is_hit,
+                0                                            AS is_ab,
+                0                                            AS is_k,
+                0                                            AS is_bb,
+                0                                            AS is_hr,
+                0                                            AS total_bases,
+                0.0                                          AS launch_speed,
+                0.0                                          AS launch_angle,
+                0.0                                          AS xba,
+                0.0                                          AS woba_value,
+                0                                            AS woba_denom
+        """

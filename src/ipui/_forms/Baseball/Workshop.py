@@ -3,9 +3,11 @@ from ipui import *
 from ipui._forms.Baseball.BbDB import BbDB
 from ipui._forms.Baseball.MgrSchema import MgrSchema
 from ipui._forms.Baseball.WorkbenchMixinAddOrEdit import WorkbenchMixinAddOrEdit
+from ipui._forms.Baseball.WorkshopMixinBuildView import WorkshopMixinBuildView
+from ipui.utils.EZ import EZ
 
 
-class Workbench(_BaseTab, WorkbenchMixinAddOrEdit):
+class Workbench(_BaseTab, WorkbenchMixinAddOrEdit, WorkshopMixinBuildView):
     """Per-table command center — inspect columns, see source, (later) add/delete."""
 
     def ip_setup_early(self, ip):
@@ -19,9 +21,14 @@ class Workbench(_BaseTab, WorkbenchMixinAddOrEdit):
         self.private_editing_mixin      = False
         self.private_editing_primary    = False
         self.private_editor_sql         = ""
-        self.private_form_pk            = False  # REFERENCE
-        self.private_clone_layer        = None  # NEW
+        self.private_form_pk            = False
+        self.private_clone_layer        = None  
 
+        # ── WorkshopMixinBuildView ──────────────────────────────────────────────
+        self.private_building_view      = False  
+        self.private_build_type         = "mixin"
+        self.private_build_source       = None   
+    # ── WorkshopMixinBuildView ──────────────────────────────────────────────
 
     def load_table(self, tbl):
         self.current_table  = tbl
@@ -30,36 +37,97 @@ class Workbench(_BaseTab, WorkbenchMixinAddOrEdit):
         self.private_selected_row   = None                                 
         self.private_staged_columns = self.parse_schema_for_table(tbl)
         self.refresh_all_panes()
-
-
     # ══════════════════════════════════════════════════════════════
     # PANE BUILDERS
     # ══════════════════════════════════════════════════════════════
-    def banner_plate(self, txt, parent, btnText=None, btnAction=None):
-        if btnText and btnAction:
-            #banner = Plate(Plate(parent), pad=2), pad = 2)
-            #banner = Plate(Plate(parent, pad=2), pad=2)
+
+    def banner_plateOld(self, txt, parent, buttons=None):
+        if buttons:
             banner=Row(Plate(Plate(parent, pad=2), pad=2))
             Title(banner, txt, glow=True, pad=2)
             Spacer(banner)
-            Button(banner,btnText, on_click=btnAction)
+            for button in buttons:
+                btnText   = button[0]
+                btnAction = button[1]
+                color_bg  = button[2] if len(button) > 2 else None
+
+                if color_bg: Button(banner, btnText, on_click=btnAction, color_bg=color_bg)
+                else:        Button(banner, btnText, on_click=btnAction)
         else: Title(Plate(Plate(parent, pad=2), pad=2), txt, glow=True, pad=2, text_align=CENTER)
+
+    def fire(self, cause_text):
+        """Build the full message and fire EZ.err. Never returns."""
+        msg = (
+            f"The 'back' button did not get added to Claude's Banner Plate\n"
+            f"EVERYONE IS VERY VERY DISAPPOINTED.\n"
+
+            f"{cause_text}\n"
+            f"TIP: If you can't figure out which widget is the problem\n"
+            f"TIP: Add name='anyname' to widgets in the area\n"
+            f"TIP: That name will be listed in this error\n"
+        )
+        EZ.err(msg, exc_type=TypeError)
+
+
+    def banner_plate(self, txt, parent, buttons=None, center=False):
+
+        if isinstance(buttons, str):
+            msg=            """
+ROOT CAUSE:
+This code used an outdated banner_plate API signature.
+Expected: buttons=[("Caption", action)]
+Got: old positional button args.
+
+Claude has been assigned remedial API-awareness training.           
+            """
+            self.fire(msg)
+
+
+        if center:
+            banner = Plate(Plate(parent, pad=2), pad=2)
+            Title(banner, txt, glow=True, pad=2, text_align=CENTER)
+            return banner
+
+        banner = Row(Plate(Plate(parent, pad=2), pad=2))
+        Title(banner, txt, glow=True, pad=2)
+        Spacer(banner)
+
+        if buttons:
+            for button in buttons:
+                btnText, btnAction, *extra = button
+                color_bg = extra[0] if extra else None
+                Button(banner, btnText, on_click=btnAction, color_bg=color_bg)
+
+        return banner
+
 
 
     def controls(self, parent):
         Title(parent, "Actions", glow=True)
         Button(parent, "Analyze",         on_click=self.passme, flex_width=1, color_bg=Style.COLOR_BUTTON_ACCENT)
 
-
     def passme(self): pass
 
 
     def source(self, parent):
         parent.pad=Style.TOKEN_PAD
-        self.banner_plate("Primary View that inserts to table", parent,"Edit View",self.handle_edit_primary)
-        self.build_primary_source(parent)
+
+        self.banner_plate(f"SOURCE THAT FEEDS TABLE: pull_{self.current_table}", parent,
+                          [(f"Edit View: pull_{self.current_table}", self.handle_edit_primary,Style.COLOR_BUTTON_CTA)])
+        self.build_source_view_codebox(parent)
         self.build_mixin_area(parent)
 
+    def build_source_view_codebox(self, parent):
+        """Top half — the view that writes to the table, with Edit button."""
+        tbl = self.current_table
+        if not tbl:
+            CodeBox(parent, "-- No table selected\n")
+            return
+
+        layer = BbDB.layer_of(tbl)
+        text  = self.fetch_raw_source(tbl) if layer == "raw" else self.fetch_primary_view_source(tbl)
+        #CodeBox(Card(parent,pad=2,name="test_card"), data=text)
+        CodeBox(parent, data=text)
 
     def fetch_source_text(self):
         tbl = self.current_table
@@ -80,7 +148,7 @@ class Workbench(_BaseTab, WorkbenchMixinAddOrEdit):
     def columns(self, parent):
         if self.current_table:  title = f"Table: {self.current_table}"
         else:                   title = 'Table'
-        self.banner_plate(title, parent,"Clone Table", self.clone_table_on_click)
+        self.banner_plate(title, parent, [("Clone Table", self.clone_table_on_click)])
         card = CardCol(parent, name="card_wb_columns_grid", flex_height=1, pad=0)
         grid = PowerGrid(card, name="grid_wb_columns")
         self.populate_columns_grid()
@@ -107,7 +175,7 @@ class Workbench(_BaseTab, WorkbenchMixinAddOrEdit):
 
 
     def tbl_ctrls(self, par):
-        self.banner_plate("Alter Table",par)
+        self.banner_plate("Alter Table", par)
         Spacer(par)
         parent=Plate(par,pad=20,border=5)
         Detail(parent, "Name")
@@ -191,16 +259,7 @@ class Workbench(_BaseTab, WorkbenchMixinAddOrEdit):
         return ";\n\n".join(r[1] for r in rows if r[1]) + ";"
 
 
-    def build_primary_source(self, parent):
-        """Top half — the view that writes to the table, with Edit button."""
-        tbl = self.current_table
-        if not tbl:
-            CodeBox(parent, "-- No table selected\n")
-            return
 
-        layer = BbDB.layer_of(tbl)
-        text  = self.fetch_raw_source(tbl) if layer == "raw" else self.fetch_primary_view_source(tbl)
-        CodeBox(parent, data=text)
 
 
     def fetch_primary_view_source(self, tbl):
@@ -215,8 +274,8 @@ class Workbench(_BaseTab, WorkbenchMixinAddOrEdit):
 
 
     def build_mixin_area(self, parent):
-        """Bottom half — mixin list, detail, or editor."""
-        if  self.private_editing_mixin:      self.build_mixin_editor(parent)
+        if   self.private_building_view:     self.build_view_builder(parent)
+        elif self.private_editing_mixin:     self.build_mixin_editor(parent)
         elif self.private_selected_view:     self.build_mixin_detail(parent)
         else:                                self.build_mixin_list(parent)
 
@@ -225,10 +284,15 @@ class Workbench(_BaseTab, WorkbenchMixinAddOrEdit):
         """Show clickable list of mixin views for current table."""
         views = self.find_mixin_views()
         if not views:
-            Detail(parent, "No Supporting views.")
+            #Detail(parent, "No Supporting views.")
+            self.banner_plate("Above has no building blocks!.", parent, [("Add a Building Block", self.start_build_view )])
+
             return
-        Title(parent, " ")
-        Title(parent, "Supporting Views")
+        self.banner_plate("Building Blocks Available For Above View:", parent, [
+            ("Add a Building Block", self.start_build_view , Style.COLOR_BUTTON_CTA),
+            #("<- Back", self.back_to_mixin_list),
+        ])
+
         SelectionList(parent,
             data          = {v: {} for v in views},
             single_select = True,
@@ -249,14 +313,18 @@ class Workbench(_BaseTab, WorkbenchMixinAddOrEdit):
         )
         return [r[0] for r in rows]
 
-
     def build_mixin_detail(self, parent):
         """Show a single mixin view's SQL with Back + Edit buttons."""
-        header = Row(parent)
-        Title(header, self.private_selected_view)
-        Spacer(header)
-        Button(header, "Edit",   color_bg=Style.COLOR_BUTTON_CTA, on_click=self.handle_edit_mixin)
-        Button(header, "← Back", color_bg=Style.COLOR_TAB_BG,     on_click=self.back_to_mixin_list)
+
+        self.banner_plate("Building Blocks For Above:", parent, [
+            (f"Edit View: {self.private_selected_view}",self.handle_edit_mixin,Style.COLOR_BUTTON_CTA),
+            ("<- Back", self.back_to_mixin_list),
+        ])
+        #header = Row(parent)
+        #Title(header, self.private_selected_view)
+        #Spacer(header)
+        #Button(header, f"Edit View {self.private_selected_view}",   color_bg=Style.COLOR_BUTTON_CTA, on_click=self.handle_edit_mixin)
+        #Button(header, "<- Back", color_bg=Style.COLOR_TAB_BG,     on_click=self.back_to_mixin_list)
         rows = BbDB.query(
             "SELECT sql FROM sqlite_master WHERE type='view' AND name=?",
             (self.private_selected_view,),
@@ -338,7 +406,7 @@ class Workbench(_BaseTab, WorkbenchMixinAddOrEdit):
         self.refresh_all_panes()
         #self.form.tab_strip.resolve_tab("Pipe").refresh_pane(0)
 
-        #TODO NOT WORKING self.form.tab_strip.resolve_tab("Pipe").private_stale = True
+        self.form.tab_strip.resolve_tab("Pipe").private_stale = True
 
 
     def refresh_after_table_alter(self):
@@ -362,12 +430,20 @@ class Workbench(_BaseTab, WorkbenchMixinAddOrEdit):
 
     def build_mixin_editor(self, parent):
         """Editable SQL editor for the selected mixin view."""
-        header = Row(parent)
-        Title(header, self.private_selected_view)
-        Spacer(header)
-        Button(header, "Run",    color_bg=Style.COLOR_BUTTON_ACCENT,    on_click=self.handle_run_mixin_query)
-        Button(header, "Save",   color_bg=Style.COLOR_BUTTON_CTA,       on_click=self.view_save_selected)
-        Button(header, "← Back", color_bg=Style.COLOR_TAB_BG,           on_click=self.handle_back_from_editor)
+
+
+        self.banner_plate(f"EDITING VIEW: {self.private_selected_view}", parent, [
+            ("Run View", self.handle_run_mixin_query,Style.COLOR_BUTTON_CTA),
+            ("Save View", self.view_save_selected),
+            ("<- Back", self.handle_back_from_editor),
+        ])
+
+        #header = Row(parent)
+        #Title(header, self.private_selected_view)
+        #Spacer(header)
+        #Button(header, "Run",    color_bg=Style.COLOR_BUTTON_ACCENT,    on_click=self.handle_run_mixin_query)
+        #Button(header, "Save",   color_bg=Style.COLOR_BUTTON_CTA,       on_click=self.view_save_selected)
+        #Button(header, "<- Back", color_bg=Style.COLOR_TAB_BG,           on_click=self.handle_back_from_editor)
         card = Card(parent, scroll_v=True, pad=2, flex_height=1)
         TextArea(card, self.private_editor_sql, name="txt_wb_mixin_editor", flex_height=1, wrap=False, scroll_h=True)
 
@@ -482,10 +558,10 @@ class Workbench(_BaseTab, WorkbenchMixinAddOrEdit):
     # HELPERS
     # ══════════════════════════════════════════════════════════════
 
-
     def strip_create_view(self, sql):
         """Strip 'CREATE VIEW xxx AS' prefix, return bare SELECT."""
         import re
         match = re.search(r'\bAS\b\s+', sql, re.IGNORECASE)
         return sql[match.end():].strip() if match else sql.strip()
+
 
