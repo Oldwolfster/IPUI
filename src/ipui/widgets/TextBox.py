@@ -176,7 +176,7 @@ class TextBox(Label):
         self.select_word_at(clicked_pos)
         #print(f"AFTER select_word: anchor={self.selection_anchor} cursor={self.cursor_pos}")
 
-    def select_word_at(self, pos):
+    def select_word_atOLD(self, pos):
         #print(f"postion ={pos}")
         if not self.text:
             return
@@ -185,6 +185,20 @@ class TextBox(Label):
         while start > 0 and self.text[start - 1] != ' ':
             start -= 1
         while end < len(self.text) and self.text[end] != ' ':
+            end += 1
+        self.selection_anchor = start
+        self.cursor_pos       = end
+        self.cursor_timer     = 0
+
+    def select_word_at(self, pos):
+        #print(f"postion ={pos}")
+        if not self.text:
+            return
+        start = pos
+        end   = pos
+        while start > 0            and self.is_word_char(self.text[start - 1]):
+            start -= 1
+        while end < len(self.text) and self.is_word_char(self.text[end]):
             end += 1
         self.selection_anchor = start
         self.cursor_pos       = end
@@ -263,8 +277,8 @@ class TextBox(Label):
         if   key == Key.RETURN:    self.submit();                  return True
         elif key == Key.LEFT:      self.move_left(ctrl, shift);    return True
         elif key == Key.RIGHT:     self.move_right(ctrl, shift);   return True
-        elif key == Key.HOME:      self.move_home(shift);          return True
-        elif key == Key.END:       self.move_end(shift);           return True
+        elif key == Key.HOME:      self.move_home(ctrl, shift);    return True
+        elif key == Key.END:       self.move_end(ctrl,shift);      return True
         elif key == Key.BACKSPACE: self.delete_back(ctrl);         return True
         elif key == Key.DELETE:    self.delete_forward();          return True
         elif ctrl and key == Key.A:self.select_all();              return True
@@ -313,16 +327,17 @@ class TextBox(Label):
             self.selection_anchor = self.cursor_pos
         self.cursor_timer = 0
 
-    def move_home(self, shift=False):
+    def move_home(self, ctrl=False, shift=False):
         self.flush_undo_chunk()
-        self.cursor_pos   = 0
+        self.cursor_pos = 0
         if not shift:
             self.selection_anchor = self.cursor_pos
         self.cursor_timer = 0
 
-    def move_end(self, shift=False):
+    # TextBox.py  method: move_end   Update: add ctrl param (absorbed) to match signature
+    def move_end(self, ctrl=False, shift=False):
         self.flush_undo_chunk()
-        self.cursor_pos   = len(self.text)
+        self.cursor_pos = len(self.text)
         if not shift:
             self.selection_anchor = self.cursor_pos
         self.cursor_timer = 0
@@ -331,7 +346,7 @@ class TextBox(Label):
     # WORD BOUNDARIES
     # ══════════════════════════════════════════════════════════════
 
-    def word_boundary_left(self):
+    def word_boundary_leftOLD(self):
         pos = self.cursor_pos - 1
         while pos > 0 and self.text[pos - 1] == ' ':
             pos -= 1
@@ -339,12 +354,35 @@ class TextBox(Label):
             pos -= 1
         return pos
 
-    def word_boundary_right(self):
+    def word_boundary_rightOLD(self):
         pos = self.cursor_pos
         while pos < len(self.text) and self.text[pos] == ' ':
             pos += 1
         while pos < len(self.text) and self.text[pos] != ' ':
             pos += 1
+        return pos
+
+
+
+    def word_boundary_right(self):
+        pos = self.cursor_pos
+        if pos < len(self.text) and self.text[pos] == '\n':
+            return pos + 1                                                           # at line end → step onto next line, then stop
+        while pos < len(self.text) and self.text[pos] != '\n' and not self.is_word_char(self.text[pos]):
+            pos += 1                                                                 # skip separators, but never past the break
+        while pos < len(self.text) and self.is_word_char(self.text[pos]):
+            pos += 1                                                                 # skip the word
+        return pos
+
+    # TextBox.py  method: word_boundary_left  Update: is_word_char + \n is a hard stop, so a jump never engulfs the previous line's word.
+    def word_boundary_left(self):
+        pos = self.cursor_pos - 1
+        if pos >= 0 and self.text[pos] == '\n':
+            return pos                                                               # at line start → step onto prev line, then stop
+        while pos > 0 and self.text[pos - 1] != '\n' and not self.is_word_char(self.text[pos - 1]):
+            pos -= 1
+        while pos > 0 and self.is_word_char(self.text[pos - 1]):
+            pos -= 1
         return pos
 
     # ══════════════════════════════════════════════════════════════
@@ -552,3 +590,25 @@ class TextBox(Label):
         snap = self.private_redo_stack.pop()
         self.private_undo_stack.append(snap)
         self.restore_state(snap)
+
+
+    # Below added 6/9
+
+    def insert_text(self, s):
+        self.delete_selection()
+        self.text             = self.text[:self.cursor_pos] + s + self.text[self.cursor_pos:]
+        self.cursor_pos      += len(s)
+        self.selection_anchor = self.cursor_pos
+        self.cursor_timer     = 0
+        self.on_text_changed()
+
+    # TextBox.py method: paste  Update: delegate to insert_text (single-line — newlines become spaces)
+    def paste(self):
+        clip = MgrClipboard.paste()
+        if not clip: return
+        clip = clip.replace('\n', ' ').replace('\r', '')
+        pygame.event.clear(pygame.KEYDOWN)             # discard repeats queued during subprocess
+        self.insert_text(clip)
+
+    @staticmethod
+    def is_word_char(ch):   return ch.isalnum() or ch == '_'

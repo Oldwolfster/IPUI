@@ -17,6 +17,7 @@ class Button(_BaseWidget):
         self.border_radius  = self.border_radius if self.border_radius is not None else Style.TOKEN_CORNER_RADIUS
         self.font           = self.font or Style.FONT_BODY
         self.color_txt      = Style.COLOR_TEXT
+        if self.color_bg    == Style.COLOR_BUTTON_ACCENT: self.color_txt=Style.COLOR_TEXT_FOR_ACCENT
         self.color_bg       = self.color_bg or Style.COLOR_BUTTON_BG
         self.pad=5
         MgrColor            . apply_bevel(self, "raised")

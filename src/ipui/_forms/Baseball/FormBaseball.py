@@ -6,7 +6,7 @@ class FormBaseball(_BaseForm):
     TAB_LAYOUT = {
         "Pipe"      : ["all_in_one"                                         ],
         #"Workbench" : [("controls",.2)    ,("source"  ,1.2), ("columns" ,.69),("tbl_ctrls",.2)],
-        "Workshop": [("controls", .2), ("source", 1.2), ("columns", .69), ("tbl_ctrls", .369)],
+        "Workshop": [("database_browser", .4), ("source", 1.2), ("columns", .569), ("tbl_ctrls", .369)],
         "Predict"   : [("controls", 0.2),("by_model", 0.75)                 ],
         #"Tree"      : ["TBD"                                                ],
         "SQL"       : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],

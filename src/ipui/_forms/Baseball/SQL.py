@@ -281,14 +281,29 @@ class SQL(_BaseTab):
 
     def handle_preview_clicked(self):
         if not self.require_selected_table(): return
-        sql = f"SELECT *\nFROM {self.selected_table}\nLIMIT 1000"
+        try:
+            cols = self.column_names(self.selected_table)
+        except Exception as e:
+            self.set_status(f"Preview error: {e}")
+            return
+        select = "\n    , ".join(cols) if cols else "*"
+        sql    = f"SELECT {select}\nFROM {self.selected_table}\nLIMIT 1000"
         self.push_query(sql, f"Preview ready for {self.selected_table}")
         self.run_query(sql)
+
+    def column_names(self, name):
+        conn = sqlite3.connect(self.db_path)
+        try:
+            cur = conn.execute(f"SELECT * FROM {self.quote_ident(name)} LIMIT 0")
+            return [d[0] for d in cur.description]
+        finally:
+            conn.close()
 
     def handle_script_clicked(self):
         if not self.require_selected_table(): return
         try:
-            sql = self.fetch_create_sql("table", self.selected_table)
+            sql = self.fetch_create_sql("table", self.selected_table) \
+               or self.fetch_create_sql("view",  self.selected_table)
         except Exception as e:
             self.set_status(f"Script error: {e}")
             return

@@ -24,6 +24,7 @@ class Style:
     COLOR_TEXT_MUTED          = Palette.GRAY_400
     COLOR_TEXT_ACCENT         = Palette.ORANGE_FORGE
     COLOR_TEXT_GLOW           = Palette.ORANGE_GLOW
+    COLOR_TEXT_FOR_ACCENT     = Palette.GRAY_900
 
     # Borders
     COLOR_BORDER              = Palette.GRAY_500

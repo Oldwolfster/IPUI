@@ -3,18 +3,18 @@ from ipui._forms.Baseball.BbDB import BbDB
 from ipui._forms.Baseball.MgrSchema import MgrSchema
 
 
-class WorkbenchMixinAddOrEdit:
+class WorkshopMixinBuildTable:
 
     def clone_table_on_click(self):
         self.set_pane(2, self.clone_ui)
 
     def clone_ui(self, par):
 
-        self.banner_plate("Clone Table",par, "Cancel", self.cancel_clone)
+        self.banner_plate("Clone Table",par,[( "Cancel", self.cancel_clone)])
         parent = Card(par, pad=Style.TOKEN_PAD/2, flex_height=1,border=0)
         Spacer(parent, flex_height=.0369)
 
-        card = Card(parent, pad_x=Style.TOKEN_PAD, flex_height=.2)
+        card = Card(parent, pad_x=Style.TOKEN_PAD, flex_height=.3)
         Body(card, "New Table Name (prefix added automatically):")
         TextBox(card, name="txt_clone_name")
         Spacer(parent, flex_height=.0669)

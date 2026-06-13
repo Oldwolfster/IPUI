@@ -1,5 +1,3 @@
-# CodeBox.py  Update: auto-dedent + copy button
-
 import inspect
 import time
 import pygame
@@ -26,9 +24,9 @@ class CodeBox(_BaseWidget):
         self.private_copy_flash     = 0
         self.private_copy_surf      = Style.FONT_DETAIL.render("Copy",    True, Style.COLOR_TEXT)
         self.private_copied_surf    = Style.FONT_DETAIL.render("Copied!", True, (100, 220, 100))
-        if self.parent:              # and not self.keep_parent_layout:
-            self.parent.pad         = 0
-            self.parent.gap         = 0
+        #if self.parent:              # and not self.keep_parent_layout:
+        #    self.parent.pad         = 0
+        #    self.parent.gap         = 0
 
         if not self.data:
             self.my_surface         = self.font.render("# no method set", True, self.color_txt)

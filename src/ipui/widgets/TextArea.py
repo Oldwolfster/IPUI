@@ -33,7 +33,7 @@ class TextArea(TextBox):
         self.display_line_starts = [0]
 
         super().build()
-        self.wrap                = True
+        if self.wrap is None     : self.wrap = True
         self.text_align          = 'l'
         self.on_click            = self.handle_click_position
         self.on_double_click     = self.select_word_at_mouse
@@ -42,7 +42,7 @@ class TextArea(TextBox):
     # ══════════════════════════════════════════════════════════════
     # SURFACE — rebuild for multi-line
     # ══════════════════════════════════════════════════════════════
-
+    INDENT = "    "
     def rebuild_surface(self):
         display = self.text if self.text else self.placeholder
         color   = self.color_txt if self.text else self.color_placeholder
@@ -76,8 +76,11 @@ class TextArea(TextBox):
     def measure(self):
         line_count = max(1, self.text.count("\n") + 1) if self.text else 3
         h = self.line_height * line_count + self.pad_y  * 2
-        w = 200
+        w = self.widest_line_px() if (self.text and not self.wrap) else 200
         return (w, h)
+
+    def widest_line_px(self):
+        return max(self.font.size(ln)[0] for ln in self.text.split("\n")) + self.pad_x * 2
 
     # ══════════════════════════════════════════════════════════════
     # DRAW — multi-line with vertical clipping
@@ -232,7 +235,7 @@ class TextArea(TextBox):
         if   key == Key.RETURN:    self.insert_newline();          return True
         elif key == Key.UP:        self.move_up(shift);            return True
         elif key == Key.DOWN:      self.move_down(shift);          return True
-        elif key == Key.TAB:       self.insert_tab();              return True
+        elif key == Key.TAB:       self.handle_tab(shift);         return True
         return super().handle_text_input(key, char, ctrl, shift)
 
     # ══════════════════════════════════════════════════════════════
@@ -249,7 +252,7 @@ class TextArea(TextBox):
 
     def insert_tab(self):
         self.delete_selection()
-        spaces               = "    "
+        spaces               = self.INDENT
         self.text            = self.text[:self.cursor_pos] + spaces + self.text[self.cursor_pos:]
         self.cursor_pos      += len(spaces)
         self.selection_anchor = self.cursor_pos
@@ -288,17 +291,24 @@ class TextArea(TextBox):
     # HOME/END — line-aware (not whole document)
     # ══════════════════════════════════════════════════════════════
 
-    def move_home(self, shift=False):
-        line, col     = self.pos_to_line_col(self.cursor_pos)
-        self.cursor_pos = self.line_col_to_pos(line, 0)
+    def move_home(self, ctrl=False, shift=False):
+        if ctrl:
+            self.cursor_pos = 0
+        else:
+            line, col       = self.pos_to_line_col(self.cursor_pos)
+            self.cursor_pos = self.line_col_to_pos(line, 0)
         if not shift:
             self.selection_anchor = self.cursor_pos
         self.cursor_timer = 0
 
-    def move_end(self, shift=False):
-        line, col       = self.pos_to_line_col(self.cursor_pos)
-        line_text       = self.display_lines[line] if line < len(self.display_lines) else ""
-        self.cursor_pos = self.line_col_to_pos(line, len(line_text))
+    # TextArea.py  method: move_end   Update: ctrl → document end (len text); else existing line-aware End
+    def move_end(self, ctrl=False, shift=False):
+        if ctrl:
+            self.cursor_pos = len(self.text)
+        else:
+            line, col       = self.pos_to_line_col(self.cursor_pos)
+            line_text       = self.display_lines[line] if line < len(self.display_lines) else ""
+            self.cursor_pos = self.line_col_to_pos(line, len(line_text))
         if not shift:
             self.selection_anchor = self.cursor_pos
         self.cursor_timer = 0
@@ -326,3 +336,86 @@ class TextArea(TextBox):
             self.selection_anchor = self.cursor_pos
             self.cursor_timer    = 0
             self.on_text_changed()
+
+    # Below added 6/9
+
+    # TextArea.py method: paste  Update: delegate to insert_text (multi-line — normalize newlines)
+    def paste(self):
+        clip = MgrClipboard.paste()
+        if not clip: return
+        clip = clip.replace('\r\n', '\n').replace('\r', '\n')
+        pygame.event.clear(pygame.KEYDOWN)             # discard repeats queued during subprocess
+        self.insert_text(clip)
+
+    # TextArea.py method: insert_newline  Update: collapse onto the shared primitive
+    def insert_newline(self): self.insert_text("\n")
+
+    # TextArea.py method: insert_tab  Update: collapse onto the shared primitive
+    def insert_tab(self): self.insert_text("    ")
+
+    # ══════════════════════════════════════════════════════════════
+    # multiline tab and shift tab
+    # ══════════════════════════════════════════════════════════════
+
+        # TextArea.py  method: handle_tab  NEW  Route Tab three ways. Keeps the key dispatcher logic-free.
+    def handle_tab(self, shift):
+        if   shift:                          self.dedent_block()
+        elif self.selection_spans_lines():   self.indent_block()
+        else:                                self.insert_tab()
+
+    # TextArea.py  method: selection_spans_lines  NEW  True only when the selection crosses a logical newline.
+    def selection_spans_lines(self):
+        sel = self.selection_range()
+        return bool(sel) and '\n' in self.text[sel[0]:sel[1]]
+
+    # TextArea.py  method: block_span  NEW  Char span [start,end) of every LOGICAL (\n) line the selection touches. NOT display_lines.
+    def block_span(self):
+        lo    = min(self.cursor_pos, self.selection_anchor)
+        hi    = max(self.cursor_pos, self.selection_anchor)
+        if hi > lo and self.text[hi - 1] == '\n':
+            hi -= 1                                   # selection ends at a line start → drop the trailing line
+        start = self.text.rfind('\n', 0, lo) + 1
+        end   = self.text.find('\n', hi)
+        return start, (len(self.text) if end == -1 else end)
+
+    # TextArea.py  method: apply_block  NEW  Run transform() over each touched logical line, splice back, re-select the whole block.
+    def apply_block(self, transform):
+        start, end            = self.block_span()
+        new_block_text        = '\n'.join(transform(line_text) for line_text in self.text[start:end].split('\n'))
+        self.text             = self.text[:start] + new_block_text + self.text[end:]
+        self.selection_anchor = start
+        self.cursor_pos       = start + len(new_block_text)
+        self.cursor_timer     = 0
+        self.on_text_changed()
+
+    # TextArea.py  method: indent_block  NEW  Tab on a multi-line selection: prepend one indent to every touched line.
+    def indent_block(self):
+        self.apply_block(lambda line_text: self.INDENT + line_text)
+
+    # TextArea.py  method: dedent_block  NEW  Shift+Tab: dedent the selected block, or the caret's line when nothing is selected.
+    def dedent_block(self):
+        if self.selection_range():
+            self.apply_block(self.strip_indent)
+        else:
+            self.dedent_caret_line()
+
+    # TextArea.py  method: dedent_caret_line  NEW  No-selection Shift+Tab: dedent the current line, keep caret collapsed and clamped.
+    def dedent_caret_line(self):
+        start, end            = self.block_span()
+        line_text             = self.text[start:end]
+        stripped_text         = self.strip_indent(line_text)
+        removed               = len(line_text) - len(stripped_text)
+        col                   = self.cursor_pos - start
+        self.text             = self.text[:start] + stripped_text + self.text[end:]
+        self.cursor_pos       = start + max(0, col - removed)
+        self.selection_anchor = self.cursor_pos
+        self.cursor_timer     = 0
+        self.on_text_changed()
+
+    # TextArea.py  method: strip_indent  NEW  Remove up to one indent's worth of leading spaces from a single line. Clamped.
+    def strip_indent(self, line_text):
+        width   = len(self.INDENT)
+        removed = 0
+        while removed < width and removed < len(line_text) and line_text[removed] == ' ':
+            removed += 1
+        return line_text[removed:]

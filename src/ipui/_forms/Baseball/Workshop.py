@@ -2,12 +2,15 @@ import inspect
 from ipui import *
 from ipui._forms.Baseball.BbDB import BbDB
 from ipui._forms.Baseball.MgrSchema import MgrSchema
-from ipui._forms.Baseball.WorkbenchMixinAddOrEdit import WorkbenchMixinAddOrEdit
+from ipui._forms.Baseball.MgrSqlBeautification  import MgrSqlBeautification
+from ipui._forms.Baseball.WorkshopMixinBuildTable import WorkshopMixinBuildTable
 from ipui._forms.Baseball.WorkshopMixinBuildView import WorkshopMixinBuildView
+from ipui._forms.Baseball.WorkshopMixinDatabaseBrowser import WorkshopMixinDatabaseBrowser
 from ipui.utils.EZ import EZ
+from ipui.widgets.CodeScroller import CodeScroller
 
 
-class Workbench(_BaseTab, WorkbenchMixinAddOrEdit, WorkshopMixinBuildView):
+class Workbench(_BaseTab, WorkshopMixinBuildTable, WorkshopMixinBuildView, WorkshopMixinDatabaseBrowser):
     """Per-table command center — inspect columns, see source, (later) add/delete."""
 
     def ip_setup_early(self, ip):
@@ -28,32 +31,24 @@ class Workbench(_BaseTab, WorkbenchMixinAddOrEdit, WorkshopMixinBuildView):
         self.private_building_view      = False  
         self.private_build_type         = "mixin"
         self.private_build_source       = None   
-    # ── WorkshopMixinBuildView ──────────────────────────────────────────────
+        # ── WorkshopMixinBuildView ──────────────────────────────────────────────
+        self.private_clone_layer        = None     # REFERENCE
+        self.private_db_filter          = "all"    # NEW
+        self.private_db_selected        = None     # NEW
 
     def load_table(self, tbl):
-        self.current_table  = tbl
-        self.private_selected_view = None
-        self.analysis_cache = {}                                             # fresh table → fresh cache
-        self.private_selected_row   = None                                 
-        self.private_staged_columns = self.parse_schema_for_table(tbl)
+        self.current_table              = tbl
+        self.private_selected_view      = None
+        self.private_editing_mixin      = False    # NEW
+        self.private_editing_primary    = False    # NEW
+        self.private_building_view      = False    # NEW
+        self.analysis_cache             = {}
+        self.private_selected_row       = None
+        self.private_staged_columns     = self.parse_schema_for_table(tbl)
         self.refresh_all_panes()
     # ══════════════════════════════════════════════════════════════
     # PANE BUILDERS
     # ══════════════════════════════════════════════════════════════
-
-    def banner_plateOld(self, txt, parent, buttons=None):
-        if buttons:
-            banner=Row(Plate(Plate(parent, pad=2), pad=2))
-            Title(banner, txt, glow=True, pad=2)
-            Spacer(banner)
-            for button in buttons:
-                btnText   = button[0]
-                btnAction = button[1]
-                color_bg  = button[2] if len(button) > 2 else None
-
-                if color_bg: Button(banner, btnText, on_click=btnAction, color_bg=color_bg)
-                else:        Button(banner, btnText, on_click=btnAction)
-        else: Title(Plate(Plate(parent, pad=2), pad=2), txt, glow=True, pad=2, text_align=CENTER)
 
     def fire(self, cause_text):
         """Build the full message and fire EZ.err. Never returns."""
@@ -68,9 +63,8 @@ class Workbench(_BaseTab, WorkbenchMixinAddOrEdit, WorkshopMixinBuildView):
         )
         EZ.err(msg, exc_type=TypeError)
 
-
     def banner_plate(self, txt, parent, buttons=None, center=False):
-
+        txtbox=None
         if isinstance(buttons, str):
             msg=            """
 ROOT CAUSE:
@@ -81,15 +75,13 @@ Got: old positional button args.
 Claude has been assigned remedial API-awareness training.           
             """
             self.fire(msg)
-
-
         if center:
             banner = Plate(Plate(parent, pad=2), pad=2)
-            Title(banner, txt, glow=True, pad=2, text_align=CENTER)
-            return banner
+            txtbox= Title(banner, txt, glow=True, pad=2, text_align=CENTER)
+            return txtbox
 
         banner = Row(Plate(Plate(parent, pad=2), pad=2))
-        Title(banner, txt, glow=True, pad=2)
+        txtbox = Title(banner, txt, glow=True, pad=2)
         Spacer(banner)
 
         if buttons:
@@ -98,24 +90,20 @@ Claude has been assigned remedial API-awareness training.
                 color_bg = extra[0] if extra else None
                 Button(banner, btnText, on_click=btnAction, color_bg=color_bg)
 
-        return banner
-
-
-
-    def controls(self, parent):
-        Title(parent, "Actions", glow=True)
-        Button(parent, "Analyze",         on_click=self.passme, flex_width=1, color_bg=Style.COLOR_BUTTON_ACCENT)
+        return txtbox
 
     def passme(self): pass
 
-
     def source(self, parent):
-        parent.pad=Style.TOKEN_PAD
+        #parent.pad = Style.TOKEN_PAD
 
         self.banner_plate(f"SOURCE THAT FEEDS TABLE: pull_{self.current_table}", parent,
                           [(f"Edit View: pull_{self.current_table}", self.handle_edit_primary,Style.COLOR_BUTTON_CTA)])
-        self.build_source_view_codebox(parent)
-        self.build_mixin_area(parent)
+        top_half = CardCol(parent,flex_height=.4,pad=0)
+        low_half = CardCol(parent, flex_height=.6,pad=0)
+        self.build_source_view_codebox(top_half)
+        self.build_mixin_area(low_half)
+
 
     def build_source_view_codebox(self, parent):
         """Top half — the view that writes to the table, with Edit button."""
@@ -127,7 +115,8 @@ Claude has been assigned remedial API-awareness training.
         layer = BbDB.layer_of(tbl)
         text  = self.fetch_raw_source(tbl) if layer == "raw" else self.fetch_primary_view_source(tbl)
         #CodeBox(Card(parent,pad=2,name="test_card"), data=text)
-        CodeBox(parent, data=text)
+        #CodeBox(parent, data=text)
+        CodeScroller(parent, data=text)
 
     def fetch_source_text(self):
         tbl = self.current_table
@@ -204,9 +193,13 @@ Claude has been assigned remedial API-awareness training.
 
 
     def set_form_type(self, chosen):
+        self.temp_hold_field  = self.form.widgets.get("txt_wb_new_col_name").text
+        #print(f"setformtype= {self.temp_hold_field}")
         self.private_form_type = chosen
+        self.handle_add_column()
         self.set_pane(3, self.tbl_ctrls)
-
+        self.form.widgets.get("txt_wb_new_col_name").set_text = self.temp_hold_field
+        #print(f"setformtype2 {self.temp_hold_field}")
 
     def build_pk_toggle(self, parent):
         label = "✓ Primary Key" if self.private_form_pk else "☐ Primary Key"
@@ -226,7 +219,7 @@ Claude has been assigned remedial API-awareness training.
     # REFRESH ALL — rebuild all three panes via set_pane
     # ══════════════════════════════════════════════════════════════
     def refresh_all_panes(self):
-        self.set_pane(0, self.controls)
+
         self.set_pane(1, self.source)
         self.set_pane(2, self.columns)
 
@@ -316,7 +309,7 @@ Claude has been assigned remedial API-awareness training.
     def build_mixin_detail(self, parent):
         """Show a single mixin view's SQL with Back + Edit buttons."""
 
-        self.banner_plate("Building Blocks For Above:", parent, [
+        self.banner_plate("Building Block For Above:", parent, [
             (f"Edit View: {self.private_selected_view}",self.handle_edit_mixin,Style.COLOR_BUTTON_CTA),
             ("<- Back", self.back_to_mixin_list),
         ])
@@ -330,7 +323,7 @@ Claude has been assigned remedial API-awareness training.
             (self.private_selected_view,),
         )
         text = rows[0][0] + ";" if rows and rows[0][0] else "-- No SQL found"
-        CodeBox(parent, data=text, flex_height=1)
+        CodeScroller(parent, data=text)
 
 
     def back_to_mixin_list(self):
@@ -434,19 +427,21 @@ Claude has been assigned remedial API-awareness training.
 
         self.banner_plate(f"EDITING VIEW: {self.private_selected_view}", parent, [
             ("Run View", self.handle_run_mixin_query,Style.COLOR_BUTTON_CTA),
+            ("SQL Beau", self.beautify_the_sql),
             ("Save View", self.view_save_selected),
-            ("<- Back", self.handle_back_from_editor),
+            ("<- Cancel", self.handle_back_from_editor),
         ])
 
-        #header = Row(parent)
-        #Title(header, self.private_selected_view)
-        #Spacer(header)
-        #Button(header, "Run",    color_bg=Style.COLOR_BUTTON_ACCENT,    on_click=self.handle_run_mixin_query)
-        #Button(header, "Save",   color_bg=Style.COLOR_BUTTON_CTA,       on_click=self.view_save_selected)
-        #Button(header, "<- Back", color_bg=Style.COLOR_TAB_BG,           on_click=self.handle_back_from_editor)
-        card = Card(parent, scroll_v=True, pad=2, flex_height=1)
-        TextArea(card, self.private_editor_sql, name="txt_wb_mixin_editor", flex_height=1, wrap=False, scroll_h=True)
 
+        #orig card = Card(parent, scroll_v=True, pad=2, flex_height=1)
+        #orig TextArea(card, self.private_editor_sql, name="txt_wb_mixin_editor", flex_height=1, wrap=False, scroll_h=True)
+
+        card = Card(parent, scroll_v=True, scroll_h=True, pad=2, flex_height=1)
+        TextArea(card, self.private_editor_sql, name="txt_wb_mixin_editor", flex_height=0, wrap=False)
+
+    def beautify_the_sql(self):
+        beautiful = MgrSqlBeautification.format_sql (self.form.widgets.get("txt_wb_mixin_editor").text)
+        self.form.widgets.get("txt_wb_mixin_editor").set_text(beautiful)
 
     def handle_run_mixin_query(self):
         """Run the editor SQL and populate the results grid."""
@@ -563,5 +558,3 @@ Claude has been assigned remedial API-awareness training.
         import re
         match = re.search(r'\bAS\b\s+', sql, re.IGNORECASE)
         return sql[match.end():].strip() if match else sql.strip()
-
-

@@ -18,8 +18,9 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
     end_date   = "2026-03-28"
 
     def ip_setup_early(self,ip):
-        self.task_queue = []
+        self.task_queue    = []
         self.private_stale = False
+        self.card_mode     = "detail"           # detail | field  (toggled in the header)
 
     def ip_activated(self,ip):          # called by TabSystem when user switches here
         #print("Am i firing")
@@ -58,10 +59,18 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
         Spacer(header)
         Button(header, "Train XGB"  , on_click=self.train_xgb)
         Button(header, "Refresh"       , on_click=self.refresh_pane)
+        Button(header, self.toggle_label(), on_click=self.toggle_card_mode)
         Button(header, "Run TS"     , on_click=lambda: self.roll_up_ts("feet_batter"))
         Button(header, "Phoenix"    , on_click=self.nuke_clicked, color_bg=Style.COLOR_BUTTON_DANGER)
 
     def refresh_pane(self): self.form.set_pane(0, self.all_in_one)
+
+    def toggle_label(self):
+        return "Fields" if self.card_mode == "detail" else "Details"
+
+    def toggle_card_mode(self):
+        self.card_mode = "field" if self.card_mode == "detail" else "detail"
+        self.refresh_pane()
 
     # MixinXGBoost.py method: train_xgb  Update: BbDB + summary + refresh
 
@@ -123,23 +132,42 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
             self.build_one_card(parent, tbl)
 
     def build_one_card(self, parent, tbl):
-        tbl_summary = BbDB.get_summary(tbl)
-        card = Card(parent, pad=5)
+        summary = BbDB.get_summary(tbl)
+        card    = Card(parent, pad=5)
+        self.build_card_header(card, tbl, summary)
+        refs    = self.build_card_body(card, tbl, summary)
+        self.build_card_buttons(card, tbl, refs)
+
+    def build_card_header(self, card, tbl, summary):
         head = Row(card)
         Title(head, tbl)
         Spacer(head)
-        Body(head, f" {MgrDT.gd_to_iso(tbl_summary.gd)}")
-        row = Row(card)
-        body_rows = Body(row , f"Rows:  {tbl_summary.rows:,}")
-        Spacer(row )
-        body_range = Body(row , f"Cols: {tbl_summary.cols}")
-        rng  = f"{MgrDT.gd_to_iso(tbl_summary.min_gd)}  to  {MgrDT.gd_to_iso(tbl_summary.max_gd)}" if tbl_summary.min_gd else "—  to  —"
+        Body(head, f" {MgrDT.gd_to_iso(summary.gd)}")
+
+    def build_card_body(self, card, tbl, summary):
+        if self.card_mode == "field":
+            self.build_field_list(card, tbl)
+            return None
+        return self.build_detail_body(card, summary)
+
+    def build_detail_body(self, card, summary):
+        row        = Row(card)
+        body_rows  = Body(row, f"Rows:  {summary.rows:,}")
+        Spacer(row)
+        body_range = Body(row, f"Cols: {summary.cols}")
+        rng        = f"{MgrDT.gd_to_iso(summary.min_gd)}  to  {MgrDT.gd_to_iso(summary.max_gd)}" if summary.min_gd else "—  to  —"
         Body(card, f"Range: {rng} ")
+        return body_rows, body_range
+
+    def build_field_list(self, card, tbl):
+        Body(card, "\n".join(BbDB.field_names(tbl)))
+
+    def build_card_buttons(self, card, tbl, refs):
+        body_rows, body_range = refs if refs else (None, None)
         btns = Row(Plate(Plate(card,pad=2),pad=6))
         Button(btns, "Run"      ,flex_width=1, on_click=lambda t=tbl, br=body_rows, bg=body_range: self.refresh_table(t, br, bg))
         Button(btns, "WB", flex_width=1, on_click=lambda t=tbl: self.view_in_workbench(t))  # NEW
         Button(btns, "SQL"      , flex_width=1, on_click=lambda t=tbl: self.view_in_sql(t))  # NEW
-
 
     def view_in_workbench(self, tbl):
         self.form.switch_tab("Workshop")                                    # construct if first visit
@@ -166,7 +194,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
     def refresh_table(self, tbl, body_rows, body_range):
         dates = self.get_start_and_end_dates()
         if dates is None: return
-        body_rows.text = "Rows:  refreshing..."
+        if body_rows: body_rows.text = "Rows:  refreshing..."     # field mode passes None — nothing to update
         self.ip.after_paint(self.refresh_table_now, tbl, dates, body_rows, body_range)
 
     def refresh_table_now(self, tbl, dates, body_rows, body_range):
@@ -180,6 +208,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
         else:
             self.update_table(tbl, start_gd, end_gd)
         s = BbDB.get_summary(tbl)
+        if not body_rows: return                                  # field mode: data refreshed, no labels to touch
         body_rows.text  = f"Rows: {s.rows:,}"
         rng = f"{MgrDT.gd_to_iso(s.min_gd)}  to  {MgrDT.gd_to_iso(s.max_gd)}" if s.min_gd else "—  to  —"
         body_range.text = f"Range: {rng}"

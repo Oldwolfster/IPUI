@@ -198,8 +198,9 @@ class BbDB:
     # ════════════════════════════════════════════════
     # Update tables from view                      ═══
     # ════════════════════════════════════════════════
-# BbDB.py method: upsert_from_view  New:
-
+    @classmethod
+    def field_names(cls, tbl):
+        return [r[1] for r in cls.query(f"PRAGMA table_info({tbl})")]
 
 
     @classmethod
@@ -234,3 +235,27 @@ class BbDB:
         )
         cls.execute(sql, (start_gd, end_gd))
         cls.log(tbl, f"upserted from {view}")
+
+
+
+    @classmethod
+    def list_objects(cls, kind):
+        where_type = "type IN ('table','view')" if kind == "all" else f"type = '{kind}'"
+        rows = cls.query(f"""
+            SELECT type, name FROM sqlite_master
+            WHERE  {where_type}
+            AND    name NOT LIKE 'sqlite_%'
+            AND    name NOT LIKE '\\_%' ESCAPE '\\'
+            ORDER BY type, name
+        """)
+        return [list(r) for r in rows]
+
+    # BbDB.py method: field_names  NEW: unified field list for tables AND views
+    @classmethod
+    def field_names(cls, obj):
+        conn  = sqlite3.connect(cls.DB_PATH)
+        cur   = conn.execute(f"SELECT * FROM {obj} LIMIT 0")
+        names = [d[0] for d in cur.description]
+        conn.close()
+        return names
+

@@ -328,46 +328,9 @@ class MgrInput:
     # ══════════════════════════════════════════════════════════════
 
     @classmethod
-    def find_click_targetOLD(cls, widget, pos):
-        """Deepest visible widget under pos that wants a click."""
-        pos = cls.translate_pos_into(widget, pos)
-        for child in widget.interactive_children:
-            result = cls.find_click_target(child, pos)
-            if result is not None:
-                return result
-        if widget.rect and widget.rect.collidepoint(pos):
-            if (widget.on_click
-                    or widget.focusable
-                    or widget.on_double_click
-                    or hasattr(widget, 'toggle_selected')):
-                return widget
-        return None
-
-    @classmethod
-    def find_scroll_vOLD(cls, widget, pos):
-        """Deepest scroll_v widget under pos."""
-        for child in widget.interactive_children:
-            result = cls.find_scroll_v(child, pos)
-            if result is not None:
-                return result
-        if widget.scroll_active and widget.rect and widget.rect.collidepoint(pos):
-            return widget
-        return None
-
-    @classmethod
-    def find_scrollbar_hitOLD(cls, widget, pos):
-        """Widget whose scrollbar handle was clicked."""
-        for child in widget.interactive_children:
-            result = cls.find_scrollbar_hit(child, pos)
-            if result is not None:
-                return result
-        if widget.private_handle_rect and widget.private_handle_rect.collidepoint(pos):
-            return widget
-        return None
-
-    @classmethod
     def find_click_target(cls, widget, mouse_coord):
         """Deepest visible widget under mouse_coord that wants a click."""
+        if cls.scroll_clips_out(widget, mouse_coord): return None  #Prevent scroller from block with it's clipped area
         child_coord = widget.translate_mouse_coord_for_horizontal_scroll(mouse_coord)
         for child in widget.interactive_children:
             result = cls.find_click_target(child, child_coord)
@@ -384,6 +347,7 @@ class MgrInput:
     @classmethod
     def find_scroll_v(cls, widget, mouse_coord):
         """Deepest scroll_v widget under mouse_coord."""
+        if cls.scroll_clips_out(widget, mouse_coord): return None  #Prevent scroller from block with it's clipped area
         child_coord = widget.translate_mouse_coord_for_horizontal_scroll(mouse_coord)
         for child in widget.interactive_children:
             result = cls.find_scroll_v(child, child_coord)
@@ -396,6 +360,7 @@ class MgrInput:
     @classmethod
     def find_scrollbar_hit(cls, widget, mouse_coord):
         """Widget whose scrollbar handle was clicked."""
+        if cls.scroll_clips_out(widget, mouse_coord): return None #Prevent scroller from block with it's clipped area
         child_coord = widget.translate_mouse_coord_for_horizontal_scroll(mouse_coord)
         for child in widget.interactive_children:
             result = cls.find_scrollbar_hit(child, child_coord)
@@ -408,6 +373,7 @@ class MgrInput:
     @classmethod
     def find_press_target(cls, widget, mouse_coord):
         """Walk tree depth-first; return the deepest widget whose on_press(mouse_coord) returns True."""
+        if cls.scroll_clips_out(widget, mouse_coord): return None  # Prevent scroller from block with it's clipped area
         child_coord = widget.translate_mouse_coord_for_horizontal_scroll(mouse_coord)
         for child in widget.interactive_children:
             result = cls.find_press_target(child, child_coord)
@@ -416,3 +382,17 @@ class MgrInput:
         if hasattr(widget, 'on_press') and widget.on_press(mouse_coord):
             return widget
         return None
+
+    # Below added 6/9
+    @classmethod
+    def focus(cls, widget):
+        if widget is None or not widget.focusable: return
+        cls.clear_focus()
+        cls.focused_widget = widget
+        widget.is_focused  = True
+
+    @classmethod
+    def scroll_clips_out(cls, widget, coord):
+        if widget.rect is None:                            return False
+        if not (widget.scroll_active or widget.scroll_h):  return False
+        return not widget.rect.collidepoint(coord)
