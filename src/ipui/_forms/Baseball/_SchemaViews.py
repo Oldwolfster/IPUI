@@ -90,6 +90,7 @@ class _SchemaViews:
                         FROM etl_pa
                         GROUP BY GD, batter, p_throws
         """
+
     @classmethod
     def view_pull_feet_pitcher(cls):
         return """
@@ -249,10 +250,10 @@ class _SchemaViews:
     def view_update_feet_batter(cls):
         return """
             SELECT GD, TS, batter, p_throws
-                                                                   ,hits * 1.0  / NULLIF(ab,         0)   AS ba
-                                                                   ,k    * 1.0  / NULLIF(pa,         0)   AS b_k_pct
-                                                                   ,woba_value  / NULLIF(woba_denom,  0)  AS b_woba
-                                                            FROM feet_batter
+                ,hits * 1.0  / NULLIF(ab,         0)   AS ba
+                ,k    * 1.0  / NULLIF(pa,         0)   AS b_k_pct
+                ,woba_value  / NULLIF(woba_denom,  0)  AS b_woba
+            FROM feet_batter
         """
     @classmethod
     def view_update_feet_pitcher(cls):

@@ -161,16 +161,6 @@ class _SchemaTbl:
         ('raw_teams',    '   division                                   TEXT'   ),
 
 
-        # ═══ raw_test9 ═══
-        ('raw_test9', 'PK batter                                  INTEGER'),
-        ('raw_test9', 'PK game_pk                                 INTEGER'),
-        ('raw_test9', '   hits                                    INTEGER'),
-        ('raw_test9', '   b_ba                                    REAL'),
-        ('raw_test9', '   p_ba_against                            REAL'),
-        ('raw_test9', '   p_throws                                TEXT'),
-        ('raw_test9', '   b_stand                                 TEXT'),
-        ('raw_test9', '   test                                    TEXT'),
-
 
         # ═══ etl_pa ═══ One row per plate appearance. Cleaned event grain.
         ('etl_pa',        'PK batter                                     INTEGER'),

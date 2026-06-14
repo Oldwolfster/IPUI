@@ -50,8 +50,11 @@ class CodeBox(_BaseWidget):
             if '\n' in self.data:                                # NEW
                 lines = self.data.splitlines()                   # NEW
             else:
-                with open(self.data, 'r', encoding='utf-8') as f:
-                    lines = f.read().splitlines()
+                try:
+                    with open(self.data, 'r', encoding='utf-8') as f:
+                        lines = f.read().splitlines()
+                except Exception as e:                                  # NEW  — "as e" names it
+                    lines = [f"{self.data} {e}"]
         else:
             lines = inspect.getsource(self.data).splitlines()
 

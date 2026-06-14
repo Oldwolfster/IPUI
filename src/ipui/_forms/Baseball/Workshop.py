@@ -118,6 +118,7 @@ Claude has been assigned remedial API-awareness training.
         #CodeBox(parent, data=text)
         CodeScroller(parent, data=text)
 
+
     def fetch_source_text(self):
         tbl = self.current_table
         if not tbl: return "-- No table selected\n"
@@ -128,7 +129,8 @@ Claude has been assigned remedial API-awareness training.
 
     def fetch_raw_source(self, tbl):
         pipe   = self.form.get_tab("Pipe")                                   # raw pull methods live on Pipe
-        method = getattr(pipe, f"pull_{tbl}", None) if pipe else None
+        prefix = "sync_" if tbl.startswith("raw") else "pull_"
+        method = getattr(pipe, f"{prefix}{tbl}", None) if pipe else None
         if not method: return f"-- No pull_{tbl}() method found on Pipe"
         try:               return inspect.getsource(method)
         except Exception as e: return f"-- Could not read source: {e}"

@@ -10,30 +10,30 @@ class MixinRawPull:
     # RAW PITCHES — pybaseball.statcast, one day at a time
     # ══════════════════════════════════════════════════════════════
 
-    def sync_raw_pitches(self, start_gd, end_gd):
-        BbDB.log("raw_pitches", f"pull starting: GD {start_gd} → {end_gd}")
+    def sync_raw_pitches(self, gd):
+        BbDB.log("raw_pitches", f"pull starting: GD= {gd}")
         t_overall  = _time.time()
         total_rows = 0
         known_cols = self.known_raw_pitches_cols()
 
-        for gd_int in MgrDT.gd_range(start_gd, end_gd):
-            day_str = MgrDT.gd_to_iso(gd_int)
-            t_day   = _time.time()
-            try:
-                df = pybaseball.statcast(start_dt=day_str, end_dt=day_str, verbose=False)
-            except Exception as e:
-                BbDB.log("raw_pitches", f"{day_str} statcast call failed: {e}")
-                continue
+        #for gd_int in MgrDT.gd_range(start_gd, end_gd):
+        day_str = MgrDT.gd_to_iso(gd)
+        t_day   = _time.time()
+        try:
+            df = pybaseball.statcast(start_dt=day_str, end_dt=day_str, verbose=False)
+        except Exception as e:
+            BbDB.log("raw_pitches", f"{day_str} statcast call failed: {e}")
 
-            if df is None or len(df) == 0:
-                BbDB.log("raw_pitches", f"{day_str} returned 0 rows (off day?)")
-                continue
 
-            df = self.conform_pitches_df(df, gd_int, known_cols)
-            n  = self.replace_day_pitches(gd_int, df)
-            ms = int((_time.time() - t_day) * 1000)
-            BbDB.log("raw_pitches", f"{day_str} inserted {n} rows ({ms}ms)")
-            total_rows += n
+        if df is None or len(df) == 0:
+            BbDB.log("raw_pitches", f"{day_str} returned 0 rows (off day?)")
+            return
+
+        df = self.conform_pitches_df(df, gd, known_cols)
+        n  = self.replace_day_pitches(gd, df)
+        ms = int((_time.time() - t_day) * 1000)
+        BbDB.log("raw_pitches", f"{day_str} inserted {n} rows ({ms}ms)")
+        total_rows += n
 
         ms_total = int((_time.time() - t_overall) * 1000)
         BbDB.log("raw_pitches", f"pull complete: {total_rows} rows ({ms_total}ms)")
@@ -70,7 +70,7 @@ class MixinRawPull:
     # RAW TEAMS — statsapi, snapshot with today's GD
     # ══════════════════════════════════════════════════════════════
 
-    def sync_raw_teams(self, start_gd, end_gd):
+    def sync_raw_teams(self, start_gd):
         import statsapi
         BbDB.log("raw_teams", "pulling teams")
         gd    = MgrDT.today_gd()
@@ -103,7 +103,7 @@ class MixinRawPull:
     # RAW PLAYERS — statsapi, IDs from raw_pitches (not etl_pa!)
     # ══════════════════════════════════════════════════════════════
 
-    def sync_raw_players(self, start_gd, end_gd):
+    def sync_raw_players(self, start_gd):
         import statsapi
         BbDB.log("raw_players", "pulling players")
         gd  = MgrDT.today_gd()

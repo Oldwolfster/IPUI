@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>It's How You Say It — A Transcreation QC Desk for Mendoza Group</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:        #1e2945;   /* Mendoza navy wordmark */
+    --paper:      #f4f6fa;   /* cool off-white */
+    --paper-deep: #e7ebf3;
+    --rule:       #aab3c9;
+    --azure:      #2f6fd6;   /* the M gradient, deep */
+    --azure-lite: #4da2e2;   /* the M gradient, light */
+    --azure-dim:  #2659ab;
+    --quiet:      #5a6480;
+    --indigo:     #5e6eb4;   /* periwinkle secondary */
+    --shadow:     rgba(30, 41, 69, 0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', 'Georgia', serif;
+    font-size: 19px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-image:
+      radial-gradient(at 15% 8%, rgba(77, 162, 226, 0.06) 0%, transparent 50%),
+      radial-gradient(at 85% 92%, rgba(94, 110, 180, 0.05) 0%, transparent 50%);
+    min-height: 100vh;
+    padding: 60px 24px 120px;
+  }
+
+  .paper { max-width: 720px; margin: 0 auto; background: var(--paper); position: relative; }
+
+  /* HEADER */
+  .header { text-align: center; padding: 40px 0 80px; position: relative; }
+
+  .header::before {
+    content: ''; position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%); width: 60px; height: 1px; background: var(--rule);
+  }
+
+  .header::after {
+    content: '◆ ◆ ◆'; position: absolute; bottom: 24px; left: 50%;
+    transform: translateX(-50%); color: var(--rule); font-size: 10px; letter-spacing: 8px;
+  }
+
+  .header-eyebrow {
+    font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600;
+    letter-spacing: 4px; text-transform: uppercase; color: var(--quiet);
+    margin-bottom: 32px; margin-top: 16px;
+  }
+
+  h1.title {
+    font-family: 'Cormorant Garamond', serif; font-size: 60px; font-weight: 500;
+    letter-spacing: -1.5px; line-height: 1.02; margin-bottom: 16px; color: var(--ink);
+  }
+
+  h1.title em {
+    font-style: italic; font-weight: 500;
+    background: linear-gradient(135deg, var(--azure-lite) 0%, var(--azure) 70%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 22px;
+    font-weight: 400; color: var(--quiet); margin-bottom: 32px; max-width: 500px;
+    margin-left: auto; margin-right: auto; line-height: 1.4;
+  }
+
+  .attribution {
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--indigo);
+  }
+
+  /* INTRO BOX */
+  .how-to {
+    background: var(--paper-deep); border-left: 3px solid var(--azure);
+    padding: 28px 32px; margin: 48px 0; position: relative;
+  }
+
+  .how-to-label {
+    font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600;
+    letter-spacing: 3px; text-transform: uppercase; color: var(--azure-dim); margin-bottom: 12px;
+  }
+
+  .how-to p { margin-bottom: 12px; font-size: 17px; }
+  .how-to p:last-child { margin-bottom: 0; }
+
+  /* CHAPTERS */
+  .chapter { margin: 80px 0 48px; }
+
+  .chapter-num {
+    font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600;
+    letter-spacing: 4px; color: var(--azure); margin-bottom: 8px;
+  }
+
+  h2.chapter-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 500;
+    letter-spacing: -0.5px; line-height: 1.1; color: var(--ink); margin-bottom: 32px;
+    padding-bottom: 24px; border-bottom: 1px solid var(--rule);
+  }
+
+  h2.chapter-title em { font-style: italic; color: var(--azure); }
+
+  p { margin-bottom: 22px; font-size: 19px; line-height: 1.7; }
+
+  .chapter > p:first-of-type::first-letter {
+    font-family: 'Cormorant Garamond', serif; font-size: 62px; float: left;
+    line-height: 0.85; margin: 6px 8px 0 0; color: var(--azure); font-weight: 500;
+  }
+
+  strong, b { font-weight: 600; color: var(--ink); }
+  em, i { font-style: italic; }
+
+  /* COMMITMENTS BLOCK */
+  .commitments {
+    background: var(--ink); color: var(--paper); padding: 40px 40px 36px;
+    margin: 32px -20px; position: relative; font-family: 'Cormorant Garamond', serif;
+  }
+
+  .commitments::before {
+    content: 'WHAT IT PROMISES'; position: absolute; top: -10px; left: 30px;
+    background: var(--azure); color: #fff; padding: 4px 12px;
+    font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 3px;
+  }
+
+  .commitments .law { font-size: 20px; line-height: 1.5; margin-bottom: 16px; color: var(--paper); }
+  .commitments .law:last-child { margin-bottom: 0; }
+  .commitments .law strong { color: #fff; font-weight: 600; }
+  .commitments .law em { color: var(--azure-lite); font-style: italic; font-weight: 500; }
+
+  /* OBSERVATION CARD */
+  .obs {
+    background: var(--paper-deep); border: 1px solid var(--rule); border-left: 4px solid var(--azure);
+    padding: 22px 26px; margin: 26px 0; font-family: 'Inter', sans-serif; font-size: 15px;
+  }
+  .obs .obs-top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--rule);
+  }
+  .obs .obs-type {
+    font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--azure-dim);
+  }
+  .obs .obs-sev {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600;
+    color: #fff; background: var(--azure); padding: 3px 10px; border-radius: 2px;
+  }
+  .obs .obs-row { margin-bottom: 8px; line-height: 1.5; color: var(--ink); }
+  .obs .obs-row:last-child { margin-bottom: 0; }
+  .obs .obs-k {
+    display: inline-block; min-width: 88px; font-size: 10px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--quiet); vertical-align: top;
+  }
+  .obs .es { font-style: italic; color: var(--azure-dim); }
+
+  /* HOUSE RULE EXAMPLE */
+  .rulecard {
+    background: #fff; border: 1px solid var(--rule); border-radius: 4px;
+    padding: 22px 26px; margin: 24px 0; font-family: 'Inter', sans-serif; font-size: 15px;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+  .rulecard .line { margin-bottom: 8px; line-height: 1.5; }
+  .rulecard .line:last-child { margin-bottom: 0; }
+  .rulecard .avoid { color: #a23b2e; font-weight: 600; }
+  .rulecard .prefer { color: var(--azure-dim); font-weight: 600; }
+  .rulecard .tag {
+    font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--quiet); display: inline-block; min-width: 64px;
+  }
+
+  /* SEVERITY LADDER */
+  .ladder { margin: 28px 0; }
+  .ladder .band {
+    display: flex; align-items: baseline; gap: 16px; padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .ladder .band:last-child { border-bottom: none; }
+  .ladder .chip {
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 1px;
+    text-transform: uppercase; color: #fff; padding: 4px 12px; border-radius: 2px;
+    flex-shrink: 0; min-width: 116px; text-align: center;
+  }
+  .ladder .c-polish  { background: var(--indigo); }
+  .ladder .c-improve { background: var(--azure-lite); }
+  .ladder .c-fix     { background: var(--azure); }
+  .ladder .c-stop    { background: var(--ink); }
+  .ladder .band .desc { font-size: 18px; line-height: 1.45; }
+
+  blockquote {
+    border-left: 3px solid var(--azure); padding: 8px 0 8px 28px; margin: 28px 0;
+    font-style: italic; font-size: 21px; color: var(--ink); line-height: 1.5;
+  }
+
+  ul, ol { margin: 16px 0 24px 28px; }
+  ul li, ol li { margin-bottom: 10px; line-height: 1.65; }
+  ul li::marker { color: var(--azure); }
+
+  /* PULL QUOTES */
+  .pull-quote {
+    font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 26px;
+    line-height: 1.35; color: var(--azure-dim); text-align: center; margin: 40px 50px; position: relative;
+  }
+  .pull-quote::before, .pull-quote::after {
+    content: ''; display: block; width: 40px; height: 1px; background: var(--rule); margin: 16px auto;
+  }
+
+  /* POSTSCRIPT */
+  .postscript { margin-top: 100px; padding: 40px 0 0; border-top: 1px solid var(--rule); position: relative; }
+  .postscript::before {
+    content: '✦'; position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    background: var(--paper); padding: 0 16px; color: var(--azure); font-size: 14px;
+  }
+  .postscript-label {
+    font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600;
+    letter-spacing: 4px; color: var(--azure); margin-bottom: 16px;
+  }
+  .signature { margin-top: 40px; text-align: right; font-style: italic; color: var(--quiet); font-size: 18px; }
+  .signature .name { display: block; font-style: normal; color: var(--ink); font-weight: 500; margin-top: 4px; }
+  .signature .date {
+    display: block; font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 2px;
+    color: var(--indigo); text-transform: uppercase; margin-top: 6px;
+  }
+
+  .editnote {
+    font-family: 'Inter', sans-serif; font-size: 12px; color: var(--quiet);
+    background: var(--paper-deep); border: 1px dashed var(--rule); border-radius: 4px;
+    padding: 10px 14px; margin-top: 24px; line-height: 1.5;
+  }
+
+  @media (max-width: 640px) {
+    body { padding: 30px 16px 80px; font-size: 17px; }
+    h1.title { font-size: 42px; }
+    h2.chapter-title { font-size: 28px; }
+    .commitments { margin: 32px -10px; padding: 28px 24px; }
+    .commitments .law { font-size: 17px; }
+    .pull-quote { margin: 32px 0; font-size: 22px; }
+    .ladder .band { flex-direction: column; gap: 6px; }
+    p { font-size: 17px; }
+  }
+
+  @media print {
+    body { background: white; padding: 0; }
+    .paper { max-width: 100%; }
+    .chapter { page-break-inside: avoid; }
+    .editnote { display: none; }
+  }
+</style>
+</head>
+<body>
+<article class="paper">
+
+<header class="header">
+  <div class="header-eyebrow">For Mia Mendoza · Mendoza Group · June 2026</div>
+  <h1 class="title">It's <em>How</em> You Say It</h1>
+  <p class="subtitle">A quality-control desk for transcreation — built to protect the craft, not replace the people who do it.</p>
+  <div class="attribution">Drafted by Wolf</div>
+</header>
+
+<section class="how-to">
+  <div class="how-to-label">What this is, in one breath</div>
+  <p>Not a translation button. Not a robot that replaces your transcreators. It's a <strong>quality-control desk</strong>: it takes a first pass, audits that pass against the source the way a careful reviewer would, flags only what actually deserves a human's attention, and — most important — remembers every correction your team makes so the house's judgment compounds instead of living in one or two people's heads.</p>
+  <p>You already say it better than anyone: <em>it's not what you say, it's how you say it.</em> This tool is built around that sentence, not against it.</p>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">I</div>
+  <h2 class="chapter-title">The problem worth <em>solving</em></h2>
+
+  <p>Mendoza's edge isn't translation — it's transcreation. The difference is the whole business: a faithful rendering that lands flat in the target culture is, in your own words, just a collection of words and symbols. The judgment that turns words into resonance lives in experienced people: which phrasing reads warm versus textbook, which term sounds cheap, what plays in Mexican Spanish versus Caribbean versus U.S. Hispanic, where a brand's voice would bend or break.</p>
+
+  <p>That judgment is the asset. It's also the risk. It's mostly tacit, it's concentrated in a few reviewers, and the review work itself is repetitive enough that good people don't want to do it forever. If a key reviewer steps back, a real piece of the agency's standard can walk out the door with them — quietly, with no record of <em>why</em> the calls were made the way they were.</p>
+
+  <p>A tool can't replace that judgment. But it can do the grunt work underneath it, and it can capture the judgment as it's exercised — so the standard becomes a thing the agency owns, not a thing it rents from whoever happens to still be reviewing.</p>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">II</div>
+  <h2 class="chapter-title">The one idea that makes it <em>useful</em></h2>
+
+  <p>Most review tools fail the same way: they either rubber-stamp everything ("looks good!") or they bury you in nitpicks until you stop reading them. Both are useless, for the same underlying reason — they don't separate two completely different things.</p>
+
+  <p>A piece of copy can almost always be polished. That does not mean the current version is <em>wrong</em>. The single most important thing this tool does is hold those two ideas apart and never confuse them:</p>
+
+  <p class="pull-quote">"Acceptable, but could be sharper" is a different verdict from "this is wrong and needs fixing." The tool never lets the first masquerade as the second.</p>
+
+  <p>That distinction is what keeps it honest. Optional polish gets labeled as optional and stays out of your reviewers' way. Real problems — meaning changed, tone reversed, a number wrong — get surfaced loudly. Your people spend their attention only where judgment is actually required.</p>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">III</div>
+  <h2 class="chapter-title">What it <em>promises</em></h2>
+
+  <p>Five commitments. They aren't slogans — each one is a rule the tool has to obey on every single page, the way your team has standards it won't break.</p>
+
+  <div class="commitments">
+    <div class="law"><strong>It serves transcreation, not just translation.</strong> <em>Accuracy is the floor, not the goal.</em></div>
+    <div class="law"><strong>It never rubber-stamps —</strong> and never <em>buries you in trivia.</em></div>
+    <div class="law"><strong>Numbers, names, dates, and dollar figures</strong> are checked <em>exactly, every time.</em></div>
+    <div class="law"><strong>It defends the work:</strong> a second, independent read <em>audits the first.</em></div>
+    <div class="law"><strong>Every human correction becomes house style.</strong> <em>The judgment compounds.</em></div>
+  </div>
+
+  <p>If a feature would violate one of these, it doesn't ship. That's what keeps the tool from drifting into a generic "AI translator" that nobody on your team would trust with a client's voice.</p>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">IV</div>
+  <h2 class="chapter-title">How a page <em>moves through it</em></h2>
+
+  <p>Plain version of the workflow. Source copy comes in. The tool produces a first-pass transcreation using the client's brief — target language, region, tone, audience, the brand glossary, and the do-not-translate list. Then a <strong>separate, independent pass</strong> compares that draft against the source and writes up specific observations. It's deliberately not allowed to grade its own homework, and it's not allowed to shrug and say "looks fine" — it has to actually scrutinize and produce findings.</p>
+
+  <p>Each finding comes back as a small card a reviewer can read in seconds:</p>
+
+  <div class="obs">
+    <div class="obs-top">
+      <span class="obs-type">Required fix · Tone</span>
+      <span class="obs-sev">SEVERITY 7</span>
+    </div>
+    <div class="obs-row"><span class="obs-k">Source</span> "An affordable plan for every family."</div>
+    <div class="obs-row"><span class="obs-k">Draft</span> <span class="es">"Un plan barato para cada familia."</span></div>
+    <div class="obs-row"><span class="obs-k">Issue</span> <em>barato</em> reads as cheap / low-quality in marketing copy — wrong emotional register for a value message.</div>
+    <div class="obs-row"><span class="obs-k">Suggested</span> <span class="es">"Un plan accesible para cada familia."</span></div>
+  </div>
+
+  <p>The reviewer accepts, edits, or overrides. Their final call — especially when they override — is the gold the tool is really after. That correction doesn't just fix this page; it feeds the knowledge base and quietly raises the floor on every page after it.</p>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">V</div>
+  <h2 class="chapter-title">A severity scale that means <em>something</em></h2>
+
+  <p>Numbers from one to ten look precise and aren't — nobody can reliably tell a "5" from a "6." So the scale collapses to four bands, and each band maps to an actual decision. The number behind it is only there to sort within a band.</p>
+
+  <div class="ladder">
+    <div class="band"><span class="chip c-polish">Polish</span><span class="desc">Pure preference. Logged, never shown unless asked. The draft was fine.</span></div>
+    <div class="band"><span class="chip c-improve">Improve</span><span class="desc">A genuinely better option exists. Offered, not required. The reviewer decides.</span></div>
+    <div class="band"><span class="chip c-fix">Fix</span><span class="desc">Wrong, unclear, off-tone, or off-brand. Goes back for revision before it ships.</span></div>
+    <div class="band"><span class="chip c-stop">Escalate</span><span class="desc">Reversed meaning, a wrong figure, an omission, anything legally or culturally risky. A human looks, always.</span></div>
+  </div>
+
+  <p>The reviewer's queue only fills with the bottom two bands. The top two stay available but out of the way — there if someone wants the extra polish, invisible if they don't. That's the difference between a tool people use and a tool people mute.</p>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">VI</div>
+  <h2 class="chapter-title">What it checks <em>exactly</em> — no opinion involved</h2>
+
+  <p>Some errors aren't a matter of taste, and the tool shouldn't treat them like they are. Numbers, dates, names, phone numbers, addresses, and dollar amounts either match the source or they don't. These are the errors with legal and financial teeth — a "1,500" that became "15,000," a benefit date that shifted, a company name misspelled in a headline.</p>
+
+  <p>For those, the tool doesn't ask anyone's judgment. It compares them directly, character by character, and flags any mismatch automatically — every time, on every page, regardless of how clean the rest of the copy looks. The same goes for anything dropped from or added to the source. Taste is for humans; arithmetic is for the machine.</p>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">VII</div>
+  <h2 class="chapter-title">The knowledge base — <em>the actual asset</em></h2>
+
+  <p>Everything above is useful. This is the part that's valuable. The first-pass-and-review loop is a convenience; the knowledge base is the agency's transcreation judgment, written down, owned, and growing. It's the answer to "what happens if our best reviewer retires" — the answer becomes "nothing, because their standards are in the system."</p>
+
+  <p>Every correction a reviewer makes can become a reusable house rule, in a form anyone can read:</p>
+
+  <div class="rulecard">
+    <div class="line"><span class="tag">Avoid</span> <span class="avoid">barato</span></div>
+    <div class="line"><span class="tag">Prefer</span> <span class="prefer">económico</span> · <span class="prefer">accesible</span></div>
+    <div class="line"><span class="tag">Why</span> <em>barato</em> can sound cheap or low-quality in marketing copy.</div>
+    <div class="line"><span class="tag">Approved</span> M. Mendoza · for value &amp; affordability messaging</div>
+  </div>
+
+  <p>Over time the base holds the things that make Mendoza's work Mendoza's: preferred and forbidden terms, the do-not-translate list (client names, product names, slogans) versus what should be transcreated, regional voice notes (warm and clear for U.S. Hispanic marketing, not textbook-formal), per-client brand-voice rules with real examples and counterexamples, and a record of every approved final correction. New copy automatically arrives pre-loaded with the rules that apply to it, so the same call never has to be made twice.</p>
+
+  <p class="pull-quote">The first version of this tool is a helpful assistant. The hundredth version is the agency's institutional memory — and it got there one human correction at a time.</p>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">VIII</div>
+  <h2 class="chapter-title">Where we'd <em>start small</em></h2>
+
+  <p>The mistake here would be to build all of that at once. The right first version is deliberately tiny, and proves the loop before anything fancy gets added. It would do exactly this and no more:</p>
+
+  <ul>
+    <li>Paste in source copy and pick a direction (English ↔ Spanish), a region, a tone, and the client.</li>
+    <li>Generate a first-pass transcreation.</li>
+    <li>Run the independent review and surface the observations, each with its band and suggested fix.</li>
+    <li>Flag the exact-match problems — numbers, names, dates — automatically.</li>
+    <li>Let a reviewer accept or edit the final version.</li>
+    <li>Save that final correction into the knowledge base.</li>
+  </ul>
+
+  <p>That's the whole engine. File upload, page-by-page processing, side-by-side diffs, client dashboards, per-campaign style guides — all of that is real and all of it can come later. None of it matters until the small loop earns its keep. Build the engine first; decorate it once it's proven.</p>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">IX</div>
+  <h2 class="chapter-title">What it <em>is</em>, finally</h2>
+
+  <p>It is not a ChatGPT wrapper, though it uses a model to draft. It is not an auto-translator, though it translates. It is not a replacement for your transcreators, though it does work they'd recognize. Calling it any of those misses the point.</p>
+
+  <p class="pull-quote">It's a quality-control desk that does the repetitive part, refuses to cry wolf, checks the facts exactly, and turns your team's judgment into something the agency permanently owns.</p>
+
+  <p>The value was never the translation button — that part is a commodity now, and Mendoza was never in the commodity business. The value is the workflow around it and the memory underneath it: consistent standards, a review that's honest about what actually needs a human, and a knowledge base that makes the agency's transcreation judgment more durable every month instead of more fragile. That's a tool worth building, and it's built squarely around the thing you already do better than anyone.</p>
+</section>
+
+<section class="postscript">
+  <div class="postscript-label">A note</div>
+
+  <p>Mia — you did me a real favor, and I wanted to put the same care into something pointed back at you. This is a first sketch of the idea we talked about, written around how Mendoza actually works rather than some generic translation app. None of it is locked; the parts that don't fit how you really review are the parts I most want you to tell me about. If the bones are right, the small first version is genuinely not much to stand up.</p>
+
+  <div class="editnote">Wolf — this closing note is a placeholder in your voice. Swap in whatever you'd actually say to Mia; everything above is hers to react to. The whole file prints clean (this dashed box won't print).</div>
+
+  <div class="signature">
+    <em>Built with care,</em>
+    <span class="name">Wolf</span>
+    <span class="date">June 2026</span>
+  </div>
+</section>
+
+</article>
+</body>
+</html>

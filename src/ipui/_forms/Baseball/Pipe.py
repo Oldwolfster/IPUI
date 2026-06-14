@@ -4,10 +4,12 @@ from ipui._forms.Baseball.PipeMixinXGBoost import MixinXGBoost
 from ipui._forms.Baseball.MgrDT import MgrDT
 from ipui import *
 from ipui._forms.Baseball.PipeMixinUpdate import MixinUpdate
+from ipui.utils.EZ import EZ
 
 
 class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
-    TIME_SLICES = [7,15,28,30,200,9999]
+    TIME_SLICES = [27,15,28,30,200,9999]
+    TIME_SLICES = [2, 3, 8, 200, 9999]
     LAYERS = ["Raw", "ETL", "Feet", "Forest", "Predict"]
     PITCH_BUCKETS = {
         "FF": "fastball", "SI": "fastball", "FC": "fastball", "FA": "fastball",
@@ -15,7 +17,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
         "CH": "offspeed", "FS": "offspeed", "SP": "offspeed", "FO": "offspeed",
     }
     start_date = "2026-03-27"
-    end_date   = "2026-03-28"
+    end_date   = "2026-04-02"
 
     def ip_setup_early(self,ip):
         self.task_queue    = []
@@ -156,7 +158,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
         Spacer(row)
         body_range = Body(row, f"Cols: {summary.cols}")
         rng        = f"{MgrDT.gd_to_iso(summary.min_gd)}  to  {MgrDT.gd_to_iso(summary.max_gd)}" if summary.min_gd else "—  to  —"
-        Body(card, f"Range: {rng} ")
+        Body(card, f"{rng} ")
         return body_rows, body_range
 
     def build_field_list(self, card, tbl):
@@ -164,7 +166,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
 
     def build_card_buttons(self, card, tbl, refs):
         body_rows, body_range = refs if refs else (None, None)
-        btns = Row(Plate(Plate(card,pad=2),pad=6))
+        btns = Row(Plate(Plate(Plate(card,pad=2),pad=2),pad=4))
         Button(btns, "Run"      ,flex_width=1, on_click=lambda t=tbl, br=body_rows, bg=body_range: self.refresh_table(t, br, bg))
         Button(btns, "WB", flex_width=1, on_click=lambda t=tbl: self.view_in_workbench(t))  # NEW
         Button(btns, "SQL"      , flex_width=1, on_click=lambda t=tbl: self.view_in_sql(t))  # NEW
@@ -223,10 +225,11 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
             end_gd = self.parse_textbox_date_to_gd("txt_end_date")
         except (ValueError, KeyError) as e:
             BbDB.log("dates", f"bad input: {e}")
-            return None
+            EZ.err(f"Bad dates: {e}")
         if start_gd > end_gd:
+            msg=f"start {start_gd} > end {end_gd}; aborting"
             BbDB.log("dates", f"start {start_gd} > end {end_gd}; aborting")
-            return None
+            EZ.err(msg)
         Pipe.start_date = self.form.widgets["txt_start_date"].text
         Pipe.end_date = self.form.widgets["txt_end_date"].text
         return start_gd, end_gd

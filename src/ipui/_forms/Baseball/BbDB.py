@@ -34,6 +34,12 @@ class BbDB:
         return rows
 
     @classmethod
+    def has_rows_on_or_past(cls, tbl, gd=None):
+        if gd is None: sql, params = f"SELECT 1 FROM {tbl} LIMIT 1",               ()
+        else:          sql, params = f"SELECT 1 FROM {tbl} WHERE GD >= ? LIMIT 1", (gd,)
+        return bool(cls.query(sql, params))
+
+    @classmethod
     def execute(cls, sql, params=()):
         conn = sqlite3.connect(cls.DB_PATH)
         cur  = conn.execute(sql, params)
@@ -204,7 +210,7 @@ class BbDB:
 
 
     @classmethod
-    def upsert_from_view(cls, tbl, start_gd, end_gd):
+    def upsert_from_view(cls, tbl, gd):
         """
         generic view→table upsert with column matching
         :param tbl:
@@ -230,13 +236,17 @@ class BbDB:
                     "DO UPDATE SET " + ", ".join(f"{c} = excluded.{c}" for c in set_cols)
         sql = (
             f"INSERT INTO {tbl} ({col_list}) "
-            f"SELECT {col_list} FROM {view} WHERE GD BETWEEN ? AND ? "
+            f"SELECT {col_list} FROM {view} WHERE GD = ?"
             f"ON CONFLICT({pk_list}) {conflict}"
         )
-        cls.execute(sql, (start_gd, end_gd))
-        cls.log(tbl, f"upserted from {view}")
+        cls.execute(sql, (gd,))
+        #cls.log(tbl, f"upserted from {view}")
 
-
+    @classmethod
+    def has_ts(cls,tbl):
+        """check for TS in primary key  - c[1] is name and c[5] is part of PK"""
+        cols = cls.query(f"PRAGMA table_info({tbl})")
+        return any(c[1] == "TS" and c[5] > 0 for c in cols)
 
     @classmethod
     def list_objects(cls, kind):
