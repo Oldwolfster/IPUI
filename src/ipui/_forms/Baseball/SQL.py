@@ -783,7 +783,7 @@ class SQL(_BaseTab):
         cols       = self.fetch_column_names(tbl)
         col_block  = ",\n    ".join(cols) if cols else "*"
         where      = self.build_gd_where(cols, start_gd, end_gd)
-        return f"SELECT\n    {col_block}\nFROM {tbl}{where}\nLIMIT 200"
+        return f"SELECT\n    {col_block}\nFROM {tbl}{where}" #\nLIMIT 200"
 
 
     # ════════════════════════════════════════════════════════════════════════════

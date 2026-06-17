@@ -15,22 +15,16 @@ class MgrSchema:
     # CREATE TABLE — dispatcher
     # ══════════════════════════════════════════════════════════════
     @staticmethod
-    def create_table(table_name, columns):
-        table_name    = MgrSchema.validate_name(table_name)
-        MgrSchema     . insert_table_schema(table_name, columns)
-        stub_sql      = MgrSchema.build_stub_select(table_name, columns)
-        MgrSchema     . save_view(f"pull_{table_name}", stub_sql)
-        MgrSchema     . drop_and_rebuild_table(table_name)
-
-        BbDB.log      ( table_name, "table created")
-
     @staticmethod
     def create_table(table_name, columns):
         table_name    = MgrSchema.validate_name(table_name)
-        MgrSchema     . replace_table_schema(table_name, columns)
-        stub_sql      = MgrSchema.build_stub_select(table_name, columns)
-        MgrSchema     . save_view(f"pull_{table_name}", stub_sql)
+        raw_cols      = MgrSchema.to_raw_cols(columns)
+        MgrSchema     . update_tbl_schema(table_name, columns)
+        BbDB          . rebuild_table(table_name, raw_cols)
+        BbDB          . update_summary(table_name)
+        MgrSchema     . build_stub_select(table_name, columns)
         BbDB.log      ( table_name, "table created")
+
     # ══════════════════════════════════════════════════════════════
     # SAVE VIEW — dispatcher
     # ══════════════════════════════════════════════════════════════
@@ -112,17 +106,26 @@ class MgrSchema:
     # TABLE SCHEMA — part 2
     # ══════════════════════════════════════════════════════════════
     @staticmethod
-    def replace_table_schema(table_name, columns):
-        """Replace a table's block in _SchemaTbl.py, rebuild DB, update summary."""
+    def update_tbl_schema(table_name, columns):
+        """Write this table's block to _SchemaTbl.py. Predict tables skip — they're ephemeral."""
+        if BbDB.layer_of(table_name) == "predict":
+            return
         MgrSchema     . backup_file(MgrSchema.TABLES_FILE)
         original      = MgrSchema.read_file(MgrSchema.TABLES_FILE)
         new_block     = MgrSchema.generate_table_block(table_name, columns)
         final         = MgrSchema.swap_table_block(original, table_name, new_block)
         MgrSchema     . validate_no_tables_lost(original, final, table_name)
         MgrSchema     . write_file(MgrSchema.TABLES_FILE, final)
-        BbDB          . rebuild_table(table_name)
-        BbDB          . update_summary(table_name)
-        BbDB          . log(table_name, "replaced in _SchemaTbl.py")
+
+
+    @staticmethod
+    def to_raw_cols(columns):
+        raw_cols = []
+        for col in columns:
+            pk = 'PK' if col['pk'] else '  '
+            raw_cols.append(f"{pk} {col['name']:<40s}{col['type']}")
+        return raw_cols
+
 
     @staticmethod
     def find_table_block_lines(file_text, table_name):
@@ -171,13 +174,37 @@ class MgrSchema:
 
     @staticmethod
     def build_stub_select(table_name, columns):
+        if BbDB.layer_of(table_name) == "raw": return
+        if BbDB.layer_of(table_name) == "predict":
+            MgrSchema.build_predict_view(table_name)
+            return
         parts = ["0 AS GD"]
         if BbDB.layer_of(table_name) == "feet":
             parts.append("0 AS TS")
         for col in columns:
             val   = "''" if col['type'] == 'TEXT' else "0.0" if col['type'] == 'REAL' else "0"
             parts.append(f"{val:<45s}AS {col['name']}")
-        return "SELECT\n    " + ",\n    ".join(parts)
+        final =  "SELECT\n    " + ",\n    ".join(parts)
+        MgrSchema.save_view(f"pull_{table_name}", final)
+
+
+    @staticmethod
+    def build_predict_view(table_name):
+        """Model view always aggregates to (GD, batter, game_pk).
+           Game-grain: SUM over one row = no-op.  PA-grain: SUM = expected hits."""
+        model_name = table_name.replace("predict_", "model_", 1)
+        select_sql = (
+            f"SELECT GD\n"
+            f"     , batter\n"
+            f"     , game_pk\n"
+            f"     , SUM(predicted) as predicted\n"
+            f"     , SUM(actual)    as actual\n"
+            f"FROM {table_name}\n"
+            f"GROUP BY GD, batter, game_pk"
+        )
+        MgrSchema.save_view(model_name, select_sql)
+        BbDB.log(table_name, f"predict view '{model_name}' created")
+
     # ══════════════════════════════════════════════════════════════
     # VIEW HELPERS
     # ══════════════════════════════════════════════════════════════

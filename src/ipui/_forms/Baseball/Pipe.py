@@ -17,12 +17,13 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
         "CH": "offspeed", "FS": "offspeed", "SP": "offspeed", "FO": "offspeed",
     }
     start_date = "2026-03-27"
-    end_date   = "2026-04-02"
+    end_date   = "2026-04-01"
 
     def ip_setup_early(self,ip):
         self.task_queue    = []
         self.private_stale = False
         self.card_mode     = "detail"           # detail | field  (toggled in the header)
+        self.update_btn_txt= "Run All"
 
     def ip_activated(self,ip):          # called by TabSystem when user switches here
         #print("Am i firing")
@@ -54,18 +55,41 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
         header   = Row(header)
         Title(header, "Data Pipeline", glow=True)
         Spacer(header)
-        self.btn_refresh_all  = Button(header, "Run all", color_bg=Style.COLOR_BUTTON_CTA,  on_click=self.update_all)
+        #self.btn_refresh_all  = Button(header, self.update_btn_txt, color_bg=Style.COLOR_BUTTON_CTA,  on_click=self.update_all)
+        Button(header, self.update_btn_txt, color_bg=Style.COLOR_BUTTON_CTA, on_click=self.run_all)
         TextBox(header, initial_value=Pipe.start_date, name="txt_start_date")
         Body(header, "to:")
         TextBox(header, initial_value=Pipe.end_date, name="txt_end_date")
         Spacer(header)
-        Button(header, "Train XGB"  , on_click=self.train_xgb)
+        #Button(header, "Train XGB"  , on_click=lambda: self.train_xgb("forest"))
+        Button(header, "Train XGB", on_click=self.train_xgb_clicked)
+        TextBox(header, initial_value="forest", name="txt_forest_table")
         Button(header, "Refresh"       , on_click=self.refresh_pane)
         Button(header, self.toggle_label(), on_click=self.toggle_card_mode)
         Button(header, "Run TS"     , on_click=lambda: self.roll_up_ts("feet_batter"))
         Button(header, "Phoenix"    , on_click=self.nuke_clicked, color_bg=Style.COLOR_BUTTON_DANGER)
 
     def refresh_pane(self): self.form.set_pane(0, self.all_in_one)
+
+
+
+    def train_xgb_clicked(self):
+        print("Training XGB")
+        table = self.form.widgets["txt_forest_table"].text.strip()
+        if table not in BbDB.tables_for_layer("forest"):
+            self.form.msgbox(
+                f"'{table}' is not a valid forest table.\n\n"
+                f"Available: {', '.join(BbDB.tables_for_layer('forest'))}",
+                MSG_BTNS_OK + MSG_ICON_WARNING,
+                "Invalid Forest Table",
+            )
+            return
+        self.train_xgb(table)
+        #self.refresh_pane()
+
+    def select_forest_table(self, tbl):
+        print(f"select_forest_table  tbl={tbl}")
+        self.form.widgets["txt_forest_table"].set_text ( tbl)
 
     def toggle_label(self):
         return "Fields" if self.card_mode == "detail" else "Details"
@@ -75,22 +99,6 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
         self.refresh_pane()
 
     # MixinXGBoost.py method: train_xgb  Update: BbDB + summary + refresh
-
-
-    def train_xgb(self):
-        BbDB.log(self.XGB_TABLE, "loading forest")
-        rows = self.load_forest()
-        if not rows:
-            BbDB.log(self.XGB_TABLE, "forest is empty — run 'Run All' first")
-            return
-        BbDB.log(self.XGB_TABLE, f"training on {len(rows)} rows")
-        model = self.fit_model(rows)
-        BbDB.log(self.XGB_TABLE, "writing predictions")
-        self.write_predictions(model, rows)
-        BbDB.log(self.XGB_TABLE, "model_xgb_v1 ready")
-        BbDB.update_summary(self.XGB_TABLE)
-        self.refresh_pane()
-
     def nuke_clicked(self):
         self.form.msgbox(
             "Nuke etl + feet + forest layers?\n\n"
@@ -136,6 +144,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
     def build_one_card(self, parent, tbl):
         summary = BbDB.get_summary(tbl)
         card    = Card(parent, pad=5)
+        if BbDB.layer_of(tbl) == "forest": card.on_click_me(lambda t=tbl: self.select_forest_table(t))
         self.build_card_header(card, tbl, summary)
         refs    = self.build_card_body(card, tbl, summary)
         self.build_card_buttons(card, tbl, refs)

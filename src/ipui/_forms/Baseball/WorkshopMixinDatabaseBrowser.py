@@ -76,3 +76,5 @@ class WorkshopMixinDatabaseBrowser:
         if editor is None: MgrClipboard.copy(field); return
         editor.insert_text(field)
         MgrInput.focus(editor)
+
+

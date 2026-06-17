@@ -189,6 +189,7 @@ class _SchemaTbl:
 
         # ═══ feet_batter ═══
         ('feet_batter', 'PK batter                                  INTEGER'),
+        ('feet_batter', 'PK game_pk                                    INTEGER'),
         ('feet_batter', 'PK p_throws                                TEXT'),
         ('feet_batter', '   pa                                      INTEGER'),
         ('feet_batter', '   ab                                      INTEGER'),
@@ -213,6 +214,7 @@ class _SchemaTbl:
 
         # ═══ feet_pitcher ═══ Mirror of feet_batter, pitcher perspective. SUMABLE ONLY.
         ('feet_pitcher', 'PK pitcher                                    INTEGER'),
+        ('feet_pitcher', 'PK game_pk                                    INTEGER'),
         ('feet_pitcher', 'PK stand                                      TEXT'),
         ('feet_pitcher', '   bf                                         INTEGER'),
         ('feet_pitcher', '   ab_against                                 INTEGER'),
@@ -234,20 +236,23 @@ class _SchemaTbl:
         ('feet_pitcher', '   p_woba_against                            REAL'),
 
         # ═══ forest ═══
-        ('forest', 'PK batter                                  INTEGER'),
-        ('forest', 'PK game_pk                                 INTEGER'),
-        ('forest', '   hits                                    INTEGER'),
-        ('forest', '   b_ba                                    REAL'),
-        ('forest', '   p_ba_against                            REAL'),
-        ('forest', '   p_throws                                TEXT'),
-        ('forest', '   b_stand                                 TEXT'),
-        ('forest', '   b_k_pct                                 REAL'),
-        ('forest', '   b_woba                                  REAL'),
-        ('forest', '   p_k_pct                                 REAL'),
-        ('forest', '   p_woba_against                          REAL'),
+        #('forest', 'PK batter                                  INTEGER'),
+        #('forest', 'PK game_pk                                 INTEGER'),
+        #('forest', '   hits                                    INTEGER'),
+        #('forest', '   b_ba                                    REAL'),
+        #('forest', '   p_ba_against                            REAL'),
+        #('forest', '   p_throws                                TEXT'),
+        #('forest', '   b_stand                                 TEXT'),
+        #('forest', '   b_k_pct                                 REAL'),
+        #('forest', '   b_woba                                  REAL'),
+        #('forest', '   p_k_pct                                 REAL'),
+        #('forest', '   p_woba_against                          REAL'),
 
-
-
+        ('forest', 'PK batter        INTEGER'),
+        ('forest', 'PK game_pk       INTEGER'),
+        ('forest', '   t_hits          INTEGER'),  # target
+        ('forest', '   b_ba          REAL'),  # feature: batter season BA, as of day before
+        ('forest', '   p_ba_against  REAL'),  # feature: pitcher season BA-against, as of day before
 
         # _Schema_tbl.py  forest block  REPLACE: full feature matrix schema
         ('forest_1002', 'PK batter                                     INTEGER'),
@@ -273,20 +278,6 @@ class _SchemaTbl:
         ('forest_1002', '   b_stand                                    TEXT'),
         ('forest_1002', '   log5_predicted                             REAL'),
 
-
-
-        # ═══ predict_xgb_v1 ═══ XGBoost v1 model predictions.
-        ('predict_xgb_v1', 'PK batter                                    INTEGER'),
-        ('predict_xgb_v1', 'PK game_pk                                   INTEGER'),
-        ('predict_xgb_v1', '   predicted                                 REAL'   ),
-
-
-
-
-
-
-
-
         # ═══ etl_matchup ═══
         ('etl_matchup', 'PK batter                                  INTEGER'),
         ('etl_matchup', 'PK game_pk                                 INTEGER'),
@@ -295,13 +286,23 @@ class _SchemaTbl:
         ('etl_matchup', '   stand                                   TEXT'),
         ('etl_matchup', '   p_throws                                TEXT'),
 
-        # ═══ etl_testclone ═══
-        ('etl_testclone', 'PK batter                                  INTEGER'),
-        ('etl_testclone', 'PK game_pk                                 INTEGER'),
-        ('etl_testclone', '   at_bat_number                           INTEGER'),
-        ('etl_testclone', '   pitcher                                 INTEGER'),
-        ('etl_testclone', '   stand                                   TEXT'),
-        ('etl_testclone', '   p_throws                                TEXT'),
 
+        # ═══ forest_pa_simplest ═══
+        #('forest_pa_simplest', 'PK batter                                  INTEGER'),
+        #('forest_pa_simplest', 'PK game_pk                                 INTEGER'),
+        #('forest_pa_simplest', 'PK at_bat_number                           INTEGER'),
+        #('forest_pa_simplest', '   pitcher                                 INTEGER'),
+        #('forest_pa_simplest', '   t_hit                                   INTEGER'),
+        #('forest_pa_simplest', '   kiss                                    INTEGER'),
+        #('forest_pa_simplest', '   b_ba                                    REAL'),
+        #('forest_pa_simplest', '   p_ba_against                            REAL'),
 
+        # ═══ forest_pa_simplest ═══
+        ('forest_pa', 'PK batter                                  INTEGER'),
+        ('forest_pa', 'PK game_pk                                 INTEGER'),
+        ('forest_pa', 'PK at_bat_number                           INTEGER'),
+        ('forest_pa', '   pitcher                                 INTEGER'),
+        ('forest_pa', '   t_hit                                   INTEGER'),
+        ('forest_pa', '   b_ba                                    REAL'),
+        ('forest_pa', '   p_ba_against                            REAL'),
     ]

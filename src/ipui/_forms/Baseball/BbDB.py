@@ -57,8 +57,11 @@ class BbDB:
         cls.execute(f"DROP TABLE IF EXISTS {tbl}")
         cls.log(tbl, "dropped")
 
+
+
     @classmethod
     def tables_for_layer(cls, layer):
+        layer = layer.lower()                                                # NEW
         rows = cls.query("""
             SELECT name FROM sqlite_master
             WHERE  type='table' AND (name = ? OR name LIKE ?)
@@ -67,12 +70,41 @@ class BbDB:
         return [r[0] for r in rows]
 
     @classmethod                                                                # NEW
-    def tables_for_layer(cls, layer):                                           # NEW
+    def tables_for_layerDELEETEMEE(cls, layer):                                           # NEW
         from ipui._forms.Baseball._SchemaTbl import _SchemaTbl                  # NEW
         seen = []                                                               # NEW
         for tbl, _ in _SchemaTbl.SCHEMA:                                        # NEW
             if tbl not in seen and tbl.split('_')[0] == layer.lower():
                 seen.append(tbl)                                                # NEW
+        return seen
+
+
+    @classmethod
+    def tables_for_layer(cls, layer):
+        schema_tbls = cls.tables_for_layer_schema(layer)
+        return        cls.tables_for_layer_add_db_only(layer, schema_tbls)
+
+    # BbDB.py method: tables_for_layer_schema  New: tables from _SchemaTbl in defined order
+    @classmethod
+    def tables_for_layer_schema(cls, layer):
+        layer = layer.lower()
+        from ipui._forms.Baseball._SchemaTbl import _SchemaTbl
+        seen = []
+        for tbl, _ in _SchemaTbl.SCHEMA:
+            if tbl not in seen and tbl.split('_')[0] == layer:  seen.append(tbl)
+        return seen
+
+    # BbDB.py method: tables_for_layer_add_db_only  New: append DB tables not already in list
+    @classmethod
+    def tables_for_layer_add_db_only(cls, layer, seen):
+        layer = layer.lower()
+        rows = cls.query("""
+            SELECT name FROM sqlite_master
+            WHERE  type='table' AND (name = ? OR name LIKE ?)
+            ORDER BY name
+        """, (layer, f"{layer}_%"))
+        for r in rows:
+            if r[0] not in seen:                seen.append(r[0])
         return seen
 
     @classmethod
@@ -121,18 +153,20 @@ class BbDB:
     # ══════════════════════════════════════════════════════════════
 
     @classmethod
-    def rebuild_table(cls, tbl):
-        import importlib
-        from ipui._forms.Baseball import _SchemaTbl
-        importlib.reload(_SchemaTbl)
-        from ipui._forms.Baseball._SchemaTbl import _SchemaTbl as fresh
+    def rebuild_table(cls, tbl, raw_cols=None):
+        if raw_cols is None:
+            import importlib
+            from ipui._forms.Baseball import _SchemaTbl
+            importlib.reload(_SchemaTbl)
+            from ipui._forms.Baseball._SchemaTbl import _SchemaTbl as fresh
+            raw_cols = [col for (t, col) in fresh.SCHEMA if t == tbl]
         conn = sqlite3.connect(cls.DB_PATH)
         conn.execute(f"DROP TABLE IF EXISTS {tbl}")
-        cols = [col for (t, col) in fresh.SCHEMA if t == tbl]
-        cls.materialize_one_table(conn, tbl, cols)
+        cls.materialize_one_table(conn, tbl, raw_cols)
         conn.commit()
         conn.close()
         cls.log(tbl, "rebuilt from schema")
+
 
     # ══════════════════════════════════════════════════════════════
     # LOG — timestamped print.  No DB.
@@ -190,6 +224,7 @@ class BbDB:
         pk_clause = f"PRIMARY KEY ({', '.join(pk_cols)})"
         body      = ",\n    ".join(columns + [pk_clause])
         suffix    = " WITHOUT ROWID"
+        print(f"tbl={tbl}")
         conn.execute(f"CREATE TABLE IF NOT EXISTS {tbl} (\n    {body}\n){suffix}")
 
     @classmethod

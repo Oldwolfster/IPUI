@@ -261,9 +261,13 @@ class Predict(_BaseTab):
             ORDER  BY  bg.hits DESC, m.predicted DESC
         """
         return BbDB.query(sql, (gd_int,))
+
     def overall_mae(self, days):
-        total_preds = sum(d[1] for d in days)
-        total_err   = sum(d[1] * d[2] for d in days)
+        scored      = [d for d in days if d[2] is not None]
+        total_preds = sum(d[1] for d in scored)
+        if not total_preds:
+            return 0.0
+        total_err   = sum(d[1] * d[2] for d in scored)
         return total_err / total_preds
 
     # ══════════════════════════════════════════════════════════════
@@ -275,9 +279,9 @@ class Predict(_BaseTab):
             {
                 "gd"          : d[0],
                 "predictions" : d[1],
-                "mae"         : round(d[2], 3),
-                "min_err"     : round(d[3], 2),
-                "max_err"     : round(d[4], 2),
+                "mae"         : round(d[2], 3) if d[2] is not None else None,
+                "min_err"     : round(d[3], 2) if d[3] is not None else None,
+                "max_err"     : round(d[4], 2) if d[4] is not None else None,
             }
             for d in days
         ]

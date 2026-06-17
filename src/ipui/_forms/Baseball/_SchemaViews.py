@@ -67,103 +67,86 @@ class _SchemaViews:
     def view_pull_feet_batter(cls):
         return """
             SELECT
-                            GD,
-                            1                                                              AS TS,
-                            batter,
-                            p_throws,
-                            COUNT(*)                                                       AS pa,
-                            SUM(is_ab)                                                     AS ab,
-                            SUM(is_hit)                                                    AS hits,
-                            SUM(is_hr)                                                     AS hr,
-                            SUM(is_bb)                                                     AS bb,
-                            SUM(is_k)                                                      AS k,
-                            SUM(total_bases)                                               AS total_bases,
-                            SUM(CASE WHEN launch_speed IS NOT NULL THEN launch_speed END)                                                           AS launch_speed,
-                            SUM(CASE WHEN launch_speed IS NOT NULL THEN 1 ELSE 0 END)      AS launch_speed_cnt,
-                            SUM(CASE WHEN xba          IS NOT NULL THEN xba          END)  AS xba,
-                            SUM(CASE WHEN xba          IS NOT NULL THEN 1 ELSE 0 END)      AS xba_cnt,
-                            SUM(woba_value)                                                AS woba_value,
-                            SUM(woba_denom)                                                AS woba_denom,
-                            SUM(CASE WHEN launch_speed >= 95 THEN 1 ELSE 0 END)           AS hard_hit,
-                            SUM(CASE WHEN launch_speed IS NULL THEN 0
-                                     WHEN launch_speed >= 95 THEN 1 ELSE 0 END)           AS barrel
-                        FROM etl_pa
-                        GROUP BY GD, batter, p_throws
+                GD
+                ,1                                                              AS TS
+                ,batter
+                ,game_pk
+                ,p_throws
+                ,COUNT(*)                                                       AS pa
+                ,SUM(is_ab)                                                     AS ab
+                ,SUM(is_hit)                                                    AS hits
+                ,SUM(is_hr)                                                     AS hr
+                ,SUM(is_bb)                                                     AS bb
+                ,SUM(is_k)                                                      AS k
+                ,SUM(total_bases)                                               AS total_bases
+                ,SUM(CASE WHEN launch_speed IS NOT NULL THEN launch_speed END)  AS launch_speed
+                ,SUM(CASE WHEN launch_speed IS NOT NULL THEN 1 ELSE 0 END)      AS launch_speed_cnt
+                ,SUM(CASE WHEN xba          IS NOT NULL THEN xba          END)  AS xba
+                ,SUM(CASE WHEN xba          IS NOT NULL THEN 1 ELSE 0 END)      AS xba_cnt
+                ,SUM(woba_value)                                                AS woba_value
+                ,SUM(woba_denom)                                                AS woba_denom
+                ,SUM(CASE WHEN launch_speed >= 95 THEN 1 ELSE 0 END)            AS hard_hit
+                ,SUM(CASE WHEN launch_speed IS NULL THEN 0
+                WHEN launch_speed >= 95 THEN 1 ELSE 0 END)             AS barrel
+            FROM etl_pa
+            GROUP BY GD, batter, game_pk, p_throws
         """
 
     @classmethod
     def view_pull_feet_pitcher(cls):
         return """
             SELECT
-                GD,
-                1                                                              AS TS,
-                pitcher,
-                stand,
-                COUNT(*)                                                       AS bf,
-                SUM(is_ab)                                                     AS ab_against,
-                SUM(is_hit)                                                    AS hits_allowed,
-                SUM(is_hr)                                                     AS hr_allowed,
-                SUM(is_bb)                                                     AS bb_allowed,
-                SUM(is_k)                                                      AS k_pitcher,
-                SUM(total_bases)                                               AS total_bases_allowed,
-                SUM(CASE WHEN launch_speed IS NOT NULL THEN launch_speed END)  AS launch_speed,
-                SUM(CASE WHEN launch_speed IS NOT NULL THEN 1 ELSE 0 END)      AS launch_speed_cnt,
-                SUM(CASE WHEN xba          IS NOT NULL THEN xba          END)  AS xba_allowed,
-                SUM(CASE WHEN xba          IS NOT NULL THEN 1 ELSE 0 END)      AS xba_cnt,
-                SUM(woba_value)                                                AS woba_value,
-                SUM(woba_denom)                                                AS woba_denom,
-                SUM(CASE WHEN launch_speed >= 95 THEN 1 ELSE 0 END)           AS hard_hit_allowed,
-                SUM(CASE WHEN launch_speed IS NULL THEN 0
-                         WHEN launch_speed >= 95 THEN 1 ELSE 0 END)           AS barrel_allowed
+                GD
+                ,1                                                              AS TS
+                ,pitcher
+                , game_pk
+                ,stand
+                ,COUNT(*)                                                       AS bf
+                ,SUM(is_ab)                                                     AS ab_against
+                ,SUM(is_hit)                                                    AS hits_allowed
+                ,SUM(is_hr)                                                     AS hr_allowed
+                ,SUM(is_bb)                                                     AS bb_allowed
+                ,SUM(is_k)                                                      AS k_pitcher
+                ,SUM(total_bases)                                               AS total_bases_allowed
+                ,SUM(CASE WHEN launch_speed IS NOT NULL THEN launch_speed END)  AS launch_speed
+                ,SUM(CASE WHEN launch_speed IS NOT NULL THEN 1 ELSE 0 END)      AS launch_speed_cnt
+                ,SUM(CASE WHEN xba          IS NOT NULL THEN xba          END)  AS xba_allowed
+                ,SUM(CASE WHEN xba          IS NOT NULL THEN 1 ELSE 0 END)      AS xba_cnt
+                ,SUM(woba_value)                                                AS woba_value
+                ,SUM(woba_denom)                                                AS woba_denom
+                ,SUM(CASE WHEN launch_speed >= 95 THEN 1 ELSE 0 END)            AS hard_hit_allowed
+                ,SUM(CASE WHEN launch_speed IS NULL THEN 0
+                WHEN launch_speed >= 95 THEN 1 ELSE 0 END)                      AS barrel_allowed
             FROM etl_pa
-            GROUP BY GD, pitcher, stand;
+            GROUP BY GD, pitcher, game_pk, stand
+        """
+    @classmethod
+    def view_model_log5(cls):
+        return """
+            SELECT
+                r.GD,
+                r.batter,
+                r.game_pk,
+                (r.b * r.p / r.lg)
+                / ( (r.b * r.p / r.lg)
+                  + ((1 - r.b) * (1 - r.p) / NULLIF(1 - r.lg, 0)) )
+                * 3.8                                                    AS predicted
+            FROM (
+                SELECT
+                    f.GD,
+                    f.batter,
+                    f.game_pk,
+                    COALESCE(f.b_ba,         lg.lg_ba)  AS b,
+                    COALESCE(f.p_ba_against, lg.lg_ba)  AS p,
+                    lg.lg_ba                            AS lg
+                FROM       forest f
+                CROSS JOIN (
+                    SELECT SUM(is_hit) * 1.0 / NULLIF(SUM(is_ab), 0) AS lg_ba
+                    FROM etl_pa
+                ) lg
+            ) r
         """
 
-    @classmethod
-    def view_model_log5(cls):  # UPDATE: scale to hits-per-game
-        """Log5 hit probability — output scaled to expected hits per game."""
-        return """
-            WITH
-            league AS (
-                SELECT
-                    SUM(is_hit) * 1.0 / NULLIF(SUM(is_ab), 0)             AS lg_ba
-                FROM etl_pa
-            ),
-            scores AS (
-                SELECT
-                    matchup.GD,
-                    matchup.batter,
-                    matchup.pitcher,
-                    matchup.game_pk,
-                    league.lg_ba,
-                    batter_season.ba                                        AS batter_ba,
-                    pitcher_season.ba_against                               AS pitcher_ba,
-                    (batter_season.ba * pitcher_season.ba_against / league.lg_ba)
-                                                                           AS hit_score,
-                    ((1-batter_season.ba) * (1-pitcher_season.ba_against) / NULLIF(1-league.lg_ba, 0))
-                                                                           AS out_score
-                FROM      etl_matchup        matchup
-                INNER JOIN pull_forest_mixin_batter_season  batter_season
-                           ON  batter_season.batter   = matchup.batter
-                          AND  batter_season.p_throws = matchup.p_throws
-                INNER JOIN pull_forest_mixin_pitcher_season pitcher_season
-                           ON  pitcher_season.pitcher = matchup.pitcher
-                          AND  pitcher_season.stand   = matchup.stand
-                CROSS JOIN league
-            )
-            SELECT
-                GD,
-                batter,
-                pitcher,
-                game_pk,
-                lg_ba,
-                batter_ba,
-                pitcher_ba,
-                hit_score,
-                out_score,
-                hit_score / NULLIF(hit_score + out_score, 0) * 3.8         AS predicted
-            FROM scores
-        """
 
     @classmethod
     def view_model_ba_baseline(cls):
@@ -223,48 +206,42 @@ class _SchemaViews:
                         WHERE  TS = 200
         """
 
+    # ═══ _SchemaViews.py — pull_forest, no subqueries, same-day equi-joins ═══
     @classmethod
     def view_pull_forest(cls):
         return """
             SELECT
-                            m.GD,
-                            m.batter,
-                            m.game_pk,
-                            bg.hits                                                    AS hits,
-                            b.ba                                                       AS b_ba,
-                            p.ba_against                                               AS p_ba_against,
-                            m.p_throws,
-                            m.stand                                                    AS b_stand,
-                            b.b_k_pct, b.b_woba, p.p_k_pct, p.p_woba_against
-                        FROM      etl_matchup        m
-                        LEFT JOIN batter_games                     bg ON  bg.GD      = m.GD
-                                                                  AND bg.batter  = m.batter
-                                                                  AND bg.game_pk = m.game_pk
-                        LEFT JOIN pull_forest_mixin_batter_season  b  ON  b.batter   = m.batter
-                                                                  AND b.p_throws = m.p_throws
-                        LEFT JOIN pull_forest_mixin_pitcher_season p  ON  p.pitcher  = m.pitcher
-                                                                  AND p.stand    = m.stand
+                m.GD,
+                m.batter,
+                m.game_pk,
+                bg.hits          AS t_hits,
+                b.ba             AS b_ba,
+                p.ba_against     AS p_ba_against
+            FROM      etl_matchup  m
+            LEFT JOIN batter_games bg  ON bg.GD = m.GD AND bg.batter = m.batter AND bg.game_pk = m.game_pk
+            LEFT JOIN feet_batter  b   ON b.batter  = m.batter  AND b.p_throws = m.p_throws AND b.TS = 200 AND b.GD = m.GD
+            LEFT JOIN feet_pitcher p   ON p.pitcher = m.pitcher AND p.stand    = m.stand    AND p.TS = 200 AND p.GD = m.GD
         """
 
     @classmethod
     def view_update_feet_batter(cls):
         return """
-            SELECT GD, TS, batter, p_throws
-                ,hits * 1.0  / NULLIF(ab,         0)   AS ba
-                ,k    * 1.0  / NULLIF(pa,         0)   AS b_k_pct
-                ,woba_value  / NULLIF(woba_denom,  0)  AS b_woba
+            SELECT GD, TS, batter, game_pk, p_throws
+                ,hits * 1.0 / NULLIF(ab, 0)          AS ba
+                ,k   * 1.0 / NULLIF(pa, 0)           AS b_k_pct
+                ,woba_value / NULLIF(woba_denom, 0)  AS b_woba
             FROM feet_batter
         """
+
     @classmethod
     def view_update_feet_pitcher(cls):
         return """
-            SELECT GD, TS, pitcher, stand,
-                               hits_allowed * 1.0 / NULLIF(ab_against,  0)    AS ba_against,
-                               k_pitcher    * 1.0 / NULLIF(bf,           0)    AS p_k_pct,
-                               woba_value         / NULLIF(woba_denom,   0)    AS p_woba_against
-                        FROM feet_pitcher
+            SELECT GD, TS, pitcher,game_pk as  game_pk, stand
+                                        ,hits_allowed * 1.0 / NULLIF(ab_against,  0)   AS ba_against
+                                        ,k_pitcher    * 1.0 / NULLIF(bf,           0)  AS p_k_pct
+                                        ,woba_value         / NULLIF(woba_denom,   0)  AS p_woba_against
+                                    FROM feet_pitcher
         """
-
     @classmethod
     def view_pull_forest_mixin_batter_season(cls):
         return """
@@ -300,4 +277,83 @@ class _SchemaViews:
                 0                                            AS pitcher,
                 ''                                           AS stand,
                 ''                                           AS p_throws
+        """
+
+    @classmethod
+    def view_pull_forest_pa_simplest(cls):
+        return """
+            SELECT
+                            etl_pa.GD, etl_pa.batter, game_pk, at_bat_number -- i believe the key
+                            ,  etl_pa.pitcher                 , is_hit AS t_hit -- the t_ identifies field AS target
+                        ,1 as kiss
+                        FROM etl_pa
+                        LEFT JOIN pull_forest_pa_mixin_batter
+        """
+    @classmethod
+    def view_pull_forest_pa(cls):
+        return """
+            SELECT
+                etl_pa.GD, etl_pa.batter, game_pk, at_bat_number -- i believe the key
+                ,  etl_pa.pitcher                 , is_hit AS t_hit -- the t_ identifies field AS target
+                ,b_ba                  ,p_ba_against
+            FROM etl_pa
+            LEFT JOIN pull_forest_pa_mixin_batter
+            ON  pull_forest_pa_mixin_batter.GD = etl_pa.GD
+                AND  pull_forest_pa_mixin_batter.batter = etl_pa.batter
+            LEFT JOIN pull_forest_pa_mixin_pitcher
+            ON  pull_forest_pa_mixin_pitcher.GD = etl_pa.GD
+                AND  pull_forest_pa_mixin_pitcher.pitcher = etl_pa.pitcher
+        """
+    @classmethod
+    def view_pull_forest_pa_mixin_batter(cls):
+        return """
+            SELECT GD, batter
+                                        ,SUM(hits) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba
+                                    FROM feet_batter
+                        WHERE ts=200 -- season numbers 
+                                    GROUP BY gd, batter
+        """
+
+    @classmethod
+    def view_pull_forest_pa_mixin_pitcher(cls):
+        return """
+            SELECT GD, pitcher
+                ,SUM(hits_allowed) * 1.0 / NULLIF(SUM(ab_against), 0) AS p_ba_against
+            FROM feet_pitcher
+            WHERE ts=200 -- season numbers
+            GROUP BY GD,pitcher
+        """
+
+    @classmethod
+    def view_model_forest_pa(cls):
+        return """
+            SELECT GD
+                 , batter
+                 , game_pk
+                 , SUM(predicted) as predicted
+                 , SUM(actual)    as actual
+            FROM predict_forest_pa
+            GROUP BY GD, batter, game_pk
+        """
+    @classmethod
+    def view_model_forest(cls):
+        return """
+            SELECT GD
+                 , batter
+                 , game_pk
+                 , SUM(predicted) as predicted
+                 , SUM(actual)    as actual
+            FROM predict_forest
+            GROUP BY GD, batter, game_pk
+        """
+    @classmethod
+    def view_model_forest_pa_simplest(cls):
+        return """
+            SELECT GD
+                 , batter
+                 , game_pk
+                 , SUM(predicted) as predicted
+                 , SUM(actual)    as actual
+            FROM predict_forest_pa_simplest
+            GROUP BY GD, batter, game_pk
         """

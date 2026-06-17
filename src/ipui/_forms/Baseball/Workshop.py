@@ -276,25 +276,29 @@ Claude has been assigned remedial API-awareness training.
 
 
     def build_mixin_list(self, parent):
-        """Show clickable list of mixin views for current table."""
+        """Show mixin views with join buttons for composing into pull view."""
         views = self.find_mixin_views()
         if not views:
-            #Detail(parent, "No Supporting views.")
-            self.banner_plate("Above has no building blocks!.", parent, [("Add a Building Block", self.start_build_view )])
-
+            self.banner_plate("Above has no building blocks!.", parent,
+                              [("Add a Building Block", self.start_build_view)])
             return
         self.banner_plate("Building Blocks Available For Above View:", parent, [
-            ("Add a Building Block", self.start_build_view , Style.COLOR_BUTTON_CTA),
-            #("<- Back", self.back_to_mixin_list),
+            ("Add a Building Block", self.start_build_view, Style.COLOR_BUTTON_CTA),
         ])
+        scroll = CardCol(parent, scroll_v=True, flex_height=1, pad=0)
+        for v in views:
+            plate = Plate(scroll, pad=5,
+                          on_click=lambda name=v: self.on_mixin_clicked(name))
+            row   = Row(plate)
+            Body(row, v)
+            Spacer(row)
+            Button(row, "LEFT", on_click=lambda name=v: self.join_mixin_to_pull(name, "LEFT"))
+            Button(row, "JOIN", on_click=lambda name=v: self.join_mixin_to_pull(name, ""))
+            Button(row, "FULL", on_click=lambda name=v: self.join_mixin_to_pull(name, "FULL"))
 
-        SelectionList(parent,
-            data          = {v: {} for v in views},
-            single_select = True,
-            flex_height   = 1,
-            on_change     = self.on_view_selected,
-        )
-
+    def on_mixin_clicked(self, name):
+        self.private_selected_view = name
+        self.set_pane(1, self.source)
 
     def find_mixin_views(self):
         """Find mixin views for current table (excludes primary pull view)."""
@@ -333,6 +337,130 @@ Claude has been assigned remedial API-awareness training.
         self.set_pane(1, self.source)
 
 
+
+
+    def build_mixin_list(self, parent):
+        """Show mixin views with join buttons for composing into pull view."""
+        views = self.find_mixin_views()
+        if not views:
+            self.banner_plate("Above has no building blocks!.", parent,
+                              [("Add a Building Block", self.start_build_view)])
+            return
+        self.banner_plate("Building Blocks Available For Above View:", parent, [
+            ("Add a Building Block", self.start_build_view, Style.COLOR_BUTTON_CTA),
+        ])
+        scroll = CardCol(parent, scroll_v=True, flex_height=1, pad=0)
+        for v in views:
+            plate = Plate(scroll, pad=5,
+                          on_click=lambda name=v: self.on_mixin_clicked(name))
+            row   = Row(plate)
+            Body(row, v)
+            Spacer(row)
+            Button(row, "LEFT", on_click=lambda name=v: self.join_mixin_to_pull(name, "LEFT"))
+            Button(row, "JOIN", on_click=lambda name=v: self.join_mixin_to_pull(name, ""))
+            Button(row, "FULL", on_click=lambda name=v: self.join_mixin_to_pull(name, "FULL"))
+
+    # ══════════════════════════════════════════════════════════════
+    # Workshop.py method: on_mixin_clicked  NEW: navigate to detail from Plate click
+    # ══════════════════════════════════════════════════════════════
+    def on_mixin_clicked(self, name):
+        self.private_selected_view = name
+        self.set_pane(1, self.source)
+
+    # ══════════════════════════════════════════════════════════════
+    # Workshop.py method: join_mixin_to_pull  NEW: auto-compose JOIN into pull view
+    # ══════════════════════════════════════════════════════════════
+    def join_mixin_to_pull(self, mixin_name, join_type):
+        tbl = self.current_table
+        if not tbl: return
+        pull_name  = f"pull_{tbl}"
+        select_sql = self.fetch_pull_select(pull_name)
+        if select_sql is None: return
+
+        if mixin_name in select_sql:
+            self.form.msgbox(
+                f"'{mixin_name}' is already in the pull view.",
+                MSG_BTNS_OK + MSG_ICON_WARNING, "Already Joined")
+            return
+
+        join_keys = self.guess_join_keys(mixin_name, pull_name)
+        if not join_keys: return
+
+        base_table = self.parse_base_table(select_sql)
+        if not base_table:
+            self.form.msgbox(
+                "Could not parse base table from FROM clause.",
+                MSG_BTNS_OK + MSG_ICON_WARNING, "Parse Error")
+            return
+
+        new_sql = self.compose_join(select_sql, mixin_name, join_type,
+                                    join_keys, base_table)
+        error   = MgrSchema.test_sql(pull_name, new_sql)
+        if error:
+            self.form.msgbox(
+                f"JOIN produced invalid SQL:\n\n{error}",
+                MSG_BTNS_OK + MSG_ICON_WARNING, "SQL Error")
+            return
+        MgrSchema.save_view(pull_name, new_sql)
+        self.set_pane(1, self.source)
+
+
+
+
+    # ══════════════════════════════════════════════════════════════
+    # Workshop.py method: fetch_pull_select  NEW: get bare SELECT from pull view
+    # ══════════════════════════════════════════════════════════════
+    def fetch_pull_select(self, pull_name):
+        rows = BbDB.query(
+            "SELECT sql FROM sqlite_master WHERE type='view' AND name=?",
+            (pull_name,))
+        if not rows or not rows[0][0]:
+            self.form.msgbox(
+                f"No view '{pull_name}' found.",
+                MSG_BTNS_OK + MSG_ICON_WARNING, "No Pull View")
+            return None
+        return self.strip_create_view(rows[0][0])
+
+    # ══════════════════════════════════════════════════════════════
+    # Workshop.py method: guess_join_keys  NEW: common columns = ON conditions
+    # ══════════════════════════════════════════════════════════════
+    def guess_join_keys(self, mixin_name, pull_name):
+        mixin_cols = set(BbDB.field_names(mixin_name))
+        pull_cols  = set(BbDB.field_names(pull_name))
+        keys       = sorted(mixin_cols & pull_cols)
+        if not keys:
+            self.form.msgbox(
+                f"No common columns between\n'{mixin_name}'\nand\n'{pull_name}'.",
+                MSG_BTNS_OK + MSG_ICON_WARNING, "No Join Keys")
+        return keys
+
+    # ══════════════════════════════════════════════════════════════
+    # Workshop.py method: parse_base_table  NEW: extract first table from FROM clause
+    # ══════════════════════════════════════════════════════════════
+    def parse_base_table(self, sql):
+        import re
+        match = re.search(r'\bFROM\s+(\w+)', sql, re.IGNORECASE)
+        return match.group(1) if match else None
+
+    def compose_join(self, select_sql, mixin_name, join_type, join_keys, base_table):
+        import re
+        clean      = select_sql.rstrip().rstrip(';').rstrip()
+        from_match = re.search(r'\bFROM\b', clean, re.IGNORECASE)
+        if from_match:
+            sel  = clean[:from_match.start()]
+            rest = clean[from_match.start():]
+            for col in join_keys:
+                sel = re.sub(r'(?<!\.)\b' + re.escape(col) + r'\b',
+                             f'{base_table}.{col}', sel)
+            clean = sel + rest
+
+        join_word  = f"{join_type} JOIN" if join_type else "JOIN"
+        conditions = [f"{mixin_name}.{col} = {base_table}.{col}"
+                      for col in join_keys]
+        on_line    = f"       ON  {conditions[0]}"
+        and_lines  = [f"      AND  {c}" for c in conditions[1:]]
+        all_lines  = [on_line] + and_lines
+        return f"{clean}\n{join_word} {mixin_name}\n" + "\n".join(all_lines)
     # ══════════════════════════════════════════════════════════════
     # SCHEMA PARSING — _SchemaTbl.SCHEMA → editable dicts
     # ══════════════════════════════════════════════════════════════

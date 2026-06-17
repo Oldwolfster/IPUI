@@ -73,10 +73,10 @@ class IP:
         self.private_cache      = {}
         self.private_machines   = {}
         self.private_machines   = {}                       # REFERENCE
-        self.actions_after_paint = []                      # NEW  (callback, args) to fire after next flip
-
-
-
+        self.actions_after_paint= []                      # NEW  (callback, args) to fire after next flip
+        self.drip_queue         = []                      # NEW  one task per frame; pumped by drip_next
+        self.drip_running       = False                   # NEW  True while the pump is scheduled (blocks double-schedule)
+        self.drip_dry_jobs      = []
     # ══════════════════════════════════════════════════════════════
     # FRAME UPDATE — called by GameLoop each frame, NOT by user code
     # ══════════════════════════════════════════════════════════════
@@ -565,3 +565,40 @@ class IP:
   Topics: identity, timing, geometry, mouse,
           keyboard, render, cache, redraw, discover
 """
+
+    # ═══ DRIP Logic ═══
+    def drip(self, fn, *args):
+        """Queue fn(*args) to run one task per frame after each paint. Built on after_paint; eager arg capture, no lambdas needed."""
+        if not callable(fn):
+            EZ.err(f"ip.drip expects a callable, got {type(fn).__name__}", TypeError)
+        self.drip_queue.append((fn, args))
+        if not self.drip_running:
+            self.drip_running = True
+            self.after_paint(self.drip_next)
+
+
+    # IP.py method: drip_next  New: internal pump — run one queued task, reschedule until drained
+    def drip_next(self):
+        """Internal. Scheduled by drip(); runs one task, then reschedules itself until the queue empties."""
+        if not self.drip_queue:
+            self.drip_running = False
+            self.run_dry_jobs()
+            return
+        fn, args = self.drip_queue.pop(0)
+        fn(*args)
+        self.after_paint(self.drip_next)
+
+    def drip_when_dry(self, fn, *args):
+        """Queue fn(*args) to run once the drip queue fully drains — after all current and spawned work."""
+        if not callable(fn):
+            EZ.err(f"ip.drip_when_dry expects a callable, got {type(fn).__name__}", TypeError)
+        self.drip_dry_jobs.append((fn, args))
+        if not self.drip_running: self.run_dry_jobs()       # already dry → fire now, no work to wait on
+
+    def run_dry_jobs(self):
+        """Fire and clear every drip_when_dry job; snapshot first so a re-register waits for the next dry."""
+        jobs               = self.drip_dry_jobs
+        self.drip_dry_jobs = []
+        for fn, args in jobs: fn(*args)
+
+
