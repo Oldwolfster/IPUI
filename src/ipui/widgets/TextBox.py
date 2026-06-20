@@ -483,7 +483,7 @@ class TextBox(Label):
     # SUBMIT
     # ══════════════════════════════════════════════════════════════
 
-    def submit(self):
+    def submitDELETE_ME_HASCLEARBUILTIN(self):
         if self.pipeline_key and self.form:
             self.form.pipeline_set(self.pipeline_key, self.text)
         if self.on_submit and self.text:
@@ -492,6 +492,14 @@ class TextBox(Label):
             self.text             = ""
             self.cursor_pos       = 0
             self.selection_anchor = 0
+        self.rebuild_surface()
+        self.set_focus()
+
+    def submit(self):
+        if self.pipeline_key and self.form:
+            self.form.pipeline_set(self.pipeline_key, self.text)
+        if self.on_submit and self.text:
+            self.on_submit(self.text)
         self.rebuild_surface()
         self.set_focus()
 

@@ -255,28 +255,6 @@ class _SchemaTbl:
         ('forest', '   p_ba_against  REAL'),  # feature: pitcher season BA-against, as of day before
 
         # _Schema_tbl.py  forest block  REPLACE: full feature matrix schema
-        ('forest_1002', 'PK batter                                     INTEGER'),
-        ('forest_1002', 'PK game_pk                                    INTEGER'),
-        ('forest_1002', '   actual_hits                                INTEGER'),
-        ('forest_1002', '   b_pa                                       INTEGER'),
-        ('forest_1002', '   b_ab                                       INTEGER'),
-        ('forest_1002', '   b_hits                                     INTEGER'),
-        ('forest_1002', '   b_ba                                       REAL'),
-        ('forest_1002', '   b_k_pct                                    REAL'),
-        ('forest_1002', '   b_bb_pct                                   REAL'),
-        ('forest_1002', '   b_hard_hit_pct                             REAL'),
-        ('forest_1002', '   b_xba                                      REAL'),
-        ('forest_1002', '   p_bf                                       INTEGER'),
-        ('forest_1002', '   p_ab_against                               INTEGER'),
-        ('forest_1002', '   p_hits_allowed                             INTEGER'),
-        ('forest_1002', '   p_ba_against                               REAL'),
-        ('forest_1002', '   p_k_pct                                    REAL'),
-        ('forest_1002', '   p_bb_pct                                   REAL'),
-        ('forest_1002', '   p_hard_hit_pct                             REAL'),
-        ('forest_1002', '   p_xba_against                              REAL'),
-        ('forest_1002', '   p_throws                                   TEXT'),
-        ('forest_1002', '   b_stand                                    TEXT'),
-        ('forest_1002', '   log5_predicted                             REAL'),
 
         # ═══ etl_matchup ═══
         ('etl_matchup', 'PK batter                                  INTEGER'),
@@ -296,6 +274,11 @@ class _SchemaTbl:
         #('forest_pa_simplest', '   kiss                                    INTEGER'),
         #('forest_pa_simplest', '   b_ba                                    REAL'),
         #('forest_pa_simplest', '   p_ba_against                            REAL'),
+        # ═══ _registry ═══ grammar vocabulary: Entity / Metric / Context tokens + definitions
+        ('_registry', 'PK kind        TEXT'),  # Entity | Metric | Context  (key-types later, "we'll see")
+        ('_registry', 'PK token       TEXT'),
+        ('_registry', '   definition  TEXT'),
+        ('_registry', '   dtype       TEXT'),
 
         # ═══ forest_pa_simplest ═══
         ('forest_pa', 'PK batter                                  INTEGER'),
@@ -305,4 +288,68 @@ class _SchemaTbl:
         ('forest_pa', '   t_hit                                   INTEGER'),
         ('forest_pa', '   b_ba                                    REAL'),
         ('forest_pa', '   p_ba_against                            REAL'),
+
+        # ═══ model_run ═══ Current model registry. One row per current model result.
+        ('model_run', 'PK run_id                                    TEXT'),
+        ('model_run', '   model_name                                TEXT'),
+        ('model_run', '   forest_table                              TEXT'),
+        ('model_run', '   predict_table                             TEXT'),
+        ('model_run', '   target_field                              TEXT'),
+        ('model_run', '   grain                                     TEXT'),
+        ('model_run', '   train_start_gd                            INTEGER'),
+        ('model_run', '   train_end_gd                              INTEGER'),
+        ('model_run', '   predict_start_gd                          INTEGER'),
+        ('model_run', '   predict_end_gd                            INTEGER'),
+        ('model_run', '   total_predictions                         INTEGER'),
+        ('model_run', '   total_mae                                 REAL'),
+        ('model_run', '   feature_count                             INTEGER'),
+        ('model_run', '   features_csv                              TEXT'),
+        ('model_run', '   created_ds                                TEXT'),
+
+        # ═══ model_day ═══ Predict tab day-level drill summary.
+        ('model_day', 'PK run_id                                    TEXT'),
+        ('model_day', '   model_name                                TEXT'),
+        ('model_day', '   predictions                               INTEGER'),
+        ('model_day', '   mae                                       REAL'),
+        ('model_day', '   min_err                                   REAL'),
+        ('model_day', '   max_err                                   REAL'),
+        ('model_day', '   actual_total                              REAL'),
+        ('model_day', '   predicted_total                           REAL'),
+
+        # ═══ model_prediction ═══ Predict tab standardized batter-game detail.
+        ('model_prediction', 'PK run_id                              TEXT'),
+        ('model_prediction', 'PK batter                              INTEGER'),
+        ('model_prediction', 'PK game_pk                             INTEGER'),
+        ('model_prediction', '   model_name                          TEXT'),
+        ('model_prediction', '   predicted                           REAL'),
+        ('model_prediction', '   actual                              REAL'),
+        ('model_prediction', '   error                               REAL'),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        # ═══ forest_strikes ═══
+        ('forest_strikes', 'PK batter                                  INTEGER'),
+        ('forest_strikes', 'PK game_pk                                 INTEGER'),
+        ('forest_strikes', '   t_hits                                  INTEGER'),
+        ('forest_strikes', '   b_ba                                    REAL'),
+        ('forest_strikes', '   p_ba_against                            REAL'),
+        ('forest_strikes', '   b_k_vsL                                 INTEGER'),
+        ('forest_strikes', '   b_k_vsR                                 INTEGER'),
+        ('forest_strikes', '   p_k_vsL                                 INTEGER'),
+        ('forest_strikes', '   p_k_vsR                                 INTEGER'),
+
+
     ]

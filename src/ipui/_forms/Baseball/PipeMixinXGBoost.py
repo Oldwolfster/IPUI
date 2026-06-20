@@ -2,7 +2,7 @@
 import pandas as pd
 from ipui._forms.Baseball.BbDB import BbDB
 from ipui.utils.EZ import EZ
-
+from ipui._forms.Baseball.MgrDT import MgrDT
 
 class MixinXGBoost:
     """
@@ -78,7 +78,7 @@ class MixinXGBoost:
         self.ensure_predict_table(df_predict, out_table)
         preds = self.predict_and_write(model, df_predict, out_table)
         self.evaluate(df_predict, preds, out_table)
-
+        self.load_model_tables(forest_table, out_table, df_train, df_predict, target)
         BbDB.update_summary(out_table)
         BbDB.log(out_table, f"{out_table} ready")
         self.refresh_pane()

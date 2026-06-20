@@ -56,7 +56,9 @@ class _BaseTab:
         #self.form.pipeline.fire_all_derives()
 
 
+    # _BaseTab.py  method: set_pane  Update: default tab_name to THIS tab, then delegate UP to the form
     def set_pane(self, index, builder, *args, tab_name=None, weight=None, **kwargs):
+        if tab_name is None: tab_name = self.tab_name      # loud crash if unstamped — never quietly hit the active tab
         self.form.set_pane(index, builder, *args, tab_name=tab_name, weight=weight, **kwargs)
 
     def hide_extra_panes(self, keep_count):

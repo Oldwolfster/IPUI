@@ -379,6 +379,8 @@ class _BaseForm(_BaseWidget):
     def switch_tab(self, name):
         self.tab_strip.switch_tab(name)
 
+
+    # _BaseForm.py  method: set_pane  Update: REVERT to original — form delegates DOWN to tab_strip (self.form is self → recursion)
     def set_pane(self, index, builder, *args, tab_name=None, weight=None, **kwargs):
         self.tab_strip.set_pane(index, builder, *args, tab_name=tab_name, weight=weight, **kwargs)
 

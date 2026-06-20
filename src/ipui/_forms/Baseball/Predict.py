@@ -79,19 +79,23 @@ class Predict(_BaseTab):
             on_change     = lambda picks, i=pane_index: self.on_model_picked(i, picks),
         )
 
+    # Predict.py method: on_model_picked  UPDATE: selected model is now model_run.model_name
     def on_model_picked(self, pane_index, picks):
         if not picks:
             return
-        self.pane_state[pane_index]["model"] = self.MODEL_PREFIX + picks[0]
+        self.pane_state[pane_index]["model"] = picks[0]
         self.set_pane(pane_index, self.by_day, pane_index=pane_index)
+
 
     # ══════════════════════════════════════════════════════════════
     # STATE: by_day (days grid)
     # ══════════════════════════════════════════════════════════════
 
+
+    # Predict.py method: by_day  UPDATE: use model tables instead of model_* view name
     def by_day(self, parent, pane_index=1):
-        model_view = self.pane_state[pane_index]["model"]
-        if model_view is None:
+        model_name = self.pane_state[pane_index]["model"]
+        if model_name is None:
             self.set_pane(pane_index, self.by_model, pane_index=pane_index)
             return
 
@@ -99,8 +103,7 @@ class Predict(_BaseTab):
         if start_str is None:
             return
 
-        days = self.query_daily_summary(model_view, start_str, end_str)
-        model_name = model_view[len(self.MODEL_PREFIX):]
+        days = self.query_daily_summary(model_name, start_str, end_str)
 
         header = Row(parent, justify_spread=True)
         Title(header, f"{model_name}  —  Daily Summary", glow=True)
@@ -120,6 +123,8 @@ class Predict(_BaseTab):
         else:
             self.show_status(f"Pane {pane_index} — no predictions in range for {model_name}.")
 
+
+
     def back_to_models(self, pane_index):
         self.set_pane(pane_index, self.by_model, pane_index=pane_index)
 
@@ -131,15 +136,15 @@ class Predict(_BaseTab):
     # STATE: by_dude (per-batter detail)
     # ══════════════════════════════════════════════════════════════
 
+    # Predict.py method: by_dude  UPDATE: use model tables instead of model_* view name
     def by_dude(self, parent, pane_index=1):
-        model_view = self.pane_state[pane_index]["model"]
+        model_name = self.pane_state[pane_index]["model"]
         gd         = self.pane_state[pane_index]["day"]
-        if model_view is None or gd is None:
+        if model_name is None or gd is None:
             self.set_pane(pane_index, self.by_day, pane_index=pane_index)
             return
 
-        rows = self.query_predictions_for(model_view, gd)
-        model_name = model_view[len(self.MODEL_PREFIX):]
+        rows = self.query_predictions_for(model_name, gd)
 
         header = Row(parent, justify_spread=True)
         Title(header, f"{model_name}  —  {gd}  ({len(rows)} batters)", glow=True)
@@ -149,6 +154,9 @@ class Predict(_BaseTab):
         grid = PowerGrid(parent, flex_height=1)
         grid.set_data(self.format_preds_rows(rows))
 
+
+
+
     def back_to_days(self, pane_index):
         self.pane_state[pane_index]["day"] = None
         self.set_pane(pane_index, self.by_day, pane_index=pane_index)
@@ -157,30 +165,30 @@ class Predict(_BaseTab):
     # STATE: no_models (empty registry)
     # ══════════════════════════════════════════════════════════════
 
+    # Predict.py method: no_models  UPDATE: model_run is now the registry
     def no_models(self, parent, pane_index=1):
         card = CardCol(parent, flex_height=1)
         Title(card, "No Models Defined", glow=True)
-        Body(card, "No models defined — views searched: model_*")
+        Body(card, "No rows found in model_run.")
         Body(card, "")
-        Body(card, "Create a model in the SQL tab:")
-        Body(card, "  CREATE VIEW model_001_bootstrap AS")
-        Body(card, "  SELECT gd, batter, game_pk, <expr> AS predicted")
-        Body(card, "  FROM ...")
-        Body(card, "")
-        Body(card, "Then return to this tab.")
+        Body(card, "Run the Pipe tab, train selected forest tables,")
+        Body(card, "then return here.")
+
+
 
     # ══════════════════════════════════════════════════════════════
     # MODEL DISCOVERY
     # ══════════════════════════════════════════════════════════════
 
+
+    # Predict.py method: list_models  UPDATE: read model registry table
     def list_models(self):
-        rows =  BbDB.query("""
-            SELECT name FROM sqlite_master
-            WHERE  type = 'view'
-              AND  name LIKE ?
-            ORDER  BY name
-        """, (self.MODEL_PREFIX + "%",))
-        return [r[0][len(self.MODEL_PREFIX):] for r in rows]
+        rows = BbDB.query("""
+            SELECT model_name
+            FROM model_run
+            ORDER BY model_name
+        """)
+        return [r[0] for r in rows]
 
     def list_models_dict(self):
         return {name: {} for name in self.list_models()}
@@ -190,77 +198,58 @@ class Predict(_BaseTab):
     # ══════════════════════════════════════════════════════════════
 
 
-    def query_daily_summary(self, model_view, start_str, end_str):
+    # Predict.py method: query_daily_summary  UPDATE: read model_day
+    def query_daily_summary(self, model_name, start_str, end_str):
         start_gd = int(start_str.replace("-", ""))
-        end_gd = int(end_str.replace("-", ""))
-        sql = f"""
+        end_gd   = int(end_str.replace("-", ""))
+        sql = """
             SELECT
-                bg.GD                                           AS gd,
-                COUNT(*)                                        AS predictions,
-                AVG(ABS(m.predicted - bg.hits))                 AS mae,
-                MIN(m.predicted - bg.hits)                      AS min_err,
-                MAX(m.predicted - bg.hits)                      AS max_err
-            FROM       batter_games   bg
-            INNER JOIN {model_view}   m
-                       ON  m.GD      = bg.GD
-                      AND  m.batter  = bg.batter
-                      AND  m.game_pk = bg.game_pk
-            WHERE      bg.GD BETWEEN ? AND ?
-            GROUP  BY  bg.GD
-            ORDER  BY  bg.GD
+                GD             AS gd,
+                predictions    AS predictions,
+                mae            AS mae,
+                min_err        AS min_err,
+                max_err        AS max_err
+            FROM model_day
+            WHERE model_name = ?
+              AND GD BETWEEN ? AND ?
+            ORDER BY GD
         """
-        return BbDB.query(sql, (start_gd, end_gd))
+        return BbDB.query(sql, (model_name, start_gd, end_gd))
 
-    # ── query_predictions_for  UPDATE: drop ABs_PER_GAME multiplier ──
 
-    def query_predictions_for(self, model_view, gd):
+    # Predict.py method: query_predictions_for  UPDATE: read standardized model_prediction table
+    def query_predictions_for(self, model_name, gd):
         gd_int = int(str(gd).replace("-", ""))
-        sql = f"""
+        sql = """
             SELECT
-                bg.batter                                               AS batter_id,
-                COALESCE(p.full_name, '#' || bg.batter)                AS name,
-                COALESCE(t.abbreviation, '???')                        AS team,
-                p.position                                             AS pos,
-                bg.game_pk                                             AS game_pk,
-                bg.hits                                                AS actual,
-                ROUND(m.predicted, 2)                                  AS predicted,
-                ROUND(m.predicted - bg.hits, 2)                        AS error
-            FROM       batter_games   bg
-            INNER JOIN {model_view}   m
-                       ON  m.GD      = bg.GD
-                      AND  m.batter  = bg.batter
-                      AND  m.game_pk = bg.game_pk
-            LEFT  JOIN raw_players    p   ON  p.player_id = bg.batter
-            LEFT  JOIN raw_teams      t   ON  t.team_id   = p.team_id
-            WHERE      bg.GD = ?
-            ORDER  BY  bg.hits DESC, m.predicted DESC
+                mp.batter                                               AS batter_id,
+                COALESCE(p.full_name, '#' || mp.batter)                 AS name,
+                COALESCE(t.abbreviation, '???')                         AS team,
+                p.position                                              AS pos,
+                mp.game_pk                                              AS game_pk,
+                mp.actual                                               AS actual,
+                ROUND(mp.predicted, 2)                                  AS predicted,
+                ROUND(mp.error, 2)                                      AS error
+            FROM       model_prediction   mp
+            LEFT JOIN  raw_players        p
+                   ON  p.player_id = mp.batter
+                  AND  p.GD = (
+                        SELECT MAX(p2.GD)
+                        FROM raw_players p2
+                        WHERE p2.player_id = mp.batter
+                  )
+            LEFT JOIN  raw_teams          t
+                   ON  t.team_id = p.team_id
+                  AND  t.GD = (
+                        SELECT MAX(t2.GD)
+                        FROM raw_teams t2
+                        WHERE t2.team_id = p.team_id
+                  )
+            WHERE      mp.model_name = ?
+              AND      mp.GD = ?
+            ORDER BY   mp.actual DESC, mp.predicted DESC
         """
-        return BbDB.query(sql, (gd_int,))
-
-
-    def query_predictions_for(self, model_view, gd):
-        gd_int = int(str(gd).replace("-", ""))
-        sql = f"""
-            SELECT
-                bg.batter                                               AS batter_id,
-                COALESCE(p.full_name, '#' || bg.batter)                AS name,
-                COALESCE(t.abbreviation, '???')                        AS team,
-                p.position                                             AS pos,
-                bg.game_pk                                             AS game_pk,
-                bg.hits                                                AS actual,
-                ROUND(m.predicted, 2)                                  AS predicted,
-                ROUND(m.predicted - bg.hits, 2)                        AS error
-            FROM       batter_games   bg
-            INNER JOIN {model_view}   m
-                       ON  m.GD      = bg.GD
-                      AND  m.batter  = bg.batter
-                      AND  m.game_pk = bg.game_pk
-            LEFT  JOIN raw_players    p   ON  p.player_id = bg.batter
-            LEFT  JOIN raw_teams      t   ON  t.team_id   = p.team_id
-            WHERE      bg.GD = ?
-            ORDER  BY  bg.hits DESC, m.predicted DESC
-        """
-        return BbDB.query(sql, (gd_int,))
+        return BbDB.query(sql, (model_name, gd_int))
 
     def overall_mae(self, days):
         scored      = [d for d in days if d[2] is not None]
@@ -349,3 +338,15 @@ class Predict(_BaseTab):
 
     def open_db(self):
         return sqlite3.connect(self.DB_PATH)
+
+
+    ################NEW CODE
+
+
+
+
+
+
+
+
+

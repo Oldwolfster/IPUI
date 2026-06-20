@@ -5,14 +5,15 @@ class FormBaseball(_BaseForm):
 
     TAB_LAYOUT = {
         "Pipe"      : ["all_in_one"                                         ],
-        #"Workbench" : [("controls",.2)    ,("source"  ,1.2), ("columns" ,.69),("tbl_ctrls",.2)],
-        "Workshop": [("database_browser", .4), ("source", 1.2), ("columns", .569), ("tbl_ctrls", .369)],
+        "DB"        : [("database_browser", .169), ("fld_registry", .269), ("the_object", .369), ("the_inspector", .2369)],
+        #"Pipe"      : ["all_in_one"                                         ],
+        "Workshop"  : [("database_browser", .4), ("source", 1.2), ("columns", .569), ("tbl_ctrls", .369)],
         "Predict"   : [("controls", 0.2),("by_model", 0.75)                 ],
-        #"Tree"      : ["TBD"                                                ],
         "SQL"       : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
+        "Log"       : ["all_in_one"],  # NEW
+        #"Registry"  : [("database_browser", .169),    ("registry_list", .3), ("columns ", .369),("tbl_ctrls", .369)],
+
         "Docs"      : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
-        "Kanban"    : ["todo"           ,"doing"            ,"done"         ],
-        "Breakout"  : ["greet"          , None              , "code"        ],
     }
     def shutdown(self): raise SystemExit
     def build(self):
@@ -21,7 +22,7 @@ class FormBaseball(_BaseForm):
     def build_header(self):
         header = Row(self)
         left = Row(header, flex_width=1)  # NEW - left container
-        Banner(header, "IPUI - Baseball v4", text_align='c', glow=True, flex_width=0,fit_content=True)
+        Banner(header, "IPUI - Baseball v5", text_align='c', glow=True, flex_width=0,fit_content=True)
         right = Row(header, flex_width=1)  # NEW - right container
 
         # Left content

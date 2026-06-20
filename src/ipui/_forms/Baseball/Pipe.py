@@ -3,27 +3,30 @@ from ipui._forms.Baseball.PipeMixinRawPull import MixinRawPull
 from ipui._forms.Baseball.PipeMixinXGBoost import MixinXGBoost
 from ipui._forms.Baseball.MgrDT import MgrDT
 from ipui import *
-from ipui._forms.Baseball.PipeMixinUpdate import MixinUpdate
+from ipui._forms.Baseball.PipeMixinUpdate import PipeMixinUpdate
 from ipui.utils.EZ import EZ
+from ipui._forms.Baseball.PipeMixinModelResults import MixinModelResults
 
-
-class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
+class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResults):#, MixinXGBoost):
     TIME_SLICES = [27,15,28,30,200,9999]
     TIME_SLICES = [2, 3, 8, 200, 9999]
+    FOREST_TABLES_TO_TRAIN = ["forest"]
     LAYERS = ["Raw", "ETL", "Feet", "Forest", "Predict"]
     PITCH_BUCKETS = {
         "FF": "fastball", "SI": "fastball", "FC": "fastball", "FA": "fastball",
         "SL": "breaking", "ST": "breaking", "CU": "breaking", "KC": "breaking", "SV": "breaking", "CS": "breaking",
         "CH": "offspeed", "FS": "offspeed", "SP": "offspeed", "FO": "offspeed",
     }
-    start_date = "2026-03-27"
-    end_date   = "2026-04-01"
+
 
     def ip_setup_early(self,ip):
         self.task_queue    = []
-        self.private_stale = False
+        self.private_stale = False     # not sure if this ended up being needed
         self.card_mode     = "detail"           # detail | field  (toggled in the header)
         self.update_btn_txt= "Run All"
+        self.start_date    = "2026-03-27"       # instance state, seeded once — survives rebuilds like card_mode
+        self.end_date      = "2026-03-30"
+        self.active_table = None
 
     def ip_activated(self,ip):          # called by TabSystem when user switches here
         #print("Am i firing")
@@ -57,39 +60,63 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
         Spacer(header)
         #self.btn_refresh_all  = Button(header, self.update_btn_txt, color_bg=Style.COLOR_BUTTON_CTA,  on_click=self.update_all)
         Button(header, self.update_btn_txt, color_bg=Style.COLOR_BUTTON_CTA, on_click=self.run_all)
-        TextBox(header, initial_value=Pipe.start_date, name="txt_start_date")
+        TextBox(header, initial_value=self.start_date, name="txt_start_date")
         Body(header, "to:")
-        TextBox(header, initial_value=Pipe.end_date, name="txt_end_date")
+        TextBox(header, initial_value=self.end_date, name="txt_end_date")
         Spacer(header)
         #Button(header, "Train XGB"  , on_click=lambda: self.train_xgb("forest"))
         Button(header, "Train XGB", on_click=self.train_xgb_clicked)
-        TextBox(header, initial_value="forest", name="txt_forest_table")
+        #TextBox(header, initial_value="forest", name="txt_forest_table")
         Button(header, "Refresh"       , on_click=self.refresh_pane)
         Button(header, self.toggle_label(), on_click=self.toggle_card_mode)
         Button(header, "Run TS"     , on_click=lambda: self.roll_up_ts("feet_batter"))
         Button(header, "Phoenix"    , on_click=self.nuke_clicked, color_bg=Style.COLOR_BUTTON_DANGER)
 
-    def refresh_pane(self): self.form.set_pane(0, self.all_in_one)
 
+    def commit_dates(self):
+        self.start_date = self.form.widgets["txt_start_date"].text
+        self.end_date   = self.form.widgets["txt_end_date"].text
+
+    def refresh_pane(self):
+        self.commit_dates()
+        self.set_pane(0, self.all_in_one)
 
 
     def train_xgb_clicked(self):
         print("Training XGB")
-        table = self.form.widgets["txt_forest_table"].text.strip()
-        if table not in BbDB.tables_for_layer("forest"):
+        selected = self.valid_forest_tables_to_train()
+        if not selected: return
+        for table in selected:
+            self.train_xgb(table)
+
+    def valid_forest_tables_to_train(self):
+        available = BbDB.tables_for_layer("forest")
+        missing   = [t for t in Pipe.FOREST_TABLES_TO_TRAIN if t not in available]
+        if missing:
             self.form.msgbox(
-                f"'{table}' is not a valid forest table.\n\n"
-                f"Available: {', '.join(BbDB.tables_for_layer('forest'))}",
+                f"Invalid forest table(s): {', '.join(missing)}\n\n"
+                f"Available: {', '.join(available)}",
                 MSG_BTNS_OK + MSG_ICON_WARNING,
                 "Invalid Forest Table",
             )
-            return
-        self.train_xgb(table)
-        #self.refresh_pane()
+            return []
+        if not Pipe.FOREST_TABLES_TO_TRAIN:
+            self.form.msgbox(
+                "No forest tables selected.\n\nClick a FOREST card to toggle training.",
+                MSG_BTNS_OK + MSG_ICON_WARNING,
+                "No Forest Tables",
+            )
+            return []
+        return list(Pipe.FOREST_TABLES_TO_TRAIN)
+
+
 
     def select_forest_table(self, tbl):
         print(f"select_forest_table  tbl={tbl}")
-        self.form.widgets["txt_forest_table"].set_text ( tbl)
+        if tbl in Pipe.FOREST_TABLES_TO_TRAIN: Pipe.FOREST_TABLES_TO_TRAIN.remove(tbl)
+        else:                                  Pipe.FOREST_TABLES_TO_TRAIN.append(tbl)
+        self.refresh_pane()
+
 
     def toggle_label(self):
         return "Fields" if self.card_mode == "detail" else "Details"
@@ -98,27 +125,22 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
         self.card_mode = "field" if self.card_mode == "detail" else "detail"
         self.refresh_pane()
 
-    # MixinXGBoost.py method: train_xgb  Update: BbDB + summary + refresh
+    # Pipe.py method: nuke_clicked  Update: msgbox now warns full-file delete
     def nuke_clicked(self):
         self.form.msgbox(
-            "Nuke etl + feet + forest layers?\n\n"
-            "All derived tables and views will be DROPPED\n"
-            "then recreated empty from schema.",
+            "PHOENIX — delete the ENTIRE database file?\n\n"
+            "Every layer (raw included) and the .db file itself\n"
+            "will be deleted, then rebuilt fresh from schema.\n"
+            "Same as your drop-bat + restart.",
             MSG_BTNS_YES_NO + MSG_ICON_QUESTION + MSG_DEFAULT_2,
-            "Nuke derived layers",
+            "Phoenix — full reset",
             on_result=self.do_nuke,
         )
 
+    # Pipe.py method: do_nuke  Update: hard reset via BbDB.phoenix(), then refresh
     def do_nuke(self, result):
         if result != MSG_RESULT_YES: return
-        print("nuke confirmed33")
-        for layer in ["etl", "feet", "forest"]:
-            for tbl in BbDB.tables_for_layer(layer):
-                BbDB.drop_table(tbl)
-        for v in BbDB.query("SELECT name FROM sqlite_master WHERE type='view'"):
-            BbDB.execute(f"DROP VIEW IF EXISTS {v[0]}")
-            BbDB.log(v[0], "dropped view")
-        BbDB.configure()
+        BbDB.phoenix()
         self.refresh_pane()
 
     # ════════════════════════════════════════════════
@@ -142,12 +164,19 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
             self.build_one_card(parent, tbl)
 
     def build_one_card(self, parent, tbl):
-        summary = BbDB.get_summary(tbl)
-        card    = Card(parent, pad=5)
+        summary  = BbDB.get_summary(tbl)
+        selected = BbDB.layer_of(tbl) == "forest" and tbl in Pipe.FOREST_TABLES_TO_TRAIN
+        color    = self.card_color(tbl, selected)
+        card     = Card(parent, pad=5, color_bg=color) if color else Card(parent, pad=5)
         if BbDB.layer_of(tbl) == "forest": card.on_click_me(lambda t=tbl: self.select_forest_table(t))
         self.build_card_header(card, tbl, summary)
-        refs    = self.build_card_body(card, tbl, summary)
+        refs     = self.build_card_body(card, tbl, summary)
         self.build_card_buttons(card, tbl, refs)
+
+    def card_color(self, tbl, selected):
+        if tbl == self.active_table: return Style.COLOR_TAB_STATUS_LINKED  # ← PICK THIS COLOR (distinct from the green)
+        if selected:                 return Style.COLOR_BUTTON_CTA
+        return None
 
     def build_card_header(self, card, tbl, summary):
         head = Row(card)
@@ -176,8 +205,8 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
     def build_card_buttons(self, card, tbl, refs):
         body_rows, body_range = refs if refs else (None, None)
         btns = Row(Plate(Plate(Plate(card,pad=2),pad=2),pad=4))
-        Button(btns, "Run"      ,flex_width=1, on_click=lambda t=tbl, br=body_rows, bg=body_range: self.refresh_table(t, br, bg))
-        Button(btns, "WB", flex_width=1, on_click=lambda t=tbl: self.view_in_workbench(t))  # NEW
+        Button(btns, "Run"      , flex_width=1, on_click=lambda t=tbl, br=body_rows, bg=body_range: self.refresh_table(t, br, bg))
+        Button(btns, "WB"       , flex_width=1, on_click=lambda t=tbl: self.view_in_workbench(t))  # NEW
         Button(btns, "SQL"      , flex_width=1, on_click=lambda t=tbl: self.view_in_sql(t))  # NEW
 
     def view_in_workbench(self, tbl):
@@ -231,7 +260,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
     def get_start_and_end_dates(self):
         try:
             start_gd = self.parse_textbox_date_to_gd("txt_start_date")
-            end_gd = self.parse_textbox_date_to_gd("txt_end_date")
+            end_gd   = self.parse_textbox_date_to_gd("txt_end_date")
         except (ValueError, KeyError) as e:
             BbDB.log("dates", f"bad input: {e}")
             EZ.err(f"Bad dates: {e}")
@@ -239,8 +268,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, MixinUpdate):#, MixinXGBoost):
             msg=f"start {start_gd} > end {end_gd}; aborting"
             BbDB.log("dates", f"start {start_gd} > end {end_gd}; aborting")
             EZ.err(msg)
-        Pipe.start_date = self.form.widgets["txt_start_date"].text
-        Pipe.end_date = self.form.widgets["txt_end_date"].text
+        self.commit_dates()
         return start_gd, end_gd
 
 

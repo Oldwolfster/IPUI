@@ -1,4 +1,4 @@
-# Lists of shit 
+# Lists of shit - ToDoBB.md
 
 ## Project Summary — 
 ### The shit this project does.
@@ -10,7 +10,7 @@
 **Convention over scaffolding — naming IS wiring:**
 - Table prefix = layer: raw_, etl_, feet_, forest_, predict_. `BbDB.layer_of()` derives layer from name.
 - `pull_{table}` view feeds a table. 
-  - `pull_mixin{table}`are subqueries formalized in a view.  Auto-discovered and editable from a table's workshop. 
+  - `pull_{table}_mixin_{suffix}` views are composable building blocks for `pull_{table}`. Auto-discovered and editable from a table's Workshop. 
   - `update_{table}*` views are auto-discovered and applied.
 - `sync_{table}` methods handle raw layer pulls. Discovered via `getattr`.
 - `t_` prefix on a column = XGBoost target. Keys are stripped for training, reattached for output.
@@ -46,14 +46,25 @@ Not refreshing pipe when clone table
 Struggling to change PK on UI
 vertical scroll works but only via mousewheel - not via keyboard 
 
+2.2) Building DB Tab
+
+2) DONE move name preview value to the BannerPlate of pane 3.  "Building ... " or Editing ...
+3) Done when clicking 'keys' on inspector it should select the keys that the table has.
+4) DONE:when in clone or edit mode.  no longer allow the db explorer(pane 0) change the table in the left grid.  do add doubleclicking a field adds ot the new version(keys up top - metrics at bottom)
+5) Done:move up/move down work, but the field is unhighlighted... after it moves field in grid rehighlight the  field 
+6) Donenew: Layer should be selected and suffix populated if it has been set when identity is clicked.
+7) issue screenshotsare for:  First image: before adding pitcher.  After: Added pitcher but deleted p_throws - removing pitcher does not add deleted field back.  but subsequent toggles of pitcher don't continue deleting fields
+
+
+
 
 ## Plan to add metrics.
 1) DONE - Build ETL Pipeline. (easily maintainable ETL) from Raw to Forest
 2) DONE - Build grain-agnositc XGB Model to Train any Forest table to predict any feature.
-3) DONE - Fields for "Model Views" are invariant. Automate recording summary results to a table - anytime a "Model" view is created, write the results, dates, and features, total MAE, Guy's line to a summary set of tables.
-   ) Record results to table from C (Actually one table per drill level - for speed at large aggregations)  No rolling up from atomic
+3) Fields for "Model Views" are invariant. Automate recording summary results to a table - anytime a "Model" view is created, write the results, dates, and features, total MAE, Guy's line to a summary set of tables.
+   A) DONE:Record results to table from C (Actually one table per drill level - for speed at large aggregations)  No rolling up from atomic
    B) Add "Regression Guard / Joy Meter" query from this table - add PROMINENTLY to Pipe page.
-   C) Add "Beats the line" number.   Color that fucking Forest table RED if it is negative. (requires new data source) 
+   C) Add "Beats the line" nmng Forest table RED if it is negative. (requires new data source) 
    D) Add "Beats GUY's line" number.   Color that fucking Forest table RED if it is negative. (DOES NOT requires new data source - it's the line i draw from log5 + other available baselines.)
 4) Build Walk forward process. (new button next to 'Run All')
    A) UI 
@@ -95,9 +106,8 @@ vertical scroll works but only via mousewheel - not via keyboard
    B) Leakage
    C) Null test (feature importance through ablation.)
    D) Counterfeit
-   D1) does feature only impact when not in presence of another feature that impacts better - probably O(N^2 :< ) 
-   D2) Fill rate should be one factor which to keep... accuracy... what else
-
+      D1) does feature only impact when not in presence of another feature that impacts better - probably O(N^2 :< ) 
+      D2) Fill rate should be one factor which to keep... accuracy... what else
     E) Score based on
     E2) lift
     E3) sample size
@@ -124,8 +134,8 @@ p = Pitcher (automates join to feet_pitcher)
 2. Metric (parts[1]): The core baseline statistic or analytical calculation.
 Examples: ba (Batting Average), ops (OPS), baa (Batting Average Against).
 
-3. Integer Window (parts[2]): A strict integer mapping directly to the TS dimension column in the database. Eliminates lookback string theater.
-200 = 200 PA rolling window.
+3. TimeSlice (parts[2]): A strict integer mapping directly to the TS dimension column in the database. Eliminates lookback string theater.
+200 = 200 day rolling window.
 9999 = Career/All-Time historical aggregate sentinel value.
 
 4. [Context1]_[Context2]... (parts[3+ - Optional): Relational platoon/situational splits. Must use explicit relational tokens to prevent naming collisions (e.g., vsR instead of HR to bypass Home Run brain fog).

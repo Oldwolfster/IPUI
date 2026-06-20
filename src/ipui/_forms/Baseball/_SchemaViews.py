@@ -120,6 +120,7 @@ class _SchemaViews:
             FROM etl_pa
             GROUP BY GD, pitcher, game_pk, stand
         """
+
     @classmethod
     def view_model_log5(cls):
         return """
@@ -179,24 +180,6 @@ class _SchemaViews:
             GROUP BY GD, batter, game_pk
         """
 
-
-    @classmethod
-    def view_model_xgb_v1(cls):
-        """XGBoost v1 — reads from predict_xgb_v1 table written by trainer."""
-        return """
-            SELECT
-                GD,
-                batter,
-                game_pk,
-                predicted
-            FROM predict_xgb_v1
-        """
-
-        # _SchemaViews.py  class: deleteme
-
-        # ═══ MIXIN VIEWS — building blocks, never materialized ═══
-
-        # _SchemaViews.py  class: deleteme
 
     @classmethod
     def view_pull_forest_mixin_pitcher_season(cls):
@@ -325,35 +308,32 @@ class _SchemaViews:
         """
 
     @classmethod
-    def view_model_forest_pa(cls):
+    def view_pull_forest_strikes(cls):
         return """
-            SELECT GD
-                 , batter
-                 , game_pk
-                 , SUM(predicted) as predicted
-                 , SUM(actual)    as actual
-            FROM predict_forest_pa
-            GROUP BY GD, batter, game_pk
+            SELECT
+                            m.GD,
+                            m.batter,
+                            m.game_pk,
+                            bg.hits          AS t_hits,
+                            b.ba             AS b_ba,
+                            p.ba_against     AS p_ba_against
+                        FROM      etl_matchup  m
+                        LEFT JOIN batter_games bg  ON bg.GD = m.GD AND bg.batter = m.batter AND bg.game_pk = m.game_pk
+                        LEFT JOIN feet_batter  b   ON b.batter  = m.batter  AND b.p_throws = m.p_throws AND b.TS = 200 AND b.GD = m.GD
+                        LEFT JOIN feet_pitcher p   ON p.pitcher = m.pitcher AND p.stand    = m.stand    AND p.TS = 200 AND p.GD = m.GD
         """
     @classmethod
-    def view_model_forest(cls):
+    def view_pull_forest_strikes_mixin_batter_season(cls):
         return """
-            SELECT GD
-                 , batter
-                 , game_pk
-                 , SUM(predicted) as predicted
-                 , SUM(actual)    as actual
-            FROM predict_forest
-            GROUP BY GD, batter, game_pk
+            SELECt batter, p_throws, ba,b_k_pct,b_woba
+                                                            FROM   feet_batter
+                                                            WHERE  TS = 200
         """
+
     @classmethod
-    def view_model_forest_pa_simplest(cls):
+    def view_pull_forest_strikes_mixin_pitcher_season(cls):
         return """
-            SELECT GD
-                 , batter
-                 , game_pk
-                 , SUM(predicted) as predicted
-                 , SUM(actual)    as actual
-            FROM predict_forest_pa_simplest
-            GROUP BY GD, batter, game_pk
+            SELECT pitcher, stand, ba_against, p_k_pct, p_woba_against
+                                    FROM   feet_pitcher
+                                    WHERE  TS = 200
         """

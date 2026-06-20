@@ -3,18 +3,20 @@
 from pathlib import Path
 import shutil
 from ipui._forms.Baseball.BbDB import BbDB
+from ipui._forms.Baseball.MgrDT import MgrDT
 from ipui.utils.EZ import EZ
 
 class MgrSchema:
     """Manages schema files and DB sync. Stateless — the files ARE the state."""
-    VIEWS_FILE  = Path(__file__).parent / "_SchemaViews.py"
-    TABLES_FILE = Path(__file__).parent / "_SchemaTbl.py"
-    BACKUP_DIR  = Path(__file__).parent / "docs" / "backup"
-
+    VIEWS_FILE                  = Path(__file__).parent / "_SchemaViews.py"
+    TABLES_FILE                 = Path(__file__).parent / "_SchemaTbl.py"
+    BACKUP_DIR                  = Path(__file__).parent / "docs" / "backup"
+    FIELDS_FILE                 = Path(__file__).parent / "_SchemaFlds.py"
+    CLONE_VERBATIM_PREFIXES     = ["update"]
     # ══════════════════════════════════════════════════════════════
     # CREATE TABLE — dispatcher
     # ══════════════════════════════════════════════════════════════
-    @staticmethod
+
     @staticmethod
     def create_table(table_name, columns):
         table_name    = MgrSchema.validate_name(table_name)
@@ -173,11 +175,11 @@ class MgrSchema:
     # ══════════════════════════════════════════════════════════════
 
     @staticmethod
-    def build_stub_select(table_name, columns):
+    def build_stub_selectOld(table_name, columns):
         if BbDB.layer_of(table_name) == "raw": return
-        if BbDB.layer_of(table_name) == "predict":
-            MgrSchema.build_predict_view(table_name)
-            return
+        if BbDB.layer_of(table_name) == "predict": return
+            #MgrSchema.build_predict_view(table_name)
+
         parts = ["0 AS GD"]
         if BbDB.layer_of(table_name) == "feet":
             parts.append("0 AS TS")
@@ -188,22 +190,17 @@ class MgrSchema:
         MgrSchema.save_view(f"pull_{table_name}", final)
 
 
-    @staticmethod
-    def build_predict_view(table_name):
-        """Model view always aggregates to (GD, batter, game_pk).
-           Game-grain: SUM over one row = no-op.  PA-grain: SUM = expected hits."""
-        model_name = table_name.replace("predict_", "model_", 1)
-        select_sql = (
-            f"SELECT GD\n"
-            f"     , batter\n"
-            f"     , game_pk\n"
-            f"     , SUM(predicted) as predicted\n"
-            f"     , SUM(actual)    as actual\n"
-            f"FROM {table_name}\n"
-            f"GROUP BY GD, batter, game_pk"
-        )
-        MgrSchema.save_view(model_name, select_sql)
-        BbDB.log(table_name, f"predict view '{model_name}' created")
+    def build_stub_select(table_name, columns):
+        if BbDB.layer_of(table_name) == "raw": return
+        if BbDB.layer_of(table_name) == "predict": return       # REPLACE old build_predict_view call
+        parts = ["0 AS GD"]
+        if BbDB.layer_of(table_name) == "feet":
+            parts.append("0 AS TS")
+        for col in columns:
+            val   = "''" if col['type'] == 'TEXT' else "0.0" if col['type'] == 'REAL' else "0"
+            parts.append(f"{val:<45s}AS {col['name']}")
+        final =  "SELECT\n    " + ",\n    ".join(parts)
+        MgrSchema.save_view(f"pull_{table_name}", final)
 
     # ══════════════════════════════════════════════════════════════
     # VIEW HELPERS
@@ -294,3 +291,194 @@ class MgrSchema:
         if not name.replace('_', '').isalnum():         raise ValueError(f"Invalid schema name: {name}")
         if name[0].isdigit():   raise ValueError(f"Schema name cannot start with a number: {name}")
         return name
+
+
+
+
+    # ══════════════════════════════════════════════════════════════
+    # FIELDS — upsert/delete a _registry vocab row, file stays in sync
+    # ══════════════════════════════════════════════════════════════
+    @staticmethod
+    def flds_upsert(kind, token, definition, dtype):
+        """Save one (kind, token) vocab row: DB, then the file."""
+        if not dtype: EZ.err(f"({kind}, {token}) has no dtype — every field needs one.")
+        MgrSchema.delete_if_exists_in_db(kind, token)
+        MgrSchema.insert_to_db(kind, token, definition, dtype)
+        MgrSchema.update_SchemaFlds(kind, token, definition, dtype)
+
+    @staticmethod
+    def flds_delete(kind, token):
+        """Delete one (kind, token) vocab row: DB, then the file."""
+        MgrSchema.delete_if_exists_in_db(kind, token)
+        MgrSchema.remove_from_SchemaFlds(kind, token)
+
+    @staticmethod
+    def delete_if_exists_in_db(kind, token):
+        BbDB.execute("DELETE FROM _registry WHERE kind=? AND token=?", (kind, token))
+
+    @staticmethod
+    def insert_to_db(kind, token, definition, dtype):
+        BbDB.execute("INSERT INTO _registry (GD, kind, token, definition, dtype) VALUES (?,?,?,?,?)",  # NEW
+                     (MgrDT.today_gd(), kind, token, definition, dtype))  # NEW
+
+    @staticmethod
+    def sync_fields_to_db():
+        """Startup call: insert every _SchemaFlds.py line missing from _registry."""
+        import importlib
+        from ipui._forms.Baseball import _SchemaFlds
+        importlib.reload(_SchemaFlds)
+        for line in _SchemaFlds._SchemaFlds.FIELDS:
+            kind, token, definition, dtype = MgrSchema.parse_field_line(line)
+            exists = BbDB.query("SELECT 1 FROM _registry WHERE kind=? AND token=?", (kind, token))
+            if not exists:
+                MgrSchema.insert_to_db(kind, token, definition, dtype)
+
+    # ── _SchemaFlds.py — find/sandwich/remove a single line by (kind, token) ───
+    @staticmethod
+    def update_SchemaFlds(kind, token, definition, dtype):
+        """Replace this (kind, token)'s line in place if it exists, else append it —
+           top + [new_line] + bottom is the whole trick."""
+        MgrSchema.backup_file(MgrSchema.FIELDS_FILE)
+        new_line       = MgrSchema.format_field_line(kind, token, dtype, definition)
+        top, _, bottom = MgrSchema.split_around_field_line(kind, token)
+        final          = MgrSchema.splice_fields_list(top, new_line, bottom)
+        MgrSchema.write_file(MgrSchema.FIELDS_FILE, final)
+
+    @staticmethod
+    def remove_from_SchemaFlds(kind, token):
+        """Drop this (kind, token)'s line from _SchemaFlds.py entirely — no replacement."""
+        MgrSchema.backup_file(MgrSchema.FIELDS_FILE)
+        top, old_line, bottom = MgrSchema.split_around_field_line(kind, token)
+        final = MgrSchema.splice_fields_list(top, None, bottom)
+        MgrSchema.write_file(MgrSchema.FIELDS_FILE, final)
+
+    @staticmethod
+    def split_around_field_line(kind, token):
+        """(top_lines, matched_line_or_None, bottom_lines) split on this (kind, token)'s
+           line. top/bottom are everything above/below it; matched line is excluded from both."""
+        file_text = MgrSchema.read_file(MgrSchema.FIELDS_FILE)
+        lines     = file_text.splitlines(keepends=True)
+        needle    = f"{kind:<9s}{token:<10s}"
+        for i, line in enumerate(lines):
+            if needle in line: return lines[:i], line, lines[i + 1:]
+        return lines, None, []
+
+    @staticmethod
+    def splice_fields_list(top, new_line, bottom):
+        """Rejoin top + [new_line] + bottom (new_line=None means just drop it),
+           inserting before the closing ']' when there's no bottom to anchor on."""
+        entry = [] if new_line is None else [f"        {new_line!r},\n"]
+        if bottom: return ''.join(top + entry + bottom)
+        for i in range(len(top) - 1, -1, -1):
+            if ']' in top[i]: return ''.join(top[:i] + entry + top[i:])
+        return ''.join(top + entry)
+
+    @staticmethod
+    def format_field_line(kind, token, dtype, definition):
+        """'kind  token  dtype  definition', tightly padded — kind/token/dtype never contain
+           a space, so they're always readable as the line's first 3 whitespace tokens."""
+        return f"{kind:<9s}{token:<10s}{dtype:<9s}{definition}"
+
+    @staticmethod
+    def parse_field_line(line):
+        """'kind  token  dtype  definition' → (kind, token, definition, dtype)."""
+        kind, token, dtype, definition = line.split(maxsplit=3)
+        return kind, token, definition.strip(), dtype
+
+
+    # ══════════════════════════════════════════════════════════════
+    # ETL VIEW CLONING
+    # ══════════════════════════════════════════════════════════════
+    # MgrSchema.py method: clone_etl_views_entrypoint  New: orchestrate ETL view cloning
+
+    @staticmethod
+    def clone_etl_views_ENTRYPOINT(source, new):
+        """Clone all ETL views (updates, mixins, pull) from source table to new table."""
+        for prefix in MgrSchema.CLONE_VERBATIM_PREFIXES:
+            MgrSchema.clone_verbatim_view(prefix, source, new)
+        MgrSchema.clone_mixin_views(source, new)
+        MgrSchema.clone_pull_view(source, new)
+
+    # MgrSchema.py method: clone_verbatim_view  New: copy a prefixed view with identical SQL
+    @staticmethod
+    def clone_verbatim_view(prefix, source, new):
+        """Clone {prefix}_{source} → {prefix}_{new} with identical SQL."""
+        sql = MgrSchema.view_select_sql(f"{prefix}_{source}")
+        if sql: MgrSchema.save_view(f"{prefix}_{new}", sql)
+
+    # MgrSchema.py method: clone_mixin_views  New: copy all mixin views for a table
+    @staticmethod
+    def clone_mixin_views(source, new):
+        """Clone every pull_{source}_mixin_{desc} → pull_{new}_mixin_{desc}."""
+        prefix = f"pull_{source}_mixin_"
+        rows   = BbDB.query("SELECT name FROM sqlite_master WHERE type='view' AND name LIKE ?", (f"{prefix}%",))
+        for (name,) in rows:
+            desc = name[len(prefix):]
+            sql  = MgrSchema.view_select_sql(name)
+            if sql: MgrSchema.save_view(f"pull_{new}_mixin_{desc}", sql)
+
+    # MgrSchema.py method: clone_pull_view  New: copy pull view, updating mixin references
+    @staticmethod
+    def clone_pull_view(source, new):
+        """Clone pull_{source} → pull_{new}, updating mixin references in SQL."""
+        sql = MgrSchema.view_select_sql(f"pull_{source}")
+        if not sql: return
+        sql = sql.replace(f"pull_{source}_mixin_", f"pull_{new}_mixin_")
+        MgrSchema.save_view(f"pull_{new}", sql)
+
+    # MgrSchema.py method: view_select_sql  New: extract bare SELECT from sqlite_master
+    @staticmethod
+    def view_select_sql(view_name):
+        """Bare SELECT from sqlite_master, or None if view doesn't exist."""
+        import re
+        rows = BbDB.query("SELECT sql FROM sqlite_master WHERE type='view' AND name=?", (view_name,))
+        if not rows or not rows[0][0]: return None
+        match = re.search(r'\bAS\b\s+', rows[0][0], re.IGNORECASE)
+        if not match: return None
+        return rows[0][0][match.end():]
+
+
+    @staticmethod
+    def delete_table_entrypoint(table_name):
+        """Delete a table: drop views, remove from _SchemaTbl.py, drop from DB."""
+        MgrSchema.delete_table_views(table_name)
+        MgrSchema.remove_from_tbl_schema(table_name)
+        BbDB.drop_table(table_name)
+        BbDB.execute("DELETE FROM _summary WHERE tbl = ?", (table_name,))
+        BbDB.log(table_name, "deleted (table + views + schema)")
+
+    # MgrSchema.py method: delete_table_views  New: find and delete all associated views
+    @staticmethod
+    def delete_table_views(table_name):
+        """Delete all pull, mixin, and update views associated with this table."""
+        for prefix in MgrSchema.CLONE_VERBATIM_PREFIXES:
+            MgrSchema.delete_one_view(f"{prefix}_{table_name}")
+        rows = BbDB.query("SELECT name FROM sqlite_master WHERE type='view' AND name LIKE ?",
+                          (f"pull_{table_name}_mixin_%",))
+        for (name,) in rows:
+            MgrSchema.delete_one_view(name)
+        MgrSchema.delete_one_view(f"pull_{table_name}")
+
+    # MgrSchema.py method: delete_one_view  New: drop from DB + remove from _SchemaViews.py
+    @staticmethod
+    def delete_one_view(view_name):
+        """Drop a view from the DB and remove its method from _SchemaViews.py."""
+        BbDB.execute(f"DROP VIEW IF EXISTS {view_name}")
+        bounds = MgrSchema.find_method_bounds(MgrSchema.read_file(MgrSchema.VIEWS_FILE), view_name)
+        if bounds is None: return
+        MgrSchema.backup_file(MgrSchema.VIEWS_FILE)
+        lines      = MgrSchema.read_file(MgrSchema.VIEWS_FILE).splitlines(keepends=True)
+        start, end = bounds
+        MgrSchema.write_file(MgrSchema.VIEWS_FILE, ''.join(lines[:start] + lines[end:]))
+
+    # MgrSchema.py method: remove_from_tbl_schema  New: strip table block from _SchemaTbl.py
+    @staticmethod
+    def remove_from_tbl_schema(table_name):
+        """Remove this table's block from _SchemaTbl.py."""
+        file_text         = MgrSchema.read_file(MgrSchema.TABLES_FILE)
+        remove, first_idx = MgrSchema.find_table_block_lines(file_text, table_name)
+        if not remove: return
+        MgrSchema.backup_file(MgrSchema.TABLES_FILE)
+        lines = file_text.splitlines(keepends=True)
+        MgrSchema.write_file(MgrSchema.TABLES_FILE,
+                             ''.join(line for i, line in enumerate(lines) if i not in remove))

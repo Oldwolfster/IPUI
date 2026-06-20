@@ -9,9 +9,31 @@ class MixinRawPull:
     # ══════════════════════════════════════════════════════════════
     # RAW PITCHES — pybaseball.statcast, one day at a time
     # ══════════════════════════════════════════════════════════════
+    # ══════════════════════════════════════════════════════════════
+    # RAW LAYER
+    # ══════════════════════════════════════════════════════════════
+    def run_raw_layer(self, gd):
+        """raw tables use sync_ methods — drip highlight then work, just like the derived layers"""
+        for tbl in BbDB.tables_for_layer("raw"):
+            self.ip.drip(self.logthe_table, tbl, gd)
+            self.ip.drip(self.run_raw_table, gd, tbl)
+
+    def run_raw_table(self, gd, tbl):
+        if self.raw_table_already_loaded(tbl, gd): return
+        method = getattr(self, f"sync_{tbl}", None)
+        if method:
+            method(gd)
+            BbDB.update_summary(tbl)
+        self.refresh_pane()
+
+    def raw_table_already_loaded(self, tbl, gd):
+        if tbl=="raw_pitches": return BbDB.has_rows_on_or_past(tbl,gd)
+        else:                  return  BbDB.has_rows_on_or_past(tbl)
+
+
 
     def sync_raw_pitches(self, gd):
-        BbDB.log("raw_pitches", f"pull starting: GD= {gd}")
+        #BbDB.log("raw_pitches", f"pull starting: GD= {gd}")
         t_overall  = _time.time()
         total_rows = 0
         known_cols = self.known_raw_pitches_cols()
@@ -32,11 +54,11 @@ class MixinRawPull:
         df = self.conform_pitches_df(df, gd, known_cols)
         n  = self.replace_day_pitches(gd, df)
         ms = int((_time.time() - t_day) * 1000)
-        BbDB.log("raw_pitches", f"{day_str} inserted {n} rows ({ms}ms)")
+        #BbDB.log("raw_pitches", f"{day_str} inserted {n} rows ({ms}ms)")
         total_rows += n
 
         ms_total = int((_time.time() - t_overall) * 1000)
-        BbDB.log("raw_pitches", f"pull complete: {total_rows} rows ({ms_total}ms)")
+        #BbDB.log("raw_pitches", f"pull complete: {total_rows} rows ({ms_total}ms)")
 
     def conform_pitches_df(self, df, gd_int, known_cols):
         df['GD'] = gd_int
@@ -55,8 +77,7 @@ class MixinRawPull:
         import sqlite3
         conn = sqlite3.connect(BbDB.DB_PATH)
         cur  = conn.execute("DELETE FROM raw_pitches WHERE GD = ?", (gd_int,))
-        if cur.rowcount > 0:
-            BbDB.log("raw_pitches", f"GD {gd_int} replaced {cur.rowcount} existing rows")
+        #if cur.rowcount > 0:          BbDB.log("raw_pitches", f"GD {gd_int} replaced {cur.rowcount} existing rows")
         df.to_sql("raw_pitches", conn, if_exists="append", index=False)
         conn.commit()
         conn.close()
@@ -72,7 +93,7 @@ class MixinRawPull:
 
     def sync_raw_teams(self, start_gd):
         import statsapi
-        BbDB.log("raw_teams", "pulling teams")
+        #BbDB.log("raw_teams", "pulling teams")
         gd    = MgrDT.today_gd()
         teams = statsapi.get('teams', {'sportId': 1})['teams']
         rows  = 0
@@ -97,7 +118,7 @@ class MixinRawPull:
                 t.get('division', {}).get('name', ''),
             ))
             rows += 1
-        BbDB.log("raw_teams", f"loaded {rows} teams")
+        #BbDB.log("raw_teams", f"loaded {rows} teams")
 
     # ══════════════════════════════════════════════════════════════
     # RAW PLAYERS — statsapi, IDs from raw_pitches (not etl_pa!)
@@ -105,14 +126,14 @@ class MixinRawPull:
 
     def sync_raw_players(self, start_gd):
         import statsapi
-        BbDB.log("raw_players", "pulling players")
+        #BbDB.log("raw_players", "pulling players")
         gd  = MgrDT.today_gd()
         ids = [r[0] for r in BbDB.query("""
             SELECT DISTINCT batter  FROM raw_pitches
             UNION
             SELECT DISTINCT pitcher FROM raw_pitches
         """)]
-        BbDB.log("raw_players", f"found {len(ids)} unique player IDs")
+        #BbDB.log("raw_players", f"found {len(ids)} unique player IDs")
         rows = 0
         for i in range(0, len(ids), 100):
             batch  = ids[i:i + 100]
@@ -146,4 +167,4 @@ class MixinRawPull:
                     p.get('primaryNumber', ''),
                 ))
                 rows += 1
-        BbDB.log("raw_players", f"loaded {rows} players")
+        #BbDB.log("raw_players", f"loaded {rows} players")

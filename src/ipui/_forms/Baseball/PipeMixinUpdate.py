@@ -3,7 +3,7 @@ from ipui._forms.Baseball.MgrDT import MgrDT
 from ipui.utils.EZ import EZ
 
 
-class MixinUpdate:
+class PipeMixinUpdate:
     """
     This mixin is meant to contain all the logic for the ETL process
     """
@@ -20,6 +20,7 @@ class MixinUpdate:
 
     def reset_run_btn(self):
         self.update_btn_txt = "Run All"
+        self.active_table   = None
         self.refresh_pane()
 
 
@@ -28,6 +29,7 @@ class MixinUpdate:
         for gd in MgrDT.gd_range(start_gd, target_gd):
             if gd == target_gd: self.run_target_day(gd)        # the held-out day
             else:               self.run_one_day(gd)           # normal training day
+        self.run_predict_layer(gd)
 
     def run_target_day(self,target_date):
         """Eventually we switch this to switchable from in pitches for research to tomorrows matchup for real use"""
@@ -45,12 +47,16 @@ class MixinUpdate:
     def update_layer(self, layer, gd):
         """loop tables, dispatch each"""
         for tbl in BbDB.tables_for_layer(layer):
-            #self.update_table(tbl, gd)
-            self.ip.drip(self.update_table,tbl, gd)
+            self.ip.drip(self.logthe_table, tbl, gd)
+            self.ip.drip(self.update_table, tbl, gd)
+
+    def logthe_table(self, tbl, gd):
+        self.active_table = tbl
+        BbDB.log(tbl, f"updating {tbl} for GD={gd}")
+        self.refresh_pane()
 
     def update_table(self, tbl, gd):
         """Steps for updating a derived table"""
-        BbDB.log(tbl, f"updating {tbl}")
         row_count = BbDB.execute(f"delete from {tbl} where gd=?",(gd,))
         if row_count: BbDB.log(tbl, f"{tbl}: Records Deleted:{row_count}")
         BbDB.upsert_from_view(tbl, gd)
@@ -115,21 +121,24 @@ class MixinUpdate:
             print  (f"sql={sql}")
             BbDB.log(tbl, f"updated {set_cols} from {view}")
 
-
     # ══════════════════════════════════════════════════════════════
-    # RAW LAYER
+    # XGB Prediction
     # ══════════════════════════════════════════════════════════════
-    def run_raw_layer(self, gd):
-        """raw tables use sync_ methods"""
-        for tbl in BbDB.tables_for_layer("raw"): self.ip.drip(self.run_raw_table,gd,tbl)
+    def run_predict_layer(self, gd):
+        for tbl in self.valid_forest_tables_for_predict_layer():
+            self.ip.drip(self.train_forest_table, tbl, gd)
+        self.ip.drip(self.load_log5_model)
 
-    def run_raw_table(self, gd,tbl):
-        if self.raw_table_already_loaded(tbl,gd): return
-        method = getattr(self, f"sync_{tbl}", None)
-        if method:
-            method(gd)
-            BbDB.update_summary(tbl)
+    def valid_forest_tables_for_predict_layer(self):
+        selected  = list(getattr(self, "FOREST_TABLES_TO_TRAIN", []))
+        available = BbDB.tables_for_layer("forest")
+        missing   = [t for t in selected if t not in available]
+        if missing: BbDB.log("predict", f"skipping missing forest table(s): {', '.join(missing)}")
+        return [t for t in selected if t in available]
 
-    def raw_table_already_loaded(self, tbl, gd):
-        if tbl=="raw_pitches": return BbDB.has_rows_on_or_past(tbl,gd)
-        else:                  return  BbDB.has_rows_on_or_past(tbl)
+
+    # PipeMixinUpdate.py method: train_forest_table  NEW: drip-safe XGB wrapper
+    def train_forest_table(self, tbl, gd):
+        BbDB.log("predict", f"training {tbl} @ {MgrDT.gd_to_iso(gd)}")
+        self.train_xgb(tbl)
+

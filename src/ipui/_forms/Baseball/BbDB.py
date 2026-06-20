@@ -10,6 +10,7 @@ class BbDB:
     Summary = namedtuple('Summary', 'gd rows cols min_gd max_gd')
     pipe_log_display = None
     pipe_log_text = ""
+    LOG_TO_FILE = True
 
     # ══════════════════════════════════════════════════════════════
     # ENTRY POINT — one call at startup, everything exists after.
@@ -19,6 +20,9 @@ class BbDB:
     def configure(cls):
         Path(cls.DB_PATH).parent.mkdir(parents=True, exist_ok=True)
         cls.materialize_all_tables()
+
+        from ipui._forms.Baseball.MgrSchema import MgrSchema
+        MgrSchema.sync_fields_to_db()
         from ipui._forms.Baseball._SchemaViews import _SchemaViews
         _SchemaViews.create_all(cls.DB_PATH)
         if not cls.query("SELECT 1 FROM _summary LIMIT 1"): cls.update_summary_all()
@@ -48,6 +52,12 @@ class BbDB:
         conn.close()
         return rc
 
+    @classmethod
+    def execute_many(cls, sql, params_list):
+        conn = sqlite3.connect(cls.DB_PATH)
+        conn.executemany(sql, params_list)
+        conn.commit()
+        conn.close()
     # ══════════════════════════════════════════════════════════════
     # TABLE HELPERS
     # ══════════════════════════════════════════════════════════════
@@ -173,12 +183,26 @@ class BbDB:
     # ══════════════════════════════════════════════════════════════
 
     @classmethod
+    def log_path(cls, now=None):
+        if now is None: now = datetime.now()
+        return Path(cls.DB_PATH).parent / f"baseball_{now.strftime('%Y%m%d')}.log"
+
+    @classmethod
     def log(cls, target, msg):
-        ts   = datetime.now().strftime("%H:%M:%S")
+        now  = datetime.now()
+        ts   = now.strftime("%H:%M:%S")
         line = f"[{ts}] {target:20s} {msg}"
         print(line)
+
+        if cls.LOG_TO_FILE:
+            try:
+                Path(cls.DB_PATH).parent.mkdir(parents=True, exist_ok=True)
+                with open(cls.log_path(now), "a", encoding="utf-8") as f:
+                    f.write(line + "\n")
+            except Exception as e:
+                print(f"[{ts}] {'log_file':20s} failed: {e}")
+
         cls.pipe_log_text=f"{line}\n{cls.pipe_log_text}"
-        if cls.pipe_log_display: cls.pipe_log_display.text = cls.pipe_log_text
 
     # ══════════════════════════════════════════════════════════════
     # MATERIALIZATION — _SchemaTbl.SCHEMA → physical tables.
@@ -304,3 +328,34 @@ class BbDB:
         conn.close()
         return names
 
+    @classmethod
+    def phoenix(cls):
+        cls.delete_db_files()                                          # ashes
+        cls.configure()                                               # rise
+        day  = cls.phoenix_count_today()    + 1                       # includes this rise
+        life = cls.phoenix_count_lifetime() + 1                       # includes this rise
+        cls.log("Phoenix", f"🔥 Phoenix #{day} - {'':32s}lifetime #{life}")
+
+    # BbDB.py method: phoenix_count_lifetime  NEW: sum 🔥 across every daily log (survives nuke)
+    @classmethod
+    def phoenix_count_lifetime(cls):
+        folder = cls.log_path().parent
+        total  = 0
+        for f in folder.glob("baseball_*.log"):
+            total += f.read_text(encoding="utf-8").count("🔥")
+        return total
+
+    # BbDB.py method: delete_db_files  NEW: remove db + sqlite sidecars (wal/shm/journal)
+    @classmethod
+    def delete_db_files(cls):
+        p     = Path(cls.DB_PATH)
+        kill  = [p, p.with_suffix(".db-wal"), p.with_suffix(".db-shm"), p.with_suffix(".db-journal")]
+        for f in kill:
+            f.unlink(missing_ok=True)
+
+    # BbDB.py method: phoenix_count_today  NEW: count prior rises in today's log (survives nuke)
+    @classmethod
+    def phoenix_count_today(cls):
+        path = cls.log_path()
+        if not path.exists(): return 0
+        return path.read_text(encoding="utf-8").count("🔥")

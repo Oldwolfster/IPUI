@@ -385,6 +385,7 @@ class TabStrip(_BaseWidget):
         method_name = builder.replace(" ", "_")
         if hasattr(self.form, method_name):
             self.tab_cache[tab_name] = self.form  # to support the 'one pager' version.
+            self.form.tab_name = tab_name#STamp added 6/17/2026 so baseform can setPane to self
             return self.form
         return self.resolve_tab(tab_name)
 
@@ -414,6 +415,7 @@ class TabStrip(_BaseWidget):
         tab_class = self.load_tab_class(found[0], tab_name)
         instance   = tab_class(self.form)
         self.tab_cache[tab_name] = instance
+        instance.tab_name = tab_name #Stamp added 6/17/2026 so _BasTab can setPane on itself instead of active tab
         return instance
 
 
@@ -470,6 +472,7 @@ class TabStrip(_BaseWidget):
                 pane.children.clear()
                 self.invoke_builder         ( tab_name, builder, pane, *args, **kwargs)
             # Removed 4/22 self.form.layout_engine.RunLayout()
+        else:    self.content_cache.pop(tab_name, None) # cached content has been updated
 
     def grow_tab_layout(self, index, tab_name):
         entries = self.tab_layout[tab_name]

@@ -14,7 +14,7 @@ __all__ = [
     # Input constants
     "Key", "Mouse",
     # Widgets
-    "Button", "Card", "Chart", "DropDown", "Plate",
+    "Button", "Card", "Chart", "DropDown", "Plate","ButtonGroup",
     "NetworkDiagram", "NeuronCell", "PowerGrid",
     "ProjectListItem", "Row", "CardCol", "CardRow", "Col",
     "SelectableListItem", "SelectionList", "Spacer",
@@ -66,7 +66,7 @@ from ipui.engine.MgrFont                import MgrFont
 from ipui.engine.Key                    import Key
 from ipui.engine.Mouse                  import Mouse
 from ipui.engine.WidgetsDict            import WidgetsDict
-
+from ipui.widgets.ButtonGroup           import ButtonGroup
 from ipui.widgets.Button                import Button
 from ipui.widgets.Card                  import Card
 from ipui.widgets.Plate                 import Plate

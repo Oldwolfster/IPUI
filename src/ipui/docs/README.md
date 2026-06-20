@@ -14,7 +14,7 @@ A lightweight, opinionated Python/Pygame UI framework that makes building comple
 > IPUI is developed and tested against `pygame-ce`. It is imported in code as `pygame`.
 
 
-> Full installation in section 2 but if you are just looking for the  pip command...
+> Full installation below but if you are just looking for the  pip command...
 
 ```bash
 python -m pip install ipui
@@ -99,7 +99,7 @@ python -m pip install ipui
 - 📜 **One-Touch Scrolling:** Make any Card scrollable with a single parameter—no complex viewport setup required. Scrollbars are styled automatically.
 - 📱 **Resolution Independent:** UI scales automatically to physical screen height, so it stays usable on an old laptop or a 4K monitor.  **Changing aspect ratio can still cause issues**
 - 🔄 **Multiple Update Styles:** Use DAG-based reactivity, pipeline-driven synchronization, or direct widget access—whichever fits the job best.
-- 🎨 **Styles and Palettes you can skin to whatever tastes/colors you need.
+- 🎨 **Styles and Palettes:** You can skin to whatever tastes/colors you need.
 - ⛓️ **Data Pipeline:** Bind widgets to a Pipeline Key and let IPUI propagate updates automatically. Derives stay in sync with zero manual update code.
 - 🎮 **Pygame Lifecycle Hooks:** `ip_think`, `ip_draw`, and `ip_draw_hud` give you full access to the game loop without fighting the framework.
 - 💡 **Multi-Tier Tooltips:** Choose between standard hover tips or "Super Tooltips"—pinnable, scrollable windows capable of displaying deep technical data.
@@ -314,7 +314,7 @@ It's not a dead stub — it's a **cookbook** of live code you can immediately cl
 
 ### Step 3: Customize and Scale
 
-IPUI generates Widgets.py a placeholder method named after the first pane you declared in TAB_LAYOUT. 
+IPUI generates Widgets.py with a placeholder method named after the first pane you declared in TAB_LAYOUT. 
 
 Replace the placeholder content 
 > **In Widgets.py delete placeholder lines (11-39)**:
@@ -421,10 +421,12 @@ Every pane method receives a `parent` parameter — the root widget of that pane
 
 > Each pane has 1 tree and parent is the trunk.
 
+```python
 def demo(self, parent):            # ← parent is this pane's root widget
     card = CardCol(parent)         # card attaches to the pane
     Title(card, "My Tree")         # Title attaches to card
     Heading(card, "Same parent")   # also attaches to card
+```
 
 No `add()`. No `pack()`. No `grid()`. Construction IS attachment — an entire
 class of "widget exists but isn't visible" bugs is gone.
