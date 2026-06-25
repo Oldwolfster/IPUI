@@ -77,6 +77,7 @@ class MixinXGBoost:
         model = self.fit_model(df_train, out_table)
         self.ensure_predict_table(df_predict, out_table)
         preds = self.predict_and_write(model, df_predict, out_table)
+        self.enrich_predictions(out_table)
         self.evaluate(df_predict, preds, out_table)
         self.load_model_tables(forest_table, out_table, df_train, df_predict, target)
         BbDB.update_summary(out_table)
@@ -157,7 +158,7 @@ class MixinXGBoost:
         return hits[0]
 
 
-    def ensure_predict_table(self, df, out_table):
+    def ensure_predict_tableOLD(self, df, out_table):
         keys    = [k for k in self.key_cols(df) if k != "GD"]
         columns = [{"name": k, "type": "INTEGER", "pk": True} for k in keys]
         columns.append({"name": "predicted", "type": "REAL", "pk": False})
@@ -166,6 +167,29 @@ class MixinXGBoost:
         MgrSchema.create_table(out_table, columns)
 
 
+    def ensure_predict_table(self, df, out_table):
+        keys    = [k for k in self.key_cols(df) if k != "GD"]
+        columns = [{"name": k, "type": "INTEGER", "pk": True} for k in keys]
+        columns.append({"name": "predicted",      "type": "REAL",    "pk": False})
+        columns.append({"name": "actual",          "type": "REAL",    "pk": False})
+        columns.append({"name": "boxscore_name",   "type": "TEXT",    "pk": False})  # NEW
+        columns.append({"name": "team",             "type": "TEXT",    "pk": False})  # NEW
+        columns.append({"name": "position",         "type": "TEXT",    "pk": False})  # NEW
+        from ipui._forms.Baseball.MgrSchema import MgrSchema
+        MgrSchema.create_table(out_table, columns)
+
+    def enrich_predictions(self, out_table):
+        """Stamp boxscore_name, team abbreviation, and position from raw_players + raw_teams."""
+        sql = f"""
+            UPDATE {out_table}
+            SET boxscore_name = p.boxscore_name
+              , team          = t.abbreviation
+              , position      = p.position
+            FROM raw_players p
+            LEFT JOIN raw_teams t ON p.team_id = t.team_id
+            WHERE {out_table}.batter = p.player_id
+        """
+        BbDB.execute(sql)
 
     # ══════════════════════════════════════════════════════════════
     # PipeMixinXGBoost.py method: predict_and_write  NEW (replaces write_predictions)

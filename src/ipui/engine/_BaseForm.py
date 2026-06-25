@@ -53,6 +53,7 @@ class _BaseForm(_BaseWidget):
         self.modal_msg      = None
         self.tab_strip      = None
         self.pinned_tooltip = None
+        self.active_dropdown = None
         super().__init__    ( parent=None)
         self                . setup()
         self                . build_footer()

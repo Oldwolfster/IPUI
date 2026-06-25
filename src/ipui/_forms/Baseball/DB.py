@@ -38,28 +38,32 @@ class DB(_BaseTab):
 
     KINDS  = ["Entity", "Metric", "Context", "Key"]                     # Key is the new 4th kind — carries a dtype, like Metric
     DTYPES = ["TEXT", "INTEGER", "REAL", "NUMERIC", "BLOB"]
-
+    VIEW_NAME_TRIM = 20
     # ── lifecycle ───────────────────────────────────────────────────────────────────
     def ip_setup_early(self, ip):
         """Init every pane's state: browser filter/selection, registry filter, selected object,
            edit/clone mode + proposed-columns + selected-row, and the Inspector's facet/layer/suffix."""
-        self.private_db_filter   = "all"                                # browser:  all | table | view
-        self.private_db_selected = None                                 # browser:  drilled-into object (detail view)
-        self.private_reg_filter  = None                                 # registry: kind filter (None = all)
-        self.current_table       = None                                 # object selected for Pane 2
+        self.private_db_filter      = "all"                                # browser:  all | table | view
+        self.private_db_selected    = None                                 # browser:  drilled-into object (detail view)
+        self.private_reg_filter     = None                                 # registry: kind filter (None = all)
+        self.current_table          = None                                 # object selected for Pane 2
+
         # For DB
-        self.private_mode        = "browse"                             # browse | edit | clone
-        self.private_proposed    = []                                   # proposed columns (seeded from Original on edit/clone)
-        self.private_sel_row     = None                                 # selected Proposed row index
+        self.private_mode           = "browse"                             # browse | edit | clone
+        self.private_proposed       = []                                   # proposed columns (seeded from Original on edit/clone)
+        self.private_sel_row        = None                                 # selected Proposed row index
         # For Alter
-        self.private_facet       = "Identity"                           # Identity | Keys | Metrics
-        self.private_layer       = None                                 # clone: chosen layer
-        self.private_suffix      = ""                                   # clone: free-text suffix
-        self.private_metric_picks = {}                                  # NEW
+        self.private_facet          = "Identity"                           # Identity | Keys | Metrics
+        self.private_layer          = None                                 # clone: chosen layer
+        self.private_suffix         = ""                                   # clone: free-text suffix
+        self.private_metric_picks   = {}                                  # NEW
+        self.private_show_tracks    = False                                 # NEW
 
     def ip_activated(self, ip):
-        """Fill the registry grid the first time this tab is shown."""
+        """Fill the registry grid; inherit table context from sibling tab if needed."""
         self.load_grid(self.private_reg_filter)
+        if self.current_table is None and getattr(self.form, 'last_viewed_table', None):  # NEW
+            self.load_table(self.form.last_viewed_table)
 
     # ════════════════════════════════════════════════════════════════════════════════
     # PANE 0 — Database Browser  (re-admitted by hand; banner_plate → BannerPlate)
@@ -118,6 +122,7 @@ class DB(_BaseTab):
     def load_table(self, name):
         """Remember the clicked object as the current table and repaint The Object pane."""
         self.current_table = name
+        self.form.last_viewed_table = name
         self.set_pane(2, self.the_object)
 
     # ════════════════════════════════════════════════════════════════════════════════
@@ -162,6 +167,7 @@ class DB(_BaseTab):
         body = Card(parent, pad=5)
         TextBox(body, name="txt_db_token", placeholder="Token (e.g. ba):")
         TextBox(body, name="txt_db_def",   placeholder="Definition:")
+        TextBox(body, name="txt_db_seq", placeholder="Seq (sort order):")
         Detail(body, "Data type (metrics / keys):")
         ButtonGroup(body, data=DB.DTYPES, initial_value="INTEGER", name="grp_db_dtype")
         self.build_registry_buttons(body)
@@ -174,18 +180,19 @@ class DB(_BaseTab):
         Button(btns, "Delete", color_bg=Style.COLOR_BUTTON_DANGER, flex_width=1, on_click=self.delete_entry)
 
     def save_entry(self):
-        """Upsert the editor's (kind, token) row into _registry, carrying dtype for every kind."""
+        """Upsert the editor's (kind, token) row into _registry, carrying dtype and seq."""
         kind  = self.form.widgets["grp_db_kind"].value
         token = self.form.widgets["txt_db_token"].text.strip()
         defn  = self.form.widgets["txt_db_def"].text.strip()
         dtype = self.form.widgets["grp_db_dtype"].value
-        MgrSchema.flds_upsert(kind, token, defn, dtype)
-
+        seq_t = self.form.widgets["txt_db_seq"].text.strip()
+        seq   = int(seq_t) if seq_t.isdigit() else None
+        MgrSchema.flds_upsert(kind, token, defn, dtype, seq)
         self.load_grid(self.private_reg_filter)
 
     def new_entry(self):
-        """Clear the token/definition fields for a fresh add."""
-        for n in ("txt_db_token", "txt_db_def"): self.set_widget_text(n, "")
+        """Clear the token/definition/seq fields for a fresh add."""
+        for n in ("txt_db_token", "txt_db_def", "txt_db_seq"): self.set_widget_text(n, "")
 
     def delete_entry(self):
         """Delete the (kind, token) row that matches the editor's current fields."""
@@ -198,11 +205,12 @@ class DB(_BaseTab):
         self.load_grid(self.private_reg_filter)
 
     def load_for_edit(self, row):
-        """Seed the editor's fields from a clicked vocab row (dtype re-read DB-direct)."""
+        """Seed the editor's fields from a clicked vocab row (dtype + seq re-read DB-direct)."""
         self.form.widgets["grp_db_kind"].value  = row["Type"]
         self.form.widgets["grp_db_dtype"].value = self.dtype_for(row["Type"], row["Token"])
         self.set_widget_text("txt_db_token", row["Token"])
         self.set_widget_text("txt_db_def",   row["Definition"])
+        self.set_widget_text("txt_db_seq",   str(MgrSchema.seq_for(row["Type"], row["Token"])))
 
     def dtype_for(self, kind, token):
         """The stored dtype for a (kind, token) pair, defaulting to INTEGER if unset."""
@@ -227,7 +235,7 @@ class DB(_BaseTab):
     def build_object_browse(self, parent):
         """Browse mode: banner with Edit/Clone/Delete + the read-only columns grid."""
         BannerPlate(parent, f"Table: {self.current_table}",
-                    data=[("Edit", self.handle_edit), ("Clone", self.handle_clone), ("Delete", self.handle_delete)])
+                    data=[("Edit", self.handle_edit), ("Clone", self.handle_clone),("Tracks", self.handle_tracks), ("Delete", self.handle_delete)])
         card = CardCol(parent, name="card_db_obj", flex_height=1, pad=0)
         grid = PowerGrid(card, name="grid_db_obj")
         grid.set_data(self.cols_to_rows(self.read_columns(self.current_table)), columns=["#", "Name", "Type", "PK"])
@@ -308,15 +316,18 @@ class DB(_BaseTab):
                        "Confirm Delete",
                        self.confirm_delete)
 
-    # DB.py method: confirm_delete  New: callback from delete confirm dialog
     def confirm_delete(self, result):
-        """If confirmed, delete table + views + schema, then refresh UI."""
+        """If confirmed, delete table + views + schema, reset all state, refresh UI."""
         if result != MSG_RESULT_YES: return
         MgrSchema.delete_table_entrypoint(self.current_table)
-        self.current_table = None
-        self.form.tab_strip.resolve_tab("Pipe").private_stale = True
+        self.current_table        = None
+        self.private_show_tracks  = False
+        self.private_mode         = "browse"
+        pipe = self.form.tab_strip.resolve_tab("Pipe")
+        if pipe: pipe.private_stale = True
         self.set_pane(0, self.database_browser)
         self.set_pane(2, self.the_object)
+        self.set_pane(3, self.the_inspector)
 
     def on_proposed_row_clicked(self, row_num):
         """Remember the clicked Proposed row, switch the Inspector to the matching facet (Keys vs Metrics)."""
@@ -354,7 +365,8 @@ class DB(_BaseTab):
     # PANE 3 — The Inspector  (facet editor for the Proposed column under edit/clone)
     # ════════════════════════════════════════════════════════════════════════════════
     def the_inspector(self, parent):
-        """Pane-3 root: browse-mode hint, or the full facet editor + constant controls + action bar."""
+        """Pane-3 root: tracks view, browse hint, or full facet editor."""
+        if self.private_show_tracks:            self.build_track_inspector(parent); return
         if self.private_mode == "browse":
             BannerPlate(parent, "Inspector", text_align=CENTER)
             Body(parent, "Edit or Clone a table, then pick a field."); return
@@ -447,7 +459,16 @@ class DB(_BaseTab):
             if tok not in present:
                 kept.insert(self.first_metric_index_of(kept), self.key_col(tok, self.locked_keys()))
         self.private_proposed = kept
+        self.sort_proposed()
         self.set_pane(2, self.the_object)
+
+    def sort_proposed(self):
+        """Sort Proposed columns by registry seq. GD is hardcoded to 0."""
+        for c in self.private_proposed:
+            if c["name"] == "GD":       c["seq"] = 0
+            elif "seq" not in c:        c["seq"] = MgrSchema.seq_for("Key", c["name"])
+        self.private_proposed.sort(key=lambda c: c["seq"])
+
 
     def build_metrics_facet(self, parent):
         """Metric assembler: 4 pick lists + live preview + Add button."""
@@ -623,8 +644,9 @@ class DB(_BaseTab):
         return [r[0] for r in BbDB.query("SELECT token FROM _registry WHERE kind='Key' ORDER BY token")]
 
     def key_col(self, name, locked):
-        """Build a key column dict for a token, with its dtype pulled from the registry."""
-        return {"name": name, "type": self.dtype_for("Key", name), "pk": True, "locked": name in locked}
+        """Build a key column dict for a token, with dtype and seq pulled from the registry."""
+        return {"name": name, "type": self.dtype_for("Key", name), "pk": True,
+                "locked": name in locked, "seq": MgrSchema.seq_for("Key", name)}
 
     def proposed_name(self):
         """The in-progress table name: layer_suffix while cloning, the current table's name while editing."""
@@ -671,7 +693,7 @@ class DB(_BaseTab):
         self.set_widget_text("detail_metric_preview", self.assembled_metric_name())
 
     # DB.py method: assembled_metric_name  New: build name from current picks
-    def assembled_metric_name(self):
+    def assembled_metric_nameOLD_RULES__(self):
         """Entity_Metric[_TimeSlice][_Context...] from current selections."""
         p       = self.private_metric_picks
         entity  = p["Entity"][0]    if p.get("Entity")    else None
@@ -683,13 +705,96 @@ class DB(_BaseTab):
         parts.extend(sorted(p.get("Context", [])))
         return "_".join(parts)
 
-    # DB.py method: add_assembled_metric  New: append assembled column to Proposed
+    def assembled_metric_name(self):
+        """Assemble column name from whatever grammar components are selected."""
+        p     = self.private_metric_picks
+        parts = []
+        if p.get("Entity"):    parts.append(p["Entity"][0])
+        if p.get("Metric"):    parts.append(p["Metric"][0])
+        if p.get("TimeSlice"): parts.append(p["TimeSlice"][0])
+        parts.extend(sorted(p.get("Context", [])))
+        return "_".join(parts) if parts else "(pick something)"
+
     def add_assembled_metric(self):
-        """Add the assembled metric name to Proposed with its registry dtype."""
+        """Add the assembled metric name to Proposed with its registry dtype and seq."""
         name = self.assembled_metric_name()
         if name.startswith("("): return
         if any(c["name"] == name for c in self.private_proposed): return
         metric_token = self.private_metric_picks["Metric"][0]
         dtype = self.dtype_for("Metric", metric_token)
-        self.private_proposed.append({"name": name, "type": dtype, "pk": False, "locked": False})
+        seq   = MgrSchema.seq_for("Metric", metric_token)
+        self.private_proposed.append({"name": name, "type": dtype, "pk": False, "locked": False, "seq": seq})
+        self.sort_proposed()
         self.refresh_editor()
+
+
+
+
+    # ════════════════════════════════════════════════
+    ################## HANDLE TRACKS
+    # ════════════════════════════════════════════════
+    def handle_tracks(self):
+        """Show the track assignment panel in the Inspector."""
+        self.private_show_tracks = True
+        self.set_pane(3, self.the_inspector)
+
+    def trim_view_name(self, name):
+        """Trim long view names, keeping the right (significant) end."""
+        if len(name) <= self.VIEW_NAME_TRIM: return name
+        return "…" + name[-(self.VIEW_NAME_TRIM - 1):]
+
+    # DB.py method: build_track_inspector  New: track assignment UI
+    def build_track_inspector(self, parent):
+        """Multi-select of tracks + new track input."""
+        BannerPlate(parent, f"Tracks: {self.trim_view_name(self.current_table)}",
+                    data=[("Done", self.handle_tracks_done)])
+        all_tracks = self.all_tracks()
+        current    = self.tracks_for_table(self.current_table)
+        if all_tracks:
+            sl = SelectionList(parent, data={t: {} for t in all_tracks},
+                               flex_height=1, pad=0, on_change=self.on_tracks_changed)
+            for item in sl.items:
+                if item.text in current:
+                    item.is_selected = True
+                    item.apply_selection_visual()
+        else:
+            Body(parent, "No tracks yet — create one below.")
+        row = Row(parent)
+        TextBox(row, name="txt_new_track", placeholder="New track name:", flex_width=1)
+        Button(row, "Add", on_click=self.add_new_track, color_bg=Style.COLOR_BUTTON_CTA)
+
+    # DB.py method: handle_tracks_done  New: close track assignment
+    def handle_tracks_done(self):
+        """Return to browse mode from track assignment."""
+        self.private_show_tracks = False
+        self.set_pane(3, self.the_inspector)
+
+    # DB.py method: on_tracks_changed  New: sync selections to _track_tables
+    def on_tracks_changed(self, selected):
+        """Full replace: delete all assignments for this table, re-insert selected."""
+        tbl = self.current_table
+        BbDB.execute("DELETE FROM _track_tables WHERE tbl=?", (tbl,))
+        for track in selected:
+            BbDB.execute("INSERT INTO _track_tables (GD, track, tbl) VALUES (?,?,?)",
+                         (MgrDT.today_gd(), track, tbl))
+
+    # DB.py method: add_new_track  New: create track and assign current table
+    def add_new_track(self):
+        """Create a new track from the textbox and assign the current table to it."""
+        w    = self.form.widgets.get("txt_new_track")
+        name = w.text.strip() if w else ""
+        if not name: return
+        BbDB.execute("INSERT OR IGNORE INTO _track_tables (GD, track, tbl) VALUES (?,?,?)",
+                     (MgrDT.today_gd(), name, self.current_table))
+        self.set_pane(3, self.the_inspector)
+
+    # DB.py method: all_tracks  New: distinct track names
+    def all_tracks(self):
+        """Every known track name."""
+        return [r[0] for r in BbDB.query("SELECT DISTINCT track FROM _track_tables ORDER BY track")]
+
+    # DB.py method: tracks_for_table  New: which tracks a table belongs to
+    def tracks_for_table(self, tbl):
+        """Set of track names this table is assigned to."""
+        return {r[0] for r in BbDB.query("SELECT track FROM _track_tables WHERE tbl=?", (tbl,))}
+

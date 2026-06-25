@@ -6,7 +6,10 @@ from ipui._forms.Baseball.BbDB import BbDB
 from ipui._forms.Baseball.MgrDT import MgrDT
 from ipui.utils.EZ import EZ
 
+
 class MgrSchema:
+    DEFAULT_SEQ = {"Key": 50, "Entity": 500, "Metric": 1000, "Context": 5000}
+
     """Manages schema files and DB sync. Stateless — the files ARE the state."""
     VIEWS_FILE                  = Path(__file__).parent / "_SchemaViews.py"
     TABLES_FILE                 = Path(__file__).parent / "_SchemaTbl.py"
@@ -299,12 +302,13 @@ class MgrSchema:
     # FIELDS — upsert/delete a _registry vocab row, file stays in sync
     # ══════════════════════════════════════════════════════════════
     @staticmethod
-    def flds_upsert(kind, token, definition, dtype):
+    def flds_upsert(kind, token, definition, dtype, seq=None):
         """Save one (kind, token) vocab row: DB, then the file."""
         if not dtype: EZ.err(f"({kind}, {token}) has no dtype — every field needs one.")
+        if seq is None: seq = MgrSchema.DEFAULT_SEQ.get(kind, 50)
         MgrSchema.delete_if_exists_in_db(kind, token)
-        MgrSchema.insert_to_db(kind, token, definition, dtype)
-        MgrSchema.update_SchemaFlds(kind, token, definition, dtype)
+        MgrSchema.insert_to_db(kind, token, definition, dtype, seq)
+        MgrSchema.update_SchemaFlds(kind, token, definition, dtype, seq)
 
     @staticmethod
     def flds_delete(kind, token):
@@ -317,9 +321,10 @@ class MgrSchema:
         BbDB.execute("DELETE FROM _registry WHERE kind=? AND token=?", (kind, token))
 
     @staticmethod
-    def insert_to_db(kind, token, definition, dtype):
-        BbDB.execute("INSERT INTO _registry (GD, kind, token, definition, dtype) VALUES (?,?,?,?,?)",  # NEW
-                     (MgrDT.today_gd(), kind, token, definition, dtype))  # NEW
+    def insert_to_db(kind, token, definition, dtype, seq=None):
+        if seq is None: seq = MgrSchema.DEFAULT_SEQ.get(kind, 50)
+        BbDB.execute("INSERT INTO _registry (GD, kind, token, definition, dtype, seq) VALUES (?,?,?,?,?,?)",
+                     (MgrDT.today_gd(), kind, token, definition, dtype, seq))
 
     @staticmethod
     def sync_fields_to_db():
@@ -328,18 +333,17 @@ class MgrSchema:
         from ipui._forms.Baseball import _SchemaFlds
         importlib.reload(_SchemaFlds)
         for line in _SchemaFlds._SchemaFlds.FIELDS:
-            kind, token, definition, dtype = MgrSchema.parse_field_line(line)
+            kind, token, definition, dtype, seq = MgrSchema.parse_field_line(line)
             exists = BbDB.query("SELECT 1 FROM _registry WHERE kind=? AND token=?", (kind, token))
             if not exists:
-                MgrSchema.insert_to_db(kind, token, definition, dtype)
+                MgrSchema.insert_to_db(kind, token, definition, dtype, seq)
 
     # ── _SchemaFlds.py — find/sandwich/remove a single line by (kind, token) ───
     @staticmethod
-    def update_SchemaFlds(kind, token, definition, dtype):
-        """Replace this (kind, token)'s line in place if it exists, else append it —
-           top + [new_line] + bottom is the whole trick."""
+    def update_SchemaFlds(kind, token, definition, dtype, seq=None):
+        """Replace this (kind, token)'s line in place if it exists, else append it."""
         MgrSchema.backup_file(MgrSchema.FIELDS_FILE)
-        new_line       = MgrSchema.format_field_line(kind, token, dtype, definition)
+        new_line       = MgrSchema.format_field_line(kind, token, dtype, definition, seq)
         top, _, bottom = MgrSchema.split_around_field_line(kind, token)
         final          = MgrSchema.splice_fields_list(top, new_line, bottom)
         MgrSchema.write_file(MgrSchema.FIELDS_FILE, final)
@@ -373,19 +377,32 @@ class MgrSchema:
             if ']' in top[i]: return ''.join(top[:i] + entry + top[i:])
         return ''.join(top + entry)
 
-    @staticmethod
-    def format_field_line(kind, token, dtype, definition):
-        """'kind  token  dtype  definition', tightly padded — kind/token/dtype never contain
-           a space, so they're always readable as the line's first 3 whitespace tokens."""
-        return f"{kind:<9s}{token:<10s}{dtype:<9s}{definition}"
+    def format_field_line(kind, token, dtype, definition, seq=None):
+        """'kind  token  dtype  seq  definition', tightly padded."""
+        if seq is None: seq = MgrSchema.DEFAULT_SEQ.get(kind, 50)
+        return f"{kind:<9s}{token:<10s}{dtype:<9s}{str(seq):<6s}{definition}"
 
     @staticmethod
     def parse_field_line(line):
-        """'kind  token  dtype  definition' → (kind, token, definition, dtype)."""
-        kind, token, dtype, definition = line.split(maxsplit=3)
-        return kind, token, definition.strip(), dtype
+        """'kind  token  dtype  [seq]  definition' → (kind, token, definition, dtype, seq).
+           If 4th token is numeric it's seq; otherwise it's the start of definition."""
+        parts = line.split(maxsplit=4)
+        kind, token, dtype = parts[0], parts[1], parts[2]
+        if len(parts) >= 4 and parts[3].isdigit():
+            seq        = int(parts[3])
+            definition = parts[4].strip() if len(parts) > 4 else ""
+        else:
+            seq        = MgrSchema.DEFAULT_SEQ.get(kind, 50)
+            definition = parts[3].strip() if len(parts) > 3 else ""
+            if len(parts) > 4: definition = (parts[3] + " " + parts[4]).strip()
+        return kind, token, definition, dtype, seq
 
-
+    @staticmethod
+    def seq_for(kind, token):
+        """Seq from _registry, or default for the kind if not found."""
+        rows = BbDB.query("SELECT seq FROM _registry WHERE kind=? AND token=?", (kind, token))
+        if rows and rows[0][0] is not None: return rows[0][0]
+        return MgrSchema.DEFAULT_SEQ.get(kind, 50)
     # ══════════════════════════════════════════════════════════════
     # ETL VIEW CLONING
     # ══════════════════════════════════════════════════════════════
@@ -445,6 +462,7 @@ class MgrSchema:
         MgrSchema.remove_from_tbl_schema(table_name)
         BbDB.drop_table(table_name)
         BbDB.execute("DELETE FROM _summary WHERE tbl = ?", (table_name,))
+        BbDB.execute("DELETE FROM _track_tables WHERE tbl = ?", (table_name,))
         BbDB.log(table_name, "deleted (table + views + schema)")
 
     # MgrSchema.py method: delete_table_views  New: find and delete all associated views

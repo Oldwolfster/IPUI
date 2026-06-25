@@ -19,6 +19,35 @@ class _SchemaViews:
         conn.close()
 
     @classmethod
+    def view_pull_etl_pitch(cls):
+        return """
+            SELECT
+                *
+                ,game_pk                                            AS game
+                ,at_bat_number                                      AS pa
+                ,CASE WHEN inning_topbot = 'Bot' THEN 1 ELSE 0 END  AS home
+                ,CASE WHEN events IS NOT NULL THEN 1 ELSE 0 END     AS pa_flag
+                ,CASE WHEN events IN ('single','double','triple','home_run')
+                THEN 1 ELSE 0 END                             AS h
+                ,CASE WHEN events IN ('walk','hit_by_pitch','sac_bunt','sac_fly'
+                ,'catcher_interf','intent_walk')
+                OR events IS NULL
+                THEN 0 ELSE 1 END                             AS ab
+                ,CASE WHEN events IN ('strikeout','strikeout_double_play')
+                THEN 1 ELSE 0 END                             AS k
+                ,CASE WHEN events IN ('walk','intent_walk')
+                THEN 1 ELSE 0 END                             AS bb
+                ,CASE WHEN events = 'home_run'
+                THEN 1 ELSE 0 END                             AS hr
+                ,CASE events
+                WHEN 'single'   THEN 1
+                WHEN 'double'   THEN 2
+                WHEN 'triple'   THEN 3
+                WHEN 'home_run' THEN 4
+                ELSE 0 END                                    AS tb
+            FROM raw_pitches
+        """
+    @classmethod
     def view_pull_etl_pa(cls):
         return """
             SELECT
@@ -272,13 +301,16 @@ class _SchemaViews:
                         FROM etl_pa
                         LEFT JOIN pull_forest_pa_mixin_batter
         """
+
     @classmethod
     def view_pull_forest_pa(cls):
         return """
             SELECT
                 etl_pa.GD, etl_pa.batter, game_pk, at_bat_number -- i believe the key
-                ,  etl_pa.pitcher                 , is_hit AS t_hit -- the t_ identifies field AS target
-                ,b_ba                  ,p_ba_against
+                ,  etl_pa.pitcher
+                , is_hit AS t_hit -- the t_ identifies field AS target
+                ,b_ba
+                ,p_ba_against
             FROM etl_pa
             LEFT JOIN pull_forest_pa_mixin_batter
             ON  pull_forest_pa_mixin_batter.GD = etl_pa.GD
@@ -308,7 +340,64 @@ class _SchemaViews:
         """
 
     @classmethod
-    def view_pull_forest_strikes(cls):
+    def view_pull_etl_smally_pa(cls):
+        return """
+            SELECT pull_etl_smally_pa_mixin_pitches.GD
+                ,pull_etl_smally_pa_mixin_pitches.batter
+                ,pull_etl_smally_pa_mixin_pitches.at_bat_number  AS pa
+                ,pull_etl_smally_pa_mixin_pitches.pitcher
+                ,pull_etl_smally_pa_mixin_pitches.game_pk        AS game
+                ,pull_etl_smally_pa_mixin_pitches.is_hit         AS h
+                ,pull_etl_smally_pa_mixin_pitches.is_ab          AS ab
+            FROM pull_etl_smally_pa_mixin_pitches
+        """
+    @classmethod
+    def view_pull_etl_smally_pa_mixin_pitches(cls):
+        return """
+            SELECT
+                GD
+                ,batter
+                ,game_pk
+                ,at_bat_number
+                ,pitcher
+                ,stand
+                ,p_throws
+                ,home_team
+                ,away_team
+                ,inning_topbot
+                ,events
+                ,launch_speed
+                ,launch_angle
+                ,woba_value
+                ,woba_denom
+                ,estimated_ba_using_speedangle                                      AS xba
+                ,CASE WHEN inning_topbot = 'Bot' THEN 1 ELSE 0 END                  AS home
+                ,CASE WHEN inning_topbot = 'Top' THEN away_team ELSE home_team END  AS bat_team
+                ,CASE WHEN inning_topbot = 'Top' THEN home_team ELSE away_team END  AS pit_team
+                ,CASE WHEN events IN ('single','double','triple','home_run')
+                THEN 1 ELSE 0 END                                              AS is_hit
+                ,CASE WHEN events IN ('walk','hit_by_pitch','sac_bunt','sac_fly'
+                ,'catcher_interf','intent_walk')
+                OR events IS NULL
+                THEN 0 ELSE 1 END                                              AS is_ab
+                ,CASE WHEN events IN ('strikeout','strikeout_double_play')
+                THEN 1 ELSE 0 END                                              AS is_k
+                ,CASE WHEN events IN ('walk','intent_walk')
+                THEN 1 ELSE 0 END                                              AS is_bb
+                ,CASE WHEN events = 'home_run'
+                THEN 1 ELSE 0 END                                              AS is_hr
+                ,CASE events
+                WHEN 'single'   THEN 1
+                WHEN 'double'   THEN 2
+                WHEN 'triple'   THEN 3
+                WHEN 'home_run' THEN 4
+                ELSE 0 END                                                     AS total_bases
+            FROM raw_pitches
+            WHERE events IS NOT NULL
+        """
+
+    @classmethod
+    def view_pull_forest_dart(cls):
         return """
             SELECT
                             m.GD,
@@ -323,7 +412,7 @@ class _SchemaViews:
                         LEFT JOIN feet_pitcher p   ON p.pitcher = m.pitcher AND p.stand    = m.stand    AND p.TS = 200 AND p.GD = m.GD
         """
     @classmethod
-    def view_pull_forest_strikes_mixin_batter_season(cls):
+    def view_pull_forest_dart_mixin_batter_season(cls):
         return """
             SELECt batter, p_throws, ba,b_k_pct,b_woba
                                                             FROM   feet_batter
@@ -331,9 +420,98 @@ class _SchemaViews:
         """
 
     @classmethod
-    def view_pull_forest_strikes_mixin_pitcher_season(cls):
+    def view_pull_forest_dart_mixin_pitcher_season(cls):
         return """
             SELECT pitcher, stand, ba_against, p_k_pct, p_woba_against
                                     FROM   feet_pitcher
                                     WHERE  TS = 200
+        """
+
+    @classmethod
+    def view_pull_forest_dart_pa(cls):
+        return """
+            SELECT
+                            etl_pa.GD, etl_pa.batter, game_pk, at_bat_number -- i believe the key
+                            ,  etl_pa.pitcher
+                            , is_hit AS t_hit -- the t_ identifies field AS target
+                            ,b_ba
+                            ,p_ba_against
+                        FROM etl_pa
+                        LEFT JOIN pull_forest_dart_pa_mixin_batter
+                        ON  pull_forest_dart_pa_mixin_batter.GD = etl_pa.GD
+                            AND  pull_forest_dart_pa_mixin_batter.batter = etl_pa.batter
+                        LEFT JOIN pull_forest_dart_pa_mixin_pitcher
+                        ON  pull_forest_dart_pa_mixin_pitcher.GD = etl_pa.GD
+                            AND  pull_forest_dart_pa_mixin_pitcher.pitcher = etl_pa.pitcher
+        """
+    @classmethod
+    def view_pull_forest_dart_pa_mixin_batter(cls):
+        return """
+            SELECT GD, batter
+                                                    ,SUM(hits) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba
+                                                FROM feet_batter
+                                    WHERE ts=200 -- season numbers 
+                                                GROUP BY gd, batter
+        """
+
+    @classmethod
+    def view_pull_forest_dart_pa_mixin_pitcher(cls):
+        return """
+            SELECT GD, pitcher
+                            ,SUM(hits_allowed) * 1.0 / NULLIF(SUM(ab_against), 0) AS p_ba_against
+                        FROM feet_pitcher
+                        WHERE ts=200 -- season numbers
+                        GROUP BY GD,pitcher
+        """
+
+    @classmethod
+    def view_pull_etl_dart_pa(cls):
+        return """
+            SELECT GD, batter, pitcher, game, pa, h, ab
+            FROM etl_pitch
+            WHERE pa_flag = 1
+        """
+
+    @classmethod
+    def view_pull_feet_dart_batter(cls):
+        return """
+            SELECT
+                                        GD
+                                        ,1         AS TS
+                                        ,batter
+                                       -- ,game
+                                        ,COUNT(*)  AS pa
+                                        ,SUM(ab)   AS ab
+                                        ,SUM(h)    AS h
+                                    FROM etl_dart_pa
+                                    GROUP BY GD, batter
+        """
+    @classmethod
+    def view_update_feet_dart_batter(cls):
+        return """
+            SELECT GD, TS, batter
+                            ,h * 1.0 / NULLIF(ab, 0) AS ba
+                        FROM feet_dart_batter
+        """
+
+    @classmethod
+    def view_pull_feet_dart_pitcher(cls):
+        return """
+            SELECT
+                GD
+                ,1         AS TS
+                ,pitcher
+                -- ,game
+                ,COUNT(*)  AS pa
+                ,SUM(ab)   AS ab
+                ,SUM(h)    AS h
+            FROM etl_dart_pa
+            GROUP BY GD, pitcher
+        """
+    @classmethod
+    def view_update_feet_dart_pitcher(cls):
+        return """
+            SELECT GD, TS, pitcher
+                ,h * 1.0 / NULLIF(ab, 0) AS ba
+            FROM feet_dart_pitcher
         """

@@ -45,6 +45,8 @@ Autoformat SQL when saving
 Not refreshing pipe when clone table
 Struggling to change PK on UI
 vertical scroll works but only via mousewheel - not via keyboard 
+Validate if enable_categorical would improve XGB
+
 
 2.2) Building DB Tab
 
@@ -169,3 +171,6 @@ Show generated name preview: Full name: pull_forest_mixin_batter_season.
 Forgive obvious naming mistakes and show cleanup: Using suffix: batter_season.
 Add tiny glossary/hover labels: GD = game/as-of date, TS = trailing window.
 In ETL cards, visually mark dev/empty tables: EMPTY or TEST
+
+
+

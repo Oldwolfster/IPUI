@@ -13,8 +13,8 @@ class MixinRawPull:
     # RAW LAYER
     # ══════════════════════════════════════════════════════════════
     def run_raw_layer(self, gd):
-        """raw tables use sync_ methods — drip highlight then work, just like the derived layers"""
-        for tbl in BbDB.tables_for_layer("raw"):
+        """Raw tables use sync_ methods — track-filtered like derived layers."""
+        for tbl in self.tables_for_layer_filtered("raw"):
             self.ip.drip(self.logthe_table, tbl, gd)
             self.ip.drip(self.run_raw_table, gd, tbl)
 

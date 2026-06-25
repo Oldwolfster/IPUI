@@ -117,6 +117,7 @@ class MgrInput:
     @classmethod
     def on_mouse_down(cls, ip, form, pos):
         if form.handle_tooltip_click(pos):          return True  # Tooltip absorbs click
+        if cls.intercept_dropdown(form, pos):       return True
         if cls.scrollbar_drag_start(form, pos):     return True  # Scrollbar drag begun
         if cls.press_drag_start(form, pos):         return True  # Generic scrolling
         target = cls.find_click_target(form, pos)                # Deepest clickable widget
@@ -128,6 +129,21 @@ class MgrInput:
         cls.fire_clicks(target)                                  # Double-click, toggle, click
         return True
 
+    @classmethod
+    def intercept_dropdown(cls, form, pos):
+        """If a dropdown is active, route click to its list or close it. Returns True if consumed."""
+        dd = form.active_dropdown
+        if not dd: return False
+        panel = getattr(dd, 'private_panel_rect', None)
+        if panel and panel.collidepoint(pos):
+            for item, r in getattr(dd, 'private_hit_rects', []):
+                if r.collidepoint(pos):
+                    dd.on_list_changed([item.text])
+                    break
+            return True
+        if not (dd.textbox.rect and dd.textbox.rect.collidepoint(pos)):
+            dd.close_panel()
+        return False
 
     @classmethod
     def manage_focus(cls, target, pos):
@@ -233,7 +249,12 @@ class MgrInput:
             return True
 
         # Find deepest scroll_v
-        target = cls.find_scroll_v(form, pos)
+        dd = form.active_dropdown  # NEW
+        if dd and dd.list.rect and dd.list.rect.collidepoint(pos):  # NEW
+            target = cls.find_scroll_v(dd.list, pos)  # NEW
+        else:  # NEW
+            target = cls.find_scroll_v(form, pos)
+
         if target is None:
             return False
 
@@ -292,6 +313,11 @@ class MgrInput:
 
         # ESC — cascade: tooltip → focus → quit
         if event.key == Key.ESCAPE:
+            dd = form.active_dropdown  # NEW
+            if dd:  # NEW
+                dd.close_panel()  # NEW
+                cls.clear_focus()  # NEW
+                return True
             if form.pinned_tooltip:
                 form.pinned_tooltip.unpin()
                 form.pinned_tooltip = None

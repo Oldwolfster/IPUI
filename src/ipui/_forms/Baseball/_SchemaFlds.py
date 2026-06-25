@@ -12,18 +12,24 @@ class _SchemaFlds:
        kind/token/dtype can never contain a space, so they're always the line's first
        3 whitespace tokens; the definition is everything after -- free text, spaces and all."""
 
+
+    # _SchemaFlds.py  Update: remove GD, it's auto-injected
     FIELDS = [
 
-        'Key      pa        INTEGER  plate appearance',
-        'Entity   b         INTEGER  batter',
-        'Entity   p         INTEGER  pitcher',
-        'Key      pitcher   INTEGER  pitcher',
-        'Key      batter    INTEGER  batter id',
-        'Metric   ab        INTEGER  at bat',
-        'Metric   h         INTEGER  hit',
-        'Metric   k         INTEGER  strikeout',
-        'Context  vsL       INTEGER  versus Lefthander',
-        'Context  vsR       INTEGER  versus Right',
-        'Metric   ba        REAL     batting average',
-        'Metric   z         REAL     made up metric',
+        'Key      game      INTEGER  20    game id (primary key)',
+        'Key      TS        INTEGER  24    time slice (200 season)',
+        'Key      batter    INTEGER  30    batter id',
+        'Key      pitcher   INTEGER  41    pitcher id',
+        'Key      pa        INTEGER  50    plate appearance - at bat number',
+        'Entity   b         INTEGER  500   batter',
+        'Entity   p         INTEGER  500   pitcher',
+        'Metric   ab        INTEGER  1000  at bat',
+        'Metric   h         INTEGER  1000  hit',
+        'Metric   k         INTEGER  1000  strikeout',
+        'Metric   ba        REAL     1000  batting average',
+        'Metric   z         REAL     1000  made up metric',
+        'Context  vsL       INTEGER  5000  versus Lefthander',
+        'Context  vsR       INTEGER  5000  versus Right',
+
+        'Key      testKey   INTEGER  50    test',
     ]

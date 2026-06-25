@@ -62,12 +62,14 @@ class DropDown(_BaseWidget):
         self.is_open           = True
         self.list.visible      = True
         self.list.set_filter("")
+        if self.form: self.form.active_dropdown = self
 
     def close_panel(self):
         if not self.is_open: return
         self.is_open           = False
         self.list.visible      = False
-
+        if self.form and self.form.active_dropdown is self:          # NEW
+            self.form.active_dropdown = None
     # ==============================================================
     # EVENTS — PUNTED: DropDown rebuild is a separate effort.
     # Click toggles open/close. ESC not yet wired. Panel click TODO.
@@ -93,16 +95,27 @@ class DropDown(_BaseWidget):
     # ==============================================================
 
     def draw_overlay(self, surface):
-        """Position and draw the floating SelectionList."""
-        if not self.is_open:     return
-        if self.textbox.rect is None: return
-        panel_rect = self.compute_panel_rect()
-        #self.list.layout(panel_rect)
-        self.form.layout_engine.layout_node(self.list, panel_rect)
-        self.list.rect = panel_rect
-        self.list.draw(surface)
-
-
+        """Draw the option panel directly — no child layout needed."""
+        if not self.is_open or not self.textbox.rect: return
+        panel = self.compute_panel_rect()
+        self.private_panel_rect = panel
+        pygame.draw.rect(surface, Style.COLOR_CARD_BG, panel)
+        pygame.draw.rect(surface, Style.COLOR_CARD_BORDER, panel, 1)
+        font  = Style.FONT_BODY
+        row_h = font.get_height() + Style.TOKEN_PAD * 2
+        mx, my = pygame.mouse.get_pos()
+        y = panel.top
+        self.private_hit_rects = []
+        for item in self.list.items:
+            if not item.visible: continue
+            if y + row_h > panel.bottom: break
+            r = pygame.Rect(panel.left, y, panel.width, row_h)
+            if r.collidepoint(mx, my):
+                pygame.draw.rect(surface, Style.COLOR_PANEL_BG, r)
+            txt = font.render(item.text, True, Style.COLOR_TEXT)
+            surface.blit(txt, (r.left + Style.TOKEN_PAD, r.top + Style.TOKEN_PAD))
+            self.private_hit_rects.append((item, r))
+            y += row_h
     def draw(self, surface):
         super().draw(surface)
         self.draw_chevron(surface)
@@ -116,7 +129,7 @@ class DropDown(_BaseWidget):
         if r is None : return
         h            = int(r.height * size)
         w            = int(h * 1.4)
-        cx           = r.right - w // 2 - self.textbox.pad
+        cx           = r.right - w // 2 - self.textbox.pad_x
         cy           = r.centery
         half_w       = w // 2
         half_h       = h // 2

@@ -25,10 +25,12 @@ class PipeMixinUpdate:
 
 
     def loop_through_dates(self):
-        start_gd, target_gd = self.get_start_and_end_dates()   # raises on bad range — no None check needed
+        start_gd, target_gd = self.get_start_and_end_dates()
         for gd in MgrDT.gd_range(start_gd, target_gd):
-            if gd == target_gd: self.run_target_day(gd)        # the held-out day
-            else:               self.run_one_day(gd)           # normal training day
+            if gd == target_gd: self.run_target_day(gd)
+            else:               self.run_one_day(gd)
+        self.ip.drip(self.sync_raw_players, start_gd)               # was direct call
+        self.ip.drip(BbDB.update_summary, "raw_players")            # was direct call
         self.run_predict_layer(gd)
 
     def run_target_day(self,target_date):
@@ -37,7 +39,6 @@ class PipeMixinUpdate:
 
 
     def run_one_day(self,gd):
-        #BbDB.log("pipeline", f"Running Day {MgrDT.gd_to_iso(gd)}")
         self.run_raw_layer(gd)
         self.update_layer("etl",      gd)
         self.update_layer("feet",     gd)
@@ -52,7 +53,9 @@ class PipeMixinUpdate:
 
     def logthe_table(self, tbl, gd):
         self.active_table = tbl
-        BbDB.log(tbl, f"updating {tbl} for GD={gd}")
+        #print(f">>> testing123 logthe_table: {tbl} for GD={gd}")
+
+        BbDB.log(tbl, f"deleting/inserting for GD={gd}")
         self.refresh_pane()
 
     def update_table(self, tbl, gd):
@@ -73,31 +76,30 @@ class PipeMixinUpdate:
 
     def roll_up_ts(self, tbl, gd):
         if not BbDB.has_ts(tbl): return
-        keys, metrics  = self.feet_grain(tbl)
-        entity         = [k for k in keys if k not in ("GD", "TS", "game_pk")]
-        has_game_pk    = "game_pk" in keys
+        keys, metrics = self.feet_grain(tbl)
+        entity        = [k for k in keys if k not in self.ROLLUP_EXCLUDE]
         for ts in self.TIME_SLICES:
-            BbDB.execute(self.rollup_sql(tbl, gd, ts, entity, metrics, has_game_pk))
+            sql= self.rollup_sql(tbl, gd, ts, entity, metrics)
+            #BbDB.log(tbl,f"rollup sql = P{sql}")
+            BbDB.execute(sql)
+
         BbDB.log(tbl, f"rolled TS {self.TIME_SLICES} @ {MgrDT.gd_to_iso(gd)} over {len(metrics)} metrics")
 
-    # PipeMixinUpdate.py method: rollup_sql  Update: insert game_pk=0 sentinel for rollups
-    def rollup_sql(self, tbl, gd, ts, entity, metrics, has_game_pk=False):
-        game_col   = ", game_pk"   if has_game_pk else ""
-        game_val   = ", 0"         if has_game_pk else ""
-        cols       = ", ".join(["GD", "TS"] + entity + metrics)
-        ent_csv    = ", ".join(entity)
-        sums       = ", ".join(f"SUM({m}) AS {m}" for m in metrics)
-        floor      = MgrDT.gd_add_days(gd, -ts)
-        sql        = f"""
-            INSERT INTO {tbl} (GD, TS{game_col}, {ent_csv}, {", ".join(metrics)})
-            SELECT {gd}, {ts}{game_val}, {ent_csv}, {sums}
+    # PipeMixinUpdate.py method: rollup_sql  Update: simplified, no game_pk hack
+    def rollup_sql(self, tbl, gd, ts, entity, metrics):
+        """Rollup TS=1 rows into a higher timeslice for the given entity columns."""
+        ent_csv = ", ".join(entity)
+        sums    = ", ".join(f"SUM({m}) AS {m}" for m in metrics)
+        floor   = MgrDT.gd_add_days(gd, -ts)
+        return f"""
+            INSERT INTO {tbl} (GD, TS, {ent_csv}, {", ".join(metrics)})
+            SELECT {gd}, {ts}, {ent_csv}, {sums}
             FROM {tbl}
             WHERE TS = 1
               AND GD >  {floor}
               AND GD < {gd}
             GROUP BY {ent_csv}
         """
-        return sql
 
     def run_update_views(self, tbl, gd):
         """discover update_{tbl}* views, UPDATE...FROM"""

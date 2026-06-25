@@ -10,6 +10,8 @@ from ipui._forms.Baseball.PipeMixinModelResults import MixinModelResults
 class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResults):#, MixinXGBoost):
     TIME_SLICES = [27,15,28,30,200,9999]
     TIME_SLICES = [2, 3, 8, 200, 9999]
+
+    ROLLUP_EXCLUDE = {"GD", "TS", "game", "game_pk", "pa", "at_bat_number"}
     FOREST_TABLES_TO_TRAIN = ["forest"]
     LAYERS = ["Raw", "ETL", "Feet", "Forest", "Predict"]
     PITCH_BUCKETS = {
@@ -22,6 +24,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
     def ip_setup_early(self,ip):
         self.task_queue    = []
         self.private_stale = False     # not sure if this ended up being needed
+        self.private_track_filter = None
         self.card_mode     = "detail"           # detail | field  (toggled in the header)
         self.update_btn_txt= "Run All"
         self.start_date    = "2026-03-27"       # instance state, seeded once — survives rebuilds like card_mode
@@ -71,6 +74,12 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         Button(header, self.toggle_label(), on_click=self.toggle_card_mode)
         Button(header, "Run TS"     , on_click=lambda: self.roll_up_ts("feet_batter"))
         Button(header, "Phoenix"    , on_click=self.nuke_clicked, color_bg=Style.COLOR_BUTTON_DANGER)
+
+        # Just a test - delete me
+        #DropDown(header, placeholder="Pick one...", border=0, pad=0, flex_width=1, data={"Alpha": {}, "Bravo": {}, "Charlie": {}, "Delta": {}, "Echo": {}, "Foxtrot": {}, "Foxtrot2": {}, "Foxtrot3": {}, "Foxtrot4": {}, "Foxtrot5": {}, "Foxtrot6": {}})
+        #DropDown(header, placeholder="All", border=0, pad=0, flex_width=1,  data=self.track_dropdown_data(), on_change=self.on_track_changed)
+        dd = DropDown(header, placeholder="All", border=0, pad=0, flex_width=1,  data=self.track_dropdown_data(), on_change=self.on_track_changed)
+        if self.private_track_filter: dd.textbox.set_text(self.private_track_filter)
 
 
     def commit_dates(self):
@@ -159,8 +168,9 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         body   = Plate(col, scroll_v=True, flex_height=1, pad=3)
         self   . build_cards_for_layer(body, layer)
 
+
     def build_cards_for_layer(self, parent, layer):
-        for tbl in BbDB.tables_for_layer(layer):
+        for tbl in self.tables_for_layer_filtered(layer):
             self.build_one_card(parent, tbl)
 
     def build_one_card(self, parent, tbl):
@@ -206,8 +216,18 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         body_rows, body_range = refs if refs else (None, None)
         btns = Row(Plate(Plate(Plate(card,pad=2),pad=2),pad=4))
         Button(btns, "Run"      , flex_width=1, on_click=lambda t=tbl, br=body_rows, bg=body_range: self.refresh_table(t, br, bg))
+        Button(btns, "DB", flex_width=1, on_click=lambda t=tbl: self.view_in_db(t))
         Button(btns, "WB"       , flex_width=1, on_click=lambda t=tbl: self.view_in_workbench(t))  # NEW
         Button(btns, "SQL"      , flex_width=1, on_click=lambda t=tbl: self.view_in_sql(t))  # NEW
+
+
+    def view_in_db(self, tbl):
+        self.form.switch_tab("DB")
+        db_tab = self.form.get_tab("DB")
+        if db_tab is None:
+            BbDB.log("view_in_db", "DB tab not found after switch")
+            return
+        db_tab.load_table(tbl)
 
     def view_in_workbench(self, tbl):
         self.form.switch_tab("Workshop")                                    # construct if first visit
@@ -237,21 +257,50 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         if body_rows: body_rows.text = "Rows:  refreshing..."     # field mode passes None — nothing to update
         self.ip.after_paint(self.refresh_table_now, tbl, dates, body_rows, body_range)
 
+    def refresh_table_nowOLD(self, tbl, dates, body_rows, body_range):
+        start_gd, end_gd = dates
+        layer = BbDB.layer_of(tbl)
+        if layer == "raw":
+            method = getattr(self, f"sync_{tbl}", None)
+            if method:
+                for gd in MgrDT.gd_range(start_gd, end_gd):
+                    method(gd)
+            else:
+                BbDB.log(tbl, "no sync method found")
+            BbDB.update_summary(tbl)
+        else:
+            for gd in MgrDT.gd_range(start_gd, end_gd):
+                self.update_table(tbl, gd)
+        s = BbDB.get_summary(tbl)
+        if not body_rows: return
+        body_rows.text  = f"Rows: {s.rows:,}"
+        rng = f"{MgrDT.gd_to_iso(s.min_gd)}  to  {MgrDT.gd_to_iso(s.max_gd)}" if s.min_gd else "—  to  —"
+        body_range.text = f"Range: {rng}"
+
+
     def refresh_table_now(self, tbl, dates, body_rows, body_range):
         start_gd, end_gd = dates
         layer = BbDB.layer_of(tbl)
         if layer == "raw":
             method = getattr(self, f"sync_{tbl}", None)
-            if method: method(start_gd, end_gd)
-            else:      BbDB.log(tbl, "no sync method found")
-            BbDB.update_summary(tbl)
+            if method:
+                for gd in MgrDT.gd_range(start_gd, end_gd):
+                    self.ip.drip(method, gd)
+            else:
+                BbDB.log(tbl, "no sync method found")
+            self.ip.drip(BbDB.update_summary, tbl)
         else:
-            self.update_table(tbl, start_gd, end_gd)
+            for gd in MgrDT.gd_range(start_gd, end_gd):
+                self.ip.drip(self.logthe_table, tbl, gd)
+                self.ip.drip(self.update_table, tbl, gd)
+        self.ip.drip(self.refresh_card_stats, tbl, body_rows, body_range)
+
+    def refresh_card_stats(self, tbl, body_rows, body_range):
         s = BbDB.get_summary(tbl)
-        if not body_rows: return                                  # field mode: data refreshed, no labels to touch
+        if not body_rows: return
         body_rows.text  = f"Rows: {s.rows:,}"
         rng = f"{MgrDT.gd_to_iso(s.min_gd)}  to  {MgrDT.gd_to_iso(s.max_gd)}" if s.min_gd else "—  to  —"
-        body_range.text = f"Range: {rng}"
+        body_range.text = rng
 
     def parse_textbox_date_to_gd(self, name):
         raw = self.form.widgets[name].text
@@ -274,9 +323,39 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
 
 
     # ════════════════════════════════════════════════
-    # Widget Tree                                  ═══
+    # Managing Track                              ═══
     # ════════════════════════════════════════════════
+    # Pipe.py method: track_dropdown_data  New: build DropDown data from _track_tables
+    def track_dropdown_data(self):
+        """All known tracks plus an 'All' entry for unfiltered view."""
+        tracks = BbDB.query("SELECT DISTINCT track FROM _track_tables ORDER BY track")
+        data   = {"All": {}}
+        for (t,) in tracks: data[t] = {}
+        return data
+
+    # Pipe.py method: on_track_changed  New: filter pipeline cards by track
+    def on_track_changed(self, selected):
+        """Store the selected track (None = All) and rebuild the card area."""
+        pick = selected[0] if selected else "All"
+        self.private_track_filter = None if pick == "All" else pick
+        self.refresh_pane()
+
+    # Pipe.py method: tables_in_track  New: set of tables belonging to a track
+    def tables_in_track(self, track):
+        """All table names assigned to this track."""
+        rows = BbDB.query("SELECT tbl FROM _track_tables WHERE track=?", (track,))
+        return {r[0] for r in rows}
+
+    def tables_for_layer_filtered(self, layer):
+        """Tables for a layer, filtered by active track if one is selected."""
+        tables = BbDB.tables_for_layer(layer)
+        if self.private_track_filter is None: return tables
+        track_set = self.tables_in_track(self.private_track_filter)
+        return [t for t in tables if t in track_set]
+
 
     # ════════════════════════════════════════════════
     # Widget Tree                                  ═══
     # ════════════════════════════════════════════════
+
+

@@ -12,9 +12,10 @@ from ipui.widgets.CodeScroller import CodeScroller
 
 class Workbench(_BaseTab, WorkshopMixinBuildTable, WorkshopMixinBuildView, WorkshopMixinDatabaseBrowser):
     """Per-table command center — inspect columns, see source, (later) add/delete."""
-
+    VIEW_NAME_TRIM = 20
     def ip_setup_early(self, ip):
         self.current_table              = None
+
         self.analysis_cache             = {}                                             # {col_name: (min, max, avg, nulls)} — populated by Analyze in Phase 2
         self.private_form_type          = "TEXT"
         self.private_form_pk            = False
@@ -36,8 +37,15 @@ class Workbench(_BaseTab, WorkshopMixinBuildTable, WorkshopMixinBuildView, Works
         self.private_db_filter          = "all"    # NEW
         self.private_db_selected        = None     # NEW
 
+
+    def ip_activated(self, ip):
+        """Inherit table context from sibling tab if needed."""
+        if self.current_table is None and getattr(self.form, 'last_viewed_table', None):
+            self.load_table(self.form.last_viewed_table)
+
     def load_table(self, tbl):
         self.current_table              = tbl
+        self.form.last_viewed_table     = tbl
         self.private_selected_view      = None
         self.private_editing_mixin      = False    # NEW
         self.private_editing_primary    = False    # NEW
@@ -274,28 +282,6 @@ Claude has been assigned remedial API-awareness training.
         elif self.private_selected_view:     self.build_mixin_detail(parent)
         else:                                self.build_mixin_list(parent)
 
-
-    def build_mixin_list(self, parent):
-        """Show mixin views with join buttons for composing into pull view."""
-        views = self.find_mixin_views()
-        if not views:
-            self.banner_plate("Above has no building blocks!.", parent,
-                              [("Add a Building Block", self.start_build_view)])
-            return
-        self.banner_plate("Building Blocks Available For Above View:", parent, [
-            ("Add a Building Block", self.start_build_view, Style.COLOR_BUTTON_CTA),
-        ])
-        scroll = CardCol(parent, scroll_v=True, flex_height=1, pad=0)
-        for v in views:
-            plate = Plate(scroll, pad=5,
-                          on_click=lambda name=v: self.on_mixin_clicked(name))
-            row   = Row(plate)
-            Body(row, v)
-            Spacer(row)
-            Button(row, "LEFT", on_click=lambda name=v: self.join_mixin_to_pull(name, "LEFT"))
-            Button(row, "JOIN", on_click=lambda name=v: self.join_mixin_to_pull(name, ""))
-            Button(row, "FULL", on_click=lambda name=v: self.join_mixin_to_pull(name, "FULL"))
-
     def on_mixin_clicked(self, name):
         self.private_selected_view = name
         self.set_pane(1, self.source)
@@ -316,7 +302,7 @@ Claude has been assigned remedial API-awareness training.
         """Show a single mixin view's SQL with Back + Edit buttons."""
 
         self.banner_plate("Building Block For Above:", parent, [
-            (f"Edit View: {self.private_selected_view}",self.handle_edit_mixin,Style.COLOR_BUTTON_CTA),
+            (f"Edit: {self.trim_view_name(self.private_selected_view)}",self.handle_edit_mixin,Style.COLOR_BUTTON_CTA),
             ("<- Back", self.back_to_mixin_list),
         ])
         #header = Row(parent)
@@ -356,6 +342,7 @@ Claude has been assigned remedial API-awareness training.
             row   = Row(plate)
             Body(row, v)
             Spacer(row)
+            Button(row, "FROM", on_click=lambda name=v: self.from_mixin_to_pull(name))  # NEW  (put before LEFT)
             Button(row, "LEFT", on_click=lambda name=v: self.join_mixin_to_pull(name, "LEFT"))
             Button(row, "JOIN", on_click=lambda name=v: self.join_mixin_to_pull(name, ""))
             Button(row, "FULL", on_click=lambda name=v: self.join_mixin_to_pull(name, "FULL"))
@@ -363,6 +350,31 @@ Claude has been assigned remedial API-awareness training.
     # ══════════════════════════════════════════════════════════════
     # Workshop.py method: on_mixin_clicked  NEW: navigate to detail from Plate click
     # ══════════════════════════════════════════════════════════════
+
+    def from_mixin_to_pull(self, mixin_name):
+        """Set mixin as FROM source; replace 369 AS col placeholders with mixin.col for exact matches."""
+        tbl = self.current_table
+        if not tbl: return
+        pull_name  = f"pull_{tbl}"
+        select_sql = self.fetch_pull_select(pull_name)
+        if select_sql is None: return
+        import re
+        mixin_cols = set(BbDB.field_names(mixin_name))
+        swap       = lambda m: f"{mixin_name}.{m.group(1)}" if m.group(1) in mixin_cols else m.group(0)
+        new_sql    = re.sub(r'369\s+AS\s+(\w+)', swap, select_sql)
+        new_sql    = new_sql.rstrip().rstrip(';').rstrip()
+        if re.search(r'\bFROM\b', new_sql, re.IGNORECASE):
+            new_sql = re.sub(r'\bFROM\s+\S+', f'FROM {mixin_name}', new_sql, count=1, flags=re.IGNORECASE)
+        else:
+            new_sql += f"\nFROM {mixin_name}"
+        error = MgrSchema.test_sql(pull_name, new_sql)
+        if error:
+            self.form.msgbox(f"FROM produced invalid SQL:\n\n{error}",
+                             MSG_BTNS_OK + MSG_ICON_WARNING, "SQL Error")
+            return
+        MgrSchema.save_view(pull_name, new_sql)
+        self.set_pane(1, self.source)
+
     def on_mixin_clicked(self, name):
         self.private_selected_view = name
         self.set_pane(1, self.source)
@@ -555,7 +567,7 @@ Claude has been assigned remedial API-awareness training.
         """Editable SQL editor for the selected mixin view."""
 
 
-        self.banner_plate(f"EDITING VIEW: {self.private_selected_view}", parent, [
+        self.banner_plate(f"EDITING: {self.trim_view_name(self.private_selected_view)}",  parent, [
             ("Run View", self.handle_run_mixin_query,Style.COLOR_BUTTON_CTA),
             ("SQL Beau", self.beautify_the_sql),
             ("Save View", self.view_save_selected),
@@ -688,3 +700,8 @@ Claude has been assigned remedial API-awareness training.
         import re
         match = re.search(r'\bAS\b\s+', sql, re.IGNORECASE)
         return sql[match.end():].strip() if match else sql.strip()
+
+    def trim_view_name(self, name):
+        """Trim long view names, keeping the right (significant) end."""
+        if len(name) <= self.VIEW_NAME_TRIM: return name
+        return "…" + name[-(self.VIEW_NAME_TRIM - 1):]
