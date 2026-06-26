@@ -263,22 +263,6 @@ class _SchemaViews:
         """
 
     @classmethod
-    def view_pull_etl_matchup(cls):
-        return """
-            SELECT pitcher.GD, batters_first_bat_num.batter,  pitcher.game_pk, pitcher.pitcher
-                ,pitcher.p_throws, pitcher.stand, batters_first_bat_num.first_bat as at_bat_number
-            FROM etl_pa pitcher
-            JOIN (
-                SELECT  batter,game_pk, MIN(at_bat_number) AS first_bat
-                FROM etl_pa batter
-                    -- WHERE batter. batter =  514888
-                GROUP BY batter, game_pk
-                ) batters_first_bat_num
-            ON  batters_first_bat_num.game_pk = pitcher.game_pk
-                AND  batters_first_bat_num.first_bat = pitcher.at_bat_number
-        """
-
-    @classmethod
     def view_pull_etl_testclone(cls):
         return """
             SELECT
@@ -397,73 +381,80 @@ class _SchemaViews:
         """
 
     @classmethod
-    def view_pull_forest_dart(cls):
+    def view_pull_etl_matchup(cls):
         return """
-            SELECT
-                            m.GD,
-                            m.batter,
-                            m.game_pk,
-                            bg.hits          AS t_hits,
-                            b.ba             AS b_ba,
-                            p.ba_against     AS p_ba_against
-                        FROM      etl_matchup  m
-                        LEFT JOIN batter_games bg  ON bg.GD = m.GD AND bg.batter = m.batter AND bg.game_pk = m.game_pk
-                        LEFT JOIN feet_batter  b   ON b.batter  = m.batter  AND b.p_throws = m.p_throws AND b.TS = 200 AND b.GD = m.GD
-                        LEFT JOIN feet_pitcher p   ON p.pitcher = m.pitcher AND p.stand    = m.stand    AND p.TS = 200 AND p.GD = m.GD
-        """
-    @classmethod
-    def view_pull_forest_dart_mixin_batter_season(cls):
-        return """
-            SELECt batter, p_throws, ba,b_k_pct,b_woba
-                                                            FROM   feet_batter
-                                                            WHERE  TS = 200
+            SELECT pitcher.GD, batters_first_bat_num.batter,  pitcher.game_pk, pitcher.pitcher
+                ,pitcher.p_throws, pitcher.stand, batters_first_bat_num.first_bat as at_bat_number
+            FROM etl_pa pitcher
+            JOIN (
+                SELECT  batter,game_pk, MIN(at_bat_number) AS first_bat
+                FROM etl_pa batter
+                    -- WHERE batter. batter =  514888
+                GROUP BY batter, game_pk
+                ) batters_first_bat_num
+            ON  batters_first_bat_num.game_pk = pitcher.game_pk
+                AND  batters_first_bat_num.first_bat = pitcher.at_bat_number
         """
 
     @classmethod
+    def view_pull_forest_dart(cls):
+        return """
+            SELECT
+                etl_starters.GD    ,etl_starters.batter    ,etl_starters.game
+                --                            bg.hits        AS t_hits,                          b.ba             AS b_ba,                            --p.ba     AS p_ba
+                ,pull_forest_dart_mixin_batter_season.h  AS t_h
+                ,pull_forest_dart_mixin_batter_season.ba b_ba
+                ,pull_forest_dart_mixin_pitcher_season.ba p_ba
+            FROM      etl_starters
+            
+            LEFT JOIN pull_forest_dart_mixin_batter_season
+            ON  pull_forest_dart_mixin_batter_season.GD = etl_starters.GD
+                AND  pull_forest_dart_mixin_batter_season.batter = etl_starters.batter
+            LEFT JOIN pull_forest_dart_mixin_pitcher_season
+            ON  pull_forest_dart_mixin_pitcher_season.GD = etl_starters.GD
+            
+                -- WHERE  t_h>0
+        """
+
+    @classmethod
+    def view_pull_forest_dart_mixin_batter_season(cls):
+        return """
+            SELECT GD, batter, ab, h, ba
+            FROM   feet_dart_batter
+            WHERE  TS = 200
+        """
+    @classmethod
     def view_pull_forest_dart_mixin_pitcher_season(cls):
         return """
-            SELECT pitcher, stand, ba_against, p_k_pct, p_woba_against
-                                    FROM   feet_pitcher
-                                    WHERE  TS = 200
+            SELECT GD, pitcher, ab, h, ba
+            FROM   feet_dart_pitcher
+            WHERE  TS = 200
         """
 
     @classmethod
     def view_pull_forest_dart_pa(cls):
         return """
             SELECT
-                            etl_pa.GD, etl_pa.batter, game_pk, at_bat_number -- i believe the key
-                            ,  etl_pa.pitcher
-                            , is_hit AS t_hit -- the t_ identifies field AS target
-                            ,b_ba
-                            ,p_ba_against
-                        FROM etl_pa
-                        LEFT JOIN pull_forest_dart_pa_mixin_batter
-                        ON  pull_forest_dart_pa_mixin_batter.GD = etl_pa.GD
-                            AND  pull_forest_dart_pa_mixin_batter.batter = etl_pa.batter
-                        LEFT JOIN pull_forest_dart_pa_mixin_pitcher
-                        ON  pull_forest_dart_pa_mixin_pitcher.GD = etl_pa.GD
-                            AND  pull_forest_dart_pa_mixin_pitcher.pitcher = etl_pa.pitcher
+                etl_dart_pa.GD, etl_dart_pa.batter, etl_dart_pa.game, etl_dart_pa.pa ,  etl_dart_pa.pitcher -- i believe the key    ,etl_dart_pa. h  AS t_h -- the t_ identifies field AS target
+                ,etl_dart_pa.h                                                                                                                        AS t_h, b_ba     ,p_ba
+            FROM etl_dart_pa
+            LEFT JOIN pull_forest_dart_pa_mixin_batter mx
+            ON  mx.GD = etl_dart_pa.GD
+                AND mx.batter = etl_dart_pa.batter
+            LEFT JOIN pull_forest_dart_pa_mixin_pitcher mx_pitch
+            ON  mx_pitch.GD = etl_dart_pa.GD
+                AND mx_pitch.pitcher = etl_dart_pa.pitcher
+                -- WHERE p_ba>0
         """
     @classmethod
     def view_pull_forest_dart_pa_mixin_batter(cls):
         return """
             SELECT GD, batter
-                                                    ,SUM(hits) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba
-                                                FROM feet_batter
-                                    WHERE ts=200 -- season numbers 
-                                                GROUP BY gd, batter
+                ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba
+            FROM feet_dart_batter
+            WHERE ts=200 -- season numbers
+            GROUP BY gd, batter
         """
-
-    @classmethod
-    def view_pull_forest_dart_pa_mixin_pitcher(cls):
-        return """
-            SELECT GD, pitcher
-                            ,SUM(hits_allowed) * 1.0 / NULLIF(SUM(ab_against), 0) AS p_ba_against
-                        FROM feet_pitcher
-                        WHERE ts=200 -- season numbers
-                        GROUP BY GD,pitcher
-        """
-
     @classmethod
     def view_pull_etl_dart_pa(cls):
         return """
@@ -514,4 +505,46 @@ class _SchemaViews:
             SELECT GD, TS, pitcher
                 ,h * 1.0 / NULLIF(ab, 0) AS ba
             FROM feet_dart_pitcher
+        """
+
+    @classmethod
+    def view_pull_etl_starters(cls):
+        return """
+            SELECT pitcher.GD, batters_first_bat_num.batter,  pitcher.game, pitcher.pitcher, pitcher.pa
+                --    ,pitcher.p_throws, pitcher.stand, batters_first_bat_num.first_bat AS at_bat_number
+            FROM etl_dart_pa pitcher
+            JOIN (
+                SELECT  GD,batter,game, MIN(pa) AS first_bat
+                FROM etl_dart_pa batter
+                    -- WHERE batter =543807 AND game = 822839
+                GROUP BY GD,batter, game
+                ) batters_first_bat_num
+            ON  batters_first_bat_num.game = pitcher.game
+                AND  batters_first_bat_num.first_bat = pitcher.pa
+        """
+    @classmethod
+    def view_pull_etl_matchups(cls):
+        return """
+            SELECT
+                p.GD
+                ,p.game
+                ,p.batter
+                ,p.pitcher
+                ,MIN(p.pa) AS pa
+            FROM etl_dart_pa p
+            GROUP BY
+                p.GD
+                ,p.game
+                ,p.batter
+                ,p.pitcher
+        """
+
+    @classmethod
+    def view_pull_forest_dart_pa_mixin_pitcher(cls):
+        return """
+            SELECT GD, pitcher
+                ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba
+            FROM feet_dart_pitcher
+            WHERE ts=200 -- season numbers
+            GROUP BY gd, pitcher;
         """

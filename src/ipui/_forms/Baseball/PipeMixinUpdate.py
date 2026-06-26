@@ -47,7 +47,7 @@ class PipeMixinUpdate:
 
     def update_layer(self, layer, gd):
         """loop tables, dispatch each"""
-        for tbl in BbDB.tables_for_layer(layer):
+        for tbl in self.tables_for_layer_filtered(layer):
             self.ip.drip(self.logthe_table, tbl, gd)
             self.ip.drip(self.update_table, tbl, gd)
 
@@ -86,7 +86,7 @@ class PipeMixinUpdate:
         BbDB.log(tbl, f"rolled TS {self.TIME_SLICES} @ {MgrDT.gd_to_iso(gd)} over {len(metrics)} metrics")
 
     # PipeMixinUpdate.py method: rollup_sql  Update: simplified, no game_pk hack
-    def rollup_sql(self, tbl, gd, ts, entity, metrics):
+    def rollup_sqlOLD(self, tbl, gd, ts, entity, metrics):
         """Rollup TS=1 rows into a higher timeslice for the given entity columns."""
         ent_csv = ", ".join(entity)
         sums    = ", ".join(f"SUM({m}) AS {m}" for m in metrics)
@@ -100,6 +100,37 @@ class PipeMixinUpdate:
               AND GD < {gd}
             GROUP BY {ent_csv}
         """
+
+
+
+    def rollup_sql(self, tbl, gd, ts, entity, metrics):
+        """Rollup TS=1 rows into a higher timeslice. Excluded PK cols get sentinel 0."""
+        keys, _     = self.feet_grain(tbl)
+        sentinel    = [(k, 0) for k in keys if k in self.ROLLUP_EXCLUDE and k not in ("GD", "TS")]
+        ent_csv     = ", ".join(entity)
+        sent_cols   = ", ".join(k for k, _ in sentinel)
+        sent_vals   = ", ".join(str(v) for _, v in sentinel)
+        met_csv     = ", ".join(metrics)
+        sums        = ", ".join(f"SUM({m}) AS {m}" for m in metrics)
+        ins_cols    = f"GD, TS, {ent_csv}"
+        ins_vals    = f"{gd}, {ts}, {ent_csv}"
+        if sentinel:
+            ins_cols += f", {sent_cols}"
+            ins_vals += f", {sent_vals}"
+        ins_cols   += f", {met_csv}"
+        ins_vals   += f", {sums}"
+        floor       = MgrDT.gd_add_days(gd, -ts)
+        return f"""
+            INSERT INTO {tbl} ({ins_cols})
+            SELECT {ins_vals}
+            FROM {tbl}
+            WHERE TS = 1
+              AND GD >  {floor}
+              AND GD <  {gd}
+            GROUP BY {ent_csv}
+        """
+
+
 
     def run_update_views(self, tbl, gd):
         """discover update_{tbl}* views, UPDATE...FROM"""

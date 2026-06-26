@@ -346,7 +346,37 @@ Claude has been assigned remedial API-awareness training.
             Button(row, "LEFT", on_click=lambda name=v: self.join_mixin_to_pull(name, "LEFT"))
             Button(row, "JOIN", on_click=lambda name=v: self.join_mixin_to_pull(name, ""))
             Button(row, "FULL", on_click=lambda name=v: self.join_mixin_to_pull(name, "FULL"))
+            Button(row, "DEL",  on_click=lambda name=v: self.delete_mixin_clicked(name), color_bg=Style.COLOR_BUTTON_DANGER)
 
+    def delete_mixin_clicked(self, view_name):
+        if view_name not in self.find_mixin_views():
+            self.form.msgbox(f"'{view_name}' is not a building block for this table.",
+                             MSG_BTNS_OK + MSG_ICON_WARNING, "Delete View")
+            return
+        self.private_delete_view_name = view_name
+        msg = self.delete_mixin_message(view_name)
+        self.form.msgbox(msg, MSG_BTNS_YES_NO + MSG_ICON_WARNING + MSG_DEFAULT_2,
+                         "Delete Building Block", on_result=self.delete_mixin_confirmed)
+
+    def delete_mixin_message(self, view_name):
+        pull_name  = f"pull_{self.current_table}"
+        pull_sql   = self.fetch_pull_select(pull_name) or ""
+        referenced = view_name in pull_sql
+        msg        = f"Delete this building block?\n\n{view_name}\n\nThis removes it from the DB and _SchemaViews.py."
+        if referenced:
+            msg += f"\n\nWARNING: {pull_name} currently references this view, so deleting it may break the pull view."
+        return msg
+
+    def delete_mixin_confirmed(self, result):
+        if result != MSG_RESULT_YES: return
+        view_name = getattr(self, "private_delete_view_name", None)
+        if not view_name: return
+        MgrSchema.delete_one_view(view_name)
+        BbDB.log(view_name, "deleted building block")
+        self.private_delete_view_name = None
+        if self.private_selected_view == view_name:
+            self.private_selected_view = None
+        self.set_pane(1, self.source)
     # ══════════════════════════════════════════════════════════════
     # Workshop.py method: on_mixin_clicked  NEW: navigate to detail from Plate click
     # ══════════════════════════════════════════════════════════════
@@ -382,7 +412,7 @@ Claude has been assigned remedial API-awareness training.
     # ══════════════════════════════════════════════════════════════
     # Workshop.py method: join_mixin_to_pull  NEW: auto-compose JOIN into pull view
     # ══════════════════════════════════════════════════════════════
-    def join_mixin_to_pull(self, mixin_name, join_type):
+    def join_mixin_to_pullOLD(self, mixin_name, join_type):
         tbl = self.current_table
         if not tbl: return
         pull_name  = f"pull_{tbl}"
@@ -416,6 +446,42 @@ Claude has been assigned remedial API-awareness training.
         MgrSchema.save_view(pull_name, new_sql)
         self.set_pane(1, self.source)
 
+
+
+    # Workshop.py method: join_mixin_to_pull  Update: generate rich commented JOIN + SELECT suggestions
+    def join_mixin_to_pull(self, mixin_name, join_type):
+        """Append a commented JOIN clause + available columns to the pull view."""
+        tbl = self.current_table
+        if not tbl: return
+        pull_name = f"pull_{tbl}"
+        select_sql = self.fetch_pull_select(pull_name)
+        if select_sql is None: return
+        if mixin_name in select_sql:
+            self.form.msgbox(f"'{mixin_name}' is already in the pull view.",
+                             MSG_BTNS_OK + MSG_ICON_WARNING, "Already Joined")
+            return
+        base_table = self.parse_base_table(select_sql)
+        join_keys = self.guess_join_keys(mixin_name, pull_name)
+        mixin_cols = BbDB.field_names(mixin_name)
+        pull_cols = set(BbDB.field_names(pull_name))
+        new_cols = [c for c in mixin_cols if c not in pull_cols and c not in join_keys]
+        keyword = f"{join_type} JOIN" if join_type else "JOIN"
+        alias = "mx"
+        lines = [f"-- {keyword} {mixin_name} {alias}"]
+        if join_keys and base_table:
+            lines.append(f"--   ON  {alias}.{join_keys[0]} = {base_table}.{join_keys[0]}")
+            for k in join_keys[1:]:
+                lines.append(f"--   AND {alias}.{k} = {base_table}.{k}")
+        else:
+            lines.append(f"--   ON  {alias}.??? = ???")
+        if new_cols:
+            lines.append(f"-- available columns:")
+            for c in new_cols:
+                lines.append(f"--   , {alias}.{c}")
+        comment = "\n".join(lines)
+        new_sql = select_sql.rstrip().rstrip(';') + "\n" + comment + ";"
+        MgrSchema.save_view(pull_name, new_sql)
+        self.set_pane(1, self.source)
 
 
 

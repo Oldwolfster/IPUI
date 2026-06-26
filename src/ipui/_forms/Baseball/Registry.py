@@ -205,18 +205,6 @@ class Registry(_BaseTab,WorkshopMixinDatabaseBrowser):
         self.private_db_selected = name
         self.set_pane(0, self.database_browser)
 
-    def save_entry(self):
-        kind  = self.form.widgets["grp_kind"].value
-        token = self.form.widgets["txt_token"].text.strip()
-        defn  = self.form.widgets["txt_def"].text.strip()
-        if not kind or not token:
-            BbDB.log("registry", "pick a Type and enter a token"); return
-        BbDB.execute("DELETE FROM _registry WHERE kind=? AND token=?", (kind, token))
-        BbDB.execute("INSERT INTO _registry (GD, kind, token, definition) VALUES (?,?,?,?)",
-                     (MgrDT.today_gd(), kind, token, defn))
-        self.load_grid(self.private_filter)
-        MgrBackup.export_all()
-
     def new_entry(self):
         self.private_edit_kind = None
         for n in ("lbl_kind", "txt_token", "txt_def"): self.set_widget_text(n, "")
@@ -342,6 +330,7 @@ class Registry(_BaseTab,WorkshopMixinDatabaseBrowser):
     def commit_alter_table(self):
         tbl = self.current_table
         if not tbl or not self.private_staged_columns: return
+        from ipui._forms.Baseball.MgrSchema import MgrSchema
         MgrSchema.replace_table_schema(tbl, self.private_staged_columns)
         self.form.tab_strip.resolve_tab("Pipe").private_stale = True
         self.form.show_modal("Old table IRRADICATED — rebuilt from staged columns", 1.5, self.after_commit)
@@ -375,7 +364,7 @@ class Registry(_BaseTab,WorkshopMixinDatabaseBrowser):
         Button(btns, "New",    flex_width=1,                       on_click=self.new_entry)
         Button(btns, "Delete", color_bg=Style.COLOR_BUTTON_DANGER, flex_width=1, on_click=self.delete_entry)
 
-    # Registry.py  method: save_entry  Update: persist dtype
+
     def save_entry(self):
         kind  = self.form.widgets["grp_kind"].value
         token = self.form.widgets["txt_token"].text.strip()

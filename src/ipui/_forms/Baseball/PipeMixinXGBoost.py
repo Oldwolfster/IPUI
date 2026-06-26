@@ -45,8 +45,8 @@ class MixinXGBoost:
     XGB_MODEL_NAME = "xgb_v1"
     XGB_TABLE      = "predict_xgb_v1"
 
-    XGB_ID_COLS  = ("GD", "batter", "game_pk", "pitcher", "at_bat_number")   # never features
-    XGB_KEY_COLS = ("GD", "batter", "game_pk", "at_bat_number")              # the prediction grain (PK)
+    XGB_ID_COLS  = ("GD", "batter", "game", "game_pk", "pitcher", "pa", "at_bat_number")
+    XGB_KEY_COLS = ("GD", "batter", "game", "game_pk", "pa", "at_bat_number")
 
     def key_cols(self, df):        return [c for c in self.XGB_KEY_COLS if c in df.columns]
 
@@ -63,8 +63,8 @@ class MixinXGBoost:
         if df_all.empty:
             BbDB.log(out_table, f"{forest_table} is empty")
             return
-        if "game_pk" not in df_all.columns:
-            return EZ.err(f"{forest_table} missing game_pk — doubleheaders break without it")
+        if "game" not in df_all.columns and "game_pk" not in df_all.columns:  # NEW
+            return EZ.err(f"{forest_table} missing game or game_pk")
 
         target                     = self.target_col(df_all)
         df_train, df_predict       = self.split_to_train_and_predict(df_all, target)

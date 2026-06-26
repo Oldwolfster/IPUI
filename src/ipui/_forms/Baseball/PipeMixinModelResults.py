@@ -28,24 +28,35 @@ class MixinModelResults:
         BbDB.execute("DELETE FROM model_run        WHERE run_id = ?", (run_id,))
 
 
-    # PipeMixinModelResults.py  method: load_model_prediction  NEW: standardize predict grain to batter-game
-    def load_model_prediction(self, run_id, model_name, predict_table):
+
+    def load_model_predictionOLD(self, run_id, model_name, predict_table):
         BbDB.execute(f"""
             INSERT INTO model_prediction
-                (GD, run_id, batter, game_pk, model_name, predicted, actual, error)
+                (GD, run_id, batter, game, model_name, predicted, actual, error)
             SELECT
                 GD,
                 ?,
                 batter,
-                game_pk,
+                game,
                 ?,
                 SUM(predicted),
                 SUM(actual),
                 SUM(predicted) - SUM(actual)
             FROM {predict_table}
-            GROUP BY GD, batter, game_pk
+            GROUP BY GD, batter, game
         """, (run_id, model_name))
 
+    def load_model_prediction(self, run_id, model_name, predict_table):
+        gcol = self.game_col_for(predict_table)
+        BbDB.execute(f"""
+            INSERT INTO model_prediction
+                (GD, run_id, batter, game, model_name, predicted, actual, error)
+            SELECT
+                GD, ?, batter, {gcol}, ?,
+                SUM(predicted), SUM(actual), SUM(predicted) - SUM(actual)
+            FROM {predict_table}
+            GROUP BY GD, batter, {gcol}
+        """, (run_id, model_name))
 
     # PipeMixinModelResults.py  method: load_model_day  NEW: materialized day drill level
     def load_model_day(self, run_id, model_name):
@@ -114,7 +125,7 @@ class MixinModelResults:
     # PipeMixinModelResults.py  method: model_grain  NEW: rough source grain label
     def model_grain(self, df):
         if "at_bat_number" in df.columns: return "pa"
-        if "batter" in df.columns and "game_pk" in df.columns: return "batter_game"
+        if "batter" in df.columns and ("game" in df.columns or "game_pk" in df.columns): return "batter_game"  # NEW
         return "unknown"
 
 
@@ -128,7 +139,12 @@ class MixinModelResults:
             WHERE run_id = ?
         """, (run_id,))
         return rows[0] if rows else (0, None)
-
+    def game_col_for(self, table):
+        """Return 'game' or 'game_pk' depending on what the table has."""
+        cols = {c[1] for c in BbDB.query(f"PRAGMA table_info({table})")}
+        if "game" in cols: return "game"
+        if "game_pk" in cols: return "game_pk"
+        return "game"
 
     # PipeMixinModelResults.py  method: update_model_summaries  NEW: refresh Pipe cards
     def update_model_summaries(self):
@@ -148,13 +164,18 @@ class MixinModelResults:
         self.load_log5_run(run_id, model_name)
         self.update_model_summaries()
         BbDB.log("model", "log5: model tables loaded")
-
+    def game_col_for(self, table):
+        """Return 'game' or 'game_pk' depending on what the table has."""
+        cols = {c[1] for c in BbDB.query(f"PRAGMA table_info({table})")}
+        if "game" in cols: return "game"
+        if "game_pk" in cols: return "game_pk"
+        return "game"
 
     # PipeMixinModelResults.py method: load_log5_prediction  NEW: materialize log5 batter-game predictions
     def load_log5_prediction(self, run_id, model_name):
         BbDB.execute("""
             INSERT INTO model_prediction
-                (GD, run_id, batter, game_pk, model_name, predicted, actual, error)
+                  (GD, run_id, batter, game, model_name, predicted, actual, error) 
             SELECT
                 r.GD,
                 ?,

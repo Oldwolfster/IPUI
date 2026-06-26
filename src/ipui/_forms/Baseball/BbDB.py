@@ -4,6 +4,9 @@ from datetime import datetime
 from pathlib import Path
 from collections import namedtuple
 
+from ipui.utils.EZ import EZ
+
+
 class BbDB:
 
     DB_PATH = str(Path.home() / ".neuroforge" / "projects" / "baseball.db")
@@ -23,6 +26,7 @@ class BbDB:
 
         from ipui._forms.Baseball.MgrSchema import MgrSchema
         MgrSchema.sync_fields_to_db()
+        MgrSchema.sync_tracks_to_db()
         from ipui._forms.Baseball._SchemaViews import _SchemaViews
         _SchemaViews.create_all(cls.DB_PATH)
         if not cls.query("SELECT 1 FROM _summary LIMIT 1"): cls.update_summary_all()
@@ -33,9 +37,16 @@ class BbDB:
     @classmethod
     def query(cls, sql, params=()):
         conn = sqlite3.connect(cls.DB_PATH)
-        rows = conn.execute(sql, params).fetchall()
-        conn.close()
-        return rows
+        try:
+            rows = conn.execute(sql, params).fetchall()
+            return rows
+        except Exception as e:
+            conn.rollback()
+            target = cls.sql_target(sql)
+            EZ.err(f"DB execute failed on {target}: {e}\n\nSQL:\n{sql}")
+        finally:
+            conn.close()
+
 
     @classmethod
     def has_rows_on_or_past(cls, tbl, gd=None):
@@ -46,11 +57,25 @@ class BbDB:
     @classmethod
     def execute(cls, sql, params=()):
         conn = sqlite3.connect(cls.DB_PATH)
-        cur  = conn.execute(sql, params)
-        rc   = cur.rowcount
-        conn.commit()
-        conn.close()
-        return rc
+        try:
+            cur = conn.execute(sql, params)
+            rc  = cur.rowcount
+            conn.commit()
+            return rc
+        except Exception as e:
+            conn.rollback()
+            target = cls.sql_target(sql)
+            EZ.err(f"DB execute failed on {target}: {e}\n\nSQL:\n{sql}")
+        finally:
+            conn.close()
+
+    @classmethod
+    def sql_target(cls, sql):
+        import re
+        text = " ".join((sql or "").split())
+        m = re.search(r"\b(?:INTO|UPDATE|FROM|TABLE|VIEW)\s+([A-Za-z_][A-Za-z0-9_]*)", text, re.IGNORECASE)
+        return m.group(1) if m else "unknown"
+
 
     @classmethod
     def execute_many(cls, sql, params_list):
@@ -68,25 +93,6 @@ class BbDB:
         cls.log(tbl, "dropped")
 
 
-
-    @classmethod
-    def tables_for_layer(cls, layer):
-        layer = layer.lower()                                                # NEW
-        rows = cls.query("""
-            SELECT name FROM sqlite_master
-            WHERE  type='table' AND (name = ? OR name LIKE ?)
-            ORDER BY name
-        """, (layer, f"{layer}_%"))
-        return [r[0] for r in rows]
-
-    @classmethod                                                                # NEW
-    def tables_for_layerDELEETEMEE(cls, layer):                                           # NEW
-        from ipui._forms.Baseball._SchemaTbl import _SchemaTbl                  # NEW
-        seen = []                                                               # NEW
-        for tbl, _ in _SchemaTbl.SCHEMA:                                        # NEW
-            if tbl not in seen and tbl.split('_')[0] == layer.lower():
-                seen.append(tbl)                                                # NEW
-        return seen
 
 
     @classmethod
@@ -211,12 +217,16 @@ class BbDB:
     #   _prefix      : metadata — no injection, standard ROWID.
     # ══════════════════════════════════════════════════════════════
 
+
     @classmethod
     def materialize_all_tables(cls):
+        import importlib  # NEW
+        from ipui._forms.Baseball import _SchemaTbl  # NEW
+        importlib.reload(_SchemaTbl)  # NEW
         from ipui._forms.Baseball._SchemaTbl import _SchemaTbl
-        conn    = sqlite3.connect(cls.DB_PATH)
+        conn = sqlite3.connect(cls.DB_PATH)
         grouped = {}
-        order   = []
+        order = []
         for tbl, col_decl in _SchemaTbl.SCHEMA:
             if tbl not in grouped:
                 grouped[tbl] = []
@@ -263,10 +273,6 @@ class BbDB:
     # ════════════════════════════════════════════════
     # Update tables from view                      ═══
     # ════════════════════════════════════════════════
-    @classmethod
-    def field_names(cls, tbl):
-        return [r[1] for r in cls.query(f"PRAGMA table_info({tbl})")]
-
 
     @classmethod
     def upsert_from_view(cls, tbl, gd):
@@ -352,6 +358,9 @@ class BbDB:
         kill  = [p, p.with_suffix(".db-wal"), p.with_suffix(".db-shm"), p.with_suffix(".db-journal")]
         for f in kill:
             f.unlink(missing_ok=True)
+    @classmethod
+    def has_rows_for_gd(cls, tbl, gd):
+        return bool(cls.query(f"SELECT 1 FROM {tbl} WHERE GD = ? LIMIT 1", (gd,)))
 
     # BbDB.py method: phoenix_count_today  NEW: count prior rises in today's log (survives nuke)
     @classmethod
@@ -359,3 +368,15 @@ class BbDB:
         path = cls.log_path()
         if not path.exists(): return 0
         return path.read_text(encoding="utf-8").count("🔥")
+
+
+    @classmethod
+    def table_exists(cls, tbl):
+        rows = cls.query("""
+            SELECT 1
+            FROM sqlite_master
+            WHERE type = 'table'
+              AND name = ?
+            LIMIT 1
+        """, (tbl,))
+        return bool(rows)

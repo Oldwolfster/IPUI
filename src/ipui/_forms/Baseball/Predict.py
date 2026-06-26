@@ -278,20 +278,6 @@ class Predict(_BaseTab):
     def format_preds_rows(self, rows):
         return [
             {
-                "batter_id" : r[0],
-                "name"      : r[1],
-                "game_pk"   : r[2],
-                "actual"    : r[3],
-                "predicted" : round(r[4] * self.ABs_PER_GAME, 2) if r[4] is not None else None,
-                "error"     : round((r[4] * self.ABs_PER_GAME) - r[3], 2) if r[4] is not None else None,
-            }
-            for r in rows
-        ]
-
-    # Predict.py  method: format_preds_rows  UPDATE: include team and pos columns
-    def format_preds_rows(self, rows):
-        return [
-            {
                 "name"      : r[1],
                 "team"      : r[2],
                 "pos"       : r[3],

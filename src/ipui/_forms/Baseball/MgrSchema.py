@@ -403,6 +403,72 @@ class MgrSchema:
         rows = BbDB.query("SELECT seq FROM _registry WHERE kind=? AND token=?", (kind, token))
         if rows and rows[0][0] is not None: return rows[0][0]
         return MgrSchema.DEFAULT_SEQ.get(kind, 50)
+
+
+    @staticmethod
+    def sync_tracks_to_db():
+        import importlib
+        from ipui._forms.Baseball import _SchemaFlds
+        importlib.reload(_SchemaFlds)
+        for gd, track, tbl in getattr(_SchemaFlds._SchemaFlds, "TRACKS", []):
+            BbDB.execute("INSERT OR IGNORE INTO _track_tables (GD, track, tbl) VALUES (?,?,?)",
+                         (gd, track, tbl))
+
+    # MgrSchema.py method: tracks_replace_table  NEW: full replace table's track assignments, then mirror file
+    @staticmethod
+    def tracks_replace_table(tbl, tracks):
+        BbDB.execute("DELETE FROM _track_tables WHERE tbl=?", (tbl,))
+        for track in tracks or []:
+            BbDB.execute("INSERT OR IGNORE INTO _track_tables (GD, track, tbl) VALUES (?,?,?)",
+                         (MgrDT.today_gd(), track, tbl))
+        MgrSchema.write_tracks_from_db()
+
+    @staticmethod
+    def track_add_table(track, tbl):
+        if not track or not tbl: return
+        BbDB.execute("INSERT OR IGNORE INTO _track_tables (GD, track, tbl) VALUES (?,?,?)",
+                     (MgrDT.today_gd(), track, tbl))
+        MgrSchema.write_tracks_from_db()
+
+    @staticmethod
+    def write_tracks_from_db():
+        rows = BbDB.query("SELECT GD, track, tbl FROM _track_tables ORDER BY track, tbl")
+        MgrSchema.backup_file(MgrSchema.FIELDS_FILE)
+        body = [f"        ({int(gd)}, {track!r}, {tbl!r}),\n" for gd, track, tbl in rows]
+        MgrSchema.write_schema_list("TRACKS", body)
+
+    # MgrSchema.py method: write_schema_list  NEW: replace or append a class-level list in _SchemaFlds.py
+    @staticmethod
+    def write_schema_list(list_name, body_lines):
+        file_text = MgrSchema.read_file(MgrSchema.FIELDS_FILE)
+        lines     = file_text.splitlines(keepends=True)
+        start     = MgrSchema.find_schema_list_start(lines, list_name)
+        block     = [f"\n    {list_name} = [\n"] + body_lines + ["    ]\n"]
+        if start is None:
+            MgrSchema.write_file(MgrSchema.FIELDS_FILE, file_text.rstrip() + "\n" + ''.join(block))
+            return
+        end = MgrSchema.find_schema_list_end(lines, start)
+        MgrSchema.write_file(MgrSchema.FIELDS_FILE, ''.join(lines[:start] + block + lines[end + 1:]))
+
+
+    # MgrSchema.py method: find_schema_list_start  NEW: find class-level list assignment
+    @staticmethod
+    def find_schema_list_start(lines, list_name):
+        needle = f"{list_name} = ["
+        for i, line in enumerate(lines):
+            if line.strip().startswith(needle): return i
+        return None
+
+
+    # MgrSchema.py method: find_schema_list_end  NEW: find matching closing bracket for simple list block
+    @staticmethod
+    def find_schema_list_end(lines, start):
+        depth = 0
+        for i in range(start, len(lines)):
+            depth += lines[i].count("[") - lines[i].count("]")
+            if i > start and depth <= 0: return i
+        return start
+
     # ══════════════════════════════════════════════════════════════
     # ETL VIEW CLONING
     # ══════════════════════════════════════════════════════════════
@@ -456,15 +522,28 @@ class MgrSchema:
 
 
     @staticmethod
-    def delete_table_entrypoint(table_name):
+    def delete_table_entrypointOLD(table_name):
         """Delete a table: drop views, remove from _SchemaTbl.py, drop from DB."""
         MgrSchema.delete_table_views(table_name)
         MgrSchema.remove_from_tbl_schema(table_name)
         BbDB.drop_table(table_name)
         BbDB.execute("DELETE FROM _summary WHERE tbl = ?", (table_name,))
         BbDB.execute("DELETE FROM _track_tables WHERE tbl = ?", (table_name,))
+        MgrSchema.write_tracks_from_db()
         BbDB.log(table_name, "deleted (table + views + schema)")
 
+    def delete_table_entrypoint(table_name):
+        """Delete a table: drop views, remove from _SchemaTbl.py, drop from DB."""
+        MgrSchema.delete_table_views(table_name)
+        MgrSchema.remove_from_tbl_schema(table_name)
+        import importlib                                                          # NEW
+        from ipui._forms.Baseball import _SchemaTbl                               # NEW
+        importlib.reload(_SchemaTbl)                                              # NEW
+        BbDB.drop_table(table_name)
+        BbDB.execute("DELETE FROM _summary WHERE tbl = ?", (table_name,))
+        BbDB.execute("DELETE FROM _track_tables WHERE tbl = ?", (table_name,))
+        MgrSchema.write_tracks_from_db()
+        BbDB.log(table_name, "deleted (table + views + schema)")
     # MgrSchema.py method: delete_table_views  New: find and delete all associated views
     @staticmethod
     def delete_table_views(table_name):

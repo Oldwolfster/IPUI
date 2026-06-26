@@ -33,3 +33,62 @@ class _SchemaFlds:
 
         'Key      testKey   INTEGER  50    test',
     ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    TRACKS = [
+        (20260625, 'Original', 'etl_matchup'),
+        (20260625, 'Original', 'etl_pa'),
+        (20260625, 'Original', 'etl_starters'),
+        (20260625, 'Original', 'feet_batter'),
+        (20260625, 'Original', 'feet_pitcher'),
+        (20260625, 'Original', 'forest'),
+        (20260625, 'Original', 'forest_pa'),
+        (20260625, 'Original', 'raw_pitches'),
+        (20260625, 'Original', 'raw_players'),
+        (20260625, 'dart', 'etl_dart_pa'),
+        (20260625, 'dart', 'etl_pitch'),
+        (20260625, 'dart', 'etl_starters'),
+        (20260625, 'dart', 'feet_dart_batter'),
+        (20260625, 'dart', 'feet_dart_pitcher'),
+        (20260625, 'dart', 'forest_dart'),
+        (20260625, 'dart', 'forest_dart_pa'),
+        (20260625, 'dart', 'raw_pitches'),
+        (20260625, 'dart', 'raw_players'),
+    ]

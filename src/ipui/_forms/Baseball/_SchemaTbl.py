@@ -287,29 +287,70 @@ class _SchemaTbl:
         ('etl_pitch', '   swing_path_tilt                             REAL'),
         ('etl_pitch', '   intercept_ball_minus_batter_pos_x_inches    REAL'),
         ('etl_pitch', '   intercept_ball_minus_batter_pos_y_inches    REAL'),
+
         # ═══ etl_pa ═══ One row per plate appearance. Cleaned event grain.
-        ('etl_pa',        'PK batter                                     INTEGER'),
-        ('etl_pa',        'PK game_pk                                    INTEGER'),
-        ('etl_pa',        'PK at_bat_number                              INTEGER'),
-        ('etl_pa',        '   pitcher                                    INTEGER'),
-        ('etl_pa',        '   stand                                      TEXT'   ),
-        ('etl_pa',        '   p_throws                                   TEXT'   ),
-        ('etl_pa',        '   home                                       INTEGER'),
-        ('etl_pa',        '   bat_team                                   TEXT'   ),
-        ('etl_pa',        '   pit_team                                   TEXT'   ),
-        ('etl_pa',        '   park                                       TEXT'   ),
-        ('etl_pa',        '   events                                     TEXT'   ),
-        ('etl_pa',        '   is_hit                                     INTEGER'),
-        ('etl_pa',        '   is_ab                                      INTEGER'),
-        ('etl_pa',        '   is_k                                       INTEGER'),
-        ('etl_pa',        '   is_bb                                      INTEGER'),
-        ('etl_pa',        '   is_hr                                      INTEGER'),
-        ('etl_pa',        '   total_bases                                INTEGER'),
-        ('etl_pa',        '   launch_speed                               REAL'   ),
-        ('etl_pa',        '   launch_angle                               REAL'   ),
-        ('etl_pa',        '   xba                                        REAL'   ),
-        ('etl_pa',        '   woba_value                                 REAL'   ),
-        ('etl_pa',        '   woba_denom                                 INTEGER'),
+        ('etl_pa', 'PK batter                                     INTEGER'),
+        ('etl_pa', 'PK game_pk                                    INTEGER'),
+        ('etl_pa', 'PK at_bat_number                              INTEGER'),
+        ('etl_pa', '   pitcher                                    INTEGER'),
+        ('etl_pa', '   stand                                      TEXT'),
+        ('etl_pa', '   p_throws                                   TEXT'),
+        ('etl_pa', '   home                                       INTEGER'),
+        ('etl_pa', '   bat_team                                   TEXT'),
+        ('etl_pa', '   pit_team                                   TEXT'),
+        ('etl_pa', '   park                                       TEXT'),
+        ('etl_pa', '   events                                     TEXT'),
+        ('etl_pa', '   is_hit                                     INTEGER'),
+        ('etl_pa', '   is_ab                                      INTEGER'),
+        ('etl_pa', '   is_k                                       INTEGER'),
+        ('etl_pa', '   is_bb                                      INTEGER'),
+        ('etl_pa', '   is_hr                                      INTEGER'),
+        ('etl_pa', '   total_bases                                INTEGER'),
+        ('etl_pa', '   launch_speed                               REAL'),
+        ('etl_pa', '   launch_angle                               REAL'),
+        ('etl_pa', '   xba                                        REAL'),
+        ('etl_pa', '   woba_value                                 REAL'),
+        ('etl_pa', '   woba_denom                                 INTEGER'),
+
+        # ═══ etl_dart_pa ═══
+        ('etl_dart_pa', 'PK game                                    INTEGER'),
+        ('etl_dart_pa', 'PK pa                                      INTEGER'),
+        ('etl_dart_pa', 'PK batter                                  INTEGER'),
+        ('etl_dart_pa', 'PK pitcher                                 INTEGER'),
+        ('etl_dart_pa', '   h                                       INTEGER'),
+        ('etl_dart_pa', '   ab                                      INTEGER'),
+
+        # ═══ etl_starters ═══
+        ('etl_starters', 'PK game                                    INTEGER'),
+        ('etl_starters', 'PK batter                                  INTEGER'),
+        ('etl_starters', 'PK pitcher                                 INTEGER'),
+        ('etl_starters', 'PK pa                                      INTEGER'),
+        # ═══ etl_matchup ═══
+        ('etl_matchup', 'PK batter                                  INTEGER'),
+        ('etl_matchup', 'PK game_pk                                 INTEGER'),
+        ('etl_matchup', 'at_bat_number                              INTEGER'),
+        ('etl_matchup', '   pitcher                                 INTEGER'),
+        ('etl_matchup', '   stand                                   TEXT'),
+        ('etl_matchup', '   p_throws                                TEXT'),
+
+        # ═══ etl_matchups ═══
+        ('etl_matchups', 'PK game                                    INTEGER'),
+        ('etl_matchups', 'PK batter                                  INTEGER'),
+        ('etl_matchups', 'PK pitcher                                 INTEGER'),
+        ('etl_matchups', 'PK pa                                      INTEGER'),
+        ('etl_matchups', '   stand                                   TEXT'),
+        ('etl_matchups', '   p_throws                                TEXT'),
+
+
+        # ═══ etl_smally_pa ═══
+        ('etl_smally_pa', 'PK game                                    INTEGER'),
+        ('etl_smally_pa', 'PK pa                                      INTEGER'),
+        ('etl_smally_pa', 'PK batter                                  INTEGER'),
+        ('etl_smally_pa', 'PK pitcher                                 INTEGER'),
+        ('etl_smally_pa', '   h                                       INTEGER'),
+        ('etl_smally_pa', '   ab                                      INTEGER'),
+
+
 
 
         # ═══ feet_batter ═══
@@ -381,13 +422,6 @@ class _SchemaTbl:
 
         # _Schema_tbl.py  forest block  REPLACE: full feature matrix schema
 
-        # ═══ etl_matchup ═══
-        ('etl_matchup', 'PK batter                                  INTEGER'),
-        ('etl_matchup', 'PK game_pk                                 INTEGER'),
-        ('etl_matchup', 'at_bat_number                              INTEGER'),
-        ('etl_matchup', '   pitcher                                 INTEGER'),
-        ('etl_matchup', '   stand                                   TEXT'),
-        ('etl_matchup', '   p_throws                                TEXT'),
 
 
         # ═══ forest_pa_simplest ═══
@@ -449,81 +483,12 @@ class _SchemaTbl:
         # ═══ model_prediction ═══ Predict tab standardized batter-game detail.
         ('model_prediction', 'PK run_id                              TEXT'),
         ('model_prediction', 'PK batter                              INTEGER'),
-        ('model_prediction', 'PK game_pk                             INTEGER'),
+        ('model_prediction', 'PK game                                INTEGER'),
         ('model_prediction', '   model_name                          TEXT'),
         ('model_prediction', '   predicted                           REAL'),
         ('model_prediction', '   actual                              REAL'),
         ('model_prediction', '   error                               REAL'),
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        # ═══ etl_smally_pa ═══
-        ('etl_smally_pa', 'PK game                                    INTEGER'),
-        ('etl_smally_pa', 'PK pa                                      INTEGER'),
-        ('etl_smally_pa', 'PK batter                                  INTEGER'),
-        ('etl_smally_pa', 'PK pitcher                                 INTEGER'),
-        ('etl_smally_pa', '   h                                       INTEGER'),
-        ('etl_smally_pa', '   ab                                      INTEGER'),
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        # ═══ etl_dart_pa ═══
-        ('etl_dart_pa', 'PK game                                    INTEGER'),
-        ('etl_dart_pa', 'PK pa                                      INTEGER'),
-        ('etl_dart_pa', 'PK batter                                  INTEGER'),
-        ('etl_dart_pa', 'PK pitcher                                 INTEGER'),
-        ('etl_dart_pa', '   h                                       INTEGER'),
-        ('etl_dart_pa', '   ab                                      INTEGER'),
-
-
-
-
-        # ═══ forest_dart ═══
-        ('forest_dart', 'PK batter                                  INTEGER'),
-        ('forest_dart', 'PK game_pk                                 INTEGER'),
-        ('forest_dart', '   t_hits                                  INTEGER'),
-        ('forest_dart', '   b_ba                                    REAL'),
-        ('forest_dart', '   p_ba_against                            REAL'),
-
-
-        # ═══ forest_dart_pa ═══
-        ('forest_dart_pa', 'PK batter                                  INTEGER'),
-        ('forest_dart_pa', 'PK game_pk                                 INTEGER'),
-        ('forest_dart_pa', 'PK at_bat_number                           INTEGER'),
-        ('forest_dart_pa', '   pitcher                                 INTEGER'),
-        ('forest_dart_pa', '   t_hit                                   INTEGER'),
-        ('forest_dart_pa', '   b_ba                                    REAL'),
-        ('forest_dart_pa', '   p_ba_against                            REAL'),
 
 
         # ═══ feet_dart_batter ═══
@@ -532,18 +497,27 @@ class _SchemaTbl:
         ('feet_dart_batter', '   h                                       INTEGER'),
         ('feet_dart_batter', '   ba                                      REAL'),
 
-
-
-
-
-
-
-
         # ═══ feet_dart_pitcher ═══
         ('feet_dart_pitcher', 'PK pitcher                                 INTEGER'),
         ('feet_dart_pitcher', '   ab                                      INTEGER'),
         ('feet_dart_pitcher', '   h                                       INTEGER'),
         ('feet_dart_pitcher', '   ba                                      REAL'),
 
+        # ═══ forest_dart_pa ═══
+        ('forest_dart_pa', 'PK game                                    INTEGER'),
+        ('forest_dart_pa', 'PK batter                                  INTEGER'),
+        ('forest_dart_pa', 'PK pa                                      INTEGER'),
+        ('forest_dart_pa', '   pitcher                                 INTEGER'),
+        ('forest_dart_pa', '   t_h                                     INTEGER'),
+        ('forest_dart_pa', '   b_ba                                    REAL'),
+        ('forest_dart_pa', '   p_ba                                    REAL'),
+
+        # ═══ forest_dart ═══
+        ('forest_dart', 'PK game                                    INTEGER'),
+        ('forest_dart', 'PK batter                                  INTEGER'),
+        ('forest_dart', '   pitcher                                 INTEGER'),
+        ('forest_dart', '   t_h                                     INTEGER'),
+        ('forest_dart', '   b_ba                                    REAL'),
+        ('forest_dart', '   p_ba                                    REAL'),
 
     ]

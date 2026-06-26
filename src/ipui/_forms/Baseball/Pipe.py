@@ -346,13 +346,19 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         rows = BbDB.query("SELECT tbl FROM _track_tables WHERE track=?", (track,))
         return {r[0] for r in rows}
 
-    def tables_for_layer_filtered(self, layer):
+    def tables_for_layer_filteredOLD(self, layer):
         """Tables for a layer, filtered by active track if one is selected."""
         tables = BbDB.tables_for_layer(layer)
         if self.private_track_filter is None: return tables
         track_set = self.tables_in_track(self.private_track_filter)
         return [t for t in tables if t in track_set]
 
+    def tables_for_layer_filtered(self, layer):
+        """Tables for a layer, filtered by active track if one is selected."""
+        tables = [t for t in BbDB.tables_for_layer(layer) if BbDB.table_exists(t)]
+        if self.private_track_filter is None: return tables
+        track_set = self.tables_in_track(self.private_track_filter)
+        return [t for t in tables if t in track_set]
 
     # ════════════════════════════════════════════════
     # Widget Tree                                  ═══

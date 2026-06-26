@@ -80,6 +80,7 @@ class MgrDT:
         return cls.gd_add_days(gd_expr, days+1)
 
     # TODO GET THE ABOVE WORKING
+    @classmethod
     def gd_minus_days(cls, gd_expr, days):
         iso = (f"substr(cast({gd_expr} as text),1,4)||'-'||"
                f"substr(cast({gd_expr} as text),5,2)||'-'||"

@@ -38,7 +38,7 @@ class DB(_BaseTab):
 
     KINDS  = ["Entity", "Metric", "Context", "Key"]                     # Key is the new 4th kind — carries a dtype, like Metric
     DTYPES = ["TEXT", "INTEGER", "REAL", "NUMERIC", "BLOB"]
-    VIEW_NAME_TRIM = 20
+    VIEW_NAME_TRIM = 12
     # ── lifecycle ───────────────────────────────────────────────────────────────────
     def ip_setup_early(self, ip):
         """Init every pane's state: browser filter/selection, registry filter, selected object,
@@ -153,10 +153,13 @@ class DB(_BaseTab):
     def load_grid(self, kind=None):
         """Repopulate the vocab grid DB-direct from _registry, optionally filtered by kind."""
         self.private_reg_filter = kind
-        all_rows = BbDB.query("SELECT kind, token, definition FROM _registry ORDER BY kind, token")
+        #all_rows = BbDB.query("SELECT kind, token, definition FROM _registry ORDER BY kind, token")
+        all_rows = BbDB.query("SELECT kind, token, seq, definition FROM _registry ORDER BY kind, token")
         rows     = [list(r) for r in all_rows if kind is None or r[0] == kind]
+
         grid     = self.form.widgets.get("grid_db_reg")
         if grid is not None: grid.set_data(rows, columns=["Type", "Token", "Definition"])
+        if grid is not None: grid.set_data(rows, columns=["Type", "Token", "Seq", "Definition"])
 
     def build_registry_editor(self, parent):
         """Kind selector + token/definition text boxes + dtype picker + Save/New/Delete buttons."""
@@ -234,7 +237,7 @@ class DB(_BaseTab):
 
     def build_object_browse(self, parent):
         """Browse mode: banner with Edit/Clone/Delete + the read-only columns grid."""
-        BannerPlate(parent, f"Table: {self.current_table}",
+        BannerPlate(parent, f"Table: {self.trim_view_name(self.current_table)}",
                     data=[("Edit", self.handle_edit), ("Clone", self.handle_clone),("Tracks", self.handle_tracks), ("Delete", self.handle_delete)])
         card = CardCol(parent, name="card_db_obj", flex_height=1, pad=0)
         grid = PowerGrid(card, name="grid_db_obj")
@@ -769,23 +772,16 @@ class DB(_BaseTab):
         self.private_show_tracks = False
         self.set_pane(3, self.the_inspector)
 
-    # DB.py method: on_tracks_changed  New: sync selections to _track_tables
     def on_tracks_changed(self, selected):
         """Full replace: delete all assignments for this table, re-insert selected."""
-        tbl = self.current_table
-        BbDB.execute("DELETE FROM _track_tables WHERE tbl=?", (tbl,))
-        for track in selected:
-            BbDB.execute("INSERT INTO _track_tables (GD, track, tbl) VALUES (?,?,?)",
-                         (MgrDT.today_gd(), track, tbl))
+        MgrSchema.tracks_replace_table(self.current_table, selected)
 
-    # DB.py method: add_new_track  New: create track and assign current table
     def add_new_track(self):
         """Create a new track from the textbox and assign the current table to it."""
         w    = self.form.widgets.get("txt_new_track")
         name = w.text.strip() if w else ""
         if not name: return
-        BbDB.execute("INSERT OR IGNORE INTO _track_tables (GD, track, tbl) VALUES (?,?,?)",
-                     (MgrDT.today_gd(), name, self.current_table))
+        MgrSchema.track_add_table(name, self.current_table)
         self.set_pane(3, self.the_inspector)
 
     # DB.py method: all_tracks  New: distinct track names
