@@ -21,34 +21,34 @@ class _SchemaViews:
     @classmethod
     def view_pull_etl_pitch(cls):
         return """
-            SELECT     
-                       *
-                       ,game_pk                                            AS gameID
-                       ,at_bat_number                                      AS pa
-                       ,stand AS b_hand
-                       ,p_throws p_hand
-                       ,CASE WHEN inning_topbot = 'Bot' THEN 1 ELSE 0 END  AS home
-                       ,CASE WHEN events IS NOT NULL THEN 1 ELSE 0 END     AS pa_flag
-                       ,CASE WHEN events IN ('single','double','triple','home_run')
-                       THEN 1 ELSE 0 END                             AS h
-                       ,CASE WHEN events IN ('walk','hit_by_pitch','sac_bunt','sac_fly'
-                       ,'catcher_interf','intent_walk')
-            OR         events IS NULL
-                       THEN 0 ELSE 1 END                             AS ab
-                       ,CASE WHEN events IN ('strikeout','strikeout_double_play')
-                       THEN 1 ELSE 0 END                             AS k
-                       ,CASE WHEN events IN ('walk','intent_walk')
-                       THEN 1 ELSE 0 END                             AS bb
-                       ,CASE WHEN events = 'home_run'
-                       THEN 1 ELSE 0 END                             AS hr
-                       ,CASE events
-                       WHEN 'single'   THEN 1
-                       WHEN 'double'   THEN 2
-                       WHEN 'triple'   THEN 3
-                       WHEN 'home_run' THEN 4
-                       ELSE 0 END                                    AS tb
-            
-            FROM       raw_pitches
+    SELECT     
+               *
+               ,game_pk                                            AS gameID
+               ,at_bat_number                                      AS pa
+               ,stand AS b_hand
+               ,p_throws p_hand
+               ,CASE WHEN inning_topbot = 'Bot' THEN 1 ELSE 0 END  AS home
+               ,CASE WHEN events IS NOT NULL THEN 1 ELSE 0 END     AS pa_flag
+               ,CASE WHEN events IN ('single','double','triple','home_run')
+               THEN 1 ELSE 0 END                             AS h
+               ,CASE WHEN events IN ('walk','hit_by_pitch','sac_bunt','sac_fly'
+               ,'catcher_interf','intent_walk')
+    OR         events IS NULL
+               THEN 0 ELSE 1 END                             AS ab
+               ,CASE WHEN events IN ('strikeout','strikeout_double_play')
+               THEN 1 ELSE 0 END                             AS k
+               ,CASE WHEN events IN ('walk','intent_walk')
+               THEN 1 ELSE 0 END                             AS bb
+               ,CASE WHEN events = 'home_run'
+               THEN 1 ELSE 0 END                             AS hr
+               ,CASE events
+               WHEN 'single'   THEN 1
+               WHEN 'double'   THEN 2
+               WHEN 'triple'   THEN 3
+               WHEN 'home_run' THEN 4
+               ELSE 0 END                                    AS tb
+    
+    FROM       raw_pitches
         """
     @classmethod
     def view_model_log5(cls):
@@ -1199,66 +1199,68 @@ class _SchemaViews:
     @classmethod
     def view_pull_forest_pa_dmg(cls):
         return """
-            SELECT     
-                       etl_pa.GD, etl_pa.batter, etl_pa.pa
-                       ,etl_pa.pitcher
-                       ,etl_pa.h                          AS t_h
-                       ,mx_b.ba                           AS b_ba
-                       ,mx_p.ba                           AS p_ba
-                       ,mx_bh.ba                          AS b_ba_hand
-                       ,mx_ph.ba                          AS p_ba_hand
-                       ,mx_bhome.ba                       AS b_ba_home
-                       ,mx_phome.ba                       AS p_ba_home
-                       ,mx_bhh.ba                         AS b_ba_hand_home
-                       ,mx_phh.ba                         AS p_ba_hand_home
-                       ,mx_b.k_rate                      AS b_k_rate
-                       ,mx_p.k_rate                      AS p_k_rate
-                       ,mx_bh.k_rate                     AS b_k_rate_hand
-                       ,mx_ph.k_rate                     AS p_k_rate_hand
-                       ,mx_bhome.k_rate                  AS b_k_rate_home
-                       ,mx_phome.k_rate                  AS p_k_rate_home
-                       ,mx_bhh.k_rate                    AS b_k_rate_hand_home
-                       ,mx_phh.k_rate                    AS p_k_rate_hand_home
-            
-            FROM       etl_pa
-            
-            LEFT JOIN  pull_forest_pa_dmg_mixin_overall mx_b
-            ON         mx_b.GD              = etl_pa.GD
-            AND        mx_b.player          = etl_pa.batter
-            
-            LEFT JOIN  pull_forest_pa_dmg_mixin_overall mx_p
-            ON         mx_p.GD              = etl_pa.GD
-            AND        mx_p.player          = etl_pa.pitcher
-            
-            LEFT JOIN  pull_forest_pa_dmg_mixin_hand mx_bh
-            ON         mx_bh.GD             = etl_pa.GD
-            AND        mx_bh.player         = etl_pa.batter
-            AND        mx_bh.hand           = etl_pa.p_hand
-            
-            LEFT JOIN  pull_forest_pa_dmg_mixin_hand mx_ph
-            ON         mx_ph.GD             = etl_pa.GD
-            AND        mx_ph.player         = etl_pa.pitcher
-            AND        mx_ph.hand           = etl_pa.b_hand
-            
-            LEFT JOIN  pull_forest_pa_dmg_mixin_home mx_bhome
-            ON         mx_bhome.GD          = etl_pa.GD
-            AND        mx_bhome.player      = etl_pa.batter
-            AND        mx_bhome.home        = etl_pa.home
-            
-            LEFT JOIN  pull_forest_pa_dmg_mixin_home mx_phome
-            ON         mx_phome.GD          = etl_pa.GD
-            AND        mx_phome.player      = etl_pa.pitcher
-            AND        mx_phome.home        = 1 - etl_pa.home
-            
-            LEFT JOIN  pull_forest_pa_dmg_mixin_hand_home mx_bhh
-            ON         mx_bhh.GD            = etl_pa.GD
-            AND        mx_bhh.player        = etl_pa.batter
-            AND        mx_bhh.hand          = etl_pa.p_hand
-            AND        mx_bhh.home          = etl_pa.home
-            
-            LEFT JOIN  pull_forest_pa_dmg_mixin_hand_home mx_phh
-            ON         mx_phh.GD            = etl_pa.GD
-            AND        mx_phh.player        = etl_pa.pitcher
-            AND        mx_phh.hand          = etl_pa.b_hand
-            AND        mx_phh.home          = 1 - etl_pa.home
+    SELECT     
+               etl_pa.GD, etl_pa.batter, etl_pa.pa
+               ,etl_pa.pitcher
+               ,etl_pa.h                      AS t_h               -- target: did batter get a hit this PA
+               -- batting average
+               ,mx_b.ba                       AS b_ba              -- batter season overall
+               ,mx_p.ba                       AS p_ba              -- pitcher season overall
+               ,mx_bh.ba                      AS b_ba_hand         -- batter vs this pitcher's hand
+               ,mx_ph.ba                      AS p_ba_hand         -- pitcher vs this batter's stance
+               ,mx_bhome.ba                   AS b_ba_home         -- batter at home OR away
+               ,mx_phome.ba                   AS p_ba_home         -- pitcher at home OR away (flipped)
+               ,mx_bhh.ba                     AS b_ba_hand_home    -- batter vs hand + home/away
+               ,mx_phh.ba                     AS p_ba_hand_home    -- pitcher vs stance + home/away (flipped)
+               -- strikeout rate
+               ,mx_b.k_rate                   AS b_k_rate          -- batter season overall
+               ,mx_p.k_rate                   AS p_k_rate          -- pitcher season overall
+               ,mx_bh.k_rate                  AS b_k_rate_hand     -- batter vs this pitcher's hand
+               ,mx_ph.k_rate                  AS p_k_rate_hand     -- pitcher vs this batter's stance
+               ,mx_bhome.k_rate               AS b_k_rate_home     -- batter at home OR away
+               ,mx_phome.k_rate               AS p_k_rate_home     -- pitcher at home OR away (flipped)
+               ,mx_bhh.k_rate                 AS b_k_rate_hand_home -- batter vs hand + home/away
+               ,mx_phh.k_rate                 AS p_k_rate_hand_home -- pitcher vs stance + home/away (flipped)
+    
+    FROM       etl_pa
+    
+    LEFT JOIN  pull_forest_pa_dmg_mixin_overall mx_b          -- batter overall stats
+    ON         mx_b.GD              = etl_pa.GD
+    AND        mx_b.player          = etl_pa.batter
+    
+    LEFT JOIN  pull_forest_pa_dmg_mixin_overall mx_p          -- pitcher overall stats
+    ON         mx_p.GD              = etl_pa.GD
+    AND        mx_p.player          = etl_pa.pitcher
+    
+    LEFT JOIN  pull_forest_pa_dmg_mixin_hand mx_bh            -- batter split BY pitcher's throwing hand
+    ON         mx_bh.GD             = etl_pa.GD
+    AND        mx_bh.player         = etl_pa.batter
+    AND        mx_bh.hand           = etl_pa.p_hand
+    
+    LEFT JOIN  pull_forest_pa_dmg_mixin_hand mx_ph            -- pitcher split BY batter's stance
+    ON         mx_ph.GD             = etl_pa.GD
+    AND        mx_ph.player         = etl_pa.pitcher
+    AND        mx_ph.hand           = etl_pa.b_hand
+    
+    LEFT JOIN  pull_forest_pa_dmg_mixin_home mx_bhome         -- batter home/away
+    ON         mx_bhome.GD          = etl_pa.GD
+    AND        mx_bhome.player      = etl_pa.batter
+    AND        mx_bhome.home        = etl_pa.home
+    
+    LEFT JOIN  pull_forest_pa_dmg_mixin_home mx_phome         -- pitcher home/away (flipped)
+    ON         mx_phome.GD          = etl_pa.GD
+    AND        mx_phome.player      = etl_pa.pitcher
+    AND        mx_phome.home        = 1 - etl_pa.home
+    
+    LEFT JOIN  pull_forest_pa_dmg_mixin_hand_home mx_bhh      -- batter hand + home/away
+    ON         mx_bhh.GD            = etl_pa.GD
+    AND        mx_bhh.player        = etl_pa.batter
+    AND        mx_bhh.hand          = etl_pa.p_hand
+    AND        mx_bhh.home          = etl_pa.home
+    
+    LEFT JOIN  pull_forest_pa_dmg_mixin_hand_home mx_phh      -- pitcher stance + home/away (flipped)
+    ON         mx_phh.GD            = etl_pa.GD
+    AND        mx_phh.player        = etl_pa.pitcher
+    AND        mx_phh.hand          = etl_pa.b_hand
+    AND        mx_phh.home          = 1 - etl_pa.home
         """

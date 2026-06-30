@@ -10,7 +10,7 @@ from ipui.utils.EZ import EZ
 from ipui.widgets.CodeScroller import CodeScroller
 
 
-class Workbench(_BaseTab, WorkshopMixinBuildTable, WorkshopMixinBuildView, WorkshopMixinDatabaseBrowser):
+class Workshop(_BaseTab, WorkshopMixinBuildTable, WorkshopMixinBuildView, WorkshopMixinDatabaseBrowser):
     """Per-table command center — inspect columns, see source, (later) add/delete."""
     VIEW_NAME_TRIM = 20
     def ip_setup_early(self, ip):
@@ -174,7 +174,7 @@ Claude has been assigned remedial API-awareness training.
 
 
     def tbl_ctrls(self, par):
-        self.banner_plate("Alter Table", par)
+        self.banner_plate("This Pane is Dead", par)
         Spacer(par)
         parent=Plate(par,pad=20,border=5)
         Detail(parent, "Name")
@@ -664,7 +664,7 @@ Claude has been assigned remedial API-awareness training.
         if not sql_proposed_for_view: return "C'mon bro... write a select!"
         return MgrSchema.test_sql(view_name, sql_proposed_for_view)  # returns None if check is good
 
-    def replace_view_return(self, file_text, view_name, new_sql):
+    def replace_view_returnDEADCODE(self, file_text, view_name, new_sql):
         """Find view_{name} method, replace its return triple-quote string."""
         method_name = f"def view_{view_name}("
         lines       = file_text.splitlines(keepends=True)
@@ -687,10 +687,14 @@ Claude has been assigned remedial API-awareness training.
         if None in (method_idx, return_idx, close_idx):
             return None
 
-        indent      = "            "
+        indent      = "  "
         new_body    = f'        return """\n{indent}{new_sql.strip()}\n        """\n'
         result      = lines[:return_idx] + [new_body] + lines[close_idx + 1:]
         return ''.join(result)
+        #indented = "\n".join("        " + ln for ln in new_sql.strip().splitlines())
+        #new_body = f'        return """\n{indented}\n        """\n'
+        #result = lines[:return_idx] + [new_body] + lines[close_idx + 1:]
+        #return ''.join(result)
 
     def handle_back_from_editor(self):
         """Exit edit mode, return to appropriate view."""

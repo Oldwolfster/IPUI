@@ -500,13 +500,21 @@ class SQL(_BaseTab):
     def build_query_slot(self, parent, slot):
         """One TextArea + Run/Open/Save button row for the given slot."""
         initial  = self.current_query if slot == 1 and hasattr(self, "current_query") else ""
-        sql_card = Card(parent, scroll_v=True, pad=2)
-        txt = TextArea(sql_card, initial, name=f"code_sql_{slot}", wrap=False, scroll_h=True)
+        sql_card = Card(parent, scroll_v=True, pad=2, flex_height=1)
+        txt = TextArea(sql_card, initial, name=f"code_sql_{slot}", flex_height=1, wrap=False, scroll_h=True)
         Button(txt, "rocket")
         row = Row(parent)
         Button(row, "Run Query", color_bg=Style.COLOR_BUTTON_CTA,       on_click=self.make_run_click(slot))
         Button(row, "Open SQL",  color_bg=Style.COLOR_BUTTON_SECONDARY,  on_click=self.make_open_click(slot))
         Button(row, "Save SQL",  color_bg=Style.COLOR_TAB_BG,            on_click=self.make_save_click(slot))
+        Button(row, "SQL Beau",  color_bg=Style.COLOR_TAB_BG,            on_click=self.make_beau_click(slot))   # NEW
+
+    def make_beau_click(self, slot):
+        def clicked():
+            from ipui.utils.MgrSqlBeautification import MgrSqlBeautification
+            cb = self.form.widgets.get(f"code_sql_{slot}")
+            if cb: cb.set_text(MgrSqlBeautification.format_sql(cb.text))
+        return clicked
 
     def handle_split_clicked(self):
         self.private_split = not self.private_split

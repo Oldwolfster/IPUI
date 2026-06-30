@@ -228,7 +228,7 @@ class MgrSchema:
     @staticmethod
     def format_method(view_name, select_sql):
         sql_lines    = select_sql.strip().splitlines()
-        indented_sql = "\n".join("            " + line for line in sql_lines)
+        indented_sql = "\n".join("    " + line for line in sql_lines)
         return (
             "\n    @classmethod\n"
             f"    def view_{view_name}(cls):\n"
