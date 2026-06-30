@@ -380,3 +380,19 @@ class BbDB:
             LIMIT 1
         """, (tbl,))
         return bool(rows)
+
+    @classmethod
+    def find_update_views(cls, tbl):
+        rows = cls.query(
+            "SELECT name FROM sqlite_master WHERE type='view' AND name LIKE ? ORDER BY name",
+            (f"update_{tbl}%",)
+        )
+        return [r[0] for r in rows if cls.update_belongs_to(r[0], tbl)]
+
+    # BbDB.py method: update_belongs_to  NEW: exact match or double-underscore split
+    @staticmethod
+    def update_belongs_to(view_name, tbl):
+        stem = view_name[len("update_"):]
+        if '__' in stem:
+            return stem.split('__')[0] == tbl
+        return stem == tbl

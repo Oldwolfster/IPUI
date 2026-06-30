@@ -21,135 +21,35 @@ class _SchemaViews:
     @classmethod
     def view_pull_etl_pitch(cls):
         return """
-            SELECT
-                *
-                ,game_pk                                            AS game
-                ,at_bat_number                                      AS pa
-                ,CASE WHEN inning_topbot = 'Bot' THEN 1 ELSE 0 END  AS home
-                ,CASE WHEN events IS NOT NULL THEN 1 ELSE 0 END     AS pa_flag
-                ,CASE WHEN events IN ('single','double','triple','home_run')
-                THEN 1 ELSE 0 END                             AS h
-                ,CASE WHEN events IN ('walk','hit_by_pitch','sac_bunt','sac_fly'
-                ,'catcher_interf','intent_walk')
-                OR events IS NULL
-                THEN 0 ELSE 1 END                             AS ab
-                ,CASE WHEN events IN ('strikeout','strikeout_double_play')
-                THEN 1 ELSE 0 END                             AS k
-                ,CASE WHEN events IN ('walk','intent_walk')
-                THEN 1 ELSE 0 END                             AS bb
-                ,CASE WHEN events = 'home_run'
-                THEN 1 ELSE 0 END                             AS hr
-                ,CASE events
-                WHEN 'single'   THEN 1
-                WHEN 'double'   THEN 2
-                WHEN 'triple'   THEN 3
-                WHEN 'home_run' THEN 4
-                ELSE 0 END                                    AS tb
-            FROM raw_pitches
+            SELECT     
+                       *
+                       ,game_pk                                            AS gameID
+                       ,at_bat_number                                      AS pa
+                       ,stand AS b_hand
+                       ,p_throws p_hand
+                       ,CASE WHEN inning_topbot = 'Bot' THEN 1 ELSE 0 END  AS home
+                       ,CASE WHEN events IS NOT NULL THEN 1 ELSE 0 END     AS pa_flag
+                       ,CASE WHEN events IN ('single','double','triple','home_run')
+                       THEN 1 ELSE 0 END                             AS h
+                       ,CASE WHEN events IN ('walk','hit_by_pitch','sac_bunt','sac_fly'
+                       ,'catcher_interf','intent_walk')
+            OR         events IS NULL
+                       THEN 0 ELSE 1 END                             AS ab
+                       ,CASE WHEN events IN ('strikeout','strikeout_double_play')
+                       THEN 1 ELSE 0 END                             AS k
+                       ,CASE WHEN events IN ('walk','intent_walk')
+                       THEN 1 ELSE 0 END                             AS bb
+                       ,CASE WHEN events = 'home_run'
+                       THEN 1 ELSE 0 END                             AS hr
+                       ,CASE events
+                       WHEN 'single'   THEN 1
+                       WHEN 'double'   THEN 2
+                       WHEN 'triple'   THEN 3
+                       WHEN 'home_run' THEN 4
+                       ELSE 0 END                                    AS tb
+            
+            FROM       raw_pitches
         """
-    @classmethod
-    def view_pull_etl_pa(cls):
-        return """
-            SELECT
-                GD,
-                batter,
-                game_pk,
-                at_bat_number,
-                pitcher,
-                stand,
-                p_throws,
-                home_team,
-                away_team,
-                inning_topbot,
-                events,
-                launch_speed,
-                launch_angle,
-                woba_value,
-                woba_denom,
-                estimated_ba_using_speedangle               AS xba,
-                CASE WHEN inning_topbot = 'Bot' THEN 1 ELSE 0 END                  AS home,
-                CASE WHEN inning_topbot = 'Top' THEN away_team ELSE home_team END AS bat_team,
-                CASE WHEN inning_topbot = 'Top' THEN home_team ELSE away_team END AS pit_team,
-                CASE WHEN events IN ('single','double','triple','home_run')
-                     THEN 1 ELSE 0 END                                            AS is_hit,
-                CASE WHEN events IN ('walk','hit_by_pitch','sac_bunt','sac_fly',
-                                     'catcher_interf','intent_walk')
-                          OR events IS NULL
-                     THEN 0 ELSE 1 END                                            AS is_ab,
-                CASE WHEN events IN ('strikeout','strikeout_double_play')
-                     THEN 1 ELSE 0 END                                            AS is_k,
-                CASE WHEN events IN ('walk','intent_walk')
-                     THEN 1 ELSE 0 END                                            AS is_bb,
-                CASE WHEN events = 'home_run'
-                     THEN 1 ELSE 0 END                                            AS is_hr,
-                CASE events
-                     WHEN 'single'   THEN 1
-                     WHEN 'double'   THEN 2
-                     WHEN 'triple'   THEN 3
-                     WHEN 'home_run' THEN 4
-                     ELSE 0 END                                                   AS total_bases
-            FROM raw_pitches
-            WHERE events IS NOT NULL;
-        """
-
-    @classmethod
-    def view_pull_feet_batter(cls):
-        return """
-            SELECT
-                GD
-                ,1                                                              AS TS
-                ,batter
-                ,game_pk
-                ,p_throws
-                ,COUNT(*)                                                       AS pa
-                ,SUM(is_ab)                                                     AS ab
-                ,SUM(is_hit)                                                    AS hits
-                ,SUM(is_hr)                                                     AS hr
-                ,SUM(is_bb)                                                     AS bb
-                ,SUM(is_k)                                                      AS k
-                ,SUM(total_bases)                                               AS total_bases
-                ,SUM(CASE WHEN launch_speed IS NOT NULL THEN launch_speed END)  AS launch_speed
-                ,SUM(CASE WHEN launch_speed IS NOT NULL THEN 1 ELSE 0 END)      AS launch_speed_cnt
-                ,SUM(CASE WHEN xba          IS NOT NULL THEN xba          END)  AS xba
-                ,SUM(CASE WHEN xba          IS NOT NULL THEN 1 ELSE 0 END)      AS xba_cnt
-                ,SUM(woba_value)                                                AS woba_value
-                ,SUM(woba_denom)                                                AS woba_denom
-                ,SUM(CASE WHEN launch_speed >= 95 THEN 1 ELSE 0 END)            AS hard_hit
-                ,SUM(CASE WHEN launch_speed IS NULL THEN 0
-                WHEN launch_speed >= 95 THEN 1 ELSE 0 END)             AS barrel
-            FROM etl_pa
-            GROUP BY GD, batter, game_pk, p_throws
-        """
-
-    @classmethod
-    def view_pull_feet_pitcher(cls):
-        return """
-            SELECT
-                GD
-                ,1                                                              AS TS
-                ,pitcher
-                , game_pk
-                ,stand
-                ,COUNT(*)                                                       AS bf
-                ,SUM(is_ab)                                                     AS ab_against
-                ,SUM(is_hit)                                                    AS hits_allowed
-                ,SUM(is_hr)                                                     AS hr_allowed
-                ,SUM(is_bb)                                                     AS bb_allowed
-                ,SUM(is_k)                                                      AS k_pitcher
-                ,SUM(total_bases)                                               AS total_bases_allowed
-                ,SUM(CASE WHEN launch_speed IS NOT NULL THEN launch_speed END)  AS launch_speed
-                ,SUM(CASE WHEN launch_speed IS NOT NULL THEN 1 ELSE 0 END)      AS launch_speed_cnt
-                ,SUM(CASE WHEN xba          IS NOT NULL THEN xba          END)  AS xba_allowed
-                ,SUM(CASE WHEN xba          IS NOT NULL THEN 1 ELSE 0 END)      AS xba_cnt
-                ,SUM(woba_value)                                                AS woba_value
-                ,SUM(woba_denom)                                                AS woba_denom
-                ,SUM(CASE WHEN launch_speed >= 95 THEN 1 ELSE 0 END)            AS hard_hit_allowed
-                ,SUM(CASE WHEN launch_speed IS NULL THEN 0
-                WHEN launch_speed >= 95 THEN 1 ELSE 0 END)                      AS barrel_allowed
-            FROM etl_pa
-            GROUP BY GD, pitcher, game_pk, stand
-        """
-
     @classmethod
     def view_model_log5(cls):
         return """
@@ -177,374 +77,1188 @@ class _SchemaViews:
             ) r
         """
 
-
     @classmethod
-    def view_model_ba_baseline(cls):
+    def view_pull_etl_starters(cls):
         return """
-            SELECT DISTINCT
-                e.GD,
-                e.batter,
-                e.game_pk,
-                b.ba                                                       AS predicted
-            FROM      etl_pa      e
-            JOIN      feet_batter b  ON  b.batter   = e.batter
-                                      AND b.p_throws  = e.p_throws
-                                      AND b.TS         = 200
-            WHERE e.at_bat_number = (
-                SELECT MIN(at_bat_number)
-                FROM   etl_pa e2
-                WHERE  e2.game_pk = e.game_pk
-            )
+            SELECT     GD
+                       ,batter
+                       ,pitcher
+                       ,pa
+            
+            FROM       (
+                       SELECT     GD
+                                  ,batter
+                                  ,pitcher
+                                  ,pa
+                                  ,ROW_NUMBER() OVER (PARTITION BY GD, batter ORDER BY pa) AS rn
+            
+                       FROM       etl_pa
+                       ) ranked
+            
+            WHERE      rn = 1
         """
 
     @classmethod
-    def view_batter_games(cls):
+    def view_pull_etl_pa(cls):
         return """
-            SELECT
-                GD,
-                batter,
-                game_pk,
-                SUM(is_hit)                                                AS hits
-            FROM  etl_pa
-            GROUP BY GD, batter, game_pk
+            SELECT     GD, batter, pitcher, pa, h, ab,b_hand, p_hand, home, k
+            
+            FROM       etl_pitch
+            
+            WHERE      pa_flag = 1
         """
-
-
     @classmethod
-    def view_pull_forest_mixin_pitcher_season(cls):
+    def view_pull_feet_batter(cls):
         return """
-            SELECT pitcher, stand, ba_against, p_k_pct, p_woba_against
-                        FROM   feet_pitcher
-                        WHERE  TS = 200
+            SELECT     
+                       GD
+                       ,1         AS TS
+                       ,batter
+            -- ,game
+                       ,COUNT(*)  AS pa
+                       ,SUM(ab)   AS ab
+                       ,SUM(h)    AS h
+            
+            FROM       etl_pa
+            
+            GROUP BY   GD, batter
         """
-
-    # ═══ _SchemaViews.py — pull_forest, no subqueries, same-day equi-joins ═══
-    @classmethod
-    def view_pull_forest(cls):
-        return """
-            SELECT
-                m.GD,
-                m.batter,
-                m.game_pk,
-                bg.hits          AS t_hits,
-                b.ba             AS b_ba,
-                p.ba_against     AS p_ba_against
-            FROM      etl_matchup  m
-            LEFT JOIN batter_games bg  ON bg.GD = m.GD AND bg.batter = m.batter AND bg.game_pk = m.game_pk
-            LEFT JOIN feet_batter  b   ON b.batter  = m.batter  AND b.p_throws = m.p_throws AND b.TS = 200 AND b.GD = m.GD
-            LEFT JOIN feet_pitcher p   ON p.pitcher = m.pitcher AND p.stand    = m.stand    AND p.TS = 200 AND p.GD = m.GD
-        """
-
     @classmethod
     def view_update_feet_batter(cls):
         return """
-            SELECT GD, TS, batter, game_pk, p_throws
-                ,hits * 1.0 / NULLIF(ab, 0)          AS ba
-                ,k   * 1.0 / NULLIF(pa, 0)           AS b_k_pct
-                ,woba_value / NULLIF(woba_denom, 0)  AS b_woba
-            FROM feet_batter
+            SELECT     GD, TS, batter
+                       ,h * 1.0 / NULLIF(ab, 0) AS ba
+            
+            FROM       feet_batter
+        """
+
+    @classmethod
+    def view_pull_feet_pitcher(cls):
+        return """
+            SELECT     
+                       GD
+                       ,1         AS TS
+                       ,pitcher
+                    -- ,game
+                       ,COUNT(*)  AS pa
+                       ,SUM(ab)   AS ab
+                       ,SUM(h)    AS h
+            
+            FROM       etl_pa
+            
+            GROUP BY   GD, pitcher
         """
 
     @classmethod
     def view_update_feet_pitcher(cls):
         return """
-            SELECT GD, TS, pitcher,game_pk as  game_pk, stand
-                                        ,hits_allowed * 1.0 / NULLIF(ab_against,  0)   AS ba_against
-                                        ,k_pitcher    * 1.0 / NULLIF(bf,           0)  AS p_k_pct
-                                        ,woba_value         / NULLIF(woba_denom,   0)  AS p_woba_against
-                                    FROM feet_pitcher
-        """
-    @classmethod
-    def view_pull_forest_mixin_batter_season(cls):
-        return """
-            SELECt batter, p_throws, ba,b_k_pct,b_woba
-                                                FROM   feet_batter
-                                                WHERE  TS = 200
-        """
-
-    @classmethod
-    def view_pull_etl_testclone(cls):
-        return """
-            SELECT
-                0 AS GD,
-                0                                            AS batter,
-                0                                            AS game_pk,
-                0                                            AS at_bat_number,
-                0                                            AS pitcher,
-                ''                                           AS stand,
-                ''                                           AS p_throws
-        """
-
-    @classmethod
-    def view_pull_forest_pa_simplest(cls):
-        return """
-            SELECT
-                            etl_pa.GD, etl_pa.batter, game_pk, at_bat_number -- i believe the key
-                            ,  etl_pa.pitcher                 , is_hit AS t_hit -- the t_ identifies field AS target
-                        ,1 as kiss
-                        FROM etl_pa
-                        LEFT JOIN pull_forest_pa_mixin_batter
+            SELECT     GD, TS, pitcher
+                       ,h * 1.0 / NULLIF(ab, 0) AS ba
+            
+            FROM       feet_pitcher
         """
 
     @classmethod
     def view_pull_forest_pa(cls):
         return """
-            SELECT
-                etl_pa.GD, etl_pa.batter, game_pk, at_bat_number -- i believe the key
-                ,  etl_pa.pitcher
-                , is_hit AS t_hit -- the t_ identifies field AS target
-                ,b_ba
-                ,p_ba_against
-            FROM etl_pa
-            LEFT JOIN pull_forest_pa_mixin_batter
-            ON  pull_forest_pa_mixin_batter.GD = etl_pa.GD
-                AND  pull_forest_pa_mixin_batter.batter = etl_pa.batter
-            LEFT JOIN pull_forest_pa_mixin_pitcher
-            ON  pull_forest_pa_mixin_pitcher.GD = etl_pa.GD
-                AND  pull_forest_pa_mixin_pitcher.pitcher = etl_pa.pitcher
+            SELECT     
+                       etl_pa.GD, etl_pa.batter, etl_pa.pa
+                       ,etl_pa.pitcher
+                       ,etl_pa.h                                    AS t_h
+                       ,pull_forest_pa_mixin_batter.b_ba
+                       ,pull_forest_pa_mixin_pitcher.p_ba
+                       ,pull_forest_pa_mixin_batter_hand.b_ba_hand
+                       ,pull_forest_pa_mixin_pitcher_hand.p_ba_hand
+            
+            FROM       etl_pa
+            
+            LEFT JOIN  pull_forest_pa_mixin_batter
+            ON         pull_forest_pa_mixin_batter.GD            = etl_pa.GD
+            AND        pull_forest_pa_mixin_batter.batter        = etl_pa.batter
+            
+            LEFT JOIN  pull_forest_pa_mixin_pitcher
+            ON         pull_forest_pa_mixin_pitcher.GD           = etl_pa.GD
+            AND        pull_forest_pa_mixin_pitcher.pitcher      = etl_pa.pitcher
+            
+            LEFT JOIN  pull_forest_pa_mixin_batter_hand
+            ON         pull_forest_pa_mixin_batter_hand.GD       = etl_pa.GD
+            AND        pull_forest_pa_mixin_batter_hand.batter   = etl_pa.batter
+            AND        pull_forest_pa_mixin_batter_hand.hand     = etl_pa.p_hand
+            
+            LEFT JOIN  pull_forest_pa_mixin_pitcher_hand
+            ON         pull_forest_pa_mixin_pitcher_hand.GD       = etl_pa.GD
+            AND        pull_forest_pa_mixin_pitcher_hand.pitcher  = etl_pa.pitcher
+            AND        pull_forest_pa_mixin_pitcher_hand.hand     = etl_pa.b_hand
         """
     @classmethod
     def view_pull_forest_pa_mixin_batter(cls):
         return """
-            SELECT GD, batter
-                                        ,SUM(hits) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba
-                                    FROM feet_batter
-                        WHERE ts=200 -- season numbers 
-                                    GROUP BY gd, batter
+            SELECT     GD, batter
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba
+            
+            FROM       feet_batter
+            
+            WHERE      ts=200 -- season numbers
+            
+            GROUP BY   gd, batter
         """
 
     @classmethod
     def view_pull_forest_pa_mixin_pitcher(cls):
         return """
-            SELECT GD, pitcher
-                ,SUM(hits_allowed) * 1.0 / NULLIF(SUM(ab_against), 0) AS p_ba_against
-            FROM feet_pitcher
-            WHERE ts=200 -- season numbers
-            GROUP BY GD,pitcher
-        """
-
-    @classmethod
-    def view_pull_etl_smally_pa(cls):
-        return """
-            SELECT pull_etl_smally_pa_mixin_pitches.GD
-                ,pull_etl_smally_pa_mixin_pitches.batter
-                ,pull_etl_smally_pa_mixin_pitches.at_bat_number  AS pa
-                ,pull_etl_smally_pa_mixin_pitches.pitcher
-                ,pull_etl_smally_pa_mixin_pitches.game_pk        AS game
-                ,pull_etl_smally_pa_mixin_pitches.is_hit         AS h
-                ,pull_etl_smally_pa_mixin_pitches.is_ab          AS ab
-            FROM pull_etl_smally_pa_mixin_pitches
-        """
-    @classmethod
-    def view_pull_etl_smally_pa_mixin_pitches(cls):
-        return """
-            SELECT
-                GD
-                ,batter
-                ,game_pk
-                ,at_bat_number
-                ,pitcher
-                ,stand
-                ,p_throws
-                ,home_team
-                ,away_team
-                ,inning_topbot
-                ,events
-                ,launch_speed
-                ,launch_angle
-                ,woba_value
-                ,woba_denom
-                ,estimated_ba_using_speedangle                                      AS xba
-                ,CASE WHEN inning_topbot = 'Bot' THEN 1 ELSE 0 END                  AS home
-                ,CASE WHEN inning_topbot = 'Top' THEN away_team ELSE home_team END  AS bat_team
-                ,CASE WHEN inning_topbot = 'Top' THEN home_team ELSE away_team END  AS pit_team
-                ,CASE WHEN events IN ('single','double','triple','home_run')
-                THEN 1 ELSE 0 END                                              AS is_hit
-                ,CASE WHEN events IN ('walk','hit_by_pitch','sac_bunt','sac_fly'
-                ,'catcher_interf','intent_walk')
-                OR events IS NULL
-                THEN 0 ELSE 1 END                                              AS is_ab
-                ,CASE WHEN events IN ('strikeout','strikeout_double_play')
-                THEN 1 ELSE 0 END                                              AS is_k
-                ,CASE WHEN events IN ('walk','intent_walk')
-                THEN 1 ELSE 0 END                                              AS is_bb
-                ,CASE WHEN events = 'home_run'
-                THEN 1 ELSE 0 END                                              AS is_hr
-                ,CASE events
-                WHEN 'single'   THEN 1
-                WHEN 'double'   THEN 2
-                WHEN 'triple'   THEN 3
-                WHEN 'home_run' THEN 4
-                ELSE 0 END                                                     AS total_bases
-            FROM raw_pitches
-            WHERE events IS NOT NULL
-        """
-
-    @classmethod
-    def view_pull_etl_matchup(cls):
-        return """
-            SELECT pitcher.GD, batters_first_bat_num.batter,  pitcher.game_pk, pitcher.pitcher
-                ,pitcher.p_throws, pitcher.stand, batters_first_bat_num.first_bat as at_bat_number
-            FROM etl_pa pitcher
-            JOIN (
-                SELECT  batter,game_pk, MIN(at_bat_number) AS first_bat
-                FROM etl_pa batter
-                    -- WHERE batter. batter =  514888
-                GROUP BY batter, game_pk
-                ) batters_first_bat_num
-            ON  batters_first_bat_num.game_pk = pitcher.game_pk
-                AND  batters_first_bat_num.first_bat = pitcher.at_bat_number
-        """
-
-    @classmethod
-    def view_pull_forest_dart(cls):
-        return """
-            SELECT
-                etl_starters.GD    ,etl_starters.batter    ,etl_starters.game
-                --                            bg.hits        AS t_hits,                          b.ba             AS b_ba,                            --p.ba     AS p_ba
-                ,pull_forest_dart_mixin_batter_season.h  AS t_h
-                ,pull_forest_dart_mixin_batter_season.ba b_ba
-                ,pull_forest_dart_mixin_pitcher_season.ba p_ba
-            FROM      etl_starters
+            SELECT     GD, pitcher
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba
             
-            LEFT JOIN pull_forest_dart_mixin_batter_season
-            ON  pull_forest_dart_mixin_batter_season.GD = etl_starters.GD
-                AND  pull_forest_dart_mixin_batter_season.batter = etl_starters.batter
-            LEFT JOIN pull_forest_dart_mixin_pitcher_season
-            ON  pull_forest_dart_mixin_pitcher_season.GD = etl_starters.GD
+            FROM       feet_pitcher
             
-                -- WHERE  t_h>0
+            WHERE      ts=200 -- season numbers
+            
+            GROUP BY   gd, pitcher
         """
 
     @classmethod
-    def view_pull_forest_dart_mixin_batter_season(cls):
+    def view_pull_forest_batter(cls):
         return """
-            SELECT GD, batter, ab, h, ba
-            FROM   feet_dart_batter
-            WHERE  TS = 200
+            SELECT     
+                       etl_starters.GD    ,etl_starters.batter --,etl_starters.game
+                       ,pull_forest_batter_mixin_batter_game     .h t_h
+                       ,pull_forest_batter_mixin_batter_season   .ba b_ba
+                       ,pull_forest_batter_mixin_pitcher_season  .ba p_ba
+            
+            FROM       etl_starters
+            
+            LEFT JOIN  pull_forest_batter_mixin_batter_game
+            ON         pull_forest_batter_mixin_batter_game.GD     = etl_starters.GD
+            AND        pull_forest_batter_mixin_batter_game.batter = etl_starters.batter
+            --AND        pull_forest_batter_mixin_batter_game.game   = etl_starters.game
+            
+            LEFT JOIN  pull_forest_batter_mixin_batter_season
+            ON         pull_forest_batter_mixin_batter_season.GD                = etl_starters.GD
+            AND        pull_forest_batter_mixin_batter_season.batter            = etl_starters.batter
+            
+            LEFT JOIN  pull_forest_batter_mixin_pitcher_season
+            ON         pull_forest_batter_mixin_pitcher_season.GD             = etl_starters.GD
+            AND        pull_forest_batter_mixin_pitcher_season.pitcher        = etl_starters.pitcher
         """
     @classmethod
-    def view_pull_forest_dart_mixin_pitcher_season(cls):
+    def view_pull_forest_batter_mixin_batter_game(cls):
         return """
-            SELECT GD, pitcher, ab, h, ba
-            FROM   feet_dart_pitcher
-            WHERE  TS = 200
-        """
-
-    @classmethod
-    def view_pull_forest_dart_pa(cls):
-        return """
-            SELECT
-                etl_dart_pa.GD, etl_dart_pa.batter, etl_dart_pa.game, etl_dart_pa.pa ,  etl_dart_pa.pitcher -- i believe the key    ,etl_dart_pa. h  AS t_h -- the t_ identifies field AS target
-                ,etl_dart_pa.h                                                                                                                        AS t_h, b_ba     ,p_ba
-            FROM etl_dart_pa
-            LEFT JOIN pull_forest_dart_pa_mixin_batter mx
-            ON  mx.GD = etl_dart_pa.GD
-                AND mx.batter = etl_dart_pa.batter
-            LEFT JOIN pull_forest_dart_pa_mixin_pitcher mx_pitch
-            ON  mx_pitch.GD = etl_dart_pa.GD
-                AND mx_pitch.pitcher = etl_dart_pa.pitcher
-                -- WHERE p_ba>0
+            SELECT     
+                       GD
+                       ,batter
+            --,game
+                       ,SUM(h) AS h
+            
+            FROM       
+                       etl_pa
+            
+            GROUP BY   
+                       GD, batter--, game
         """
     @classmethod
-    def view_pull_forest_dart_pa_mixin_batter(cls):
+    def view_pull_forest_batter_mixin_batter_season(cls):
         return """
-            SELECT GD, batter
-                ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba
-            FROM feet_dart_batter
-            WHERE ts=200 -- season numbers
-            GROUP BY gd, batter
-        """
-    @classmethod
-    def view_pull_etl_dart_pa(cls):
-        return """
-            SELECT GD, batter, pitcher, game, pa, h, ab
-            FROM etl_pitch
-            WHERE pa_flag = 1
-        """
-
-    @classmethod
-    def view_pull_feet_dart_batter(cls):
-        return """
-            SELECT
-                                        GD
-                                        ,1         AS TS
-                                        ,batter
-                                       -- ,game
-                                        ,COUNT(*)  AS pa
-                                        ,SUM(ab)   AS ab
-                                        ,SUM(h)    AS h
-                                    FROM etl_dart_pa
-                                    GROUP BY GD, batter
-        """
-    @classmethod
-    def view_update_feet_dart_batter(cls):
-        return """
-            SELECT GD, TS, batter
-                            ,h * 1.0 / NULLIF(ab, 0) AS ba
-                        FROM feet_dart_batter
+            SELECT     GD, batter, ab, h, ba
+            
+            FROM       feet_batter
+            
+            WHERE      TS = 200
         """
 
     @classmethod
-    def view_pull_feet_dart_pitcher(cls):
+    def view_pull_forest_batter_mixin_pitcher_season(cls):
         return """
-            SELECT
-                GD
-                ,1         AS TS
-                ,pitcher
-                -- ,game
-                ,COUNT(*)  AS pa
-                ,SUM(ab)   AS ab
-                ,SUM(h)    AS h
-            FROM etl_dart_pa
-            GROUP BY GD, pitcher
-        """
-    @classmethod
-    def view_update_feet_dart_pitcher(cls):
-        return """
-            SELECT GD, TS, pitcher
-                ,h * 1.0 / NULLIF(ab, 0) AS ba
-            FROM feet_dart_pitcher
+            SELECT     GD, pitcher, ab, h, ba
+            
+            FROM       feet_pitcher
+            
+            WHERE      TS = 200
         """
 
     @classmethod
-    def view_pull_etl_starters(cls):
+    def view_pull_feet_batter_hand(cls):
         return """
-            SELECT pitcher.GD, batters_first_bat_num.batter,  pitcher.game, pitcher.pitcher, pitcher.pa
-                --    ,pitcher.p_throws, pitcher.stand, batters_first_bat_num.first_bat AS at_bat_number
-            FROM etl_dart_pa pitcher
-            JOIN (
-                SELECT  GD,batter,game, MIN(pa) AS first_bat
-                FROM etl_dart_pa batter
-                    -- WHERE batter =543807 AND game = 822839
-                GROUP BY GD,batter, game
-                ) batters_first_bat_num
-            ON  batters_first_bat_num.game = pitcher.game
-                AND  batters_first_bat_num.first_bat = pitcher.pa
+            SELECT     
+                       GD                       ,1         AS TS
+                       ,batter                  ,p_hand AS hand
+            -- ,game
+                       ,COUNT(*)  AS pa
+                       ,SUM(ab)   AS ab
+                       ,SUM(h)    AS h
+            
+            FROM       etl_pa
+            
+            GROUP BY   GD, batter,p_hand
         """
     @classmethod
-    def view_pull_etl_matchups(cls):
+    def view_update_feet_batter_hand(cls):
         return """
-            SELECT
-                p.GD
-                ,p.game
-                ,p.batter
-                ,p.pitcher
-                ,MIN(p.pa) AS pa
-            FROM etl_dart_pa p
-            GROUP BY
-                p.GD
-                ,p.game
-                ,p.batter
-                ,p.pitcher
+            SELECT     GD, TS, batter, hand
+                       ,h * 1.0 / NULLIF(ab, 0) AS ba
+            
+            FROM       feet_batter_hand
         """
 
     @classmethod
-    def view_pull_forest_dart_pa_mixin_pitcher(cls):
+    def view_pull_feet_pitcher_hand(cls):
         return """
-            SELECT GD, pitcher
-                ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba
-            FROM feet_dart_pitcher
-            WHERE ts=200 -- season numbers
-            GROUP BY gd, pitcher;
+            SELECT     
+                                   GD
+                                   ,1         AS TS
+                                   ,pitcher, b_hand AS hand
+                        -- ,game
+                                   ,COUNT(*)  AS pa
+                                   ,SUM(ab)   AS ab
+                                   ,SUM(h)    AS h
+                        
+                        FROM       etl_pa
+                        
+                        GROUP BY   GD, pitcher, b_hand
+        """
+    @classmethod
+    def view_update_feet_pitcher_hand(cls):
+        return """
+            SELECT     GD, TS, pitcher,hand
+                       ,h * 1.0 / NULLIF(ab, 0) AS ba
+            
+            FROM       feet_pitcher_hand
+        """
+
+    @classmethod
+    def view_pull_forest_pa_mixin_batter_hand(cls):
+        return """
+            SELECT     GD, batter, hand
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba_hand
+            
+            FROM       feet_batter_hand
+            
+            WHERE      ts = 200
+            
+            GROUP BY   GD, batter, hand
+        """
+
+    @classmethod
+    def view_pull_forest_pa_mixin_pitcher_hand(cls):
+        return """
+            SELECT     GD, pitcher, hand
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba_hand
+            
+            FROM       feet_pitcher_hand
+            
+            WHERE      ts = 200
+            
+            GROUP BY   GD, pitcher, hand
+        """
+
+    @classmethod
+    def view_pull_forest_pa_both(cls):
+        return """
+            SELECT     
+                                   etl_pa.GD, etl_pa.batter, etl_pa.pa
+                                   ,etl_pa.pitcher
+                                   ,etl_pa.h                                    AS t_h
+                                   ,pull_forest_pa_both_mixin_batter.b_ba
+                                   ,pull_forest_pa_both_mixin_pitcher.p_ba
+                                   ,pull_forest_pa_both_mixin_batter_hand.b_ba_hand
+                                   ,pull_forest_pa_both_mixin_pitcher_hand.p_ba_hand
+                        
+                        FROM       etl_pa
+                        
+                        LEFT JOIN  pull_forest_pa_both_mixin_batter
+                        ON         pull_forest_pa_both_mixin_batter.GD            = etl_pa.GD
+                        AND        pull_forest_pa_both_mixin_batter.batter        = etl_pa.batter
+                        
+                        LEFT JOIN  pull_forest_pa_both_mixin_pitcher
+                        ON         pull_forest_pa_both_mixin_pitcher.GD           = etl_pa.GD
+                        AND        pull_forest_pa_both_mixin_pitcher.pitcher      = etl_pa.pitcher
+                        
+                        LEFT JOIN  pull_forest_pa_both_mixin_batter_hand
+                        ON         pull_forest_pa_both_mixin_batter_hand.GD       = etl_pa.GD
+                        AND        pull_forest_pa_both_mixin_batter_hand.batter   = etl_pa.batter
+                        AND        pull_forest_pa_both_mixin_batter_hand.hand     = etl_pa.p_hand
+                        
+                        LEFT JOIN  pull_forest_pa_both_mixin_pitcher_hand
+                        ON         pull_forest_pa_both_mixin_pitcher_hand.GD       = etl_pa.GD
+                        AND        pull_forest_pa_both_mixin_pitcher_hand.pitcher  = etl_pa.pitcher
+                        AND        pull_forest_pa_both_mixin_pitcher_hand.hand     = etl_pa.b_hand
+        """
+    @classmethod
+    def view_pull_forest_pa_both_mixin_batter(cls):
+        return """
+            SELECT     GD, batter
+                                   ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba
+                        
+                        FROM       feet_batter
+                        
+                        WHERE      ts=200 -- season numbers
+                        
+                        GROUP BY   gd, batter
+        """
+
+    @classmethod
+    def view_pull_forest_pa_both_mixin_pitcher(cls):
+        return """
+            SELECT     GD, pitcher
+                                   ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba
+                        
+                        FROM       feet_pitcher
+                        
+                        WHERE      ts=200 -- season numbers
+                        
+                        GROUP BY   gd, pitcher
+        """
+
+    @classmethod
+    def view_pull_forest_pa_both_mixin_batter_hand(cls):
+        return """
+            SELECT     GD, batter, hand
+                                   ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba_hand
+                        
+                        FROM       feet_batter_hand
+                        
+                        WHERE      ts = 200
+                        
+                        GROUP BY   GD, batter, hand
+        """
+
+    @classmethod
+    def view_pull_forest_pa_both_mixin_pitcher_hand(cls):
+        return """
+            SELECT     GD, pitcher, hand
+                                   ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba_hand
+                        
+                        FROM       feet_pitcher_hand
+                        
+                        WHERE      ts = 200
+                        
+                        GROUP BY   GD, pitcher, hand
+        """
+
+    @classmethod
+    def view_pull_forest_pa_hand(cls):
+        return """
+            SELECT     
+                                   etl_pa.GD, etl_pa.batter, etl_pa.pa
+                                   ,etl_pa.pitcher
+                                   ,etl_pa.h                                    AS t_h
+                                   ,pull_forest_pa_hand_mixin_batter_hand.b_ba_hand
+                                   ,pull_forest_pa_hand_mixin_pitcher_hand.p_ba_hand
+                        
+                        FROM       etl_pa
+                        
+                        LEFT JOIN  pull_forest_pa_hand_mixin_batter_hand
+                        ON         pull_forest_pa_hand_mixin_batter_hand.GD       = etl_pa.GD
+                        AND        pull_forest_pa_hand_mixin_batter_hand.batter   = etl_pa.batter
+                        AND        pull_forest_pa_hand_mixin_batter_hand.hand     = etl_pa.p_hand
+                        
+                        LEFT JOIN  pull_forest_pa_hand_mixin_pitcher_hand
+                        ON         pull_forest_pa_hand_mixin_pitcher_hand.GD       = etl_pa.GD
+                        AND        pull_forest_pa_hand_mixin_pitcher_hand.pitcher  = etl_pa.pitcher
+                        AND        pull_forest_pa_hand_mixin_pitcher_hand.hand     = etl_pa.b_hand
+        """
+    @classmethod
+    def view_pull_forest_pa_hand_mixin_batter_hand(cls):
+        return """
+            SELECT     GD, batter, hand
+                                                                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba_hand
+                                                            
+                                                            FROM       feet_batter_hand
+                                                            
+                                                            WHERE      ts = 200
+                                                            
+                                                            GROUP BY   GD, batter, hand
+        """
+
+    @classmethod
+    def view_pull_forest_pa_hand_mixin_pitcher_hand(cls):
+        return """
+            SELECT     GD, pitcher, hand
+                                                                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba_hand
+                                                            
+                                                            FROM       feet_pitcher_hand
+                                                            
+                                                            WHERE      ts = 200
+                                                            
+                                                            GROUP BY   GD, pitcher, hand
+        """
+
+    @classmethod
+    def view_pull_feet_batter_home(cls):
+        return """
+            SELECT     
+                       GD
+                       ,1         AS TS
+                       ,batter, home
+            -- ,game
+                       ,COUNT(*)  AS pa
+                       ,SUM(ab)   AS ab
+                       ,SUM(h)    AS h
+            
+            FROM       etl_pa
+            
+            GROUP BY   GD, batter, home
+        """
+
+    @classmethod
+    def view_update_feet_batter_home(cls):
+        return """
+            SELECT     GD, TS, batter, home
+                       ,h * 1.0 / NULLIF(ab, 0) AS ba
+            
+            FROM       feet_batter_home
+        """
+
+    @classmethod
+    def view_pull_feet_pitcher_home(cls):
+        return """
+            SELECT     
+                       GD
+                       ,1         AS TS
+                       ,pitcher, home
+            -- ,game
+                       ,COUNT(*)  AS pa
+                       ,SUM(ab)   AS ab
+                       ,SUM(h)    AS h
+            
+            FROM       etl_pa
+            
+            GROUP BY   GD, pitcher, home
+        """
+
+    @classmethod
+    def view_update_feet_pitcher_home(cls):
+        return """
+            SELECT     GD, TS, pitcher, home
+                       ,h * 1.0 / NULLIF(ab, 0) AS ba
+            
+            FROM       feet_pitcher_home
+        """
+
+    @classmethod
+    def view_pull_forest_pa_home(cls):
+        return """
+            SELECT     
+                       etl_pa.GD, etl_pa.batter, etl_pa.pa
+                       ,etl_pa.pitcher
+                       ,etl_pa.h                                    AS t_h
+                       ,pull_forest_pa_home_mixin_batter_home.b_ba_home
+                       ,pull_forest_pa_home_mixin_pitcher_home.p_ba_home
+            
+            FROM       etl_pa
+            
+            LEFT JOIN  pull_forest_pa_home_mixin_batter_home
+            ON         pull_forest_pa_home_mixin_batter_home.GD       = etl_pa.GD
+            AND        pull_forest_pa_home_mixin_batter_home.batter   = etl_pa.batter
+            AND        pull_forest_pa_home_mixin_batter_home.home     = etl_pa.home
+            
+            LEFT JOIN  pull_forest_pa_home_mixin_pitcher_home
+            ON         pull_forest_pa_home_mixin_pitcher_home.GD       = etl_pa.GD
+            AND        pull_forest_pa_home_mixin_pitcher_home.pitcher  = etl_pa.pitcher
+            AND        pull_forest_pa_home_mixin_pitcher_home.home     = etl_pa.home
+        """
+    @classmethod
+    def view_pull_forest_pa_home_mixin_batter_home(cls):
+        return """
+            SELECT     GD, batter, home
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba_home
+            
+            FROM       feet_batter_home
+            
+            WHERE      ts = 200
+            
+            GROUP BY   GD, batter, home
+        """
+
+    @classmethod
+    def view_pull_forest_pa_home_mixin_pitcher_home(cls):
+        return """
+            SELECT     GD, pitcher, home
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba_home
+            
+            FROM       feet_pitcher_home
+            
+            WHERE      ts = 200
+            
+            GROUP BY   GD, pitcher, home
+        """
+
+
+    # ══════════════════════════════════════════════════════════════
+    # _SchemaViews.py  — ADD all methods below
+    # ══════════════════════════════════════════════════════════════
+
+    # ── forest_pa_home: 2 mixins + pull ──────────────────────────
+
+    # _SchemaViews.py method: view_pull_forest_pa_home_mixin_batter_home  NEW
+    @classmethod
+    def view_pull_forest_pa_home_mixin_batter_home(cls):
+        return """
+            SELECT     GD, batter, home
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba_home
+
+            FROM       feet_batter_home
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, batter, home
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_home_mixin_pitcher_home  NEW
+    @classmethod
+    def view_pull_forest_pa_home_mixin_pitcher_home(cls):
+        return """
+            SELECT     GD, pitcher, home
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba_home
+
+            FROM       feet_pitcher_home
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, pitcher, home
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_home  NEW
+    @classmethod
+    def view_pull_forest_pa_home(cls):
+        return """
+            SELECT     
+                       etl_pa.GD, etl_pa.batter, etl_pa.pa
+                       ,etl_pa.pitcher
+                       ,etl_pa.h                                    AS t_h
+                       ,mx_bhome.b_ba_home
+                       ,mx_phome.p_ba_home
+
+            FROM       etl_pa
+
+            LEFT JOIN  pull_forest_pa_home_mixin_batter_home mx_bhome
+            ON         mx_bhome.GD          = etl_pa.GD
+            AND        mx_bhome.batter      = etl_pa.batter
+            AND        mx_bhome.home        = etl_pa.home
+
+            LEFT JOIN  pull_forest_pa_home_mixin_pitcher_home mx_phome
+            ON         mx_phome.GD          = etl_pa.GD
+            AND        mx_phome.pitcher     = etl_pa.pitcher
+            AND        mx_phome.home        = etl_pa.home
+        """
+
+    # ── forest_pa_all: 6 mixins + pull ───────────────────────────
+
+    # _SchemaViews.py method: view_pull_forest_pa_all_mixin_batter  NEW
+    @classmethod
+    def view_pull_forest_pa_all_mixin_batter(cls):
+        return """
+            SELECT     GD, batter
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba
+
+            FROM       feet_batter
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, batter
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_all_mixin_pitcher  NEW
+    @classmethod
+    def view_pull_forest_pa_all_mixin_pitcher(cls):
+        return """
+            SELECT     GD, pitcher
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba
+
+            FROM       feet_pitcher
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, pitcher
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_all_mixin_batter_hand  NEW
+    @classmethod
+    def view_pull_forest_pa_all_mixin_batter_hand(cls):
+        return """
+            SELECT     GD, batter, hand
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba_hand
+
+            FROM       feet_batter_hand
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, batter, hand
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_all_mixin_pitcher_hand  NEW
+    @classmethod
+    def view_pull_forest_pa_all_mixin_pitcher_hand(cls):
+        return """
+            SELECT     GD, pitcher, hand
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba_hand
+
+            FROM       feet_pitcher_hand
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, pitcher, hand
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_all_mixin_batter_home  NEW
+    @classmethod
+    def view_pull_forest_pa_all_mixin_batter_home(cls):
+        return """
+            SELECT     GD, batter, home
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba_home
+
+            FROM       feet_batter_home
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, batter, home
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_all_mixin_pitcher_home  NEW
+    @classmethod
+    def view_pull_forest_pa_all_mixin_pitcher_home(cls):
+        return """
+            SELECT     GD, pitcher, home
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba_home
+
+            FROM       feet_pitcher_home
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, pitcher, home
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_all  NEW
+    @classmethod
+    def view_pull_forest_pa_all(cls):
+        return """
+            SELECT     
+                       etl_pa.GD, etl_pa.batter, etl_pa.pa
+                       ,etl_pa.pitcher
+                       ,etl_pa.h                          AS t_h
+                       ,mx_b.b_ba
+                       ,mx_p.p_ba
+                       ,mx_bh.b_ba_hand
+                       ,mx_ph.p_ba_hand
+                       ,mx_bhome.b_ba_home
+                       ,mx_phome.p_ba_home
+
+            FROM       etl_pa
+
+            LEFT JOIN  pull_forest_pa_all_mixin_batter mx_b
+            ON         mx_b.GD              = etl_pa.GD
+            AND        mx_b.batter          = etl_pa.batter
+
+            LEFT JOIN  pull_forest_pa_all_mixin_pitcher mx_p
+            ON         mx_p.GD              = etl_pa.GD
+            AND        mx_p.pitcher         = etl_pa.pitcher
+
+            LEFT JOIN  pull_forest_pa_all_mixin_batter_hand mx_bh
+            ON         mx_bh.GD             = etl_pa.GD
+            AND        mx_bh.batter         = etl_pa.batter
+            AND        mx_bh.hand           = etl_pa.p_hand
+
+            LEFT JOIN  pull_forest_pa_all_mixin_pitcher_hand mx_ph
+            ON         mx_ph.GD             = etl_pa.GD
+            AND        mx_ph.pitcher        = etl_pa.pitcher
+            AND        mx_ph.hand           = etl_pa.b_hand
+
+            LEFT JOIN  pull_forest_pa_all_mixin_batter_home mx_bhome
+            ON         mx_bhome.GD          = etl_pa.GD
+            AND        mx_bhome.batter      = etl_pa.batter
+            AND        mx_bhome.home        = etl_pa.home
+
+            LEFT JOIN  pull_forest_pa_all_mixin_pitcher_home mx_phome
+            ON         mx_phome.GD          = etl_pa.GD
+            AND        mx_phome.pitcher     = etl_pa.pitcher
+            AND        mx_phome.home        = etl_pa.home
+        """
+
+
+    @classmethod
+    def view_update_feet_batter_hand_home(cls):
+        return """
+            SELECT     GD, TS, batter, hand, home
+                       ,h * 1.0 / NULLIF(ab, 0) AS ba
+
+            FROM       feet_batter_hand_home
+        """
+
+    # ── feet_pitcher_hand_home: pull + update ────────────────────
+
+    # _SchemaViews.py method: view_pull_feet_pitcher_hand_home  NEW
+    @classmethod
+    def view_pull_feet_pitcher_hand_home(cls):
+        return """
+            SELECT     GD
+                       ,1         AS TS
+                       ,pitcher
+                       ,b_hand    AS hand
+                       ,home
+                       ,COUNT(*)  AS pa
+                       ,SUM(ab)   AS ab
+                       ,SUM(h)    AS h
+
+            FROM       etl_pa
+
+            GROUP BY   GD, pitcher, b_hand, home
+        """
+
+    # _SchemaViews.py method: view_update_feet_pitcher_hand_home  NEW
+    @classmethod
+    def view_update_feet_pitcher_hand_home(cls):
+        return """
+            SELECT     GD, TS, pitcher, hand, home
+                       ,h * 1.0 / NULLIF(ab, 0) AS ba
+
+            FROM       feet_pitcher_hand_home
+        """
+
+    # ── forest_pa_hand_home: 2 mixins + pull ─────────────────────
+
+    # _SchemaViews.py method: view_pull_forest_pa_hand_home_mixin_batter_hand_home  NEW
+    @classmethod
+    def view_pull_forest_pa_hand_home_mixin_batter_hand_home(cls):
+        return """
+            SELECT     GD, batter, hand, home
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba_hand_home
+
+            FROM       feet_batter_hand_home
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, batter, hand, home
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_hand_home_mixin_pitcher_hand_home  NEW
+    @classmethod
+    def view_pull_forest_pa_hand_home_mixin_pitcher_hand_home(cls):
+        return """
+            SELECT     GD, pitcher, hand, home
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba_hand_home
+
+            FROM       feet_pitcher_hand_home
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, pitcher, hand, home
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_hand_home  NEW
+    @classmethod
+    def view_pull_forest_pa_hand_home(cls):
+        return """
+            SELECT     
+                       etl_pa.GD, etl_pa.batter, etl_pa.pa
+                       ,etl_pa.pitcher
+                       ,etl_pa.h                              AS t_h
+                       ,mx_bhh.b_ba_hand_home
+                       ,mx_phh.p_ba_hand_home
+
+            FROM       etl_pa
+
+            LEFT JOIN  pull_forest_pa_hand_home_mixin_batter_hand_home mx_bhh
+            ON         mx_bhh.GD          = etl_pa.GD
+            AND        mx_bhh.batter      = etl_pa.batter
+            AND        mx_bhh.hand        = etl_pa.p_hand
+            AND        mx_bhh.home        = etl_pa.home
+
+            LEFT JOIN  pull_forest_pa_hand_home_mixin_pitcher_hand_home mx_phh
+            ON         mx_phh.GD          = etl_pa.GD
+            AND        mx_phh.pitcher     = etl_pa.pitcher
+            AND        mx_phh.hand        = etl_pa.b_hand
+            AND        mx_phh.home        = etl_pa.home
+        """
+
+    # ── forest_pa_all2: 8 mixins + pull ──────────────────────────
+
+    # _SchemaViews.py method: view_pull_forest_pa_all2_mixin_batter  NEW
+    @classmethod
+    def view_pull_forest_pa_all2_mixin_batter(cls):
+        return """
+            SELECT     GD, batter
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba
+
+            FROM       feet_batter
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, batter
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_all2_mixin_pitcher  NEW
+    @classmethod
+    def view_pull_forest_pa_all2_mixin_pitcher(cls):
+        return """
+            SELECT     GD, pitcher
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba
+
+            FROM       feet_pitcher
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, pitcher
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_all2_mixin_batter_hand  NEW
+    @classmethod
+    def view_pull_forest_pa_all2_mixin_batter_hand(cls):
+        return """
+            SELECT     GD, batter, hand
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba_hand
+
+            FROM       feet_batter_hand
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, batter, hand
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_all2_mixin_pitcher_hand  NEW
+    @classmethod
+    def view_pull_forest_pa_all2_mixin_pitcher_hand(cls):
+        return """
+            SELECT     GD, pitcher, hand
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba_hand
+
+            FROM       feet_pitcher_hand
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, pitcher, hand
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_all2_mixin_batter_home  NEW
+    @classmethod
+    def view_pull_forest_pa_all2_mixin_batter_home(cls):
+        return """
+            SELECT     GD, batter, home
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba_home
+
+            FROM       feet_batter_home
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, batter, home
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_all2_mixin_pitcher_home  NEW
+    @classmethod
+    def view_pull_forest_pa_all2_mixin_pitcher_home(cls):
+        return """
+            SELECT     GD, pitcher, home
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba_home
+
+            FROM       feet_pitcher_home
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, pitcher, home
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_all2_mixin_batter_hand_home  NEW
+    @classmethod
+    def view_pull_forest_pa_all2_mixin_batter_hand_home(cls):
+        return """
+            SELECT     GD, batter, hand, home
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS b_ba_hand_home
+
+            FROM       feet_batter_hand_home
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, batter, hand, home
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_all2_mixin_pitcher_hand_home  NEW
+    @classmethod
+    def view_pull_forest_pa_all2_mixin_pitcher_hand_home(cls):
+        return """
+            SELECT     GD, pitcher, hand, home
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS p_ba_hand_home
+
+            FROM       feet_pitcher_hand_home
+
+            WHERE      ts = 200
+
+            GROUP BY   GD, pitcher, hand, home
+        """
+
+    # _SchemaViews.py method: view_pull_forest_pa_all2  NEW
+    @classmethod
+    def view_pull_forest_pa_all2(cls):
+        return """
+            SELECT     
+                       etl_pa.GD, etl_pa.batter, etl_pa.pa
+                       ,etl_pa.pitcher
+                       ,etl_pa.h                          AS t_h
+                       ,mx_b.b_ba
+                       ,mx_p.p_ba
+                       ,mx_bh.b_ba_hand
+                       ,mx_ph.p_ba_hand
+                       ,mx_bhome.b_ba_home
+                       ,mx_phome.p_ba_home
+                       ,mx_bhh.b_ba_hand_home
+                       ,mx_phh.p_ba_hand_home
+
+            FROM       etl_pa
+
+            LEFT JOIN  pull_forest_pa_all2_mixin_batter mx_b
+            ON         mx_b.GD              = etl_pa.GD
+            AND        mx_b.batter          = etl_pa.batter
+
+            LEFT JOIN  pull_forest_pa_all2_mixin_pitcher mx_p
+            ON         mx_p.GD              = etl_pa.GD
+            AND        mx_p.pitcher         = etl_pa.pitcher
+
+            LEFT JOIN  pull_forest_pa_all2_mixin_batter_hand mx_bh
+            ON         mx_bh.GD             = etl_pa.GD
+            AND        mx_bh.batter         = etl_pa.batter
+            AND        mx_bh.hand           = etl_pa.p_hand
+
+            LEFT JOIN  pull_forest_pa_all2_mixin_pitcher_hand mx_ph
+            ON         mx_ph.GD             = etl_pa.GD
+            AND        mx_ph.pitcher        = etl_pa.pitcher
+            AND        mx_ph.hand           = etl_pa.b_hand
+
+            LEFT JOIN  pull_forest_pa_all2_mixin_batter_home mx_bhome
+            ON         mx_bhome.GD          = etl_pa.GD
+            AND        mx_bhome.batter      = etl_pa.batter
+            AND        mx_bhome.home        = etl_pa.home
+
+            LEFT JOIN  pull_forest_pa_all2_mixin_pitcher_home mx_phome
+            ON         mx_phome.GD          = etl_pa.GD
+            AND        mx_phome.pitcher     = etl_pa.pitcher
+            AND        mx_phome.home        = etl_pa.home
+
+            LEFT JOIN  pull_forest_pa_all2_mixin_batter_hand_home mx_bhh
+            ON         mx_bhh.GD            = etl_pa.GD
+            AND        mx_bhh.batter        = etl_pa.batter
+            AND        mx_bhh.hand          = etl_pa.p_hand
+            AND        mx_bhh.home          = etl_pa.home
+
+            LEFT JOIN  pull_forest_pa_all2_mixin_pitcher_hand_home mx_phh
+            ON         mx_phh.GD            = etl_pa.GD
+            AND        mx_phh.pitcher       = etl_pa.pitcher
+            AND        mx_phh.hand          = etl_pa.b_hand
+            AND        mx_phh.home          = etl_pa.home
+        """
+
+    @classmethod
+    def view_pull_feet_batter_hand_home(cls):
+        return """
+            SELECT     GD
+                       ,1         AS TS
+                       ,batter
+                       ,p_hand    AS hand
+                       ,home
+                       ,COUNT(*)  AS pa
+                       ,SUM(ab)   AS ab
+                       ,SUM(h)    AS h
+            
+            FROM       etl_pa
+            
+            GROUP BY   GD, batter, p_hand, home
+        """
+
+
+
+
+
+    # ══════════════════════════════════════════════════════════════
+    # _SchemaViews.py  — True_dmg track)
+    # ══════════════════════════════════════════════════════════════
+
+    # ── etl_agg: pull ────────────────────────────────────────────
+
+    # _SchemaViews.py method: view_pull_etl_agg  NEW
+
+    @classmethod
+    def view_pull_etl_agg(cls):
+        return """
+            SELECT     GD, batter  AS player, p_hand AS hand, home
+                       ,SUM(ab) AS ab
+                       ,SUM(h)  AS h
+                       ,SUM(k) AS k
+            
+            FROM       etl_pa
+            
+            GROUP BY   GD, batter, p_hand, home
+            
+            UNION      ALL
+            
+            SELECT     GD, pitcher AS player, b_hand AS hand, 1 - home
+                       ,SUM(ab) AS ab
+                       ,SUM(h)  AS h
+                       ,SUM(k) AS k
+            
+            FROM       etl_pa
+            
+            GROUP BY   GD, pitcher, b_hand, home
+        """
+
+    @classmethod
+    def view_pull_feet_atom(cls):
+        return """
+            SELECT     GD
+                       ,1         AS TS
+                       ,player
+                       ,hand
+                       ,home
+                       ,ab
+                       ,h
+                       ,k
+            
+            FROM       etl_agg
+        """
+
+    @classmethod
+    def view_update_feet_atom(cls):
+        return """
+            SELECT     GD, TS, player, hand, home
+                       ,h * 1.0 / NULLIF(ab, 0) AS ba
+                       ,k * 1.0 / NULLIF(ab, 0) AS k_rate
+            
+            FROM       feet_atom
+        """
+
+    @classmethod
+    def view_pull_feet_fast(cls):
+        return """
+            SELECT     GD
+                       ,1         AS TS
+                       ,player
+                       ,SUM(ab)   AS ab
+                       ,SUM(h)    AS h
+                       ,SUM(k) AS k
+            
+            FROM       etl_agg
+            
+            GROUP BY   GD, player
+        """
+
+    @classmethod
+    def view_update_feet_fast(cls):
+        return """
+            SELECT     GD, TS, player
+                       ,h * 1.0 / NULLIF(ab, 0) AS ba
+                       , k * 1.0 / NULLIF(ab, 0) AS k_rate
+            
+            FROM       feet_fast
+        """
+
+    @classmethod
+    def view_pull_forest_pa_dmg_mixin_overall(cls):
+        return """
+            SELECT     GD, player
+                       ,ba
+                       ,k_rate
+            
+            FROM       feet_fast
+            
+            WHERE      ts = 200
+        """
+    @classmethod
+    def view_pull_forest_pa_dmg_mixin_hand(cls):
+        return """
+            SELECT     GD, player, hand
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS ba
+                       ,SUM(k) * 1.0 / NULLIF(SUM(ab), 0) AS  k_rate
+            
+            FROM       feet_atom
+            
+            WHERE      ts = 200
+            
+            GROUP BY   GD, player, hand
+        """
+
+    @classmethod
+    def view_pull_forest_pa_dmg_mixin_home(cls):
+        return """
+            SELECT     GD, player, home
+                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS ba
+                       ,SUM(k) * 1.0 / NULLIF(SUM(ab), 0) AS k_rate
+            
+            FROM       feet_atom
+            
+            WHERE      ts = 200
+            
+            GROUP BY   GD, player, home
+        """
+    @classmethod
+    def view_pull_forest_pa_dmg_mixin_hand_home(cls):
+        return """
+            SELECT     GD, player, hand, home
+                       ,ba
+                       , k_rate
+            
+            FROM       feet_atom
+            
+            WHERE      ts = 200
+        """
+
+    @classmethod
+    def view_pull_forest_pa_dmg(cls):
+        return """
+            SELECT     
+                       etl_pa.GD, etl_pa.batter, etl_pa.pa
+                       ,etl_pa.pitcher
+                       ,etl_pa.h                          AS t_h
+                       ,mx_b.ba                           AS b_ba
+                       ,mx_p.ba                           AS p_ba
+                       ,mx_bh.ba                          AS b_ba_hand
+                       ,mx_ph.ba                          AS p_ba_hand
+                       ,mx_bhome.ba                       AS b_ba_home
+                       ,mx_phome.ba                       AS p_ba_home
+                       ,mx_bhh.ba                         AS b_ba_hand_home
+                       ,mx_phh.ba                         AS p_ba_hand_home
+                       ,mx_b.k_rate                      AS b_k_rate
+                       ,mx_p.k_rate                      AS p_k_rate
+                       ,mx_bh.k_rate                     AS b_k_rate_hand
+                       ,mx_ph.k_rate                     AS p_k_rate_hand
+                       ,mx_bhome.k_rate                  AS b_k_rate_home
+                       ,mx_phome.k_rate                  AS p_k_rate_home
+                       ,mx_bhh.k_rate                    AS b_k_rate_hand_home
+                       ,mx_phh.k_rate                    AS p_k_rate_hand_home
+            
+            FROM       etl_pa
+            
+            LEFT JOIN  pull_forest_pa_dmg_mixin_overall mx_b
+            ON         mx_b.GD              = etl_pa.GD
+            AND        mx_b.player          = etl_pa.batter
+            
+            LEFT JOIN  pull_forest_pa_dmg_mixin_overall mx_p
+            ON         mx_p.GD              = etl_pa.GD
+            AND        mx_p.player          = etl_pa.pitcher
+            
+            LEFT JOIN  pull_forest_pa_dmg_mixin_hand mx_bh
+            ON         mx_bh.GD             = etl_pa.GD
+            AND        mx_bh.player         = etl_pa.batter
+            AND        mx_bh.hand           = etl_pa.p_hand
+            
+            LEFT JOIN  pull_forest_pa_dmg_mixin_hand mx_ph
+            ON         mx_ph.GD             = etl_pa.GD
+            AND        mx_ph.player         = etl_pa.pitcher
+            AND        mx_ph.hand           = etl_pa.b_hand
+            
+            LEFT JOIN  pull_forest_pa_dmg_mixin_home mx_bhome
+            ON         mx_bhome.GD          = etl_pa.GD
+            AND        mx_bhome.player      = etl_pa.batter
+            AND        mx_bhome.home        = etl_pa.home
+            
+            LEFT JOIN  pull_forest_pa_dmg_mixin_home mx_phome
+            ON         mx_phome.GD          = etl_pa.GD
+            AND        mx_phome.player      = etl_pa.pitcher
+            AND        mx_phome.home        = 1 - etl_pa.home
+            
+            LEFT JOIN  pull_forest_pa_dmg_mixin_hand_home mx_bhh
+            ON         mx_bhh.GD            = etl_pa.GD
+            AND        mx_bhh.player        = etl_pa.batter
+            AND        mx_bhh.hand          = etl_pa.p_hand
+            AND        mx_bhh.home          = etl_pa.home
+            
+            LEFT JOIN  pull_forest_pa_dmg_mixin_hand_home mx_phh
+            ON         mx_phh.GD            = etl_pa.GD
+            AND        mx_phh.player        = etl_pa.pitcher
+            AND        mx_phh.hand          = etl_pa.b_hand
+            AND        mx_phh.home          = 1 - etl_pa.home
         """

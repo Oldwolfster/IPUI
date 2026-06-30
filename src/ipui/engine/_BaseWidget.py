@@ -79,7 +79,7 @@ class _BaseWidget(MixinScrollH):
                  pad=None, pad_x=None, pad_y=None, gap=None,  border=None,justify_center=False, justify_spread=False, visible = True,
                  enabled=True, start= None, end = None, font=None, fit_content=False, border_radius=None,hug_parent=False,
                  text_align=None, wrap=None, color_bg=None, glow=False, data=None, single_select=False, tooltip=None,
-                 placeholder=None, initial_value=None, on_submit=None, on_change=None, on_click=None, tab_order=None, on_double_click=None,
+                 placeholder=None, initial_value=None, on_submit=None, on_change=None, on_click=None, tab_order=None, on_double_click=None, on_right_click=None,
                  pipeline_key=None, tooltip_class=None, scroll_v=None, scroll_glow=.369, early_load =None):
 
         self.preflight_check(parent, text_align, flex_width, flex_height)
@@ -159,6 +159,7 @@ class _BaseWidget(MixinScrollH):
         # Events — declare, don't handle. MgrInput reads these.
         self.on_click           = on_click
         self.on_double_click    = on_double_click
+        self.on_right_click     = on_right_click
         self.on_change          = on_change
         self.on_hover           = None
         self.focusable          = False
@@ -732,11 +733,11 @@ class _BaseWidget(MixinScrollH):
     # ==============================================================
 
     @property
-    def text(self):
+    def textOld(self):
         return getattr(self, "private_text", None)
 
-    @text.setter
-    def text(self, value):
+    @textOld.setter
+    def textOld(self, value):
         prev = getattr(self, "private_text", None)
         self.private_text = value
         if value == prev: return                              # unchanged → skip
@@ -765,3 +766,18 @@ class _BaseWidget(MixinScrollH):
         return self
 
 
+    # _BaseWidget.py  method: text (property)  New: .text getter — transparent read of backing store
+    @property
+    def text(self):
+        return self.private_text
+
+    # _BaseWidget.py  method: text (setter)  New: store + repaint cache. NO layout. Gated until build() has run once.
+    @text.setter
+    def text(self, value):
+        self.private_text = value
+        if getattr(self, "private_build_comp", False):
+            self.refresh_surface()
+
+    # _BaseWidget.py  method: refresh_surface  New: regenerate cached glyph surface from current text (override for non-text surfaces)
+    def refresh_surface(self):
+        self.my_surface = self.render_multiline(self.private_text)

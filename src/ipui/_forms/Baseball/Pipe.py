@@ -1,18 +1,22 @@
+import pygame
+
 from ipui._forms.Baseball.BbDB import BbDB
+from ipui._forms.Baseball.FieldLineage import FieldLineage
 from ipui._forms.Baseball.PipeMixinRawPull import MixinRawPull
 from ipui._forms.Baseball.PipeMixinXGBoost import MixinXGBoost
 from ipui._forms.Baseball.MgrDT import MgrDT
 from ipui import *
 from ipui._forms.Baseball.PipeMixinUpdate import PipeMixinUpdate
+from ipui.engine.DisplayArrow import DisplayArrow
 from ipui.utils.EZ import EZ
 from ipui._forms.Baseball.PipeMixinModelResults import MixinModelResults
 
 class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResults):#, MixinXGBoost):
     TIME_SLICES = [27,15,28,30,200,9999]
     TIME_SLICES = [2, 3, 8, 200, 9999]
-
+    GUYS_LINE   = 0.77
     ROLLUP_EXCLUDE = {"GD", "TS", "game", "game_pk", "pa", "at_bat_number"}
-    FOREST_TABLES_TO_TRAIN = ["forest"]
+    FOREST_TABLES_TO_TRAIN = []
     LAYERS = ["Raw", "ETL", "Feet", "Forest", "Predict"]
     PITCH_BUCKETS = {
         "FF": "fastball", "SI": "fastball", "FC": "fastball", "FA": "fastball",
@@ -30,6 +34,8 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         self.start_date    = "2026-03-27"       # instance state, seeded once — survives rebuilds like card_mode
         self.end_date      = "2026-03-30"
         self.active_table = None
+        self.private_lineage_path = None
+        self.private_field_bodies = {}
 
     def ip_activated(self,ip):          # called by TabSystem when user switches here
         #print("Am i firing")
@@ -37,6 +43,16 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
             self.private_stale = False
             self.refresh_pane()
 
+    def ip_think(self, ip):
+        """#Drift warning ip_think  NEW: detect right-click on fields"""
+        if self.card_mode != "field":
+            self.private_lineage_path = None
+            return
+        for event in ip.unhandled:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                self.handle_field_right_click(event.pos)
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                self.private_lineage_path = None
     # ════════════════════════════════════════════════
     # Widget Tree                                  ═══
     # ════════════════════════════════════════════════
@@ -59,10 +75,11 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         header   = Plate(header   , pad=5)
         header   = Plate(header   , pad=5)
         header   = Row(header)
-        Title(header, "Data Pipeline", glow=True)
+        Title(header, "Pipeline", glow=True)
         Spacer(header)
         #self.btn_refresh_all  = Button(header, self.update_btn_txt, color_bg=Style.COLOR_BUTTON_CTA,  on_click=self.update_all)
         Button(header, self.update_btn_txt, color_bg=Style.COLOR_BUTTON_CTA, on_click=self.run_all)
+        #ButtonDrip(header, "Run All2", data="Working...", name="btn_run_all",    color_bg=Style.COLOR_BUTTON_CTA, on_click=self.run_all)
         TextBox(header, initial_value=self.start_date, name="txt_start_date")
         Body(header, "to:")
         TextBox(header, initial_value=self.end_date, name="txt_end_date")
@@ -72,8 +89,13 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         #TextBox(header, initial_value="forest", name="txt_forest_table")
         Button(header, "Refresh"       , on_click=self.refresh_pane)
         Button(header, self.toggle_label(), on_click=self.toggle_card_mode)
-        Button(header, "Run TS"     , on_click=lambda: self.roll_up_ts("feet_batter"))
+        #Button(header, "Run TS"     , on_click=lambda: self.roll_up_ts("feet_batter"))
+        #btn = Button(header, "Run TS")
+        #btn.on_click = lambda: (btn.set_text("Working..."))
+
         Button(header, "Phoenix"    , on_click=self.nuke_clicked, color_bg=Style.COLOR_BUTTON_DANGER)
+        Button(header, "Clear Cache", on_click=self.clear_cache_clicked)
+
 
         # Just a test - delete me
         #DropDown(header, placeholder="Pick one...", border=0, pad=0, flex_width=1, data={"Alpha": {}, "Bravo": {}, "Charlie": {}, "Delta": {}, "Echo": {}, "Foxtrot": {}, "Foxtrot2": {}, "Foxtrot3": {}, "Foxtrot4": {}, "Foxtrot5": {}, "Foxtrot6": {}})
@@ -81,6 +103,10 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         dd = DropDown(header, placeholder="All", border=0, pad=0, flex_width=1,  data=self.track_dropdown_data(), on_change=self.on_track_changed)
         if self.private_track_filter: dd.textbox.set_text(self.private_track_filter)
 
+    def clear_cache_clicked(self):
+
+        self.clear_cache()
+        self.refresh_pane()
 
     def commit_dates(self):
         self.start_date = self.form.widgets["txt_start_date"].text
@@ -210,16 +236,90 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         return body_rows, body_range
 
     def build_field_list(self, card, tbl):
-        Body(card, "\n".join(BbDB.field_names(tbl)))
+        body = Body(card, "\n".join(BbDB.field_names(tbl)),
+                    on_right_click=lambda t=tbl: self.handle_field_lineage(t))
+        self.private_field_bodies[tbl] = body
 
-    def build_card_buttons(self, card, tbl, refs):
+    # Pipe.py method: handle_field_lineage  NEW: right-click → trace → store path
+    def handle_field_lineage(self, tbl):
+        import pygame
+        pos   = pygame.mouse.get_pos()
+        field = self.field_at_click(tbl, pos[1])
+        if field is None: return
+        backward, forward = FieldLineage.trace(field, tbl)
+        path = [(hop.table, hop.field) for hop in reversed(backward)]
+        path.append((tbl, field))
+        path.extend((hop.table, hop.field) for hop in forward)
+        self.private_lineage_path = path
+
+    # Pipe.py method: ip_draw_hud  NEW: draw lineage arrows
+    def ip_draw_hud(self, ip):
+        if not self.private_lineage_path: return
+        path = self.private_lineage_path
+        for i in range(len(path) - 1):
+            src_tbl, src_field = path[i]
+            dst_tbl, dst_field = path[i + 1]
+            src_body = self.form.widgets.get(f"fields_{src_tbl}")
+            dst_body = self.form.widgets.get(f"fields_{dst_tbl}")
+            if src_body is None or dst_body is None: continue
+            src_fields = BbDB.field_names(src_tbl)
+            dst_fields = BbDB.field_names(dst_tbl)
+            if src_field not in src_fields or dst_field not in dst_fields: continue
+            lh    = Style.FONT_BODY.get_height()
+            src_i = src_fields.index(src_field)
+            dst_i = dst_fields.index(dst_field)
+            start = (src_body.abs_rect.right, src_body.abs_rect.top + src_i * lh + lh // 2)
+            end   = (dst_body.abs_rect.left,  dst_body.abs_rect.top + dst_i * lh + lh // 2)
+            DisplayArrow(
+                start, end,
+                screen     = ip.surface,
+                color      = Style.COLOR_MOLTEN,
+                thickness  = 2,
+                arrow_size = 10,
+            ).draw()
+
+
+
+
+    def field_at_click(self, tbl, click_y):
+        body = self.private_field_bodies.get(tbl)                  # DELETE form.widgets line
+        if body is None: return None
+        fields      = BbDB.field_names(tbl)
+        if not fields: return None
+        line_height = Style.FONT_BODY.get_height()
+        line_index  = (click_y - body.rect.top) // line_height
+        if line_index < 0 or line_index >= len(fields): return None
+        return fields[line_index]
+
+
+    # Pipe.py method: field_coords  NEW: field name → screen (x, y) midpoint
+    def field_coords(self, tbl, field_name, side='right'):
+        body = self.form.widgets.get(f"fields_{tbl}")
+        if body is None: return None
+        fields = BbDB.field_names(tbl)
+        if field_name not in fields: return None
+        line_height = Style.FONT_BODY.get_height()
+        index       = fields.index(field_name)
+        y           = body.rect.top + (index * line_height) + (line_height // 2)
+        x           = body.rect.right if side == 'right' else body.rect.left
+        return (x, y)
+    def build_card_buttonsOLD(self, card, tbl, refs):
         body_rows, body_range = refs if refs else (None, None)
         btns = Row(Plate(Plate(Plate(card,pad=2),pad=2),pad=4))
         Button(btns, "Run"      , flex_width=1, on_click=lambda t=tbl, br=body_rows, bg=body_range: self.refresh_table(t, br, bg))
         Button(btns, "DB", flex_width=1, on_click=lambda t=tbl: self.view_in_db(t))
-        Button(btns, "WB"       , flex_width=1, on_click=lambda t=tbl: self.view_in_workbench(t))  # NEW
+        Button(btns, "WS"       , flex_width=1, on_click=lambda t=tbl: self.view_in_workbench(t))  # NEW
         Button(btns, "SQL"      , flex_width=1, on_click=lambda t=tbl: self.view_in_sql(t))  # NEW
 
+    def build_card_buttons(self, card, tbl, refs):
+        body_rows, body_range = refs if refs else (None, None)
+        plate_color = self.guys_line_color(tbl)
+        plate = Plate(Plate(Plate(card, pad=2, color_bg=plate_color), pad=2), pad=4)   # DELETE old line 217
+        btns  = Row(plate)
+        Button(btns, "Run"      , flex_width=1, on_click=lambda t=tbl, br=body_rows, bg=body_range: self.refresh_table(t, br, bg))
+        Button(btns, "DB",        flex_width=1, on_click=lambda t=tbl: self.view_in_db(t))
+        Button(btns, "WB"       , flex_width=1, on_click=lambda t=tbl: self.view_in_workbench(t))
+        Button(btns, "SQL"      , flex_width=1, on_click=lambda t=tbl: self.view_in_sql(t))
 
     def view_in_db(self, tbl):
         self.form.switch_tab("DB")
@@ -365,3 +465,65 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
     # ════════════════════════════════════════════════
 
 
+    def build_card_buttons(self, card, tbl, refs):
+        body_rows, body_range = refs if refs else (None, None)
+        plate_color = self.guys_line_color(tbl)
+        plate = Plate(Plate(Plate(card, pad=2, color_bg=plate_color), pad=2), pad=4)   # DELETE old line 217
+        btns  = Row(plate)
+        Button(btns, "Run"      , flex_width=1, on_click=lambda t=tbl, br=body_rows, bg=body_range: self.refresh_table(t, br, bg))
+        Button(btns, "DB",        flex_width=1, on_click=lambda t=tbl: self.view_in_db(t))
+        Button(btns, "WB"       , flex_width=1, on_click=lambda t=tbl: self.view_in_workbench(t))
+        Button(btns, "SQL"      , flex_width=1, on_click=lambda t=tbl: self.view_in_sql(t))
+
+    # Pipe.py method: guys_line_color  NEW: MAE → red/yellow/green spectrum
+    def guys_line_color(self, tbl):
+        layer = BbDB.layer_of(tbl)
+        if not tbl.startswith("predict_"):     return None
+        forest = tbl.replace("predict_", "") if layer == "predict" else tbl
+        row = BbDB.query("SELECT total_mae FROM model_run WHERE forest_table = ? ORDER BY GD DESC LIMIT 1",            (forest,)        )
+        if not row or row[0][0] is None:            return None
+        mae   = row[0][0]
+        ratio = mae / Pipe.GUYS_LINE
+        return Pipe.spectrum_color(ratio)
+
+    # Pipe.py method: spectrum_color  NEW: ratio → RGB
+    @staticmethod
+    def spectrum_color(ratio):
+        # 0.8 or below = green, 1.0 = yellow, 1.2+ = red
+        ratio  = max(0.8, min(1.2, ratio))
+        t      = (ratio - 0.8) / 0.4        # 0.0 = green, 0.5 = yellow, 1.0 = red
+        if t <= 0.5:
+            r = int(255 * (t * 2))
+            g = 255
+        else:
+            r = 255
+            g = int(255 * (1 - (t - 0.5) * 2))
+        return (r, g, 0)
+
+    ####################FIELD LINEAGE #######################
+    ####################FIELD LINEAGE #######################
+
+    def ip_draw_hud(self, ip):
+        if not self.private_lineage_path: return
+        path = self.private_lineage_path
+        for i in range(len(path) - 1):
+            src_tbl, src_field = path[i]
+            dst_tbl, dst_field = path[i + 1]
+            src_body = self.private_field_bodies.get(src_tbl)      # DELETE form.widgets line
+            dst_body = self.private_field_bodies.get(dst_tbl)      # DELETE form.widgets line
+            if src_body is None or dst_body is None: continue
+            src_fields = BbDB.field_names(src_tbl)
+            dst_fields = BbDB.field_names(dst_tbl)
+            if src_field not in src_fields or dst_field not in dst_fields: continue
+            lh    = Style.FONT_BODY.get_height()
+            src_i = src_fields.index(src_field)
+            dst_i = dst_fields.index(dst_field)
+            start = (src_body.rect.right, src_body.rect.top + src_i * lh + lh // 2)
+            end   = (dst_body.rect.left,  dst_body.rect.top + dst_i * lh + lh // 2)
+            DisplayArrow(
+                start, end,
+                screen     = ip.surface,
+                color      = Style.COLOR_MOLTEN,
+                thickness  = 2,
+                arrow_size = 10,
+            ).draw()

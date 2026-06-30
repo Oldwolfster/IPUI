@@ -27,10 +27,99 @@
   - Predict tables are ephemeral — NOT stored in _SchemaTbl. Model views are auto-created by MgrSchema.build_predict_view.
 - If we need to raise an error, let's use the IPUI custom EZ.err
 - tables_for_layer returns schema-defined order first (pipeline dependency order), then DB-only tables. Order matters.
-- Forest tables MUST include game_pk in their keys — batter + GD is not unique (doubleheaders).
+- Forest tables MUST include game(formerly game_pk in their keys — batter + GD is not unique (doubleheaders).
 - TextBox: .text is read-only. Use .set_text(value) to update.
 
 
+ 
+
+Example: adding `k`
+
+### ETL Layer
+
+| #  | Tab | Object                    | What to do                                                                                |
+|----|-----|---------------------------|-------------------------------------------------------------------------------------------|
+| 1  | DB  | Field Registry            | Add `k` as Metric. Give it a unique seq# for deterministic sorting.                       |
+| 2  | DB  | etl_pa — Edit Table       | Inspector → Metrics → select `k` → Add to Proposed → Drop and Rebuild.                   |
+| 3  | WS  | pull_etl_pa — Edit View   | Add `k` to SELECT.                                                                       |
+| 4  | DB  | etl_agg — Edit Table      | Inspector → Metrics → select `k` → Add to Proposed → Drop and Rebuild.                   |
+| 5  | WS  | pull_etl_agg — Edit View  | Add `SUM(k) AS k` to BOTH halves of the UNION ALL.                                       |
+
+### Feet Layer
+
+| #  | Tab | Object                      | What to do                                                                              |
+|----|-----|-----------------------------|-----------------------------------------------------------------------------------------|
+| 6  | DB  | feet_atom — Edit Table       | Add `k INTEGER` and `k_rate REAL` → Drop and Rebuild.                                  |
+| 7  | WS  | pull_feet_atom — Edit View   | Add `k` to SELECT.                                                                     |
+| 8  | WS  | update_feet_atom — Edit View | Add `k * 1.0 / NULLIF(ab, 0) AS k_rate`.                                               |
+| 9  | DB  | feet_fast — Edit Table       | Add `k INTEGER` and `k_rate REAL` → Drop and Rebuild.                                  |
+| 10 | WS  | pull_feet_fast — Edit View   | Add `SUM(k)` to SELECT.                                                                |
+| 11 | WS  | update_feet_fast — Edit View | Add `k * 1.0 / NULLIF(ab, 0) AS k_rate`.                                               |
+
+### Forest Layer — Mixins
+
+| #  | Tab | Object                              | What to do                                                              |
+|----|-----|--------------------------------------|-------------------------------------------------------------------------|
+| 12 | WS  | mixin_overall — Edit View            | Add `,k_rate` (pass-through, no SUM — reads feet_fast directly).        |
+| 13 | WS  | mixin_hand — Edit View               | Add `,SUM(k) * 1.0 / NULLIF(SUM(ab), 0) AS k_rate` (GROUP BY rollup).  |
+| 14 | WS  | mixin_home — Edit View               | Add `,SUM(k) * 1.0 / NULLIF(SUM(ab), 0) AS k_rate` (GROUP BY rollup).  |
+| 15 | WS  | mixin_hand_home — Edit View          | Add `,k_rate` (pass-through, no SUM — atomic grain).                    |
+
+### Forest Layer — Pull + Table
+
+| #  | Tab | Object                               | What to do                                                             |
+|----|-----|---------------------------------------|------------------------------------------------------------------------|
+| 16 | WS  | pull_forest_pa_dmg — Edit View        | Add 8 lines to SELECT (below).                                        |
+| 17 | DB  | forest_pa_dmg — Edit Table            | Add same 8 fields as REAL → Drop and Rebuild.                          |
+
+```sql
+-- 8 lines to add to pull_forest_pa_dmg SELECT:
+           ,mx_b.k_rate                      AS b_k_rate
+           ,mx_p.k_rate                      AS p_k_rate
+           ,mx_bh.k_rate                     AS b_k_rate_hand
+           ,mx_ph.k_rate                     AS p_k_rate_hand
+           ,mx_bhome.k_rate                  AS b_k_rate_home
+           ,mx_phome.k_rate                  AS p_k_rate_home
+           ,mx_bhh.k_rate                    AS b_k_rate_hand_home
+           ,mx_phh.k_rate                    AS p_k_rate_hand_home
+```
+
+Then Phoenix the track.
+
+
+
+
+**Forest mixins** — add `k_rate` alongside `ba` in each mixin SELECT. No new views, no new joins.
+ 
+Then Phoenix the track.
+
+#### true_dmg Track (CZAR: Claude)
+ 
+Unified batter/pitcher pipeline. One set of tables serves both sides.
+ 
+Pipeline: etl_pa → etl_agg → feet_atom + feet_fast → forest_pa_dmg → predict
+ 
+Key insight: etl_agg UNION ALLs batter and pitcher into a single "player"
+column, flipping hand (p_hand/b_hand) and home (1-home) so downstream
+tables need no batter/pitcher distinction.
+ 
+Tables:
+  etl_agg    — player × hand × home grain, SUMs from etl_pa (UNION ALL)
+  feet_atom  — player × hand × home, finest context grain, rates computed by update view
+  feet_fast  — player only, overall stats rolled up from etl_agg
+  forest_pa_dmg — PA grain, 8 LEFT JOINs (4 mixins × 2: once for batter, once for pitcher)
+ 
+Mixins (4, each joined twice in forest pull):
+  _mixin_overall    — from feet_fast WHERE ts=200
+  _mixin_hand       — from feet_atom, GROUP BY player, hand
+  _mixin_home       — from feet_atom, GROUP BY player, home
+  _mixin_hand_home  — from feet_atom, no rollup (atomic grain)
+ 
+Join wiring:
+  Batter: mx.player = etl_pa.batter, mx.hand = etl_pa.p_hand, mx.home = etl_pa.home
+  Pitcher: mx.player = etl_pa.pitcher, mx.hand = etl_pa.b_hand, mx.home = 1 - etl_pa.home
+ 
+Adding a metric: see "Adding a Summable Metric" guide. ~10 UI touches, zero new views.
 
 
 ## List of shit that is done
@@ -55,9 +144,6 @@ Validate if enable_categorical would improve XGB
 4) DONE:when in clone or edit mode.  no longer allow the db explorer(pane 0) change the table in the left grid.  do add doubleclicking a field adds ot the new version(keys up top - metrics at bottom)
 5) Done:move up/move down work, but the field is unhighlighted... after it moves field in grid rehighlight the  field 
 6) Donenew: Layer should be selected and suffix populated if it has been set when identity is clicked.
-7) issue screenshotsare for:  First image: before adding pitcher.  After: Added pitcher but deleted p_throws - removing pitcher does not add deleted field back.  but subsequent toggles of pitcher don't continue deleting fields
-
-
 
 
 ## Plan to add metrics.
@@ -65,9 +151,8 @@ Validate if enable_categorical would improve XGB
 2) DONE - Build grain-agnositc XGB Model to Train any Forest table to predict any feature.
 3) Fields for "Model Views" are invariant. Automate recording summary results to a table - anytime a "Model" view is created, write the results, dates, and features, total MAE, Guy's line to a summary set of tables.
    A) DONE:Record results to table from C (Actually one table per drill level - for speed at large aggregations)  No rolling up from atomic
-   B) Add "Regression Guard / Joy Meter" query from this table - add PROMINENTLY to Pipe page.
-   C) Add "Beats the line" nmng Forest table RED if it is negative. (requires new data source) 
-   D) Add "Beats GUY's line" number.   Color that fucking Forest table RED if it is negative. (DOES NOT requires new data source - it's the line i draw from log5 + other available baselines.)
+   B) Add "Regression Guard / Joy Meter" query from this table - add PROMINENTLY to Pipe page.    
+   D) DONE: Add "Beats GUY's line" number.   Color that fucking Forest table RED if it is negative. (DOES NOT requires new data source - it's the line i draw from log5 + other available baselines.)
 4) Build Walk forward process. (new button next to 'Run All')
    A) UI 
    A1) uses same date boxes.
@@ -143,8 +228,9 @@ Examples: ba (Batting Average), ops (OPS), baa (Batting Average Against).
 4. [Context1]_[Context2]... (parts[3+ - Optional): Relational platoon/situational splits. Must use explicit relational tokens to prevent naming collisions (e.g., vsR instead of HR to bypass Home Run brain fog).
 vsR = Versus Right-handed opponent.
 vsL = Versus Left-handed opponent.
-home
-away
+home or away
+Day/Night — Real splits exist for some players, but the effect is weaker than home/away and you'd need to derive it from game_datetime in raw_schedule. More plumbing for less signal. MAybe we find only players it matters for
+
 
 
 
@@ -171,6 +257,33 @@ Show generated name preview: Full name: pull_forest_mixin_batter_season.
 Forgive obvious naming mistakes and show cleanup: Using suffix: batter_season.
 Add tiny glossary/hover labels: GD = game/as-of date, TS = trailing window.
 In ETL cards, visually mark dev/empty tables: EMPTY or TEST
+C) Add "Beats the line" Forest table RED if it is negative. (requires new data source)
 
 
-
+# Adding a Summable Metric to true_dmg
+ 
+Example: adding `k` (strikeout flag, already in etl_pitch)
+ 
+| # | File / Object              | Change                                          |
+|---|----------------------------|--------------------------------------------------|
+| 1 | `_SchemaTbl` — etl_pa      | Add `k INTEGER`                                  |
+| 2 | `_SchemaViews` — pull_etl_pa | Add `k` to SELECT                              |
+| 3 | `_SchemaViews` — pull_etl_agg | Add `SUM(k) AS k` to both halves of UNION ALL |
+| 4 | `_SchemaTbl` — etl_agg     | Add `k INTEGER`                                  |
+| 5 | `_SchemaTbl` — feet_atom   | Add `k INTEGER`                                  |
+| 6 | `_SchemaViews` — pull_feet_atom | Add `k` to SELECT pass-through                |
+| 7 | `_SchemaTbl` — feet_fast   | Add `k INTEGER`                                  |
+| 8 | `_SchemaViews` — pull_feet_fast | Add `SUM(k)` to SELECT                        |
+ 
+**Rates** — add to both update views (same formula):
+ 
+| # | File / Object                | Change                                        |
+|---|------------------------------|------------------------------------------------|
+| 9 | `_SchemaTbl` — feet_atom     | Add `k_rate REAL`                              |
+|10 | `_SchemaViews` — update_feet_atom | Add `k * 1.0 / NULLIF(ab, 0) AS k_rate`  |
+|11 | `_SchemaTbl` — feet_fast     | Add `k_rate REAL`                              |
+|12 | `_SchemaViews` — update_feet_fast | Add `k * 1.0 / NULLIF(ab, 0) AS k_rate`  |
+ 
+**Forest** — mixins already produce `ba`; to add `k_rate`, add it alongside `ba` in each mixin SELECT. No new views, no new joins.
+ 
+Then Phoenix the track.

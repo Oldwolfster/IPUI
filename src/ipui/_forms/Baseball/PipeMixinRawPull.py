@@ -2,9 +2,11 @@ import time as _time
 import pybaseball
 from ipui._forms.Baseball.BbDB import BbDB
 from ipui._forms.Baseball.MgrDT import MgrDT
-
+from pathlib import Path  # NEW
+import pandas as pd  # NEW
 
 class MixinRawPull:
+    CACHE_DIR = Path.home() / ".neuroforge" / "projects" / "bb_cache"
 
     # ══════════════════════════════════════════════════════════════
     # RAW PITCHES — pybaseball.statcast, one day at a time
@@ -15,79 +17,65 @@ class MixinRawPull:
     def run_raw_layer(self, gd):
         """Raw tables use sync_ methods — track-filtered like derived layers."""
         for tbl in self.tables_for_layer_filtered("raw"):
+            if tbl == "raw_players": continue #wait until we have all days downloaded to get players.
             self.ip.drip(self.logthe_table, tbl, gd)
             self.ip.drip(self.run_raw_table, gd, tbl)
 
     def run_raw_table(self, gd, tbl):
-        if self.raw_table_already_loaded(tbl, gd): return
+        if self.raw_table_already_loaded(tbl, gd):
+            self.seed_cache_if_needed(tbl, gd)                                         # NEW
+            return
         method = getattr(self, f"sync_{tbl}", None)
         if method:
             method(gd)
             BbDB.update_summary(tbl)
         self.refresh_pane()
 
-    def raw_table_already_loaded(self, tbl, gd):
-        if tbl=="raw_pitches": return BbDB.has_rows_on_or_past(tbl,gd)
-        else:                  return  BbDB.has_rows_on_or_past(tbl)
 
     def raw_table_already_loaded(self, tbl, gd):
         if tbl == "raw_pitches": return BbDB.has_rows_for_gd(tbl, gd)
         else:                    return BbDB.has_rows_on_or_past(tbl)
 
-    def sync_raw_pitchesOLD(self, gd):
-        #BbDB.log("raw_pitches", f"pull starting: GD= {gd}")
-        t_overall  = _time.time()
-        total_rows = 0
-        known_cols = self.known_raw_pitches_cols()
-
-        #for gd_int in MgrDT.gd_range(start_gd, end_gd):
-        day_str = MgrDT.gd_to_iso(gd)
-        t_day   = _time.time()
-        try:
-            df = pybaseball.statcast(start_dt=day_str, end_dt=day_str, verbose=False)
-        except Exception as e:
-            BbDB.log("raw_pitches", f"{day_str} statcast call failed: {e}")
-
-
-        if df is None or len(df) == 0:
-            BbDB.log("raw_pitches", f"{day_str} returned 0 rows (off day?)")
-            return
-
-        df = self.conform_pitches_df(df, gd, known_cols)
-        n  = self.replace_day_pitches(gd, df)
-        ms = int((_time.time() - t_day) * 1000)
-        #BbDB.log("raw_pitches", f"{day_str} inserted {n} rows ({ms}ms)")
-        total_rows += n
-
-        ms_total = int((_time.time() - t_overall) * 1000)
-        #BbDB.log("raw_pitches", f"pull complete: {total_rows} rows ({ms_total}ms)")
+    def seed_cache_if_needed(self, tbl, gd):
+        import pandas as pd
+        import sqlite3
+        if tbl == "raw_pitches":
+            cache = self.cache_path_pitches(gd)
+            if cache.exists(): return
+            self.ensure_cache_dir()
+            conn = sqlite3.connect(BbDB.DB_PATH)
+            df = pd.read_sql(f"SELECT * FROM {tbl} WHERE GD = ?", conn, params=(gd,))
+            conn.close()
+            df.to_csv(cache, index=False)
+            BbDB.log(tbl, f"seeded cache ({len(df)} rows)")
 
     def sync_raw_pitches(self, gd):
-        #BbDB.log("raw_pitches", f"pull starting: GD= {gd}")
-        t_overall  = _time.time()
-        total_rows = 0
+        import pandas as pd
         known_cols = self.known_raw_pitches_cols()
+        day_str    = MgrDT.gd_to_iso(gd)
+        cache      = self.cache_path_pitches(gd)
 
-        #for gd_int in MgrDT.gd_range(start_gd, end_gd):
-        day_str = MgrDT.gd_to_iso(gd)
-        t_day   = _time.time()
-        try:
-            df = pybaseball.statcast(start_dt=day_str, end_dt=day_str, verbose=False)
-        except Exception as e:
-            BbDB.log("raw_pitches", f"{day_str} statcast call failed: {e}")
-            return
-
-        if df is None or len(df) == 0:
-            BbDB.log("raw_pitches", f"{day_str} returned 0 rows (off day?)")
-            return
+        if cache.exists():
+            df = pd.read_csv(cache)
+            BbDB.log("raw_pitches", f"{day_str} loaded from cache")
+        else:
+            try:
+                df = pybaseball.statcast(start_dt=day_str, end_dt=day_str, verbose=False)
+            except Exception as e:
+                BbDB.log("raw_pitches", f"{day_str} statcast call failed: {e}")
+                return
+            if df is None or len(df) == 0:
+                BbDB.log("raw_pitches", f"{day_str} returned 0 rows (off day?)")
+                return
+            self.ensure_cache_dir()
+            df.to_csv(cache, index=False)
 
         df = self.conform_pitches_df(df, gd, known_cols)
-        n  = self.replace_day_pitches(gd, df)
-        ms = int((_time.time() - t_day) * 1000)
-        #BbDB.log("raw_pitches", f"{day_str} inserted {n} rows ({ms}ms)")
-        total_rows += n
+        self.replace_day_pitches(gd, df)
 
-        ms_total = int((_time.time() - t_overall) * 1000)
+
+    # PipeMixinRawPull.py method: sync_raw_players  Update: cache-first, save after API
+
     def conform_pitches_df(self, df, gd_int, known_cols):
         df['GD'] = gd_int
         if 'game_date' in df.columns:
@@ -152,19 +140,18 @@ class MixinRawPull:
     # RAW PLAYERS — statsapi, IDs from raw_pitches (not etl_pa!)
     # ══════════════════════════════════════════════════════════════
 
+
     def sync_raw_players(self, start_gd):
         import statsapi
-        #BbDB.log("raw_players", "pulling players")
-        gd  = MgrDT.today_gd()
+        gd = MgrDT.today_gd()
         ids = [r[0] for r in BbDB.query("""
             SELECT DISTINCT batter  FROM raw_pitches
             UNION
             SELECT DISTINCT pitcher FROM raw_pitches
         """)]
-        #BbDB.log("raw_players", f"found {len(ids)} unique player IDs")
         rows = 0
         for i in range(0, len(ids), 100):
-            batch  = ids[i:i + 100]
+            batch = ids[i:i + 100]
             id_str = ",".join(str(x) for x in batch)
             people = statsapi.get('people', {'personIds': id_str, 'hydrate': 'currentTeam'})['people']
             for p in people:
@@ -195,4 +182,26 @@ class MixinRawPull:
                     p.get('primaryNumber', ''),
                 ))
                 rows += 1
-        #BbDB.log("raw_players", f"loaded {rows} players")
+
+    # ══════════════════════════════════════════════════════════════
+    # Cache helpers
+    # ══════════════════════════════════════════════════════════════
+
+
+    def cache_path_pitches(self, gd):
+        return self.CACHE_DIR / f"raw_pitches_{gd}.csv"
+
+    # PipeMixinRawPull.py method: cache_path_players  NEW: single players cache path
+    def cache_path_players(self):
+        return self.CACHE_DIR / "raw_players.csv"
+
+    # PipeMixinRawPull.py method: ensure_cache_dir  NEW: mkdir if needed
+    def ensure_cache_dir(self):
+        self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+    # PipeMixinRawPull.py method: clear_cache  NEW: nuke the cache folder
+    def clear_cache(self):
+        import shutil
+        if self.CACHE_DIR.exists():
+            shutil.rmtree(self.CACHE_DIR)
+        BbDB.log("cache", "bb_cache cleared")

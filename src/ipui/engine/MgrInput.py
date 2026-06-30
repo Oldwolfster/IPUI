@@ -5,6 +5,7 @@
 #
 # Framework walks, widgets declare.
 # ─ on_click        → any widget becomes a button
+# ─ on_right_click  → any widget responds to right-click
 # ─ focusable       → any widget receives text input
 # ─ scroll_v      → any widget scrolls
 # ─ toggle_selected → any widget toggles
@@ -103,10 +104,40 @@ class MgrInput:
                 consumed = False  # MOUSEMOTION always unhandled (game loops use it)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button in (4, 5):
                 consumed = cls.on_scroll(ip, form, event.pos, event.button)
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:          # NEW
+                consumed = cls.on_right_mouse_down(form, event.pos)
+
             elif event.type == pygame.KEYDOWN:
                 consumed = cls.on_keydown(ip, form, event)
             if not consumed:
                 ip.unhandled.append(event)
+
+    # ══════════════════════════════════════════════════════════════
+    # RIGHT CLICK  NEW: tree walk for on_right_click
+    # ══════════════════════════════════════════════════════════════
+
+    @classmethod
+    def on_right_mouse_down(cls, form, pos):
+        target = cls.find_right_click_target(form, pos)
+        if target is None:                    return False
+        if target.enabled is not True:        return True
+        target.on_right_click()
+        return True
+
+
+
+    @classmethod
+    def find_right_click_target(cls, widget, mouse_coord):
+        """Deepest visible widget under mouse_coord that has on_right_click."""
+        if cls.scroll_clips_out(widget, mouse_coord): return None
+        child_coord = widget.translate_mouse_coord_for_horizontal_scroll(mouse_coord)
+        for child in widget.interactive_children:
+            result = cls.find_right_click_target(child, child_coord)
+            if result is not None:
+                return result
+        if widget.rect and widget.rect.collidepoint(mouse_coord) and widget.on_right_click:
+            return widget
+        return None
 
     # ══════════════════════════════════════════════════════════════
     # MOUSE DOWN — tooltip check → scrollbar drag → click dispatch

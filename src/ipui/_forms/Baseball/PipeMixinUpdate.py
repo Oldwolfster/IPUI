@@ -134,10 +134,11 @@ class PipeMixinUpdate:
 
     def run_update_views(self, tbl, gd):
         """discover update_{tbl}* views, UPDATE...FROM"""
-        views = [r[0] for r in BbDB.query(
-            "SELECT name FROM sqlite_master WHERE type='view' AND name LIKE ?",
-            (f"update_{tbl}%",)
-        )]
+        views = BbDB.find_update_views(tbl)                                          # NEW
+        # views = [r[0] for r in BbDB.query(                                         # DELETE
+        #     "SELECT name FROM sqlite_master WHERE type='view' AND name LIKE ?",     # DELETE
+        #     (f"update_{tbl}%",)                                                     # DELETE
+        # )]                                                                          # DELETE
         if not views: return
         pk_cols  = [r[1] for r in BbDB.query(f"PRAGMA table_info({tbl})") if r[5] > 0]
         tbl_cols = set(r[1] for r in BbDB.query(f"PRAGMA table_info({tbl})"))

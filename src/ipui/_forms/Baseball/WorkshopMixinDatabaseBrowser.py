@@ -16,7 +16,9 @@ class WorkshopMixinDatabaseBrowser:
 
     # method: build_db_list  NEW: title + filter buttons + objects grid
     def build_db_list(self, parent):
-        self.banner_plate("Database", parent, center=True)
+
+        from ipui.widgets.BannerPlate import BannerPlate
+        BannerPlate(parent, "Database", data=[("DB", self.go_to_db)])
         self.build_db_filter_buttons(parent)
         card = CardCol(parent, name="card_db_objects", flex_height=1, pad=0)
         grid = PowerGrid(card, name="grid_db_objects")
@@ -61,11 +63,17 @@ class WorkshopMixinDatabaseBrowser:
         grid.on_row_double_click(self.on_db_field_dbl_clicked, "Field")
 
         # method: back_to_db_list  NEW: clear selection, rebuild pane
+
     def back_to_db_list(self):
         self.private_db_selected = None
         self.set_pane(0, self.database_browser)
 
-        # WorkshopMixinDatabaseBrowser.py method: editor_if_open  NEW: the open view editor, else None
+    def go_to_db(self):
+        if not self.current_table: return
+        db = self.form.prepare("DB")                                                   # NEW (was get_tab)
+        db.load_table(self.current_table)
+        self.form.switch_tab("DB")
+
     def editor_if_open(self):
         if not self.private_editing_mixin: return None
         return self.form.widgets.get("txt_wb_mixin_editor")

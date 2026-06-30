@@ -286,17 +286,17 @@ Claude has been assigned remedial API-awareness training.
         self.private_selected_view = name
         self.set_pane(1, self.source)
 
+    # Workshop.py method: find_mixin_views  UPDATE: use BbDB helper for updates
     def find_mixin_views(self):
-        """Find mixin views for current table (excludes primary pull view)."""
         tbl = self.current_table
         if not tbl: return []
-        rows = BbDB.query(
+        mixins = BbDB.query(
             "SELECT name FROM sqlite_master "
-            "WHERE type='view' AND (name LIKE ? or name LIKE ?) "
+            "WHERE type='view' AND name LIKE ? "
             "ORDER BY name",
-            (f"pull_{tbl}_mixin_%",  f"update_{tbl}%" ),
+            (f"pull_{tbl}_mixin_%",),
         )
-        return [r[0] for r in rows]
+        return [r[0] for r in mixins] + BbDB.find_update_views(tbl)
 
     def build_mixin_detail(self, parent):
         """Show a single mixin view's SQL with Back + Edit buttons."""
@@ -412,40 +412,6 @@ Claude has been assigned remedial API-awareness training.
     # ══════════════════════════════════════════════════════════════
     # Workshop.py method: join_mixin_to_pull  NEW: auto-compose JOIN into pull view
     # ══════════════════════════════════════════════════════════════
-    def join_mixin_to_pullOLD(self, mixin_name, join_type):
-        tbl = self.current_table
-        if not tbl: return
-        pull_name  = f"pull_{tbl}"
-        select_sql = self.fetch_pull_select(pull_name)
-        if select_sql is None: return
-
-        if mixin_name in select_sql:
-            self.form.msgbox(
-                f"'{mixin_name}' is already in the pull view.",
-                MSG_BTNS_OK + MSG_ICON_WARNING, "Already Joined")
-            return
-
-        join_keys = self.guess_join_keys(mixin_name, pull_name)
-        if not join_keys: return
-
-        base_table = self.parse_base_table(select_sql)
-        if not base_table:
-            self.form.msgbox(
-                "Could not parse base table from FROM clause.",
-                MSG_BTNS_OK + MSG_ICON_WARNING, "Parse Error")
-            return
-
-        new_sql = self.compose_join(select_sql, mixin_name, join_type,
-                                    join_keys, base_table)
-        error   = MgrSchema.test_sql(pull_name, new_sql)
-        if error:
-            self.form.msgbox(
-                f"JOIN produced invalid SQL:\n\n{error}",
-                MSG_BTNS_OK + MSG_ICON_WARNING, "SQL Error")
-            return
-        MgrSchema.save_view(pull_name, new_sql)
-        self.set_pane(1, self.source)
-
 
 
     # Workshop.py method: join_mixin_to_pull  Update: generate rich commented JOIN + SELECT suggestions
@@ -456,10 +422,6 @@ Claude has been assigned remedial API-awareness training.
         pull_name = f"pull_{tbl}"
         select_sql = self.fetch_pull_select(pull_name)
         if select_sql is None: return
-        if mixin_name in select_sql:
-            self.form.msgbox(f"'{mixin_name}' is already in the pull view.",
-                             MSG_BTNS_OK + MSG_ICON_WARNING, "Already Joined")
-            return
         base_table = self.parse_base_table(select_sql)
         join_keys = self.guess_join_keys(mixin_name, pull_name)
         mixin_cols = BbDB.field_names(mixin_name)

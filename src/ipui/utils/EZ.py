@@ -15,6 +15,7 @@ class EZ:
     RESET           = "\033[0m"
     PREFIX_ERR      = " HOUSTON!!! WE HAVE A PROBLEM!!! "
     PREFIX_WARN     = " HOUSTON!!! WE HAVE A WARNING!!! "
+    WRAP_WIDTH = 120
 
     # IPUI_ROOT = the absolute path of the ipui package, derived from EZ.py's location.
     # EZ.py lives at <IPUI_ROOT>/utils/EZ.py, so two dirname() calls walk us up to ipui/.
@@ -46,10 +47,33 @@ class EZ:
         return lines[0] + "".join(f"\n    {l}" for l in lines[1:])
 
     @staticmethod
-    def draw_box(msg, color, title, origin):
+    def draw_boxOLD(msg, color, title, origin):
         lines   = msg.split("\n")
         width   = max(len(l) for l in lines)
         width   = max(width, len(title)) + 4
+
+        # The "Structural Frame" - Impossible to miss while scrolling
+        out  = f"\n{color}{EZ.BOLD}╔" + "═" * (width) + "╗\n"
+        out += f"║{title.center(width)}║\n"
+        out += f"╠" + "═" * (width) + "╣\n"
+        for l in lines:
+            out += f"║  {l:<{width-2}}║\n"
+        out += f"╚" + "═" * (width) + f"╝{EZ.RESET}\n"
+        out += f"\n{origin}"
+        return out
+
+    @staticmethod
+    def draw_box(msg, color, title, origin):
+        import textwrap
+        raw_lines = msg.split("\n")
+        lines     = []
+        for raw in raw_lines:
+            if len(raw) <= EZ.WRAP_WIDTH:
+                lines.append(raw)
+            else:
+                lines.extend(textwrap.wrap(raw, EZ.WRAP_WIDTH, break_long_words=True, break_on_hyphens=False))
+        width = max(len(l) for l in lines)
+        width = max(width, len(title)) + 4
 
         # The "Structural Frame" - Impossible to miss while scrolling
         out  = f"\n{color}{EZ.BOLD}╔" + "═" * (width) + "╗\n"

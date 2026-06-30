@@ -26,6 +26,7 @@ class BannerPlate(_BaseWidget):
 
     # BannerPlate.py  method: build  NEW: text_align picks the layout — centered title, or left title + buttons
     def build(self):
+        self.pad = 0
         if self.text_align == CENTER: self.build_centered()
         else:                         self.build_left_with_buttons()
 

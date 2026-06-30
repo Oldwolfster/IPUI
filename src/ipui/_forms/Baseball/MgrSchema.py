@@ -357,7 +357,7 @@ class MgrSchema:
         MgrSchema.write_file(MgrSchema.FIELDS_FILE, final)
 
     @staticmethod
-    def split_around_field_line(kind, token):
+    def split_around_field_lineOLD(kind, token):
         """(top_lines, matched_line_or_None, bottom_lines) split on this (kind, token)'s
            line. top/bottom are everything above/below it; matched line is excluded from both."""
         file_text = MgrSchema.read_file(MgrSchema.FIELDS_FILE)
@@ -366,6 +366,19 @@ class MgrSchema:
         for i, line in enumerate(lines):
             if needle in line: return lines[:i], line, lines[i + 1:]
         return lines, None, []
+
+
+    @staticmethod
+    def split_around_field_line(kind, token):
+        """(top_lines, matched_line_or_None, bottom_lines) split on this (kind, token)'s
+           line. top/bottom are everything above/below it; matched line is excluded from both."""
+        file_text = MgrSchema.read_file(MgrSchema.FIELDS_FILE)
+        lines     = file_text.splitlines(keepends=True)
+        needle    = f"{kind:<9s}{token:<10s}"
+        for i, line in enumerate(lines):
+            if needle in line: return lines[:i], line, lines[i + 1:]
+        end = MgrSchema.find_schema_list_end(lines, MgrSchema.find_schema_list_start(lines, "FIELDS"))    # NEW
+        return lines[:end], None, lines[end:]
 
     @staticmethod
     def splice_fields_list(top, new_line, bottom):
@@ -482,12 +495,13 @@ class MgrSchema:
         MgrSchema.clone_mixin_views(source, new)
         MgrSchema.clone_pull_view(source, new)
 
-    # MgrSchema.py method: clone_verbatim_view  New: copy a prefixed view with identical SQL
-    @staticmethod
+
     def clone_verbatim_view(prefix, source, new):
-        """Clone {prefix}_{source} → {prefix}_{new} with identical SQL."""
+        """Clone {prefix}_{source} → {prefix}_{new}, updating table references."""
         sql = MgrSchema.view_select_sql(f"{prefix}_{source}")
-        if sql: MgrSchema.save_view(f"{prefix}_{new}", sql)
+        if not sql: return
+        sql = sql.replace(source, new)                                                # NEW
+        MgrSchema.save_view(f"{prefix}_{new}", sql)
 
     # MgrSchema.py method: clone_mixin_views  New: copy all mixin views for a table
     @staticmethod

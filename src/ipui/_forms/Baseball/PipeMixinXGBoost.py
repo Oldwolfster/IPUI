@@ -45,8 +45,8 @@ class MixinXGBoost:
     XGB_MODEL_NAME = "xgb_v1"
     XGB_TABLE      = "predict_xgb_v1"
 
-    XGB_ID_COLS  = ("GD", "batter", "game", "game_pk", "pitcher", "pa", "at_bat_number")
-    XGB_KEY_COLS = ("GD", "batter", "game", "game_pk", "pa", "at_bat_number")
+    XGB_ID_COLS  = ("GD", "batter", "game", "pitcher", "pa")
+    XGB_KEY_COLS = ("GD", "batter", "game", "pa")
 
     def key_cols(self, df):        return [c for c in self.XGB_KEY_COLS if c in df.columns]
 
@@ -56,6 +56,8 @@ class MixinXGBoost:
     # everything else = feature. Add a feature to forest → no change here.
     # ══════════════════════════════════════════════════════════════
 
+
+
     def train_xgb(self, forest_table):
         out_table = f"predict_{forest_table}"
         BbDB.log(out_table, f"loading {forest_table}")
@@ -63,8 +65,7 @@ class MixinXGBoost:
         if df_all.empty:
             BbDB.log(out_table, f"{forest_table} is empty")
             return
-        if "game" not in df_all.columns and "game_pk" not in df_all.columns:  # NEW
-            return EZ.err(f"{forest_table} missing game or game_pk")
+        #if "game" not in df_all.columns:            return EZ.err(f"{forest_table} missing game — doubleheaders break without it")
 
         target                     = self.target_col(df_all)
         df_train, df_predict       = self.split_to_train_and_predict(df_all, target)
@@ -76,6 +77,7 @@ class MixinXGBoost:
 
         model = self.fit_model(df_train, out_table)
         self.ensure_predict_table(df_predict, out_table)
+        self.inherit_tracks(forest_table, out_table)                              # NEW
         preds = self.predict_and_write(model, df_predict, out_table)
         self.enrich_predictions(out_table)
         self.evaluate(df_predict, preds, out_table)
@@ -84,6 +86,13 @@ class MixinXGBoost:
         BbDB.log(out_table, f"{out_table} ready")
         self.refresh_pane()
 
+    # PipeMixinXGBoost.py method: inherit_tracks  NEW: copy forest table's tracks to predict table
+    def inherit_tracks(self, forest_table, predict_table):
+        from ipui._forms.Baseball.MgrSchema import MgrSchema
+        rows   = BbDB.query("SELECT track FROM _track_tables WHERE tbl = ?", (forest_table,))
+        tracks = [r[0] for r in rows]
+        if tracks:
+            MgrSchema.tracks_replace_table(predict_table, tracks)
 
     # ══════════════════════════════════════════════════════════════
     # LOAD — whatever forest holds. Drop only LABEL-less rows;

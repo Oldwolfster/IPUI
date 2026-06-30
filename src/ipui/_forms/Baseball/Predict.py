@@ -216,8 +216,6 @@ class Predict(_BaseTab):
         """
         return BbDB.query(sql, (model_name, start_gd, end_gd))
 
-
-    # Predict.py method: query_predictions_for  UPDATE: read standardized model_prediction table
     def query_predictions_for(self, model_name, gd):
         gd_int = int(str(gd).replace("-", ""))
         sql = """
@@ -226,7 +224,7 @@ class Predict(_BaseTab):
                 COALESCE(p.full_name, '#' || mp.batter)                 AS name,
                 COALESCE(t.abbreviation, '???')                         AS team,
                 p.position                                              AS pos,
-                mp.game_pk                                              AS game_pk,
+                --mp.game                                                 AS game,
                 mp.actual                                               AS actual,
                 ROUND(mp.predicted, 2)                                  AS predicted,
                 ROUND(mp.error, 2)                                      AS error
@@ -250,7 +248,6 @@ class Predict(_BaseTab):
             ORDER BY   mp.actual DESC, mp.predicted DESC
         """
         return BbDB.query(sql, (model_name, gd_int))
-
     def overall_mae(self, days):
         scored      = [d for d in days if d[2] is not None]
         total_preds = sum(d[1] for d in scored)
@@ -281,10 +278,10 @@ class Predict(_BaseTab):
                 "name"      : r[1],
                 "team"      : r[2],
                 "pos"       : r[3],
-                "game_pk"   : r[4],
-                "actual"    : r[5],
-                "predicted" : r[6],
-                "error"     : r[7],
+                #"game"   : r[4],
+                "actual"    : r[4],
+                "predicted" : r[5],
+                "error"     : r[6],
             }
             for r in rows
         ]

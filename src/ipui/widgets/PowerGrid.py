@@ -96,8 +96,7 @@ class PowerGrid(_BaseWidget):
     # ══════════════════════════════════════════════════════════════
 
     def build(self):
-        if self.flex_height == 0:
-            print("[PowerGrid] Note: flex_height forced to 1 — PowerGrid scrolls internally.")
+        #if self.flex_height == 0:            print("[PowerGrid] Note: flex_height forced to 1 — PowerGrid scrolls internally.")
         self.flex_height        = 1
         self.pad                = 0
         self.font               = self.font or Style.FONT_BODY

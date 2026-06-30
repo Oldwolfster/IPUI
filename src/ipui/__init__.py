@@ -14,7 +14,7 @@ __all__ = [
     # Input constants
     "Key", "Mouse",
     # Widgets
-    "Button", "Card", "Chart", "DropDown", "Plate","ButtonGroup",
+    "Button", "ButtonDrip", "Card", "Chart", "DropDown", "Plate","ButtonGroup",
     "NetworkDiagram", "NeuronCell", "PowerGrid",
     "ProjectListItem", "Row", "CardCol", "CardRow", "Col",
     "SelectableListItem", "SelectionList", "Spacer",
@@ -93,7 +93,7 @@ from ipui.utils.WidgetCatalog           import WidgetCatalog
 from ipui.utils.general_text            import parse_int_list
 from ipui.utils.MgrFileManager          import FileManager
 from ipui.utils.MgrPkgPath              import MgrPkgPath
-
+from ipui.widgets.ButtonDrip            import ButtonDrip
 from ipui.utils.Align                   import Align, LEFT,CENTER,RIGHT
 from ipui.widgets.Icon                  import Icon
 from ipui.utils.MgrMsgBox               import MgrMsgBox, MSG_BTNS_OK, MSG_BTNS_OK_CANCEL, MSG_BTNS_YES_NO, MSG_ICON_INFO, MSG_ICON_QUESTION, MSG_ICON_WARNING, MSG_ICON_CRITICAL, MSG_DEFAULT_1, MSG_DEFAULT_2, MSG_DEFAULT_3, MSG_RESULT_OK, MSG_RESULT_CANCEL, MSG_RESULT_YES, MSG_RESULT_NO

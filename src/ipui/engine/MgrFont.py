@@ -83,7 +83,7 @@ class MgrFont:
         Style.FONT_TITLE        = cls.get_font_for_height(surface_height * scale * Style.FONT_RATIO_TITLE,      'bold')
         Style.FONT_BODY         = cls.get_font_for_height(surface_height * scale * Style.FONT_RATIO_BODY,       'regular')
         Style.FONT_DETAIL       = cls.get_font_for_height(surface_height * scale * Style.FONT_RATIO_DETAIL,     'regular')
-        Style.FONT_MONO         = cls.get_font_for_height(surface_height * scale * Style.FONT_RATIO_MONO,       'mono')
+        Style.FONT_MONO         = cls.get_font_for_height(surface_height * scale * Style.FONT_RATIO_MONO * 1.2,       'mono')
         Style.FONT_MONO_BODY    = cls.get_font_for_height(surface_height * scale * Style.FONT_RATIO_MONO * 1.2, 'mono')
 
     @classmethod

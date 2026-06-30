@@ -27,35 +27,22 @@ class MixinModelResults:
         BbDB.execute("DELETE FROM model_day        WHERE run_id = ?", (run_id,))
         BbDB.execute("DELETE FROM model_run        WHERE run_id = ?", (run_id,))
 
-
-
-    def load_model_predictionOLD(self, run_id, model_name, predict_table):
+    def load_model_prediction(self, run_id, model_name, predict_table):
         BbDB.execute(f"""
             INSERT INTO model_prediction
-                (GD, run_id, batter, game, model_name, predicted, actual, error)
+                (GD, run_id, batter, --game,
+                 model_name, predicted, actual, error)
             SELECT
                 GD,
                 ?,
                 batter,
-                game,
+                --game,
                 ?,
                 SUM(predicted),
                 SUM(actual),
                 SUM(predicted) - SUM(actual)
             FROM {predict_table}
-            GROUP BY GD, batter, game
-        """, (run_id, model_name))
-
-    def load_model_prediction(self, run_id, model_name, predict_table):
-        gcol = self.game_col_for(predict_table)
-        BbDB.execute(f"""
-            INSERT INTO model_prediction
-                (GD, run_id, batter, game, model_name, predicted, actual, error)
-            SELECT
-                GD, ?, batter, {gcol}, ?,
-                SUM(predicted), SUM(actual), SUM(predicted) - SUM(actual)
-            FROM {predict_table}
-            GROUP BY GD, batter, {gcol}
+            GROUP BY GD, batter--, game
         """, (run_id, model_name))
 
     # PipeMixinModelResults.py  method: load_model_day  NEW: materialized day drill level
@@ -171,62 +158,53 @@ class MixinModelResults:
         if "game_pk" in cols: return "game_pk"
         return "game"
 
-    # PipeMixinModelResults.py method: load_log5_prediction  NEW: materialize log5 batter-game predictions
+
+
     def load_log5_prediction(self, run_id, model_name):
         BbDB.execute("""
             INSERT INTO model_prediction
-                  (GD, run_id, batter, game, model_name, predicted, actual, error) 
+                (GD, run_id, batter,  model_name, predicted, actual, error)
             SELECT
-                r.GD,
+                f.GD,
                 ?,
-                r.batter,
-                r.game_pk,
+                f.batter,
+                --f.game,
                 ?,
-                r.predicted,
-                bg.hits,
-                r.predicted - bg.hits
+                (b * p / lg)
+                / ( (b * p / lg)
+                  + ((1 - b) * (1 - p) / NULLIF(1 - lg, 0)) )
+                * 3.8,
+                f.t_h,
+                (b * p / lg)
+                / ( (b * p / lg)
+                  + ((1 - b) * (1 - p) / NULLIF(1 - lg, 0)) )
+                * 3.8 - f.t_h
             FROM (
                 SELECT
                     f.GD,
                     f.batter,
-                    f.game_pk,
-                    (
-                        (b * p / lg)
-                        / (
-                            (b * p / lg)
-                            + ((1 - b) * (1 - p) / NULLIF(1 - lg, 0))
-                        )
-                    ) * 3.8 AS predicted
-                FROM (
+                    --f.game,
+                    f.t_h,
+                    COALESCE(f.b_ba, lg.lg_ba)  AS b,
+                    COALESCE(f.p_ba, lg.lg_ba)  AS p,
+                    lg.lg_ba                    AS lg
+                FROM       forest_batter f                          -- DELETE forest_dart
+                JOIN (
                     SELECT
-                        f.GD,
-                        f.batter,
-                        f.game_pk,
-                        COALESCE(f.b_ba,         lg.lg_ba) AS b,
-                        COALESCE(f.p_ba_against, lg.lg_ba) AS p,
-                        lg.lg_ba                           AS lg
-                    FROM       forest f
-                    CROSS JOIN (
-                        SELECT SUM(is_hit) * 1.0 / NULLIF(SUM(is_ab), 0) AS lg_ba
-                        FROM etl_pa
-                    ) lg
-                ) f
-            ) r
-            INNER JOIN batter_games bg
-                    ON bg.GD      = r.GD
-                   AND bg.batter  = r.batter
-                   AND bg.game_pk = r.game_pk
+                        d.GD,
+                        SUM(e.h) * 1.0 / NULLIF(SUM(e.ab), 0) AS lg_ba
+                    FROM (SELECT DISTINCT GD FROM forest_batter) d  -- DELETE forest_dart
+                    JOIN etl_pa e ON e.GD < d.GD                    -- DELETE etl_dart_pa
+                    GROUP BY d.GD
+                ) lg ON lg.GD = f.GD
+            ) f
         """, (run_id, model_name))
-
-
-    # PipeMixinModelResults.py method: load_log5_run  NEW: add log5 to Predict picker registry
     def load_log5_run(self, run_id, model_name):
-        pred_start, pred_end  = self.model_prediction_bounds(run_id)
+        pred_start, pred_end   = self.model_prediction_bounds(run_id)
         total_preds, total_mae = self.model_totals(run_id)
         if pred_end is None:
             BbDB.log("model", "log5: no rows found")
             return
-
         BbDB.execute("""
             INSERT INTO model_run
                 (GD, run_id, model_name, forest_table, predict_table, target_field, grain,
@@ -237,9 +215,9 @@ class MixinModelResults:
             pred_end,
             run_id,
             model_name,
-            "forest",
+            "forest_dart",
             "",
-            "hits",
+            "t_h",
             "batter_game",
             None,
             None,
@@ -248,11 +226,9 @@ class MixinModelResults:
             total_preds,
             total_mae,
             3,
-            "b_ba, p_ba_against, lg_ba",
+            "b_ba, p_ba, lg_ba",
             MgrDT.today_ds(),
         ))
-
-
     # PipeMixinModelResults.py method: model_prediction_bounds  NEW: min/max GD for loaded model rows
     def model_prediction_bounds(self, run_id):
         rows = BbDB.query("""

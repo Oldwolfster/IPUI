@@ -27,12 +27,13 @@ class TextArea(TextBox):
 
 
     def build(self):
-        self.font                = self.font or Style.FONT_BODY
+        self.font                = self.font or Style.FONT_MONO
         self.line_height         = self.font.get_height()
         self.display_lines       = [""]
         self.display_line_starts = [0]
 
         super().build()
+        self.color_bg            = Style.COLOR_CODE_BG
         if self.wrap is None     : self.wrap = True
         self.text_align          = 'l'
         self.on_click            = self.handle_click_position

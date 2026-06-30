@@ -75,11 +75,19 @@ class DB(_BaseTab):
 
     def build_db_list(self, parent):
         """Title banner + All/Tables/Views filter buttons + the grid of matching DB objects."""
-        BannerPlate(parent, "Database", text_align=CENTER)
+        #BannerPlate(parent, "Database", text_align=CENTER)
+        BannerPlate(parent, "Database", data=[("Workshop", self.go_to_workshop)])
+        parent.pad=0
         self.build_db_filter_buttons(parent)
         card = CardCol(parent, name="card_db_objects", flex_height=1, pad=0)
         grid = PowerGrid(card, name="grid_db_objects")
         self.populate_db_objects_grid(grid)
+
+    def go_to_workshop(self):
+        if not self.current_table: return
+        ws = self.form.prepare("Workshop")  # NEW (was get_tab)
+        ws.load_table(self.current_table)
+        self.form.switch_tab("Workshop")
 
     def build_db_filter_buttons(self, parent):
         """All / Tables / Views row; the active filter's button is painted as the CTA color."""
@@ -121,9 +129,11 @@ class DB(_BaseTab):
 
     def load_table(self, name):
         """Remember the clicked object as the current table and repaint The Object pane."""
-        self.current_table = name
+        self.current_table        = name
         self.form.last_viewed_table = name
+        self.private_show_tracks  = False                                              # NEW
         self.set_pane(2, self.the_object)
+        self.set_pane(3, self.the_inspector)
 
     # ════════════════════════════════════════════════════════════════════════════════
     # PANE 1 — Fld Registry  (re-admitted; +Key kind, dtype kept for Metric & Key)
@@ -454,9 +464,9 @@ class DB(_BaseTab):
     def on_keys_changed(self, selected):
         """Toggling the Keys SelectionList only touches the tokens it governs — every Proposed
            column outside that option set (locked keys, metrics, anything like p_throws) survives untouched."""
-        options  = set(self.all_key_tokens()) - set(self.locked_keys())     # only these are toggleable here
+        options  = set(self.all_key_tokens()) - set(self.locked_keys())
         selected = set(selected)
-        kept     = [c for c in self.private_proposed if c["name"] not in options or c["name"] in selected]
+        kept     = [c for c in self.private_proposed if c["name"] not in options or c["name"] in selected or not c["pk"]]    # NEW: or not c["pk"]
         present  = {c["name"] for c in kept}
         for tok in selected:
             if tok not in present:
@@ -631,16 +641,14 @@ class DB(_BaseTab):
         return BbDB.layer_of(self.current_table)
 
     def locked_keys(self):
-        """Keys that can't be toggled off: GD always, game_pk on forest, TS if already present."""
+        """Keys that can't be toggled off: GD always, TS if already present."""
         locked = ["GD"]
-        if self.active_layer() == "forest": locked.append("game_pk")
         if any(c["name"] == "TS" for c in self.private_proposed): locked.append("TS")
         return locked
 
     def enforce_layer_keys(self):
-        """Forest tables must carry game_pk — add it to Proposed if it's missing."""
-        if self.active_layer() == "forest" and not any(c["name"] == "game_pk" for c in self.private_proposed):
-            self.private_proposed.append(self.key_col("game_pk", self.locked_keys()))
+        """Reserved for future layer-specific key enforcement — currently no-op."""
+        pass
 
     def all_key_tokens(self):
         """Every registered Key-kind token, read DB-direct from _registry."""
