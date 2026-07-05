@@ -18,6 +18,9 @@ class _SchemaViews:
         conn.commit()
         conn.close()
 
+
+    # _SchemaViews.py method: view_pull_etl_pitch  Update: add hbp + sf flags; ab-fix folds in the _double_play sac variants
+
     @classmethod
     def view_pull_etl_pitch(cls):
         return """
@@ -31,8 +34,8 @@ class _SchemaViews:
                ,CASE WHEN events IS NOT NULL THEN 1 ELSE 0 END     AS pa_flag
                ,CASE WHEN events IN ('single','double','triple','home_run')
                THEN 1 ELSE 0 END                             AS h
-               ,CASE WHEN events IN ('walk','hit_by_pitch','sac_bunt','sac_fly'
-               ,'catcher_interf','intent_walk')
+               ,CASE WHEN events IN ('walk','hit_by_pitch','sac_bunt','sac_bunt_double_play'
+               ,'sac_fly','sac_fly_double_play','catcher_interf','intent_walk')
     OR         events IS NULL
                THEN 0 ELSE 1 END                             AS ab
                ,CASE WHEN events IN ('strikeout','strikeout_double_play')
@@ -47,6 +50,13 @@ class _SchemaViews:
                WHEN 'triple'   THEN 3
                WHEN 'home_run' THEN 4
                ELSE 0 END                                    AS tb
+               ,CASE WHEN events = 'hit_by_pitch'
+               THEN 1 ELSE 0 END                             AS hbp
+               ,CASE WHEN events IN ('sac_fly','sac_fly_double_play')
+               THEN 1 ELSE 0 END                             AS sf
+               ,CASE WHEN events = 'single' THEN 1 ELSE 0 END AS b1
+               ,CASE WHEN events = 'double' THEN 1 ELSE 0 END AS b2
+               ,CASE WHEN events = 'triple' THEN 1 ELSE 0 END AS b3
     
     FROM       raw_pitches
         """
@@ -98,14 +108,17 @@ class _SchemaViews:
             WHERE      rn = 1
         """
 
+    # _SchemaViews.py method: view_pull_etl_pa  Update: forward bb, hr, tb, hbp, sf
+
     @classmethod
     def view_pull_etl_pa(cls):
         return """
-            SELECT     GD, batter, pitcher, pa, h, ab,b_hand, p_hand, home, k
-            
-            FROM       etl_pitch
-            
-            WHERE      pa_flag = 1
+    SELECT     GD, batter, pitcher, pa, h, ab,b_hand, p_hand, home
+               ,k, bb, hr, tb, hbp, sf, b1, b2, b3
+    
+    FROM       etl_pitch
+    
+    WHERE      pa_flag = 1
         """
     @classmethod
     def view_pull_feet_batter(cls):
@@ -1070,130 +1083,196 @@ class _SchemaViews:
 
     # ── etl_agg: pull ────────────────────────────────────────────
 
-    # _SchemaViews.py method: view_pull_etl_agg  NEW
+    # _SchemaViews.py method: view_pull_etl_agg  Update: SUM bb, hr, tb, hbp, sf in BOTH union halves
 
     @classmethod
     def view_pull_etl_agg(cls):
         return """
-            SELECT     GD, batter  AS player, p_hand AS hand, home
-                       ,SUM(ab) AS ab
-                       ,SUM(h)  AS h
-                       ,SUM(k) AS k
-            
-            FROM       etl_pa
-            
-            GROUP BY   GD, batter, p_hand, home
-            
-            UNION      ALL
-            
-            SELECT     GD, pitcher AS player, b_hand AS hand, 1 - home
-                       ,SUM(ab) AS ab
-                       ,SUM(h)  AS h
-                       ,SUM(k) AS k
-            
-            FROM       etl_pa
-            
-            GROUP BY   GD, pitcher, b_hand, home
+    SELECT     GD, batter  AS player, p_hand AS hand, home
+               ,SUM(ab)  AS ab
+               ,SUM(h)   AS h
+               ,SUM(k)   AS k
+               ,SUM(bb)  AS bb
+               ,SUM(hr)  AS hr
+               ,SUM(tb)  AS tb
+               ,SUM(hbp) AS hbp
+               ,SUM(sf)  AS sf
+               ,SUM(b1)  AS b1
+               ,SUM(b2)  AS b2
+               ,SUM(b3)  AS b3
+    
+    FROM       etl_pa
+    
+    GROUP BY   GD, batter, p_hand, home
+    
+    UNION      ALL
+    
+    SELECT     GD, pitcher AS player, b_hand AS hand, 1 - home
+               ,SUM(ab)  AS ab
+               ,SUM(h)   AS h
+               ,SUM(k)   AS k
+               ,SUM(bb)  AS bb
+               ,SUM(hr)  AS hr
+               ,SUM(tb)  AS tb
+               ,SUM(hbp) AS hbp
+               ,SUM(sf)  AS sf
+               ,SUM(b1)  AS b1
+               ,SUM(b2)  AS b2
+               ,SUM(b3)  AS b3
+    
+    FROM       etl_pa
+    
+    GROUP BY   GD, pitcher, b_hand, home
         """
-
     @classmethod
     def view_pull_feet_atom(cls):
         return """
-            SELECT     GD
-                       ,1         AS TS
-                       ,player
-                       ,hand
-                       ,home
-                       ,ab
-                       ,h
-                       ,k
-            
-            FROM       etl_agg
+    SELECT     GD
+               ,1         AS TS
+               ,player
+               ,hand
+               ,home
+               ,ab
+               ,h
+               ,k
+               ,bb
+               ,hr
+               ,tb
+               ,hbp
+               ,sf
+               ,b1
+               ,b2
+               ,b3
+    
+    FROM       etl_agg
         """
 
     @classmethod
     def view_update_feet_atom(cls):
         return """
-            SELECT     GD, TS, player, hand, home
-                       ,h * 1.0 / NULLIF(ab, 0) AS ba
-                       ,k * 1.0 / NULLIF(ab, 0) AS k_rate
-            
-            FROM       feet_atom
+    SELECT     GD, TS, player, hand, home
+               ,h  * 1.0 / NULLIF(ab, 0) AS ba
+               ,k  * 1.0 / NULLIF(ab, 0) AS k_rate
+               ,tb * 1.0 / NULLIF(ab, 0) AS slg
+               ,(h + bb + hbp) * 1.0 / NULLIF(ab + bb + hbp + sf, 0) AS obp
+               ,(tb - h)       * 1.0 / NULLIF(ab, 0) AS iso
+               ,(b2 + b3 + hr) * 1.0 / NULLIF(ab, 0) AS xbh
+               ,b1 * 1.0 / NULLIF(ab, 0) AS b1_rate
+               ,b2 * 1.0 / NULLIF(ab, 0) AS b2_rate
+               ,b3 * 1.0 / NULLIF(ab, 0) AS b3_rate
+    
+    FROM       feet_atom
         """
-
     @classmethod
     def view_pull_feet_fast(cls):
         return """
             SELECT     GD
                        ,1         AS TS
                        ,player
-                       ,SUM(ab)   AS ab
-                       ,SUM(h)    AS h
-                       ,SUM(k) AS k
-            
+                       ,SUM(ab)  AS ab
+                       ,SUM(h)   AS h
+                       ,SUM(k)   AS k
+                       ,SUM(bb)  AS bb
+                       ,SUM(hr)  AS hr
+                       ,SUM(tb)  AS tb
+                       ,SUM(hbp) AS hbp
+                       ,SUM(sf)  AS sf
+
             FROM       etl_agg
-            
+
             GROUP BY   GD, player
         """
 
     @classmethod
     def view_update_feet_fast(cls):
         return """
-            SELECT     GD, TS, player
-                       ,h * 1.0 / NULLIF(ab, 0) AS ba
-                       , k * 1.0 / NULLIF(ab, 0) AS k_rate
-            
-            FROM       feet_fast
+    SELECT     GD, TS, player
+               ,h  * 1.0 / NULLIF(ab, 0) AS ba
+               ,k  * 1.0 / NULLIF(ab, 0) AS k_rate
+               ,tb * 1.0 / NULLIF(ab, 0) AS slg
+               ,(h + bb + hbp) * 1.0 / NULLIF(ab + bb + hbp + sf, 0) AS obp
+    
+    FROM       feet_fast
         """
 
     @classmethod
     def view_pull_forest_pa_dmg_mixin_overall(cls):
         return """
-            SELECT     GD, player
-                       ,ba
-                       ,k_rate
-            
-            FROM       feet_fast
-            
-            WHERE      ts = 200
+    SELECT     GD, player
+               ,ba
+               ,k_rate
+               ,obp
+               ,slg
+               ,iso
+               ,xbh
+               ,b1_rate
+               ,b2_rate
+               ,b3_rate
+    
+    FROM       feet_fast
+    
+    WHERE      ts = 200
         """
+
     @classmethod
     def view_pull_forest_pa_dmg_mixin_hand(cls):
         return """
-            SELECT     GD, player, hand
-                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS ba
-                       ,SUM(k) * 1.0 / NULLIF(SUM(ab), 0) AS  k_rate
-            
-            FROM       feet_atom
-            
-            WHERE      ts = 200
-            
-            GROUP BY   GD, player, hand
+    SELECT     GD, player, hand
+               ,SUM(h)  * 1.0 / NULLIF(SUM(ab), 0) AS ba
+               ,SUM(k)  * 1.0 / NULLIF(SUM(ab), 0) AS k_rate
+               ,SUM(tb) * 1.0 / NULLIF(SUM(ab), 0) AS slg
+               ,(SUM(h) + SUM(bb) + SUM(hbp)) * 1.0 / NULLIF(SUM(ab) + SUM(bb) + SUM(hbp) + SUM(sf), 0) AS obp
+               ,(SUM(tb) - SUM(h))            * 1.0 / NULLIF(SUM(ab), 0) AS iso
+               ,(SUM(b2) + SUM(b3) + SUM(hr)) * 1.0 / NULLIF(SUM(ab), 0) AS xbh
+               ,SUM(b1)                       * 1.0 / NULLIF(SUM(ab), 0) AS b1_rate
+               ,SUM(b2)                       * 1.0 / NULLIF(SUM(ab), 0) AS b2_rate
+               ,SUM(b3)                       * 1.0 / NULLIF(SUM(ab), 0) AS b3_rate
+    
+    FROM       feet_atom
+    
+    WHERE      ts = 200
+    
+    GROUP BY   GD, player, hand
         """
 
     @classmethod
     def view_pull_forest_pa_dmg_mixin_home(cls):
         return """
-            SELECT     GD, player, home
-                       ,SUM(h) * 1.0 / NULLIF(SUM(ab), 0) AS ba
-                       ,SUM(k) * 1.0 / NULLIF(SUM(ab), 0) AS k_rate
-            
-            FROM       feet_atom
-            
-            WHERE      ts = 200
-            
-            GROUP BY   GD, player, home
+    SELECT     GD, player, home
+               ,SUM(h)  * 1.0 / NULLIF(SUM(ab), 0) AS ba
+               ,SUM(k)  * 1.0 / NULLIF(SUM(ab), 0) AS k_rate
+               ,SUM(tb) * 1.0 / NULLIF(SUM(ab), 0) AS slg
+               ,(SUM(h) + SUM(bb) + SUM(hbp)) * 1.0 / NULLIF(SUM(ab) + SUM(bb) + SUM(hbp) + SUM(sf), 0) AS obp
+               ,(SUM(tb) - SUM(h))            * 1.0 / NULLIF(SUM(ab), 0) AS iso
+               ,(SUM(b2) + SUM(b3) + SUM(hr)) * 1.0 / NULLIF(SUM(ab), 0) AS xbh
+               ,SUM(b1)                       * 1.0 / NULLIF(SUM(ab), 0) AS b1_rate
+               ,SUM(b2)                       * 1.0 / NULLIF(SUM(ab), 0) AS b2_rate
+               ,SUM(b3)                       * 1.0 / NULLIF(SUM(ab), 0) AS b3_rate
+    
+    FROM       feet_atom
+    
+    WHERE      ts = 200
+    
+    GROUP BY   GD, player, home
         """
+
     @classmethod
     def view_pull_forest_pa_dmg_mixin_hand_home(cls):
         return """
-            SELECT     GD, player, hand, home
-                       ,ba
-                       , k_rate
-            
-            FROM       feet_atom
-            
-            WHERE      ts = 200
+    SELECT     GD, player, hand, home
+               ,ba
+               ,k_rate
+               ,obp
+               ,slg
+               ,iso
+               ,xbh
+               ,b1_rate
+               ,b2_rate
+               ,b3_rate
+    
+    FROM       feet_atom
+    
+    WHERE      ts = 200
         """
 
     @classmethod
@@ -1203,7 +1282,7 @@ class _SchemaViews:
                etl_pa.GD, etl_pa.batter, etl_pa.pa
                ,etl_pa.pitcher
                ,etl_pa.h                      AS t_h               -- target: did batter get a hit this PA
-               -- batting average
+    -- batting average
                ,mx_b.ba                       AS b_ba              -- batter season overall
                ,mx_p.ba                       AS p_ba              -- pitcher season overall
                ,mx_bh.ba                      AS b_ba_hand         -- batter vs this pitcher's hand
@@ -1212,7 +1291,7 @@ class _SchemaViews:
                ,mx_phome.ba                   AS p_ba_home         -- pitcher at home OR away (flipped)
                ,mx_bhh.ba                     AS b_ba_hand_home    -- batter vs hand + home/away
                ,mx_phh.ba                     AS p_ba_hand_home    -- pitcher vs stance + home/away (flipped)
-               -- strikeout rate
+    -- strikeout rate
                ,mx_b.k_rate                   AS b_k_rate          -- batter season overall
                ,mx_p.k_rate                   AS p_k_rate          -- pitcher season overall
                ,mx_bh.k_rate                  AS b_k_rate_hand     -- batter vs this pitcher's hand
@@ -1221,6 +1300,70 @@ class _SchemaViews:
                ,mx_phome.k_rate               AS p_k_rate_home     -- pitcher at home OR away (flipped)
                ,mx_bhh.k_rate                 AS b_k_rate_hand_home -- batter vs hand + home/away
                ,mx_phh.k_rate                 AS p_k_rate_hand_home -- pitcher vs stance + home/away (flipped)
+    
+    -- ON-base percentage
+               ,mx_b.obp                      AS b_obp              -- batter season overall
+               ,mx_p.obp                      AS p_obp              -- pitcher season overall
+               ,mx_bh.obp                     AS b_obp_hand         -- batter vs this pitcher's hand
+               ,mx_ph.obp                     AS p_obp_hand         -- pitcher vs this batter's stance
+               ,mx_bhome.obp                  AS b_obp_home         -- batter at home OR away
+               ,mx_phome.obp                  AS p_obp_home         -- pitcher at home OR away (flipped)
+               ,mx_bhh.obp                    AS b_obp_hand_home    -- batter vs hand + home/away
+               ,mx_phh.obp                    AS p_obp_hand_home    -- pitcher vs stance + home/away (flipped)
+    -- slugging
+               ,mx_b.slg                      AS b_slg
+               ,mx_p.slg                      AS p_slg
+               ,mx_bh.slg                     AS b_slg_hand
+               ,mx_ph.slg                     AS p_slg_hand
+               ,mx_bhome.slg                  AS b_slg_home
+               ,mx_phome.slg                  AS p_slg_home
+               ,mx_bhh.slg                    AS b_slg_hand_home
+               ,mx_phh.slg                    AS p_slg_hand_home
+    -- isolated power                                               # NEW (ALL lines below)
+               ,mx_b.iso                      AS b_iso
+               ,mx_p.iso                      AS p_iso
+               ,mx_bh.iso                     AS b_iso_hand
+               ,mx_ph.iso                     AS p_iso_hand
+               ,mx_bhome.iso                  AS b_iso_home
+               ,mx_phome.iso                  AS p_iso_home
+               ,mx_bhh.iso                    AS b_iso_hand_home
+               ,mx_phh.iso                    AS p_iso_hand_home
+    -- extra base hit rate
+               ,mx_b.xbh                      AS b_xbh
+               ,mx_p.xbh                      AS p_xbh
+               ,mx_bh.xbh                     AS b_xbh_hand
+               ,mx_ph.xbh                     AS p_xbh_hand
+               ,mx_bhome.xbh                  AS b_xbh_home
+               ,mx_phome.xbh                  AS p_xbh_home
+               ,mx_bhh.xbh                    AS b_xbh_hand_home
+               ,mx_phh.xbh                    AS p_xbh_hand_home
+    -- single rate
+               ,mx_b.b1_rate                  AS b_b1_rate
+               ,mx_p.b1_rate                  AS p_b1_rate
+               ,mx_bh.b1_rate                 AS b_b1_rate_hand
+               ,mx_ph.b1_rate                 AS p_b1_rate_hand
+               ,mx_bhome.b1_rate              AS b_b1_rate_home
+               ,mx_phome.b1_rate              AS p_b1_rate_home
+               ,mx_bhh.b1_rate                AS b_b1_rate_hand_home
+               ,mx_phh.b1_rate                AS p_b1_rate_hand_home
+    -- double rate
+               ,mx_b.b2_rate                  AS b_b2_rate
+               ,mx_p.b2_rate                  AS p_b2_rate
+               ,mx_bh.b2_rate                 AS b_b2_rate_hand
+               ,mx_ph.b2_rate                 AS p_b2_rate_hand
+               ,mx_bhome.b2_rate              AS b_b2_rate_home
+               ,mx_phome.b2_rate              AS p_b2_rate_home
+               ,mx_bhh.b2_rate                AS b_b2_rate_hand_home
+               ,mx_phh.b2_rate                AS p_b2_rate_hand_home
+    -- triple rate
+               ,mx_b.b3_rate                  AS b_b3_rate
+               ,mx_p.b3_rate                  AS p_b3_rate
+               ,mx_bh.b3_rate                 AS b_b3_rate_hand
+               ,mx_ph.b3_rate                 AS p_b3_rate_hand
+               ,mx_bhome.b3_rate              AS b_b3_rate_home
+               ,mx_phome.b3_rate              AS p_b3_rate_home
+               ,mx_bhh.b3_rate                AS b_b3_rate_hand_home
+               ,mx_phh.b3_rate                AS p_b3_rate_hand_home
     
     FROM       etl_pa
     
@@ -1263,4 +1406,91 @@ class _SchemaViews:
     AND        mx_phh.player        = etl_pa.pitcher
     AND        mx_phh.hand          = etl_pa.b_hand
     AND        mx_phh.home          = 1 - etl_pa.home
+    """
+
+
+    # _SchemaViews.py method: view_update_feet_atom  Update: add slg + obp (atomic grain, no SUM)
+    @classmethod
+    def view_update_feet_atom(cls):
+        return """
+            SELECT     GD, TS, player, hand, home
+                       ,h  * 1.0 / NULLIF(ab, 0) AS ba
+                       ,k  * 1.0 / NULLIF(ab, 0) AS k_rate
+                       ,tb * 1.0 / NULLIF(ab, 0) AS slg
+                       ,(h + bb + hbp) * 1.0 / NULLIF(ab + bb + hbp + sf, 0) AS obp
+
+            FROM       feet_atom
         """
+
+    # _SchemaViews.py method: view_update_feet_fast  Update: add slg + obp (overall grain, counts pre-SUMmed in pull)
+    @classmethod
+    def view_update_feet_fast(cls):
+        return """
+            SELECT     GD, TS, player
+                       ,h  * 1.0 / NULLIF(ab, 0) AS ba
+                       ,k  * 1.0 / NULLIF(ab, 0) AS k_rate
+                       ,tb * 1.0 / NULLIF(ab, 0) AS slg
+                       ,(h + bb + hbp) * 1.0 / NULLIF(ab + bb + hbp + sf, 0) AS obp
+
+            FROM       feet_fast
+        """
+
+
+    @classmethod
+    def view_pull_forest_pa_ortho_mixin_overall(cls):
+        return """
+            SELECT     GD, player
+                       ,ba
+                       ,k_rate
+                       ,obp
+                       ,slg
+                       ,iso
+                       ,xbh
+                       ,b1_rate
+                       ,b2_rate
+                       ,b3_rate
+
+            FROM       feet_fast
+
+            WHERE      ts = 200
+        """
+
+    # _SchemaViews.py  method: view_pull_forest_pa_ortho  NEW: 2 joins, 18 champions + platoon born here
+    @classmethod
+    def view_pull_forest_pa_ortho(cls):
+        return """
+    SELECT
+               etl_pa.GD, etl_pa.batter, etl_pa.pa
+               ,etl_pa.pitcher
+               ,etl_pa.h                      AS t_h               -- target: did batter get a hit this PA
+               ,mx_b.ba                       AS b_ba
+               ,mx_p.ba                       AS p_ba
+               ,mx_b.k_rate                   AS b_k_rate
+               ,mx_p.k_rate                   AS p_k_rate
+               ,mx_b.obp                      AS b_obp
+               ,mx_p.obp                      AS p_obp
+               ,mx_b.slg                      AS b_slg
+               ,mx_p.slg                      AS p_slg
+               ,mx_b.iso                      AS b_iso
+               ,mx_p.iso                      AS p_iso
+               ,mx_b.xbh                      AS b_xbh
+               ,mx_p.xbh                      AS p_xbh
+               ,mx_b.b1_rate                  AS b_b1_rate
+               ,mx_p.b1_rate                  AS p_b1_rate
+               ,mx_b.b2_rate                  AS b_b2_rate
+               ,mx_p.b2_rate                  AS p_b2_rate
+               ,mx_b.b3_rate                  AS b_b3_rate
+               ,mx_p.b3_rate                  AS p_b3_rate
+               ,CASE WHEN etl_pa.b_hand <> etl_pa.p_hand
+                     THEN 1 ELSE 0 END        AS platoon           -- 1 = batter has the advantage (opposite hands)
+
+    FROM       etl_pa
+
+    LEFT JOIN  pull_forest_pa_ortho_mixin_overall mx_b            -- batter overall stats
+    ON         mx_b.GD              = etl_pa.GD
+    AND        mx_b.player          = etl_pa.batter
+
+    LEFT JOIN  pull_forest_pa_ortho_mixin_overall mx_p            -- pitcher overall stats
+    ON         mx_p.GD              = etl_pa.GD
+    AND        mx_p.player          = etl_pa.pitcher
+    """

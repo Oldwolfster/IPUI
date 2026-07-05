@@ -9,6 +9,7 @@ import time
 import tkinter as tk
 from tkinter import filedialog
 from ipui import *
+from ipui._forms.Baseball.MgrSqlBeautification import MgrSqlBeautification
 from ipui.utils.MgrAccessImport import MgrAccessImport
 from ipui.utils.MgrClipboard import MgrClipboard
 from ipui.utils.MgrPrefs import MgrPrefs
@@ -509,17 +510,33 @@ class SQL(_BaseTab):
         Button(row, "Save SQL",  color_bg=Style.COLOR_TAB_BG,            on_click=self.make_save_click(slot))
         Button(row, "SQL Beau",  color_bg=Style.COLOR_TAB_BG,            on_click=self.make_beau_click(slot))   # NEW
 
+        Button(row, "Group", color_bg=Style.COLOR_TAB_BG, on_click=self.make_beau_click(slot))
     def make_beau_click(self, slot):
         def clicked():
-            from ipui.utils.MgrSqlBeautification import MgrSqlBeautification
+
             cb = self.form.widgets.get(f"code_sql_{slot}")
-            if cb: cb.set_text(MgrSqlBeautification.format_sql(cb.text))
+            if cb:
+
+                cb.set_text(MgrSqlBeautification.format_sql(cb.text))
         return clicked
 
     def handle_split_clicked(self):
         self.private_split = not self.private_split
         self.form.set_pane(1, self.query)
         self.form.set_pane(2, self.results)
+    def make_group_by_click(self, slot):
+        def clicked(): self.handle_group_by_clicked(slot)
+        return clicked
+
+    # SQL.py  method: handle_group_by_clicked  NEW
+    def handle_group_by_clicked(self, slot):
+        cb = self.form.widgets.get(f"code_sql_{slot}")
+        if not cb: return
+        try:
+            cb.set_text(MgrSqlBeautification.smart_group_by(cb.text))
+            self.set_status("Group by resolved")
+        except Exception as e:
+            self.set_status(f"Error: {e}")
 
     # ══════════════════════════════════════════════════════════════
     # RIGHT PANE — results grid (single or split)

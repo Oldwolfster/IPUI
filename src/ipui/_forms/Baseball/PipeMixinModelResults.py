@@ -1,11 +1,14 @@
 #PipeMixinModelResults
 from ipui._forms.Baseball.BbDB import BbDB
+from ipui._forms.Baseball.DbResults import DbResults
 from ipui._forms.Baseball.MgrDT import MgrDT
 
 
-class MixinModelResults:
 
-    # PipeMixinModelResults.py  method: load_model_tables  NEW: dispatcher after predict table is written
+class MixinModelResults:
+    RUN_LABEL = "ortho"  # edit per experiment: "baseline+pitchtype" etc.
+    walk_run_id = None
+
     def load_model_tables(self, forest_table, predict_table, df_train, df_predict, target):
         if df_predict.empty:
             BbDB.log("model", f"{forest_table}: no prediction rows to load")
@@ -17,8 +20,9 @@ class MixinModelResults:
         self.load_model_prediction(run_id, model_name, predict_table)
         self.load_model_day(run_id, model_name)
         self.load_model_run(run_id, model_name, forest_table, predict_table, target, features, df_train, df_predict)
+        self.load_results_gd(run_id, model_name, forest_table, predict_table, target, features, df_train)  # NEW
         self.update_model_summaries()
-        BbDB.log("model", f"{model_name}: model tables loaded")
+
 
 
     # PipeMixinModelResults.py  method: clear_model_rows  NEW: refresh current result rows only
@@ -237,3 +241,38 @@ class MixinModelResults:
             WHERE run_id = ?
         """, (run_id,))
         return rows[0] if rows else (None, None)
+
+    def load_results_gd(self, run_key, model_name, forest_table, predict_table, target, features, df_train):
+        run_id = self.walk_run_id or DbResults.next_run_id()
+        base   = self.results_base_row(run_id, model_name, forest_table, predict_table, target, features, df_train)
+        days   = BbDB.query("SELECT GD, predictions, mae, predicted_total, actual_total FROM model_day WHERE run_id = ?", (run_key,))
+        for gd, preds, mae, pred_tot, act_tot in days:
+            DbResults.insert_run_gd({**base, "GD": gd, "predictions": preds, "mae": mae,"predicted_total": pred_tot, "actual_total": act_tot})
+
+
+        run_mae = DbResults.update_run_mae(run_id)  # NEW
+        self.log_results_line(model_name, days, run_mae, len(df_train))
+            # PipeMixinModelResults.py  method: results_base_row  NEW: run-level metadata shared by every GD row
+    def log_results_line(self, model_name, days, run_mae, train_rows):
+        for gd, preds, mae, pred_tot, act_tot in days:
+            BbDB.log(model_name, f"{gd % 10000:04d}  mae {mae:.3f}  run {run_mae:.3f}  preds {preds}  train {train_rows:,}")
+
+    def results_base_row(self, run_id, model_name, forest_table, predict_table,
+                         target, features, df_train):
+        t_start, t_end = self.model_gd_bounds(df_train)
+        return {"run_id": run_id, "model_name": model_name,
+                "run_mae": 0.0,
+                "seed": self.XGB_SEED, "hyper": str(self.XGB_PARAMS),
+                "label": self.run_label(), "forest_table": forest_table,
+                "predict_table": predict_table, "target_field": target,
+                "grain": self.model_grain(df_train),
+                "train_start_gd": t_start, "train_end_gd": t_end,
+                "train_rows": len(df_train), "feature_count": len(features),
+                "features_csv": ", ".join(features), "created_ds": MgrDT.today_ds()}
+
+
+    def run_label(self):
+        pieces = [self.RUN_LABEL]
+        pieces += [f"-{p}" for p in self.ABLATE_COLS]
+        if self.XGB_SEED != 42: pieces += [f"s{self.XGB_SEED}"]
+        return " ".join(pieces)

@@ -1,6 +1,7 @@
 import pygame
 
 from ipui._forms.Baseball.BbDB import BbDB
+from ipui._forms.Baseball.DbResults import DbResults
 from ipui._forms.Baseball.FieldLineage import FieldLineage
 from ipui._forms.Baseball.PipeMixinRawPull import MixinRawPull
 from ipui._forms.Baseball.PipeMixinXGBoost import MixinXGBoost
@@ -26,16 +27,19 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
 
 
     def ip_setup_early(self,ip):
-        self.task_queue    = []
-        self.private_stale = False     # not sure if this ended up being needed
-        self.private_track_filter = None
-        self.card_mode     = "detail"           # detail | field  (toggled in the header)
-        self.update_btn_txt= "Run All"
-        self.start_date    = "2026-03-27"       # instance state, seeded once — survives rebuilds like card_mode
-        self.end_date      = "2026-03-30"
-        self.active_table = None
-        self.private_lineage_path = None
-        self.private_field_bodies = {}
+        self.task_queue             = []
+        self.private_stale          = False     # not sure if this ended up being needed
+        self.private_track_filter   = None
+        self.card_mode              = "detail"           # detail | field  (toggled in the header)
+        self.btn_run_all_txt        = "Run All"
+        self.btn_train_xgb          = "Train XGB"
+        self.btn_walk_up            = "Walk Up"
+
+        self.start_date             = "2026-03-27"       # instance state, seeded once — survives rebuilds like card_mode
+        self.end_date               = "2026-03-30"
+        self.active_table           = None
+        self.private_lineage_path   = None
+        self.private_field_bodies   = {}
 
     def ip_activated(self,ip):          # called by TabSystem when user switches here
         #print("Am i firing")
@@ -77,24 +81,24 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         header   = Row(header)
         Title(header, "Pipeline", glow=True)
         Spacer(header)
-        #self.btn_refresh_all  = Button(header, self.update_btn_txt, color_bg=Style.COLOR_BUTTON_CTA,  on_click=self.update_all)
-        Button(header, self.update_btn_txt, color_bg=Style.COLOR_BUTTON_CTA, on_click=self.run_all)
-        #ButtonDrip(header, "Run All2", data="Working...", name="btn_run_all",    color_bg=Style.COLOR_BUTTON_CTA, on_click=self.run_all)
+
+        Button(header, self.btn_run_all_txt, color_bg=Style.COLOR_BUTTON_CTA, on_click=self.run_all)
+
+
         TextBox(header, initial_value=self.start_date, name="txt_start_date")
         Body(header, "to:")
         TextBox(header, initial_value=self.end_date, name="txt_end_date")
+        Button(header, self.btn_walk_up, color_bg=Style.COLOR_BUTTON_CTA, on_click=self.walk_all)
         Spacer(header)
         #Button(header, "Train XGB"  , on_click=lambda: self.train_xgb("forest"))
-        Button(header, "Train XGB", on_click=self.train_xgb_clicked)
-        #TextBox(header, initial_value="forest", name="txt_forest_table")
+        Button(header, self.btn_train_xgb, on_click=self.train_xgb_clicked)
+
         Button(header, "Refresh"       , on_click=self.refresh_pane)
         Button(header, self.toggle_label(), on_click=self.toggle_card_mode)
-        #Button(header, "Run TS"     , on_click=lambda: self.roll_up_ts("feet_batter"))
-        #btn = Button(header, "Run TS")
         #btn.on_click = lambda: (btn.set_text("Working..."))
 
         Button(header, "Phoenix"    , on_click=self.nuke_clicked, color_bg=Style.COLOR_BUTTON_DANGER)
-        Button(header, "Clear Cache", on_click=self.clear_cache_clicked)
+        #Button(header, "Clear Cache", on_click=self.clear_cache_clicked)
 
 
         # Just a test - delete me
@@ -118,11 +122,11 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
 
 
     def train_xgb_clicked(self):
-        print("Training XGB")
-        selected = self.valid_forest_tables_to_train()
-        if not selected: return
-        for table in selected:
-            self.train_xgb(table)
+        start_gd, target_gd = self.get_start_and_end_dates()
+        self.btn_train_xgb="Working..."
+        self.refresh_pane()
+        self.run_predict_layer(target_gd)
+        self.ip.drip_when_dry(self.reset_run_btn)
 
     def valid_forest_tables_to_train(self):
         available = BbDB.tables_for_layer("forest")
@@ -307,7 +311,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         body_rows, body_range = refs if refs else (None, None)
         btns = Row(Plate(Plate(Plate(card,pad=2),pad=2),pad=4))
         Button(btns, "Run"      , flex_width=1, on_click=lambda t=tbl, br=body_rows, bg=body_range: self.refresh_table(t, br, bg))
-        Button(btns, "DB", flex_width=1, on_click=lambda t=tbl: self.view_in_db(t))
+        Button(btns, "DB"       , flex_width=1, on_click=lambda t=tbl: self.view_in_db(t))
         Button(btns, "WS"       , flex_width=1, on_click=lambda t=tbl: self.view_in_workbench(t))  # NEW
         Button(btns, "SQL"      , flex_width=1, on_click=lambda t=tbl: self.view_in_sql(t))  # NEW
 
@@ -317,9 +321,10 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         plate = Plate(Plate(Plate(card, pad=2, color_bg=plate_color), pad=2), pad=4)   # DELETE old line 217
         btns  = Row(plate)
         Button(btns, "Run"      , flex_width=1, on_click=lambda t=tbl, br=body_rows, bg=body_range: self.refresh_table(t, br, bg))
-        Button(btns, "DB",        flex_width=1, on_click=lambda t=tbl: self.view_in_db(t))
+        Button(btns, "DB"       , flex_width=1, on_click=lambda t=tbl: self.view_in_db(t))
         Button(btns, "WB"       , flex_width=1, on_click=lambda t=tbl: self.view_in_workbench(t))
         Button(btns, "SQL"      , flex_width=1, on_click=lambda t=tbl: self.view_in_sql(t))
+        Button(btns, "SQL"      , flex_width=1, on_click=lambda t=tbl: self.trace_table(t))
 
     def view_in_db(self, tbl):
         self.form.switch_tab("DB")
@@ -402,9 +407,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         rng = f"{MgrDT.gd_to_iso(s.min_gd)}  to  {MgrDT.gd_to_iso(s.max_gd)}" if s.min_gd else "—  to  —"
         body_range.text = rng
 
-    def parse_textbox_date_to_gd(self, name):
-        raw = self.form.widgets[name].text
-        return MgrDT.str_to_gd(raw)
+    def parse_textbox_date_to_gd(self, name): return MgrDT.str_to_gd(self.form.widgets[name].text)
 
     def get_start_and_end_dates(self):
         try:
@@ -527,3 +530,35 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
                 thickness  = 2,
                 arrow_size = 10,
             ).draw()
+
+    ########################### WALK UP ###########################
+    ########################### WALK UP ###########################
+
+    def walk_all(self):
+        self.btn_walk_up = "Walking..."
+        self.refresh_pane()
+        BbDB.log("walk", "preparing to walk up")
+        self.ip.drip(self.queue_walk_folds)
+        self.ip.drip_when_dry(self.reset_run_btn)
+
+    def queue_walk_folds(self):
+        start_gd, target_gd = self.get_start_and_end_dates()
+        tables              = self.valid_forest_tables_for_predict_layer()   # snapshot — mid-walk clicks can't mutate
+        base_id             = DbResults.next_run_id()
+        for i, table in enumerate(tables):
+            self.ip.drip(self.set_walk_run, base_id + i)
+            for gd in MgrDT.gd_range(start_gd, target_gd):
+                if gd == start_gd: continue                                  # day one has nothing to train on
+                self.ip.drip(self.walk_one_fold, table, gd)
+        self.ip.drip(self.clear_walk_run)
+
+    # Pipe.py  method: walk_one_fold  NEW: one fold = the literal production path with a cut
+    def walk_one_fold(self, table, gd):
+        self.train_xgb(table, cut_date=gd)
+
+    # Pipe.py  method: clear_walk_run  NEW: back to normal minting
+    def clear_walk_run(self):
+        self.walk_run_id = None
+
+    def set_walk_run(self, run_id):
+        self.walk_run_id = run_id

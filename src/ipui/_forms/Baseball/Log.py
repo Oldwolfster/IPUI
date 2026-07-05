@@ -73,7 +73,7 @@ class Log(_BaseTab):
         frame = CardRow(parent, flex_height=1, pad=2)
         self.log_pane(frame, "log_main",  "Log")
         self.log_pane(frame, "log_mid",   "(reserved)")
-        self.log_pane(frame, "log_right", "(reserved)")
+        #self.log_pane(frame, "log_right", "(reserved)")
 
     def log_pane(self, parent, name, label):
         col  = CardCol(parent, flex_width=1, flex_height=1, pad=2)

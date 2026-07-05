@@ -3,6 +3,8 @@ import pandas as pd
 from ipui._forms.Baseball.BbDB import BbDB
 from ipui.utils.EZ import EZ
 from ipui._forms.Baseball.MgrDT import MgrDT
+import fnmatch
+
 
 class MixinXGBoost:
     """
@@ -42,11 +44,25 @@ class MixinXGBoost:
         raw batter as a numeric feature → reject (memorization; keep it as an ID only)
 
     """
-    XGB_MODEL_NAME = "xgb_v1"
-    XGB_TABLE      = "predict_xgb_v1"
+    XGB_MODEL_NAME  = "xgb_v1"
+    XGB_TABLE       = "predict_xgb_v1"
 
-    XGB_ID_COLS  = ("GD", "batter", "game", "pitcher", "pa")
-    XGB_KEY_COLS = ("GD", "batter", "game", "pa")
+    XGB_ID_COLS     = ("GD", "batter", "game", "pitcher", "pa")
+    XGB_KEY_COLS    = ("GD", "batter", "game", "pa")
+    #ABLATE_COLS    = ("*_hand", "*_home",)  # e.g. ("*_hand_home",) — implicit minus
+    ABLATE_COLS     = ("platoon",)  # e.g. ("*_hand_home",) — implicit minus
+
+    XGB_SEED        = 42    # REFERENCE
+    XGB_PARAMS      = dict(n_estimators=50, max_depth=3, learning_rate=0.1, subsample=0.8)
+
+
+    def apply_ablate(self, df_all):
+        """ drop matching columns; protected columns fail loud"""
+        if not self.ABLATE_COLS: return df_all
+        drop = [c for c in df_all.columns if any(fnmatch.fnmatch(c, p) for p in self.ABLATE_COLS)]
+        bad  = [c for c in drop if c in self.XGB_ID_COLS or c == self.target_col(df_all)]
+        if bad: EZ.err(f"ABLATE_COLS hits protected column(s): {', '.join(bad)}")
+        return df_all.drop(columns=drop)
 
     def key_cols(self, df):        return [c for c in self.XGB_KEY_COLS if c in df.columns]
 
@@ -57,42 +73,51 @@ class MixinXGBoost:
     # ══════════════════════════════════════════════════════════════
 
 
-
-    def train_xgb(self, forest_table):
+    def train_xgb(self, forest_table, cut_date=None):
         out_table = f"predict_{forest_table}"
-        BbDB.log(out_table, f"loading {forest_table}")
+
         df_all = self.load_forest(forest_table)
         if df_all.empty:
             BbDB.log(out_table, f"{forest_table} is empty")
             return
-        #if "game" not in df_all.columns:            return EZ.err(f"{forest_table} missing game — doubleheaders break without it")
+        df_all = self.apply_cut     (df_all, cut_date)
+        if self.skip_fold(df_all, cut_date, out_table): return
+        df_all = self.apply_ablate  (df_all)
 
         target                     = self.target_col(df_all)
         df_train, df_predict       = self.split_to_train_and_predict(df_all, target)
         if df_train.empty:
             BbDB.log(out_table, "no training rows")
             return
-        BbDB.log(out_table,
-                 f"train {len(df_train)} | predict {len(df_predict)}")
 
         model = self.fit_model(df_train, out_table)
         self.ensure_predict_table(df_predict, out_table)
         self.inherit_tracks(forest_table, out_table)                              # NEW
         preds = self.predict_and_write(model, df_predict, out_table)
         self.enrich_predictions(out_table)
-        self.evaluate(df_predict, preds, out_table)
+
         self.load_model_tables(forest_table, out_table, df_train, df_predict, target)
         BbDB.update_summary(out_table)
-        BbDB.log(out_table, f"{out_table} ready")
+        #BbDB.log(out_table, f"{out_table} ready")
         self.refresh_pane()
 
-    # PipeMixinXGBoost.py method: inherit_tracks  NEW: copy forest table's tracks to predict table
+    def skip_fold(self, df_all, cut_date, out_table):
+        if cut_date is None: return False
+        if cut_date in df_all["GD"].values: return False
+        BbDB.log(out_table, f"{cut_date % 10000:04d}  no games — fold skipped")
+        return True
+
     def inherit_tracks(self, forest_table, predict_table):
         from ipui._forms.Baseball.MgrSchema import MgrSchema
         rows   = BbDB.query("SELECT track FROM _track_tables WHERE tbl = ?", (forest_table,))
         tracks = [r[0] for r in rows]
         if tracks:
             MgrSchema.tracks_replace_table(predict_table, tracks)
+
+    def apply_cut(self, df_all, cut_date):
+        if cut_date is None: return df_all
+        return df_all[df_all["GD"] <= cut_date]
+
 
     # ══════════════════════════════════════════════════════════════
     # LOAD — whatever forest holds. Drop only LABEL-less rows;
@@ -134,16 +159,8 @@ class MixinXGBoost:
         import xgboost as xgb
         X, y, features = self.split_xy(df)
         objective      = self.pick_objective(y)                  # the target's own values choose the loss
-        BbDB.log(out_table, f"features: {features}  objective: {objective}")
-        model = xgb.XGBRegressor(
-            objective     = objective,
-            n_estimators  = 50,
-            max_depth     = 3,
-            learning_rate = 0.1,
-            subsample     = 0.8,
-            random_state  = 42,
-            verbosity     = 0,
-        )
+
+        model = xgb.XGBRegressor(objective=objective, random_state=self.XGB_SEED, verbosity=0, **self.XGB_PARAMS)
         model.fit(X, y)
         return model
     # ══════════════════════════════════════════════════════════════
@@ -225,18 +242,4 @@ class MixinXGBoost:
             vals += [float(act) if pd.notna(act) else None]
             BbDB.execute(sql, vals)
         return preds
-
-
-    def evaluate(self, df_infer, preds, out_table):
-        target  = self.target_col(df_infer)
-        actuals = df_infer[target].values
-        n       = len(actuals)
-        if n == 0:
-            return
-        mae = sum(abs(float(a) - float(p)) for a, p in zip(actuals, preds)) / n
-        BbDB.log(out_table, f"infer MAE {mae:.4f} across {n} rows")
-        vals = set(actuals)
-        if vals <= {0, 1}:
-            correct = sum(1 for a, p in zip(actuals, preds) if (p >= 0.5) == (a == 1))
-            BbDB.log(out_table, f"accuracy {correct}/{n} = {correct/n:.1%}")
 

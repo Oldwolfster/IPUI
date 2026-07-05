@@ -175,6 +175,11 @@ class _SchemaTbl:
         ('etl_pitch', '   bb                                      INTEGER'),
         ('etl_pitch', '   hr                                      INTEGER'),
         ('etl_pitch', '   tb                                      INTEGER'),
+        ('etl_pitch', '   hbp                                     INTEGER'),
+        ('etl_pitch', '   sf                                      INTEGER'),
+        ('etl_pitch', '   b1                                      INTEGER'),  # NEW
+        ('etl_pitch', '   b2                                      INTEGER'),  # NEW
+        ('etl_pitch', '   b3                                      INTEGER'),  # NEW
         ('etl_pitch', '   engineered_fields_above                 INTEGER'),
         ('etl_pitch', '   pitch_type                              TEXT'),
         ('etl_pitch', '   release_speed                           REAL'),
@@ -288,14 +293,6 @@ class _SchemaTbl:
 
 
 
-
-
-
-
-        # -- engineered --
-
-        # -- raw passthrough --
-
         # ═══ etl_pa ═══
         ('etl_pa', 'PK batter                                  INTEGER'),
         ('etl_pa', 'PK pitcher                                 INTEGER'),
@@ -305,12 +302,17 @@ class _SchemaTbl:
         ('etl_pa', '   h                                       INTEGER'),
         ('etl_pa', '   ab                                      INTEGER'),
         ('etl_pa', 'PK home                                    INTEGER'),
-        ('etl_pa', '   k                                       INTEGER'),
-
-
-
-
-
+        # _SchemaTbl.py — etl_pa : propagate bb/hr/tb + new hbp/sf
+        ('etl_pa', '   k                                       INTEGER'),  # REFERENCE
+        ('etl_pa', '   bb                                      INTEGER'),  # NEW
+        ('etl_pa', '   hr                                      INTEGER'),  # NEW
+        ('etl_pa', '   tb                                      INTEGER'),  # NEW
+        ('etl_pa', '   hbp                                     INTEGER'),  # NEW
+        # _SchemaTbl.py — etl_pa : propagate b1, b2, b3
+        ('etl_pa', '   sf                                      INTEGER'),  # REFERENCE
+        ('etl_pa', '   b1                                      INTEGER'),  # NEW
+        ('etl_pa', '   b2                                      INTEGER'),  # NEW
+        ('etl_pa', '   b3                                      INTEGER'),  # NEW
 
         # ═══ etl_starters ═══
         #('etl_starters', 'PK game                                    INTEGER'),
@@ -319,29 +321,6 @@ class _SchemaTbl:
         ('etl_starters', 'PK pa                                      INTEGER'),
 
 
-
-
-
-
-
-
-
-
-
-
-
-        # _Schema_tbl.py  forest block  REPLACE: full feature matrix schema
-
-
-
-        #('forest_pa_simplest', 'PK batter                                  INTEGER'),
-        #('forest_pa_simplest', 'PK game_pk                                 INTEGER'),
-        #('forest_pa_simplest', 'PK at_bat_number                           INTEGER'),
-        #('forest_pa_simplest', '   pitcher                                 INTEGER'),
-        #('forest_pa_simplest', '   t_hit                                   INTEGER'),
-        #('forest_pa_simplest', '   kiss                                    INTEGER'),
-        #('forest_pa_simplest', '   b_ba                                    REAL'),
-        #('forest_pa_simplest', '   p_ba_against                            REAL'),
         # ═══ _registry ═══ grammar vocabulary: Entity / Metric / Context tokens + definitions
         ('_registry', 'PK kind        TEXT'),  # Entity | Metric | Context  (key-types later, "we'll see")
         ('_registry', 'PK token       TEXT'),
@@ -570,9 +549,15 @@ class _SchemaTbl:
         ('etl_agg', '   h                                       INTEGER'),
         ('etl_agg', 'PK hand                                    TEXT'),
         ('etl_agg', 'PK home                                    INTEGER'),
-        ('etl_agg', '   k                                       INTEGER'),
-
-
+        ('etl_agg', '   k                                       INTEGER'),  # REFERENCE
+        ('etl_agg', '   bb                                      INTEGER'),  # NEW
+        ('etl_agg', '   hr                                      INTEGER'),  # NEW
+        ('etl_agg', '   tb                                      INTEGER'),  # NEW
+        ('etl_agg', '   hbp                                     INTEGER'),  # NEW
+        ('etl_agg', '   sf                                      INTEGER'),
+        ('etl_agg', '   b1                                      INTEGER'),  # NEW
+        ('etl_agg', '   b2                                      INTEGER'),  # NEW
+        ('etl_agg', '   b3                                      INTEGER'),  # NEW
 
         # ═══ feet_atom ═══
         ('feet_atom', 'PK player                                  INTEGER'),
@@ -581,8 +566,24 @@ class _SchemaTbl:
         ('feet_atom', '   ab                                      INTEGER'),
         ('feet_atom', '   h                                       INTEGER'),
         ('feet_atom', '   ba                                      REAL'),
-        ('feet_atom', '   k                                       INTEGER'),
+        # _SchemaTbl.py — feet_atom : counts only (rates come next batch)
+        ('feet_atom', '   k                                       INTEGER'),  # REFERENCE
+        ('feet_atom', '   bb                                      INTEGER'),  # NEW
+        ('feet_atom', '   hr                                      INTEGER'),  # NEW
+        ('feet_atom', '   tb                                      INTEGER'),  # NEW
+        ('feet_atom', '   hbp                                     INTEGER'),  # NEW
+        ('feet_atom', '   sf                                      INTEGER'),  # NEW
+        ('feet_atom', '   b1                                      INTEGER'),  # NEW
+        ('feet_atom', '   b2                                      INTEGER'),  # NEW
+        ('feet_atom', '   b3                                      INTEGER'),  # NEW
         ('feet_atom', '   k_rate                                  REAL'),
+        ('feet_atom', '   obp                                     REAL'),  # NEW
+        ('feet_atom', '   slg                                     REAL'),  # NEW
+        ('feet_atom', '   iso                                     REAL'),  # NEW
+        ('feet_atom', '   xbh                                     REAL'),  # NEW
+        ('feet_atom', '   b1_rate                                 REAL'),  # NEW
+        ('feet_atom', '   b2_rate                                 REAL'),  # NEW
+        ('feet_atom', '   b3_rate                                 REAL'),  # NEW
 
 
 
@@ -592,7 +593,25 @@ class _SchemaTbl:
         ('feet_fast', '   h                                      INTEGER'),
         ('feet_fast', '   ba                                     REAL'),
         ('feet_fast', '   k                                       INTEGER'),
+        ('feet_fast', '   bb                                      INTEGER'),  # NEW
+        ('feet_fast', '   hr                                      INTEGER'),  # NEW
+        ('feet_fast', '   tb                                      INTEGER'),  # NEW
+        ('feet_fast', '   hbp                                     INTEGER'),  # NEW
+        ('feet_fast', '   sf                                      INTEGER'),  # NEW
+        ('feet_fast', '   b1                                      INTEGER'),  # NEW
+        ('feet_fast', '   b2                                      INTEGER'),  # NEW
+        ('feet_fast', '   b3                                      INTEGER'),  # NEW
         ('feet_fast', '   k_rate                                  REAL'),
+        ('feet_fast', '   obp                                     REAL'),  # NEW
+        ('feet_fast', '   slg                                     REAL'),  # NEW
+        ('feet_fast', '   iso                                     REAL'),  # NEW
+        ('feet_fast', '   xbh                                     REAL'),  # NEW
+        ('feet_fast', '   b1_rate                                 REAL'),  # NEW
+        ('feet_fast', '   b2_rate                                 REAL'),  # NEW
+        ('feet_fast', '   b3_rate                                 REAL'),  # NEW
+
+        # _SchemaTbl.py — feet_fast : counts only (rates come next batch)
+
 
         # ═══ forest_pa_dmg ═══
         ('forest_pa_dmg', 'PK batter                                  INTEGER'),
@@ -615,7 +634,89 @@ class _SchemaTbl:
         ('forest_pa_dmg', '   p_k_rate_home                           REAL'),
         ('forest_pa_dmg', '   b_k_rate_hand_home                      REAL'),
         ('forest_pa_dmg', '   p_k_rate_hand_home                      REAL'),
+        # _SchemaTbl.py — forest_pa_dmg : 16 cols, b_/p_ × {overall, hand, home, hand_home}
+
+        ('forest_pa_dmg', '   b_obp                                   REAL'),  # NEW
+        ('forest_pa_dmg', '   p_obp                                   REAL'),  # NEW
+        ('forest_pa_dmg', '   b_obp_hand                              REAL'),  # NEW
+        ('forest_pa_dmg', '   p_obp_hand                              REAL'),  # NEW
+        ('forest_pa_dmg', '   b_obp_home                              REAL'),  # NEW
+        ('forest_pa_dmg', '   p_obp_home                              REAL'),  # NEW
+        ('forest_pa_dmg', '   b_obp_hand_home                         REAL'),  # NEW
+        ('forest_pa_dmg', '   p_obp_hand_home                         REAL'),  # NEW
+        ('forest_pa_dmg', '   b_slg                                   REAL'),  # NEW
+        ('forest_pa_dmg', '   p_slg                                   REAL'),  # NEW
+        ('forest_pa_dmg', '   b_slg_hand                              REAL'),  # NEW
+        ('forest_pa_dmg', '   p_slg_hand                              REAL'),  # NEW
+        ('forest_pa_dmg', '   b_slg_home                              REAL'),  # NEW
+        ('forest_pa_dmg', '   p_slg_home                              REAL'),  # NEW
+        ('forest_pa_dmg', '   b_slg_hand_home                         REAL'),  # NEW
+        ('forest_pa_dmg', '   p_slg_hand_home                         REAL'),  # NEW
+        # _SchemaTbl.py — forest_pa_dmg : 40 cols (5 rates x 4 contexts x 2 sides), after p_slg_hand_home
+        ('forest_pa_dmg', '   b_iso                                   REAL'),  # NEW
+        ('forest_pa_dmg', '   p_iso                                   REAL'),  # NEW
+        ('forest_pa_dmg', '   b_iso_hand                              REAL'),  # NEW
+        ('forest_pa_dmg', '   p_iso_hand                              REAL'),  # NEW
+        ('forest_pa_dmg', '   b_iso_home                              REAL'),  # NEW
+        ('forest_pa_dmg', '   p_iso_home                              REAL'),  # NEW
+        ('forest_pa_dmg', '   b_iso_hand_home                         REAL'),  # NEW
+        ('forest_pa_dmg', '   p_iso_hand_home                         REAL'),  # NEW
+        ('forest_pa_dmg', '   b_xbh                                   REAL'),  # NEW
+        ('forest_pa_dmg', '   p_xbh                                   REAL'),  # NEW
+        ('forest_pa_dmg', '   b_xbh_hand                              REAL'),  # NEW
+        ('forest_pa_dmg', '   p_xbh_hand                              REAL'),  # NEW
+        ('forest_pa_dmg', '   b_xbh_home                              REAL'),  # NEW
+        ('forest_pa_dmg', '   p_xbh_home                              REAL'),  # NEW
+        ('forest_pa_dmg', '   b_xbh_hand_home                         REAL'),  # NEW
+        ('forest_pa_dmg', '   p_xbh_hand_home                         REAL'),  # NEW
+        ('forest_pa_dmg', '   b_b1_rate                               REAL'),  # NEW
+        ('forest_pa_dmg', '   p_b1_rate                               REAL'),  # NEW
+        ('forest_pa_dmg', '   b_b1_rate_hand                          REAL'),  # NEW
+        ('forest_pa_dmg', '   p_b1_rate_hand                          REAL'),  # NEW
+        ('forest_pa_dmg', '   b_b1_rate_home                          REAL'),  # NEW
+        ('forest_pa_dmg', '   p_b1_rate_home                          REAL'),  # NEW
+        ('forest_pa_dmg', '   b_b1_rate_hand_home                     REAL'),  # NEW
+        ('forest_pa_dmg', '   p_b1_rate_hand_home                     REAL'),  # NEW
+        ('forest_pa_dmg', '   b_b2_rate                               REAL'),  # NEW
+        ('forest_pa_dmg', '   p_b2_rate                               REAL'),  # NEW
+        ('forest_pa_dmg', '   b_b2_rate_hand                          REAL'),  # NEW
+        ('forest_pa_dmg', '   p_b2_rate_hand                          REAL'),  # NEW
+        ('forest_pa_dmg', '   b_b2_rate_home                          REAL'),  # NEW
+        ('forest_pa_dmg', '   p_b2_rate_home                          REAL'),  # NEW
+        ('forest_pa_dmg', '   b_b2_rate_hand_home                     REAL'),  # NEW
+        ('forest_pa_dmg', '   p_b2_rate_hand_home                     REAL'),  # NEW
+        ('forest_pa_dmg', '   b_b3_rate                               REAL'),  # NEW
+        ('forest_pa_dmg', '   p_b3_rate                               REAL'),  # NEW
+        ('forest_pa_dmg', '   b_b3_rate_hand                          REAL'),  # NEW
+        ('forest_pa_dmg', '   p_b3_rate_hand                          REAL'),  # NEW
+        ('forest_pa_dmg', '   b_b3_rate_home                          REAL'),  # NEW
+        ('forest_pa_dmg', '   p_b3_rate_home                          REAL'),  # NEW
+        ('forest_pa_dmg', '   b_b3_rate_hand_home                     REAL'),  # NEW
+        ('forest_pa_dmg', '   p_b3_rate_hand_home                     REAL'),  # NEW
+
+        # ═══ forest_pa_ortho ═══
+        ('forest_pa_ortho', 'PK batter                                  INTEGER'),
+        ('forest_pa_ortho', 'PK pa                                      INTEGER'),
+        ('forest_pa_ortho', '   pitcher                                 INTEGER'),
+        ('forest_pa_ortho', '   t_h                                     INTEGER'),
+        ('forest_pa_ortho', '   b_ba                                    REAL'),
+        ('forest_pa_ortho', '   p_ba                                    REAL'),
+        ('forest_pa_ortho', '   b_k_rate                                REAL'),
+        ('forest_pa_ortho', '   p_k_rate                                REAL'),
+        ('forest_pa_ortho', '   b_obp                                   REAL'),
+        ('forest_pa_ortho', '   p_obp                                   REAL'),
+        ('forest_pa_ortho', '   b_slg                                   REAL'),
+        ('forest_pa_ortho', '   p_slg                                   REAL'),
+        ('forest_pa_ortho', '   b_iso                                   REAL'),
+        ('forest_pa_ortho', '   p_iso                                   REAL'),
+        ('forest_pa_ortho', '   b_xbh                                   REAL'),
+        ('forest_pa_ortho', '   p_xbh                                   REAL'),
+        ('forest_pa_ortho', '   b_b1_rate                               REAL'),
+        ('forest_pa_ortho', '   p_b1_rate                               REAL'),
+        ('forest_pa_ortho', '   b_b2_rate                               REAL'),
+        ('forest_pa_ortho', '   p_b2_rate                               REAL'),
+        ('forest_pa_ortho', '   b_b3_rate                               REAL'),
+        ('forest_pa_ortho', '   p_b3_rate                               REAL'),
+        ('forest_pa_ortho', '   platoon                                 INTEGER'),
 
     ]
-
-

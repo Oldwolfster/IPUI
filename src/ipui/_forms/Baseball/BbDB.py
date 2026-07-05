@@ -8,12 +8,17 @@ from ipui.utils.EZ import EZ
 
 
 class BbDB:
-
+    LOG_MAX_LINES = 300
     DB_PATH = str(Path.home() / ".neuroforge" / "projects" / "baseball.db")
-    Summary = namedtuple('Summary', 'gd rows cols min_gd max_gd')
+    LOG_TO_FILE = True
+
+    log_conn      = None     # lazy — opened on first BbDB.log call
+    log_prev_time = None     # last log datetime this session (None = first write, delta NULL)
     pipe_log_display = None
     pipe_log_text = ""
-    LOG_TO_FILE = True
+
+    Summary = namedtuple('Summary', 'gd rows cols min_gd max_gd')
+
 
     # ══════════════════════════════════════════════════════════════
     # ENTRY POINT — one call at startup, everything exists after.
@@ -194,12 +199,12 @@ class BbDB:
         return Path(cls.DB_PATH).parent / f"baseball_{now.strftime('%Y%m%d')}.log"
 
     @classmethod
-    def log(cls, target, msg):
+    def log(cls, target, msg): #ATTACH DATABASE 'dbLog.db' AS logdb;
         now  = datetime.now()
         ts   = now.strftime("%H:%M:%S")
         line = f"[{ts}] {target:20s} {msg}"
         print(line)
-
+        cls.log_db(now, target, msg) #write to db
         if cls.LOG_TO_FILE:
             try:
                 Path(cls.DB_PATH).parent.mkdir(parents=True, exist_ok=True)
@@ -208,7 +213,31 @@ class BbDB:
             except Exception as e:
                 print(f"[{ts}] {'log_file':20s} failed: {e}")
 
-        cls.pipe_log_text=f"{line}\n{cls.pipe_log_text}"
+        #cls.pipe_log_text=f"{line}\n{cls.pipe_log_text}"
+        cls.pipe_log_text = "\n".join(f"{line}\n{cls.pipe_log_text}".split("\n")[:cls.LOG_MAX_LINES])
+
+    @classmethod
+    def log_connect(cls):
+        if cls.log_conn is None:
+            path         = Path(cls.DB_PATH).parent / "dbLog.db"
+            cls.log_conn = sqlite3.connect(path)
+            cls.log_conn.execute("PRAGMA journal_mode=WAL")
+            cls.log_conn.execute("PRAGMA synchronous=NORMAL")
+            cls.log_conn.execute("CREATE TABLE IF NOT EXISTS log (ts TEXT, delta REAL, target TEXT, msg TEXT)")
+        return cls.log_conn
+
+    # BbDB.py method: log_db  NEW: insert one row; delta = seconds since last log this session
+    @classmethod
+    def log_db(cls, now, target, msg):
+        try:
+            conn  = cls.log_connect()
+            delta = (now - cls.log_prev_time).total_seconds() if cls.log_prev_time else None
+            conn.execute("INSERT INTO log (ts, delta, target, msg) VALUES (?,?,?,?)",
+                         (now.isoformat(sep=' ', timespec='milliseconds'), delta, target, msg))
+            conn.commit()
+            cls.log_prev_time = now
+        except Exception as e:
+            print(f"log_db failed: {e}")
 
     # ══════════════════════════════════════════════════════════════
     # MATERIALIZATION — _SchemaTbl.SCHEMA → physical tables.

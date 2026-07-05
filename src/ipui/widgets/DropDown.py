@@ -129,7 +129,7 @@ class DropDown(_BaseWidget):
         if r is None : return
         h            = int(r.height * size)
         w            = int(h * 1.4)
-        cx           = r.right - w // 2 - self.textbox.pad_x
+        cx           = r.right - w // 2 - self.textbox.pad_x+9.6
         cy           = r.centery
         half_w       = w // 2
         half_h       = h // 2

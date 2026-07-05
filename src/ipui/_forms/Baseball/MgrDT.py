@@ -2,6 +2,8 @@
 
 import datetime as _dt
 
+from ipui.utils.EZ import EZ
+
 
 class MgrDT:
 
@@ -63,10 +65,18 @@ class MgrDT:
         return int(s.replace('-', ''))
 
     @classmethod
-    def str_to_gd(cls, s):                                   # tolerant: accepts -, /, or no separator
+    def str_to_gdOLD(cls, s):                                   # tolerant: accepts -, /, or no separator
         return int(s.strip().replace('-', '').replace('/', ''))
 
-
+    @classmethod
+    def str_to_gd(cls, s, blank_is_today=True):
+        s = (s or "").strip()
+        if not s:
+            if blank_is_today:  return cls.today_gd()
+            EZ.err("Blank date. Expected: 20260704, 2026-7-4, 7/4/2026, or 7/4")
+        for sep in ('/', '.', ' '):  s = s.replace(sep, '-')
+        if '-' in s:  return cls.gd_from_parts(s.split('-'))
+        return cls.gd_from_digits(s)
     # ══════════════════════════════════════════════════════════════
     # MATH
     # ══════════════════════════════════════════════════════════════
@@ -111,3 +121,27 @@ class MgrDT:
             return True
         except (ValueError, IndexError, TypeError):
             return False
+
+        # MgrDT.py method: gd_from_parts  NEW: separator path — year is wherever the 4-digit part is
+    @classmethod
+    def gd_from_parts(cls, parts):
+        parts = [p for p in parts if p]                       # tolerate doubled separators
+        if len(parts) == 2:    return cls.gd_validate(cls.today_gd() // 10000, parts[0], parts[1])
+        if len(parts) != 3:    EZ.err(f"Can't parse date parts {parts}. Expected Y-M-D, M/D/Y, or M/D")
+        if len(parts[0]) == 4: return cls.gd_validate(parts[0], parts[1], parts[2])
+        if len(parts[2]) == 4: return cls.gd_validate(parts[2], parts[0], parts[1])
+        EZ.err(f"No 4-digit year in {parts}. Expected Y-M-D, M/D/Y, or M/D")
+
+    # MgrDT.py method: gd_from_digits  NEW: bare-digit path — 8 only; 6/7 rejected as ambiguous
+    @classmethod
+    def gd_from_digits(cls, s):
+        if len(s) == 8 and s.isdigit():  return cls.gd_validate(s[:4], s[4:6], s[6:8])
+        if len(s) in (6, 7) and s.isdigit():
+            EZ.err(f"'{s}' is ambiguous — e.g. 2026112 could be Jan 12 or Nov 2.\nUse 8 digits (20260704) or separators (2026-7-4)")
+        EZ.err(f"Can't parse date '{s}'. Expected: 20260704, 2026-7-4, 7/4/2026, or 7/4")
+
+    # MgrDT.py method: gd_validate  NEW: real calendar check (kills 20261399, respects leap years)
+    @classmethod
+    def gd_validate(cls, y, m, d):
+        try:                return cls.date_to_gd(_dt.date(int(y), int(m), int(d)))
+        except ValueError:  EZ.err(f"Not a real calendar date: year={y} month={m} day={d}")

@@ -419,6 +419,12 @@ class MgrSchema:
 
 
     @staticmethod
+    def key_tokens():
+        """All _registry tokens with kind='Key', plus GD (auto-injected, never a _registry row)."""
+        rows = BbDB.query("SELECT token FROM _registry WHERE kind='Key'")
+        return frozenset(r[0] for r in rows) | {"GD"}
+
+    @staticmethod
     def sync_tracks_to_db():
         import importlib
         from ipui._forms.Baseball import _SchemaFlds

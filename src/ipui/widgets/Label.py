@@ -89,7 +89,7 @@ class Label(_BaseWidget):
 ##################################################
 class Banner(Label):
     """
-    desc:        The biggest voice in the room. One per screen, max.
+    desc:        The biggest voice in the room. Usually one per screen, but knock yourself out if you want to.
     when_to_use: App title, hero text.
     best_for:    The thing you see from across the room.
     example:     Banner(parent, "NeuroForge", glow=True)

@@ -13,14 +13,16 @@ class PipeMixinUpdate:
 
     # MixinUpdate.py method: update_all  New: entry point, defers to after_paint
     def run_all(self):
-        self.update_btn_txt = "Working..."
+        self.btn_run_all_txt = "Working..."
         self.refresh_pane()
         self.ip.drip(self.loop_through_dates)
         self.ip.drip_when_dry(self.reset_run_btn)
 
     def reset_run_btn(self):
-        self.update_btn_txt = "Run All"
-        self.active_table   = None
+        self.btn_run_all_txt        = "Run All"
+        self.btn_train_xgb          = "Train XGB"
+        self.btn_walk_up            = "Walk Up"
+        self.active_table           = None
         self.refresh_pane()
 
 
@@ -161,11 +163,12 @@ class PipeMixinUpdate:
     def run_predict_layer(self, gd):
         for tbl in self.valid_forest_tables_for_predict_layer():
             self.ip.drip(self.train_forest_table, tbl, gd)
-        self.ip.drip(self.load_log5_model)
+        #self.ip.drip(self.load_log5_model)
 
     def valid_forest_tables_for_predict_layer(self):
         selected  = list(getattr(self, "FOREST_TABLES_TO_TRAIN", []))
-        available = BbDB.tables_for_layer("forest")
+        available = self.tables_for_layer_filtered("forest")
+        if not selected: selected = available
         missing   = [t for t in selected if t not in available]
         if missing: BbDB.log("predict", f"skipping missing forest table(s): {', '.join(missing)}")
         return [t for t in selected if t in available]

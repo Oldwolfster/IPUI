@@ -22,7 +22,7 @@ class FormBaseball(_BaseForm):
     def build_header(self):
         header = Row(self)
         left = Row(header, flex_width=1)  # NEW - left container
-        Banner(header, "IPUI - Baseball v6", text_align='c', glow=True, flex_width=0,fit_content=True)
+        Banner(header, "IPUI - Baseball v7", text_align='c', glow=True, flex_width=0,fit_content=True)
         right = Row(header, flex_width=1)  # NEW - right container
 
         # Left content
