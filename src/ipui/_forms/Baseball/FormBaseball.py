@@ -9,7 +9,7 @@ class FormBaseball(_BaseForm):
         #"Pipe"      : ["all_in_one"                                         ],
         "Workshop"  : [("database_browser", .4), ("source", 1.2), ("columns", .569), ("tbl_ctrls", .369)],
         "Predict"   : [("controls", 0.2),("by_model", 0.75)                 ],
-        "SQL"       : [("tables"  ,.5)  ,("query"   ,.7)    ,("results", 1) ],
+        "SQL"       : [("tables"  ,.3)  ,("query"   ,.7)    ,("results", 2) ],
         "Log"       : ["all_in_one"],  # NEW
         #"Registry"  : [("database_browser", .169),    ("registry_list", .3), ("columns ", .369),("tbl_ctrls", .369)],
 

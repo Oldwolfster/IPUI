@@ -180,6 +180,7 @@ class _SchemaTbl:
         ('etl_pitch', '   b1                                      INTEGER'),  # NEW
         ('etl_pitch', '   b2                                      INTEGER'),  # NEW
         ('etl_pitch', '   b3                                      INTEGER'),  # NEW
+        ('etl_pitch', '   barrel                                  INTEGER'),
         ('etl_pitch', '   engineered_fields_above                 INTEGER'),
         ('etl_pitch', '   pitch_type                              TEXT'),
         ('etl_pitch', '   release_speed                           REAL'),
@@ -313,6 +314,7 @@ class _SchemaTbl:
         ('etl_pa', '   b1                                      INTEGER'),  # NEW
         ('etl_pa', '   b2                                      INTEGER'),  # NEW
         ('etl_pa', '   b3                                      INTEGER'),  # NEW
+        ('etl_pa', '   barrel                                  INTEGER'),
 
         # ═══ etl_starters ═══
         #('etl_starters', 'PK game                                    INTEGER'),
@@ -558,6 +560,9 @@ class _SchemaTbl:
         ('etl_agg', '   b1                                      INTEGER'),  # NEW
         ('etl_agg', '   b2                                      INTEGER'),  # NEW
         ('etl_agg', '   b3                                      INTEGER'),  # NEW
+        ('etl_agg', '   barrel                                  INTEGER'),
+
+
 
         # ═══ feet_atom ═══
         ('feet_atom', 'PK player                                  INTEGER'),
@@ -576,6 +581,9 @@ class _SchemaTbl:
         ('feet_atom', '   b1                                      INTEGER'),  # NEW
         ('feet_atom', '   b2                                      INTEGER'),  # NEW
         ('feet_atom', '   b3                                      INTEGER'),  # NEW
+        ('feet_atom', '   barrel                                  INTEGER'),
+
+
         ('feet_atom', '   k_rate                                  REAL'),
         ('feet_atom', '   obp                                     REAL'),  # NEW
         ('feet_atom', '   slg                                     REAL'),  # NEW
@@ -584,7 +592,7 @@ class _SchemaTbl:
         ('feet_atom', '   b1_rate                                 REAL'),  # NEW
         ('feet_atom', '   b2_rate                                 REAL'),  # NEW
         ('feet_atom', '   b3_rate                                 REAL'),  # NEW
-
+        ('feet_atom', '   barrel_rate                             REAL'),
 
 
         # ═══ feet_fast ═══
@@ -601,6 +609,7 @@ class _SchemaTbl:
         ('feet_fast', '   b1                                      INTEGER'),  # NEW
         ('feet_fast', '   b2                                      INTEGER'),  # NEW
         ('feet_fast', '   b3                                      INTEGER'),  # NEW
+        ('feet_fast', '   barrel                                  INTEGER'),
         ('feet_fast', '   k_rate                                  REAL'),
         ('feet_fast', '   obp                                     REAL'),  # NEW
         ('feet_fast', '   slg                                     REAL'),  # NEW
@@ -609,7 +618,7 @@ class _SchemaTbl:
         ('feet_fast', '   b1_rate                                 REAL'),  # NEW
         ('feet_fast', '   b2_rate                                 REAL'),  # NEW
         ('feet_fast', '   b3_rate                                 REAL'),  # NEW
-
+        ('feet_fast', '   barrel_rate                             REAL'),
         # _SchemaTbl.py — feet_fast : counts only (rates come next batch)
 
 
@@ -717,31 +726,11 @@ class _SchemaTbl:
         ('forest_pa_ortho', '   p_b2_rate                               REAL'),
         ('forest_pa_ortho', '   b_b3_rate                               REAL'),
         ('forest_pa_ortho', '   p_b3_rate                               REAL'),
+        ('forest_pa_ortho', '   b_barrel_rate                           REAL'),  # NEW
+        ('forest_pa_ortho', '   p_barrel_rate                           REAL'),  # NEW
+
         ('forest_pa_ortho', '   platoon                                 INTEGER'),
 
-        # ═══ forest_pa_ortho_no_platoon ═══
-        ('forest_pa_ortho_no_platoon', 'PK batter                                  INTEGER'),
-        ('forest_pa_ortho_no_platoon', 'PK pa                                      INTEGER'),
-        ('forest_pa_ortho_no_platoon', '   pitcher                                 INTEGER'),
-        ('forest_pa_ortho_no_platoon', '   t_h                                     INTEGER'),
-        ('forest_pa_ortho_no_platoon', '   b_ba                                    REAL'),
-        ('forest_pa_ortho_no_platoon', '   p_ba                                    REAL'),
-        ('forest_pa_ortho_no_platoon', '   b_k_rate                                REAL'),
-        ('forest_pa_ortho_no_platoon', '   p_k_rate                                REAL'),
-        ('forest_pa_ortho_no_platoon', '   b_obp                                   REAL'),
-        ('forest_pa_ortho_no_platoon', '   p_obp                                   REAL'),
-        ('forest_pa_ortho_no_platoon', '   b_slg                                   REAL'),
-        ('forest_pa_ortho_no_platoon', '   p_slg                                   REAL'),
-        ('forest_pa_ortho_no_platoon', '   b_iso                                   REAL'),
-        ('forest_pa_ortho_no_platoon', '   p_iso                                   REAL'),
-        ('forest_pa_ortho_no_platoon', '   b_xbh                                   REAL'),
-        ('forest_pa_ortho_no_platoon', '   p_xbh                                   REAL'),
-        ('forest_pa_ortho_no_platoon', '   b_b1_rate                               REAL'),
-        ('forest_pa_ortho_no_platoon', '   p_b1_rate                               REAL'),
-        ('forest_pa_ortho_no_platoon', '   b_b2_rate                               REAL'),
-        ('forest_pa_ortho_no_platoon', '   p_b2_rate                               REAL'),
-        ('forest_pa_ortho_no_platoon', '   b_b3_rate                               REAL'),
-        ('forest_pa_ortho_no_platoon', '   p_b3_rate                               REAL'),
 
 
     ]

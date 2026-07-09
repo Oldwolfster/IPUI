@@ -57,7 +57,8 @@ class _SchemaViews:
                ,CASE WHEN events = 'single' THEN 1 ELSE 0 END AS b1
                ,CASE WHEN events = 'double' THEN 1 ELSE 0 END AS b2
                ,CASE WHEN events = 'triple' THEN 1 ELSE 0 END AS b3
-    
+               ,CASE WHEN launch_speed_angle = 6
+               THEN 1 ELSE 0 END                             AS barrel 
     FROM       raw_pitches
         """
     @classmethod
@@ -114,7 +115,7 @@ class _SchemaViews:
     def view_pull_etl_pa(cls):
         return """
     SELECT     GD, batter, pitcher, pa, h, ab,b_hand, p_hand, home
-               ,k, bb, hr, tb, hbp, sf, b1, b2, b3
+               ,k, bb, hr, tb, hbp, sf, b1, b2, b3, barrel
     
     FROM       etl_pitch
     
@@ -1100,7 +1101,7 @@ class _SchemaViews:
                ,SUM(b1)  AS b1
                ,SUM(b2)  AS b2
                ,SUM(b3)  AS b3
-    
+               ,SUM(barrel) AS barrel 
     FROM       etl_pa
     
     GROUP BY   GD, batter, p_hand, home
@@ -1143,6 +1144,7 @@ class _SchemaViews:
                ,b1
                ,b2
                ,b3
+               ,barrel 
     
     FROM       etl_agg
         """
@@ -1160,6 +1162,7 @@ class _SchemaViews:
                ,b1 * 1.0 / NULLIF(ab, 0) AS b1_rate
                ,b2 * 1.0 / NULLIF(ab, 0) AS b2_rate
                ,b3 * 1.0 / NULLIF(ab, 0) AS b3_rate
+                ,barrel * 1.0 / NULLIF(ab, 0) AS barrel_rate    
     
     FROM       feet_atom
         """
@@ -1177,6 +1180,7 @@ class _SchemaViews:
                        ,SUM(tb)  AS tb
                        ,SUM(hbp) AS hbp
                        ,SUM(sf)  AS sf
+                       ,SUM(barrel) AS barrel
 
             FROM       etl_agg
 
@@ -1191,6 +1195,7 @@ class _SchemaViews:
                ,k  * 1.0 / NULLIF(ab, 0) AS k_rate
                ,tb * 1.0 / NULLIF(ab, 0) AS slg
                ,(h + bb + hbp) * 1.0 / NULLIF(ab + bb + hbp + sf, 0) AS obp
+               ,barrel * 1.0 / NULLIF(ab, 0) AS barrel_rate 
     
     FROM       feet_fast
         """
@@ -1449,6 +1454,7 @@ class _SchemaViews:
                        ,b1_rate
                        ,b2_rate
                        ,b3_rate
+                       ,barrel_rate
 
             FROM       feet_fast
 
@@ -1481,7 +1487,10 @@ class _SchemaViews:
                ,mx_p.b2_rate                  AS p_b2_rate
                ,mx_b.b3_rate                  AS b_b3_rate
                ,mx_p.b3_rate                  AS p_b3_rate
+               ,mx_b.barrel_rate              AS b_barrel_rate 
+               ,mx_p.barrel_rate              AS p_barrel_rate 
                ,CASE WHEN etl_pa.b_hand <> etl_pa.p_hand
+               
                      THEN 1 ELSE 0 END        AS platoon           -- 1 = batter has the advantage (opposite hands)
 
     FROM       etl_pa
@@ -1495,58 +1504,3 @@ class _SchemaViews:
     AND        mx_p.player          = etl_pa.pitcher
     """
 
-    @classmethod
-    def view_pull_forest_pa_ortho_no_platoon(cls):
-        return """
-    SELECT     
-               etl_pa.GD, etl_pa.batter, etl_pa.pa
-               ,etl_pa.pitcher
-               ,etl_pa.h                      AS t_h               -- target: did batter get a hit this PA
-               ,mx_b.ba                       AS b_ba
-               ,mx_p.ba                       AS p_ba
-               ,mx_b.k_rate                   AS b_k_rate
-               ,mx_p.k_rate                   AS p_k_rate
-               ,mx_b.obp                      AS b_obp
-               ,mx_p.obp                      AS p_obp
-               ,mx_b.slg                      AS b_slg
-               ,mx_p.slg                      AS p_slg
-               ,mx_b.iso                      AS b_iso
-               ,mx_p.iso                      AS p_iso
-               ,mx_b.xbh                      AS b_xbh
-               ,mx_p.xbh                      AS p_xbh
-               ,mx_b.b1_rate                  AS b_b1_rate
-               ,mx_p.b1_rate                  AS p_b1_rate
-               ,mx_b.b2_rate                  AS b_b2_rate
-               ,mx_p.b2_rate                  AS p_b2_rate
-               ,mx_b.b3_rate                  AS b_b3_rate
-               ,mx_p.b3_rate                  AS p_b3_rate
-              -- ,CASE WHEN etl_pa.b_hand <> etl_pa.p_hand THEN 1 ELSE 0 END   AS platoon           -- 1 = batter has the advantage (opposite hands)
-    
-    FROM       etl_pa
-    
-    LEFT JOIN  pull_forest_pa_ortho_no_platoon_mixin_overall mx_b            -- batter overall stats
-    ON         mx_b.GD              = etl_pa.GD
-    AND        mx_b.player          = etl_pa.batter
-    
-    LEFT JOIN  pull_forest_pa_ortho_no_platoon_mixin_overall mx_p            -- pitcher overall stats
-    ON         mx_p.GD              = etl_pa.GD
-    AND        mx_p.player          = etl_pa.pitcher
-        """
-    @classmethod
-    def view_pull_forest_pa_ortho_no_platoon_mixin_overall(cls):
-        return """
-    SELECT     GD, player
-                           ,ba
-                           ,k_rate
-                           ,obp
-                           ,slg
-                           ,iso
-                           ,xbh
-                           ,b1_rate
-                           ,b2_rate
-                           ,b3_rate
-    
-                FROM       feet_fast
-    
-                WHERE      ts = 200
-        """

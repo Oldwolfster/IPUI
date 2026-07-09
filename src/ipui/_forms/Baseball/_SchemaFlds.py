@@ -36,7 +36,9 @@ class _SchemaFlds:
         'Context  rate      REAL     5002  calculation of another prop',
         'Metric   slg       REAL     1000  slugging total bases / ab',
         'Metric   obp       REAL     1000  on base percent',
+        'Metric   iso       REAL     1000  isolated power',
     ]
+
 
 
 
@@ -1069,7 +1071,6 @@ class _SchemaFlds:
         (20260708, 'Ortho', 'etl_pitch'),
         (20260708, 'Ortho', 'feet_fast'),
         (20260705, 'Ortho', 'forest_pa_ortho'),
-        (20260708, 'Ortho', 'forest_pa_ortho_no_platoon'),
         (20260708, 'Ortho', 'predict_forest_pa_ortho'),
         (20260708, 'Ortho', 'predict_forest_pa_ortho_no_platoon'),
         (20260708, 'Ortho', 'raw_pitches'),
