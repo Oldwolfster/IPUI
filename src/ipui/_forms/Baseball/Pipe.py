@@ -37,6 +37,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
 
         self.start_date             = "2026-03-27"       # instance state, seeded once — survives rebuilds like card_mode
         self.end_date               = "2026-03-30"
+        self.ablated_fields         = ""
         self.active_table           = None
         self.private_lineage_path   = None
         self.private_field_bodies   = {}
@@ -89,6 +90,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         Body(header, "to:")
         TextBox(header, initial_value=self.end_date, name="txt_end_date")
         Button(header, self.btn_walk_up, color_bg=Style.COLOR_BUTTON_CTA, on_click=self.walk_all)
+        TextBox(header, initial_value=self.ablated_fields, name="ablated_fields", placeholder="Ablate Flds")
         Spacer(header)
         #Button(header, "Train XGB"  , on_click=lambda: self.train_xgb("forest"))
         Button(header, self.btn_train_xgb, on_click=self.train_xgb_clicked)
@@ -113,8 +115,9 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         self.refresh_pane()
 
     def commit_dates(self):
-        self.start_date = self.form.widgets["txt_start_date"].text
-        self.end_date   = self.form.widgets["txt_end_date"].text
+        self.start_date     = self.form.widgets["txt_start_date"].text
+        self.end_date       = self.form.widgets["txt_end_date"].text
+        self.ablated_fields = self.form.widgets["ablated_fields"].text
 
     def refresh_pane(self):
         self.commit_dates()
@@ -541,7 +544,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
         self.ip.drip(self.queue_walk_folds)
         self.ip.drip_when_dry(self.reset_run_btn)
 
-    def queue_walk_folds(self):
+    def queue_walk_foldsOLD(self):
         start_gd, target_gd = self.get_start_and_end_dates()
         tables              = self.valid_forest_tables_for_predict_layer()   # snapshot — mid-walk clicks can't mutate
         base_id             = DbResults.next_run_id()
@@ -554,7 +557,7 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
 
     # Pipe.py  method: walk_one_fold  NEW: one fold = the literal production path with a cut
     def walk_one_fold(self, table, gd):
-        self.train_xgb(table, cut_date=gd)
+        self.train_xgb(table, cut_date=gd,ablated_fields=self.ablated_fields)
 
     # Pipe.py  method: clear_walk_run  NEW: back to normal minting
     def clear_walk_run(self):
@@ -562,3 +565,70 @@ class Pipe(_BaseTab, MixinRawPull, MixinXGBoost, PipeMixinUpdate,MixinModelResul
 
     def set_walk_run(self, run_id):
         self.walk_run_id = run_id
+
+
+    ########################### RESUME WALK UP ###########################
+    ###########################  RESUME Walk UP ###########################
+
+    # Pipe.py  method: queue_walk_folds  Update: single-table resume check via msgbox chain
+    def queue_walk_folds(self):
+        start_gd, end_gd = self.get_start_and_end_dates()
+        tables           = self.valid_forest_tables_for_predict_layer()   # snapshot — mid-walk clicks can't mutate
+        if len(tables) == 1:
+            self.walk_check_resume(tables[0], start_gd, end_gd)           # may prompt; drives queuing via callbacks
+            return
+        base_id = DbResults.next_run_id()
+        for i, table in enumerate(tables):
+            self.queue_folds_from(base_id + i, table, start_gd, start_gd, end_gd)
+        self.ip.drip(self.clear_walk_run)
+
+    # Pipe.py  method: walk_check_resume  NEW: decide fresh vs resume for a single-table walk
+    def walk_check_resume(self, table, start_gd, end_gd):
+        ceiling      = BbDB.query(f"SELECT MAX(GD) FROM {table}")[0][0]   # data ceiling — never past what forest holds
+        intended_end = min(end_gd, ceiling) if ceiling is not None else end_gd
+        last         = DbResults.last_run_for(table)                     # (run_id, max_gd) or None
+        if last is not None and last[1] < intended_end:
+            self.walk_prompt_resume(table, start_gd, intended_end, last)
+        else:
+            self.walk_start_new(table, start_gd, intended_end)
+
+    # Pipe.py  method: walk_prompt_resume  NEW: box 1 (Continue?) then box 2 (Start new?)
+    def walk_prompt_resume(self, table, start_gd, intended_end, last):
+        run_id, max_gd = last
+        def on_box1(result):
+            if result == MSG_RESULT_YES:
+                self.queue_folds_from(run_id, table, start_gd, max_gd + 1, intended_end)  # resume: skip-ref stays start_gd
+                self.ip.drip(self.clear_walk_run)
+            else:
+                self.walk_prompt_new(table, start_gd, intended_end)
+        MgrMsgBox.show(self.form,
+                       f"Partial run found for {table} (through {max_gd}).\nContinue where it left off?",
+                       MSG_BTNS_YES_NO | MSG_ICON_QUESTION,
+                       "Resume Walk?",
+                       on_box1)
+
+    # Pipe.py  method: walk_prompt_new  NEW: box 2 — start fresh or cancel out entirely
+    def walk_prompt_new(self, table, start_gd, intended_end):
+        def on_box2(result):
+            if result == MSG_RESULT_OK:
+                self.walk_start_new(table, start_gd, intended_end)
+            else:
+                self.reset_run_btn()                                     # Cancel: queue nothing, restore button
+        MgrMsgBox.show(self.form,
+                       f"Start a new run for {table} from the beginning?",
+                       MSG_BTNS_OK_CANCEL | MSG_ICON_QUESTION,
+                       "New Walk?",
+                       on_box2)
+
+    # Pipe.py  method: walk_start_new  NEW: fresh run_id, walk the full window
+    def walk_start_new(self, table, start_gd, intended_end):
+        base_id = DbResults.next_run_id()
+        self.queue_folds_from(base_id, table, start_gd, start_gd, intended_end)
+        self.ip.drip(self.clear_walk_run)
+
+    # Pipe.py  method: queue_folds_from  NEW: queue one table's folds; skip_ref anchors day-one skip
+    def queue_folds_from(self, run_id, table, skip_ref, first_gd, end_gd):
+        self.ip.drip(self.set_walk_run, run_id)
+        for gd in MgrDT.gd_range(first_gd, end_gd):
+            if gd == skip_ref: continue                                  # day one of the SERIES has nothing to train on
+            self.ip.drip(self.walk_one_fold, table, gd)

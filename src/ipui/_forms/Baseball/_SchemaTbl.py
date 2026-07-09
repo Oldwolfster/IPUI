@@ -719,4 +719,29 @@ class _SchemaTbl:
         ('forest_pa_ortho', '   p_b3_rate                               REAL'),
         ('forest_pa_ortho', '   platoon                                 INTEGER'),
 
+        # ═══ forest_pa_ortho_no_platoon ═══
+        ('forest_pa_ortho_no_platoon', 'PK batter                                  INTEGER'),
+        ('forest_pa_ortho_no_platoon', 'PK pa                                      INTEGER'),
+        ('forest_pa_ortho_no_platoon', '   pitcher                                 INTEGER'),
+        ('forest_pa_ortho_no_platoon', '   t_h                                     INTEGER'),
+        ('forest_pa_ortho_no_platoon', '   b_ba                                    REAL'),
+        ('forest_pa_ortho_no_platoon', '   p_ba                                    REAL'),
+        ('forest_pa_ortho_no_platoon', '   b_k_rate                                REAL'),
+        ('forest_pa_ortho_no_platoon', '   p_k_rate                                REAL'),
+        ('forest_pa_ortho_no_platoon', '   b_obp                                   REAL'),
+        ('forest_pa_ortho_no_platoon', '   p_obp                                   REAL'),
+        ('forest_pa_ortho_no_platoon', '   b_slg                                   REAL'),
+        ('forest_pa_ortho_no_platoon', '   p_slg                                   REAL'),
+        ('forest_pa_ortho_no_platoon', '   b_iso                                   REAL'),
+        ('forest_pa_ortho_no_platoon', '   p_iso                                   REAL'),
+        ('forest_pa_ortho_no_platoon', '   b_xbh                                   REAL'),
+        ('forest_pa_ortho_no_platoon', '   p_xbh                                   REAL'),
+        ('forest_pa_ortho_no_platoon', '   b_b1_rate                               REAL'),
+        ('forest_pa_ortho_no_platoon', '   p_b1_rate                               REAL'),
+        ('forest_pa_ortho_no_platoon', '   b_b2_rate                               REAL'),
+        ('forest_pa_ortho_no_platoon', '   p_b2_rate                               REAL'),
+        ('forest_pa_ortho_no_platoon', '   b_b3_rate                               REAL'),
+        ('forest_pa_ortho_no_platoon', '   p_b3_rate                               REAL'),
+
+
     ]

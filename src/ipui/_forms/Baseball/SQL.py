@@ -505,12 +505,17 @@ class SQL(_BaseTab):
         txt = TextArea(sql_card, initial, name=f"code_sql_{slot}", flex_height=1, wrap=False, scroll_h=True)
         Button(txt, "rocket")
         row = Row(parent)
-        Button(row, "Run Query", color_bg=Style.COLOR_BUTTON_CTA,       on_click=self.make_run_click(slot))
+        Button(row, "Run Query", color_bg=Style.COLOR_BUTTON_CTA,        on_click=self.make_run_click(slot))
         Button(row, "Open SQL",  color_bg=Style.COLOR_BUTTON_SECONDARY,  on_click=self.make_open_click(slot))
         Button(row, "Save SQL",  color_bg=Style.COLOR_TAB_BG,            on_click=self.make_save_click(slot))
         Button(row, "SQL Beau",  color_bg=Style.COLOR_TAB_BG,            on_click=self.make_beau_click(slot))   # NEW
 
-        Button(row, "Group", color_bg=Style.COLOR_TAB_BG, on_click=self.make_beau_click(slot))
+        Button(row, "Group",     color_bg=Style.COLOR_TAB_BG,            on_click=self.make_beau_click(slot))
+        Button(row, "Explain",   color_bg=Style.COLOR_TAB_BG,            on_click=self.make_explain_click(slot))
+        #Button(row, "Analyze",   color_bg=Style.COLOR_TAB_BG,            on_click=self.make_analyze_click(slot))
+
+
+
     def make_beau_click(self, slot):
         def clicked():
 
@@ -601,29 +606,76 @@ class SQL(_BaseTab):
         self.update_query_box(sql)
         self.set_status(status_msg)
 
+    # SQL.py  method: run_query  Update: branch to script for multi-statement; close conn on all paths (leak fix)
     def run_query(self, sql, slot=1):
         self.current_query = sql
+        statements = self.split_statements(sql)
+        if len(statements) > 1:
+            self.run_script(statements, slot)
+            return
         started = time.perf_counter()
+        conn    = None
         try:
             conn   = sqlite3.connect(self.db_path)
             cursor = conn.execute(sql)
             if cursor.description is None:
                 conn.commit()
-                conn.close()
                 elapsed_ms = (time.perf_counter() - started) * 1000
                 self.populate_grid(["status"], [["Statement executed successfully"]], slot)
                 self.set_status(f"Statement executed in {elapsed_ms:.1f} ms")
                 return
             cols       = [desc[0] for desc in cursor.description]
             rows       = [list(r) for r in cursor.fetchall()]
-            conn.close()
             elapsed_ms = (time.perf_counter() - started) * 1000
             self.populate_grid(cols, rows, slot)
             self.set_status(f"{len(rows)} rows returned in {elapsed_ms:.1f} ms")
         except Exception as e:
             self.set_status(f"Error: {e}")
             self.populate_grid(["error"], [[str(e)]], slot)
+        finally:
+            if conn is not None: conn.close()
 
+    # SQL.py  method: run_script  NEW: run N statements in order (autocommit → ATTACH works); show last SELECT
+    def run_script(self, statements, slot=1):
+        started   = time.perf_counter()
+        conn      = sqlite3.connect(self.db_path)
+        conn.isolation_level = None                       # autocommit: each stmt durable, ATTACH allowed
+        last_cols = None
+        last_rows = None
+        try:
+            for i, stmt in enumerate(statements, start=1):
+                try:
+                    cursor = conn.execute(stmt)
+                except Exception as e:
+                    self.set_status  (f"Statement {i} failed: {e}")
+                    self.populate_grid(["error"], [[f"Statement {i}: {e}"]], slot)
+                    return
+                if cursor.description is not None:
+                    last_cols = [desc[0] for desc in cursor.description]
+                    last_rows = [list(r) for r in cursor.fetchall()]
+        finally:
+            conn.close()
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        if last_cols is None:
+            self.populate_grid(["status"], [["Statement(s) executed successfully"]], slot)
+            self.set_status  (f"{len(statements)} statements executed in {elapsed_ms:.1f} ms")
+            return
+        self.populate_grid(last_cols, last_rows, slot)
+        self.set_status  (f"{len(last_rows)} rows returned in {elapsed_ms:.1f} ms ({len(statements)} statements)")
+
+    # SQL.py  method: split_statements  NEW: split on ; respecting string literals (sqlite3.complete_statement)
+    def split_statements(self, sql):
+        stmts = []
+        buf   = ""
+        for ch in sql:
+            buf += ch
+            if ch == ";" and sqlite3.complete_statement(buf):
+                stmts.append(buf.strip())
+                buf = ""
+        tail = buf.strip()
+        if tail:
+            stmts.append(tail)
+        return [s for s in stmts if s.strip(" ;\r\n\t")]
     def update_query_box(self, sql):
         cb = self.form.widgets.get("code_sql_1")
         if cb: cb.set_text(sql)
@@ -833,3 +885,86 @@ class SQL(_BaseTab):
         if start_gd is None or end_gd is None: return ""
         if "GD" not in cols:                   return ""
         return f"\nWHERE GD BETWEEN {start_gd} AND {end_gd}"
+
+        # ════════════════════════════════════════════════════════════════════════════
+        # Show Plan
+        # And Analyze
+        # ════════════════════════════════════════════════════════════════════════════
+
+
+    # SQL.py  method: make_explain_click  NEW: factory for Explain Plan button
+    def make_explain_click(self, slot):
+        def clicked(): self.handle_explain_clicked(slot)
+        return clicked
+
+    # SQL.py  method: make_analyze_click  NEW: factory for real SQLite ANALYZE button
+    def make_analyze_click(self, slot):
+        def clicked(): self.handle_sqlite_analyze_clicked(slot)
+        return clicked
+
+    # SQL.py  method: handle_sqlite_analyze_clicked  NEW: run real SQLite ANALYZE (populates sqlite_stat1)
+    def handle_sqlite_analyze_clicked(self, slot):
+        started = time.perf_counter()
+        conn    = None
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.execute("ANALYZE")
+            conn.commit()
+        except Exception as e:
+            self.set_status(f"ANALYZE error: {e}")
+            return
+        finally:
+            if conn is not None: conn.close()
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        self.set_status(f"ANALYZE complete in {elapsed_ms:.0f} ms — planner stats refreshed")
+
+    # SQL.py  method: handle_explain_clicked  NEW: run setup stmts for real, EXPLAIN QUERY PLAN the last SELECT
+    def handle_explain_clicked(self, slot):
+        cb = self.form.widgets.get(f"code_sql_{slot}")
+        if not cb: return
+        statements = self.split_statements(cb.text)
+        if not statements:
+            self.set_status("Nothing to explain")
+            return
+        setup  = statements[:-1]
+        target = statements[-1]
+        conn   = sqlite3.connect(self.db_path)
+        conn.isolation_level = None                       # autocommit so ATTACH/DDL setup runs for real
+        try:
+            for i, stmt in enumerate(setup, start=1):
+                try:
+                    conn.execute(stmt)
+                except Exception as e:
+                    self.set_status  (f"Setup statement {i} failed: {e}")
+                    self.populate_grid(["error"], [[f"Statement {i}: {e}"]], slot)
+                    return
+            try:
+                cursor = conn.execute(f"EXPLAIN QUERY PLAN {target}")
+                plan   = cursor.fetchall()
+            except Exception as e:
+                self.set_status  (f"Explain error: {e}")
+                self.populate_grid(["error"], [[str(e)]], slot)
+                return
+        finally:
+            conn.close()
+        self.render_plan(plan, slot)
+
+    # SQL.py  method: render_plan  NEW: indent EQP by parent depth; mark SCAN / TEMP B-TREE rows with >>
+    def render_plan(self, plan, slot):
+        depth_of = {0: -1}                                # root's children sit at depth 0
+        rows     = []
+        flagged  = 0
+        for node_id, parent_id, _notused, detail in plan:
+            depth            = depth_of.get(parent_id, 0) + 1
+            depth_of[node_id] = depth
+            is_slow          = ("SCAN" in detail) or ("TEMP B-TREE" in detail)
+            marker           = ">>" if is_slow else ""
+            flagged         += 1 if is_slow else 0
+            rows.append([marker, ("  " * depth) + detail])
+        if not rows:
+            self.populate_grid(["status"], [["No plan (statement returns no rows)"]], slot)
+            self.set_status("Nothing to explain")
+            return
+        self.populate_grid(["!", "Query Plan"], rows, slot)
+        note = f", {flagged} full scan/sort" if flagged else ""
+        self.set_status(f"Query plan: {len(rows)} steps{note}")

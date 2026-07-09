@@ -635,13 +635,450 @@ class _SchemaFlds:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     TRACKS = [
+        (20260708, 'Ortho', 'etl_agg'),
+        (20260708, 'Ortho', 'etl_pa'),
+        (20260708, 'Ortho', 'etl_pitch'),
+        (20260708, 'Ortho', 'feet_fast'),
         (20260705, 'Ortho', 'forest_pa_ortho'),
-        (20260705, 'Ortho', 'predict_forest_pa_ortho'),
+        (20260708, 'Ortho', 'forest_pa_ortho_no_platoon'),
+        (20260708, 'Ortho', 'predict_forest_pa_ortho'),
+        (20260708, 'Ortho', 'predict_forest_pa_ortho_no_platoon'),
+        (20260708, 'Ortho', 'raw_pitches'),
+        (20260708, 'Ortho', 'raw_players'),
+        (20260708, 'Ortho', 'raw_teams'),
         (20260628, 'dart', 'predict_forest_dart'),
         (20260628, 'dart', 'predict_forest_dart_pa'),
-        (20260629, 'perm', 'etl_pa'),
-        (20260629, 'perm', 'etl_pitch'),
+        (20260708, 'perm', 'etl_pa'),
+        (20260708, 'perm', 'etl_pitch'),
         (20260629, 'perm', 'etl_starters'),
         (20260628, 'perm', 'feet_batter'),
         (20260629, 'perm', 'feet_batter_hand_home'),
@@ -653,18 +1090,18 @@ class _SchemaFlds:
         (20260704, 'perm', 'predict_forest_batter'),
         (20260705, 'perm', 'predict_forest_pa'),
         (20260704, 'perm', 'predict_forest_pa_all2'),
-        (20260704, 'perm', 'raw_pitches'),
-        (20260629, 'perm', 'raw_players'),
-        (20260629, 'trueDmg', 'etl_agg'),
-        (20260629, 'trueDmg', 'etl_pa'),
-        (20260629, 'trueDmg', 'etl_pitch'),
+        (20260708, 'perm', 'raw_pitches'),
+        (20260708, 'perm', 'raw_players'),
+        (20260708, 'trueDmg', 'etl_agg'),
+        (20260708, 'trueDmg', 'etl_pa'),
+        (20260708, 'trueDmg', 'etl_pitch'),
         (20260629, 'trueDmg', 'feet_atom'),
-        (20260629, 'trueDmg', 'feet_fast'),
+        (20260708, 'trueDmg', 'feet_fast'),
         (20260629, 'trueDmg', 'forest_pa_dmg'),
         (20260704, 'trueDmg', 'predict_forest_batter'),
         (20260705, 'trueDmg', 'predict_forest_pa'),
         (20260705, 'trueDmg', 'predict_forest_pa_dmg'),
-        (20260704, 'trueDmg', 'raw_pitches'),
-        (20260629, 'trueDmg', 'raw_players'),
-        (20260629, 'trueDmg', 'raw_teams'),
+        (20260708, 'trueDmg', 'raw_pitches'),
+        (20260708, 'trueDmg', 'raw_players'),
+        (20260708, 'trueDmg', 'raw_teams'),
     ]

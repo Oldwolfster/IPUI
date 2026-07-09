@@ -75,3 +75,16 @@ class DbResults:
         conn.commit()
         conn.close()
 
+    @classmethod
+    def last_run_for(cls, forest_table):
+        conn = cls.open_conn()
+        row  = conn.execute("""
+            SELECT   run_id
+                    ,MAX(GD)
+            FROM     run_gd
+            WHERE    forest_table = ?
+            AND      run_id = (SELECT MAX(run_id) FROM run_gd WHERE forest_table = ?)
+        """, (forest_table, forest_table)).fetchone()
+        conn.close()
+        if row is None or row[0] is None: return None
+        return (row[0], row[1])

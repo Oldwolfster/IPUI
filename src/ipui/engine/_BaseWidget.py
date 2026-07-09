@@ -76,11 +76,16 @@ class _BaseWidget(MixinScrollH):
 
     def __init__(self, parent=None, text=None, name=None,
                  flex_width=0, flex_height=0, scroll_h=None, encroach_x=None, encroach_y=None,
-                 pad=None, pad_x=None, pad_y=None, gap=None,  border=None,justify_center=False, justify_spread=False, visible = True,
-                 enabled=True, start= None, end = None, font=None, fit_content=False, border_radius=None,hug_parent=False,
-                 text_align=None, wrap=None, color_bg=None, glow=False, data=None, single_select=False, tooltip=None,
-                 placeholder=None, initial_value=None, on_submit=None, on_change=None, on_click=None, tab_order=None, on_double_click=None, on_right_click=None,
-                 pipeline_key=None, tooltip_class=None, scroll_v=None, scroll_glow=.369, early_load =None):
+                 pad=None, pad_x=None, pad_y=None, gap=None,  border=None,justify_center=False,
+                 justify_spread=False, visible = True,
+                 enabled=True, start= None, end = None, font=None, fit_content=False,
+                 border_radius=None,hug_parent=False,
+                 text_align=None, wrap=None, color_bg=None, glow=False,
+                 data=None, single_select=False, tooltip=None,
+                 placeholder=None, initial_value=None, on_submit=None, on_change=None,
+                 on_click=None, tab_order=None, on_double_click=None, on_right_click=None,
+                 pipeline_key=None, tooltip_class=None, scroll_v=None, scroll_glow=.369,
+                 early_load =None):
 
         self.preflight_check(parent, text_align, flex_width, flex_height)
 

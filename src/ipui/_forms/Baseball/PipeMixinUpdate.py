@@ -177,5 +177,5 @@ class PipeMixinUpdate:
     # PipeMixinUpdate.py method: train_forest_table  NEW: drip-safe XGB wrapper
     def train_forest_table(self, tbl, gd):
         BbDB.log("predict", f"training {tbl} @ {MgrDT.gd_to_iso(gd)}")
-        self.train_xgb(tbl)
+        self.train_xgb(tbl,ablated_fields=self.ablated_fields)
 

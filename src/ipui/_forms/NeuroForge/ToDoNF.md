@@ -277,3 +277,7 @@ tenet.** One run = one reproducible fact.
 
 1) Add hold out vs test cycle.
 2) Add drop out with arena demonstrating
+3) add batch norm
+4) fix input scalers.
+5) fix target scaler
+6) shuffle - ensure neuroscope animation by epoch hits same sample.

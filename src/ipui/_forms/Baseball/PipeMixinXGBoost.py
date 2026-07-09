@@ -50,7 +50,7 @@ class MixinXGBoost:
     XGB_ID_COLS     = ("GD", "batter", "game", "pitcher", "pa")
     XGB_KEY_COLS    = ("GD", "batter", "game", "pa")
     #ABLATE_COLS    = ("*_hand", "*_home",)  # e.g. ("*_hand_home",) — implicit minus
-    ABLATE_COLS     = ("platoon",)  # e.g. ("*_hand_home",) — implicit minus
+    ABLATE_COLS     = () # DO NOT SET HERE - OVERWRITTEN FROM UI    # e.g. ("*_hand_home",) "platoon"  — implicit minus
 
     XGB_SEED        = 42    # REFERENCE
     XGB_PARAMS      = dict(n_estimators=50, max_depth=3, learning_rate=0.1, subsample=0.8)
@@ -72,8 +72,19 @@ class MixinXGBoost:
     # everything else = feature. Add a feature to forest → no change here.
     # ══════════════════════════════════════════════════════════════
 
+    @staticmethod
+    def parse_ablate_text(text):
+        out = []
+        for piece in (text or "").split(","):
+            piece = piece.strip()
+            if len(piece) >= 2 and piece[0] in "\"'" and piece[-1] == piece[0]:
+                piece = piece[1:-1].strip()                  # peel matching edge-quotes only
+            if piece:
+                out.append(piece)                            # drop empties (blank box / trailing comma)
+        return tuple(out)
 
-    def train_xgb(self, forest_table, cut_date=None):
+    def train_xgb(self, forest_table, cut_date=None, ablated_fields=None):
+        MixinXGBoost.ABLATE_COLS = MixinXGBoost.parse_ablate_text(ablated_fields)
         out_table = f"predict_{forest_table}"
 
         df_all = self.load_forest(forest_table)
